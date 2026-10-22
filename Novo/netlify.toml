@@ -1,0 +1,22 @@
+# Configuração do Netlify.
+# No Netlify, em "Site configuration > Build & deploy", define:
+#   Base directory:    Novo
+# O resto é lido deste ficheiro.
+
+[build]
+  publish = "public"
+  functions = "netlify/functions"
+
+[functions]
+  node_bundler = "esbuild"
+
+[[headers]]
+  for = "/assets/*"
+  [headers.values]
+    Cache-Control = "public, max-age=3600"
+
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Content-Type-Options = "nosniff"
+    Referrer-Policy = "strict-origin-when-cross-origin"

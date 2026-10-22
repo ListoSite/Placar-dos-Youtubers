@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="pt-PT">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>Placar dos Youtubers</title>
+    <meta name="description" content="Quem são os maiores Youtubers de Portugal? Rankings mensais, views, subscritores, projetos e o Índice de Influência de cada criador português." />
+    <meta name="theme-color" content="#0e1a3d" />
+    <link rel="icon" href="/assets/icon.svg" type="image/svg+xml" />
+    <link rel="preload" href="/assets/fonts/big-shoulders-display-latin-wght-normal.woff2" as="font" type="font/woff2" crossorigin />
+    <link rel="preload" href="/assets/fonts/schibsted-grotesk-latin-wght-normal.woff2" as="font" type="font/woff2" crossorigin />
+    <link rel="stylesheet" href="/assets/css/app.css" />
+    <link rel="stylesheet" href="/assets/css/palco.css" />
+    <link rel="stylesheet" href="/assets/css/editar.css" />
+    <script src="/assets/vendor/d3.min.js" defer></script>
+    <script src="/assets/js/app.js" type="module"></script>
+  </head>
+  <body>
+    <a class="sr-only" href="#conteudo">Saltar para o conteúdo</a>
+    <header class="topo" id="topo">
+      <div class="wrap">
+        <a class="marca" href="#/" aria-label="Placar dos Youtubers, início">
+          <svg viewBox="0 0 32 32" aria-hidden="true">
+            <rect width="32" height="32" rx="7" fill="#4a86ff" />
+            <path d="M0 9a9 9 0 0 0 9-9H0zM32 9a9 9 0 0 1-9-9h9zM0 23a9 9 0 0 1 9 9H0zM32 23a9 9 0 0 0-9 9h9z" fill="#f2b53a" />
+            <path d="M12.5 10.5v11l9.5-5.5z" fill="#fff" />
+          </svg>
+          <b>Placar <span>dos Youtubers</span></b>
+        </a>
+        <nav class="nav" id="nav" aria-label="Principal">
+          <a href="#/">Início</a>
+          <a href="#/ranking">Ranking</a>
+          <a href="#/comparar">Comparar</a>
+          <a href="#/categorias">Categorias</a>
+          <a href="#/projetos">Projetos</a>
+          <a href="#/palco">Palco</a>
+        </nav>
+        <div class="topo-acoes">
+          <div class="pesquisa" role="search">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="7" /><path d="m20 20-3.5-3.5" /></svg>
+            <label class="sr-only" for="pesquisa">Procurar Youtuber</label>
+            <input id="pesquisa" type="search" placeholder="Procurar Youtuber" autocomplete="off" />
+            <div class="pesquisa-lista" id="pesquisa-lista" role="listbox"></div>
+          </div>
+          <button class="botao-icone" id="som" type="button" aria-pressed="false" title="Ligar som">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M11 5 6 9H3v6h3l5 4z" /><path class="onda" d="M16 9a4 4 0 0 1 0 6M19 6a8 8 0 0 1 0 12" /><path class="corte" d="m16 9 6 6m0-6-6 6" /></svg>
+          </button>
+          <a class="botao-icone" href="#/editar" id="link-editar" title="Editar">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M4 20h4L19 9l-4-4L4 16z" /><path d="m13.5 6.5 4 4" /></svg>
+            <span class="sr-only">Editar</span>
+          </a>
+          <button class="botao-icone menu-movel" id="menu-movel" type="button" aria-expanded="false" aria-controls="nav">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16" /></svg>
+            <span class="sr-only">Menu</span>
+          </button>
+        </div>
+      </div>
+    </header>
+    <main id="conteudo" tabindex="-1">
+      <div class="a-carregar"><div class="roda" aria-label="A carregar"></div></div>
+    </main>
+    <footer class="rodape" id="rodape">
+      <div class="wrap">
+        <p>Placar dos Youtubers. Dados públicos do YouTube, do Social Blade e de recolha manual.</p>
+        <p id="rodape-atualizado"></p>
+      </div>
+    </footer>
+    <div class="toasts" id="toasts" aria-live="polite"></div>
+    <div class="dica" id="dica" role="tooltip"></div>
+  </body>
+</html>
