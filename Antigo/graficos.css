@@ -1,0 +1,156 @@
+/* graficos.css - Estilos para a página de Gráficos Comparativos (Versão 2.0 - Redesign) */
+
+/* --- Layout Principal --- */
+.graficos-container {
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+    max-width: 1200px;
+    margin: 2rem auto;
+}
+
+.graficos-toolbar {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 1rem;
+    padding: 1.5rem;
+    background-color: #282828;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    flex-wrap: wrap;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+}
+
+.graficos-comparison-title {
+    width: 100%;
+    text-align: center;
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 3rem;
+    font-weight: 400;
+    margin-bottom: 1rem;
+    display: none; /* Começa escondido */
+    letter-spacing: 1px;
+}
+
+.graficos-comparison-title .youtuber-name-1 {
+    color: #36A2EB; /* Azul Chart.js */
+}
+
+.graficos-comparison-title .youtuber-name-2 {
+    color: #FF6384; /* Rosa Chart.js */
+}
+
+
+/* --- Área dos Gráficos --- */
+.graficos-charts-area {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 2rem;
+}
+
+.chart-wrapper {
+    background-color: #282828;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    padding: 2rem;
+    height: 450px; /* Altura aumentada para melhor visualização */
+    box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+}
+
+.chart-wrapper h3 {
+    text-align: center;
+    margin-bottom: 2rem;
+    font-size: 1.4rem;
+    font-weight: 600;
+    color: var(--cor-texto-principal);
+}
+
+/* --- Mensagem Inicial --- */
+.graficos-initial-message {
+    text-align: center;
+    padding: 6rem 2rem;
+    background-color: rgba(0,0,0,0.2);
+    border: 2px dashed var(--cor-vermelho-escuro);
+    border-radius: 12px;
+}
+
+.graficos-initial-message h2 {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 2.5rem;
+    margin-bottom: 0.5rem;
+    color: var(--cor-texto-principal);
+}
+
+.graficos-initial-message p {
+    color: var(--cor-texto-secundario);
+    max-width: 500px;
+    margin: 0 auto;
+    font-size: 1.1rem;
+}
+
+/* --- Estilos do Modal de Seleção --- */
+#graficos-select-modal-body {
+    max-height: 60vh;
+    overflow-y: auto;
+    padding-right: 1rem;
+}
+
+.graficos-youtuber-selection-list {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+}
+
+.youtuber-selection-item {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 0.75rem;
+    background-color: var(--cor-vinho-escuro);
+    border: 1px solid var(--cor-vermelho-escuro);
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.youtuber-selection-item:hover {
+    background-color: var(--cor-vermelho-escuro);
+    transform: scale(1.03);
+}
+
+.youtuber-selection-item.selected {
+    background-color: var(--cor-principal);
+    border-color: var(--cor-destaque);
+    box-shadow: 0 0 15px rgba(217, 7, 63, 0.5);
+    color: white;
+}
+
+.youtuber-selection-item img {
+    width: 45px;
+    height: 45px;
+    border-radius: 50%;
+    object-fit: cover;
+}
+
+.youtuber-selection-item span {
+    font-weight: 500;
+    font-size: 1.1rem;
+}
+
+.youtuber-selection-item input[type="checkbox"] {
+    display: none; /* O checkbox real fica escondido */
+}
+
+/* Responsividade */
+@media (max-width: 992px) {
+    .graficos-charts-area {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 768px) {
+    .graficos-youtuber-selection-list {
+        grid-template-columns: 1fr;
+    }
+}

@@ -1,0 +1,373 @@
+/* ocaso-casos.css - Estilos específicos para a secção "Casos" (v5.0 - Suporte a Timeline de Eventos) */
+
+/* --- NOVO: Botão Terciário --- */
+.action-button-redesigned.tertiary {
+    background: transparent;
+    border: 1px solid var(--ocaso-sucesso);
+    color: var(--ocaso-sucesso);
+    margin-right: auto; /* Alinha este botão à esquerda */
+}
+.action-button-redesigned.tertiary:hover {
+    background: rgba(32, 240, 160, 0.1);
+    box-shadow: 0 0 10px rgba(32, 240, 160, 0.4);
+}
+
+/* --- NOVO: Estilos da Timeline de Eventos no Formulário --- */
+.caso-timeline-container {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+    border-bottom: 1px solid var(--ocaso-borda);
+    padding-bottom: 2rem;
+}
+
+.timeline-event-item {
+    background-color: var(--ocaso-input-fundo);
+    border: 1px solid var(--ocaso-borda);
+    border-left: 4px solid var(--ocaso-principal);
+    border-radius: 8px;
+    animation: fadeIn 0.4s ease;
+}
+
+.timeline-item-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.75rem 1.25rem;
+    background-color: rgba(0,0,0,0.2);
+}
+
+.timeline-item-header h5 {
+    font-size: 1.1rem;
+    color: var(--ocaso-texto-principal);
+    margin: 0;
+}
+.timeline-item-header h5 .category-name {
+    font-weight: 400;
+    color: var(--ocaso-texto-secundario);
+}
+
+.timeline-item-header .actions .icon-button:hover {
+    color: var(--ocaso-erro);
+}
+
+.timeline-item-body {
+    padding: 1.25rem;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 1rem;
+}
+
+.event-section-header {
+    font-size: 1.4rem;
+    color: var(--ocaso-principal);
+    margin: 1rem 0;
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--ocaso-borda);
+}
+
+
+/* --- Formulário de Casos --- */
+.caso-form-container .participants-container {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.selected-participants-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    min-height: 50px;
+    background-color: var(--ocaso-input-fundo);
+    border: 1px solid var(--ocaso-borda);
+    border-radius: 8px;
+    padding: 0.75rem;
+    transition: all 0.3s ease;
+}
+
+.selected-participants-grid.drag-over {
+    border-color: var(--ocaso-principal);
+    background-color: rgba(160, 32, 240, 0.1);
+}
+
+.participant-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.75rem;
+    background-color: var(--ocaso-escuro);
+    padding: 0.5rem 1rem;
+    border-radius: 25px;
+    font-weight: 500;
+    animation: fadeIn 0.3s ease;
+    cursor: grab;
+    transition: all 0.2s ease-in-out;
+    border: 1px solid var(--ocaso-borda);
+}
+
+.participant-pill:active {
+    cursor: grabbing;
+}
+
+.participant-pill.dragging {
+    opacity: 0.5;
+    transform: scale(1.05);
+}
+
+.participant-pill img {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    object-fit: cover;
+}
+
+.remove-pill-btn {
+    background: none;
+    border: none;
+    color: var(--ocaso-texto-secundario);
+    cursor: pointer;
+    font-size: 1.2rem;
+    line-height: 1;
+    padding: 0 0.25rem;
+    transition: color 0.2s ease;
+    margin-left: 0.25rem;
+}
+
+.remove-pill-btn:hover {
+    color: var(--ocaso-erro);
+}
+
+.search-container {
+    position: relative;
+}
+
+.search-results {
+    position: absolute;
+    width: 100%;
+    background-color: var(--ocaso-fundo);
+    border: 1px solid var(--ocaso-principal);
+    border-radius: 8px;
+    margin-top: 0.5rem;
+    max-height: 200px;
+    overflow-y: auto;
+    z-index: 100;
+    box-shadow: 0 8px 20px rgba(0,0,0,0.5);
+}
+
+/* --- Secção de Cálculo de Aura --- */
+.aura-calculator-section {
+    background-color: rgba(0, 0, 0, 0.2);
+    border: 1px solid var(--ocaso-borda);
+    border-radius: 12px;
+    padding: 1.5rem 2rem;
+    margin-top: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+.aura-calculator-section h4 {
+    font-size: 1.3rem;
+    color: var(--ocaso-principal);
+    margin: 0;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid var(--ocaso-borda);
+}
+
+.sub-situations-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+}
+
+.situation-card {
+    background-color: var(--ocaso-fundo-secundario);
+    border: 1px solid var(--ocaso-borda);
+    border-radius: 8px;
+    padding: 0.75rem 1.25rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-family: 'Inter', sans-serif;
+    font-size: 0.9rem;
+    color: var(--ocaso-texto-principal);
+    text-align: left;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.situation-card:hover {
+    transform: translateY(-3px);
+    border-color: var(--ocaso-principal-hover);
+}
+
+.situation-card.selected {
+    background-color: var(--ocaso-principal);
+    color: white;
+    border-color: var(--ocaso-principal);
+    box-shadow: 0 0 15px rgba(160, 32, 240, 0.6);
+}
+
+.situation-card strong {
+    font-weight: 600;
+}
+
+.situation-card span {
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+}
+.situation-card.selected span, .situation-card.selected .fa-bolt { color: white !important; }
+
+.role-assignment-section {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1.5rem;
+    margin-top: 1rem;
+}
+
+.role-column {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.role-column label {
+    font-weight: 600;
+    color: var(--ocaso-texto-secundario);
+    font-size: 0.9rem;
+    padding-left: 0.5rem;
+    text-align: center;
+}
+
+.role-selector {
+    background-color: var(--ocaso-input-fundo);
+    min-height: 120px;
+    border-radius: 8px;
+    border: 2px dashed var(--ocaso-borda);
+    padding: 0.75rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    transition: all 0.3s ease;
+    flex-grow: 1;
+}
+
+.role-selector.drag-over {
+    border-color: var(--ocaso-principal);
+    background-color: rgba(160, 32, 240, 0.1);
+    border-style: solid;
+}
+
+.role-selector:empty::after {
+    content: "Arraste para aqui";
+    color: var(--ocaso-texto-secundario);
+    font-size: 0.9rem;
+    align-self: center;
+    margin: auto;
+    width: 100%;
+    text-align: center;
+}
+
+.aura-results-container {
+    border-top: 1px solid var(--ocaso-borda);
+    padding-top: 1.5rem;
+}
+
+.aura-results-container h5 {
+    font-size: 1.1rem;
+    color: var(--ocaso-texto-principal);
+    margin: 0 0 1rem 0;
+}
+
+#aura-results-preview {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 0.75rem;
+}
+
+#aura-results-preview p {
+    color: var(--ocaso-texto-secundario);
+    font-style: italic;
+    grid-column: 1 / -1;
+}
+
+.aura-result-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.75rem 1rem;
+    background-color: var(--ocaso-input-fundo);
+    border-radius: 8px;
+}
+
+.aura-result-item .person { display: flex; align-items: center; gap: 0.75rem; }
+.aura-result-item .person img { width: 32px; height: 32px; border-radius: 50%; object-fit: cover; }
+.aura-result-item .points { font-weight: 700; font-size: 1.2rem; display: flex; align-items: center; gap: 0.5rem; }
+.points.positive { color: var(--ocaso-sucesso); }
+.points.negative { color: var(--ocaso-erro); }
+.points.neutral { color: var(--ocaso-texto-secundario); }
+
+
+/* --- Card de Caso (Atualizado) --- */
+.caso-card { display: flex; flex-direction: column; gap: 1rem; padding: 1.5rem; }
+.caso-card-header { display: flex; justify-content: space-between; align-items: flex-start; gap: 1rem; }
+.caso-card-title h3 { font-size: 1.4rem; margin: 0; color: var(--ocaso-texto-principal); }
+.caso-card-title .caso-card-date { font-size: 0.8rem; color: var(--ocaso-texto-secundario); }
+
+.caso-card-participants-preview {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+    margin-top: 1rem;
+}
+.participant-aura-preview {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    background-color: var(--ocaso-input-fundo);
+    padding: 0.5rem;
+    border-radius: 8px;
+}
+.participant-aura-preview img {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    object-fit: cover;
+}
+.participant-aura-preview .aura-details {
+    font-size: 0.9rem;
+}
+.participant-aura-preview .aura-details strong {
+    display: block;
+    color: var(--ocaso-texto-principal);
+}
+.participant-aura-preview .aura-details span {
+    color: var(--ocaso-texto-secundario);
+}
+.participant-aura-preview .aura-details .change {
+    font-weight: 700;
+    margin-left: 0.5rem;
+}
+.participant-aura-preview .aura-details .change.positive { color: var(--ocaso-sucesso); }
+.participant-aura-preview .aura-details .change.negative { color: var(--ocaso-erro); }
+
+
+.caso-card-body p { color: var(--ocaso-texto-secundario); line-height: 1.6; margin: 0; }
+.caso-card-links { margin-top: 1rem; }
+.caso-card-links strong { font-size: 0.9rem; color: var(--ocaso-texto-principal); }
+.caso-card-links ul { list-style: none; margin-top: 0.5rem; display: flex; gap: 0.75rem; }
+.caso-card-links a { color: var(--ocaso-principal); text-decoration: none; font-size: 0.9rem; }
+.caso-card-links a:hover { text-decoration: underline; }
+.caso-card-footer { display: flex; justify-content: space-between; align-items: center; margin-top: auto; padding-top: 1rem; border-top: 1px solid var(--ocaso-borda); }
+.caso-card-footer .archive-btn { padding: 0.6rem 1.2rem; font-size: 0.9rem; }
+.footer-actions { display: flex; gap: 0.5rem; }
+
+.caso-type-tag {
+    background-color: var(--ocaso-escuro);
+    border: 1px solid var(--ocaso-principal);
+    color: var(--ocaso-principal);
+}
+

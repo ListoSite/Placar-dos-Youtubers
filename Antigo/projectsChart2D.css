@@ -1,0 +1,142 @@
+/* projectsChart2D.css - Estilos para o Gráfico 2D de Projetos (Versão 2.0 - Redesign) */
+
+/* --- Estilos Gerais para o Wrapper do Gráfico --- */
+.chart-wrapper {
+    background-color: #282828;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    padding: 2rem;
+    height: 600px; /* Altura aumentada para melhor visualização */
+    box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+    display: flex;
+    flex-direction: column;
+}
+
+.chart-wrapper h3 {
+    text-align: center;
+    margin-bottom: 2rem;
+    font-size: 1.6rem;
+    font-weight: 600;
+    color: var(--cor-texto-principal);
+    font-family: 'Bebas Neue', sans-serif;
+    letter-spacing: 1px;
+}
+
+/* --- Estilos para o Tooltip Personalizado (REDESIGN) --- */
+#projects-chart-tooltip {
+    opacity: 0;
+    position: absolute;
+    background: rgba(30, 30, 30, 0.9);
+    color: white;
+    border-radius: 12px;
+    border: 1px solid var(--cor-principal);
+    width: 320px; 
+    pointer-events: none;
+    transition: opacity 0.3s ease-in-out, transform 0.3s ease-in-out;
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    box-shadow: 0 8px 25px rgba(0,0,0,0.5);
+    z-index: 10000;
+    overflow: hidden;
+    transform: scale(0.95);
+}
+
+#projects-chart-tooltip.visible {
+    opacity: 1;
+    transform: scale(1);
+}
+
+
+/* Cabeçalho do Tooltip */
+.tooltip-project-header {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1.25rem;
+    background: linear-gradient(145deg, rgba(0,0,0,0.4), rgba(0,0,0,0.2));
+    border-bottom: 1px solid var(--cor-escuro);
+}
+
+.tooltip-project-logo {
+    width: 65px;
+    height: 65px;
+    border-radius: 10px;
+    object-fit: cover;
+    border: 2px solid var(--cor-principal);
+    flex-shrink: 0;
+}
+
+.tooltip-project-title-container {
+    display: flex;
+    flex-direction: column;
+    text-align: left;
+}
+
+.tooltip-project-name {
+    font-family: 'Bebas Neue', sans-serif;
+    font-weight: 400;
+    font-size: 1.8rem;
+    line-height: 1.1;
+    color: var(--cor-texto-principal);
+    margin: 0;
+}
+
+.tooltip-project-creator {
+    font-size: 0.9rem;
+    color: var(--cor-texto-secundario);
+    margin: 0;
+    font-weight: 500;
+}
+
+/* Corpo do Tooltip com as Estatísticas */
+.tooltip-project-body {
+    padding: 1.25rem;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+}
+
+.tooltip-project-stat {
+    display: flex;
+    flex-direction: column;
+    background-color: rgba(0,0,0,0.2);
+    padding: 0.75rem;
+    border-radius: 8px;
+    text-align: center;
+}
+
+.tooltip-project-stat-label {
+    font-size: 0.8rem;
+    color: var(--cor-texto-secundario);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.4rem;
+    margin-bottom: 0.5rem;
+}
+
+.tooltip-project-stat-value {
+    font-size: 1.6rem;
+    font-weight: 700;
+    color: var(--cor-texto-principal);
+    line-height: 1.2;
+}
+
+/* Cores específicas para cada tipo de dado */
+.tooltip-project-stat-value.views {
+    color: var(--cor-destaque);
+}
+
+.tooltip-project-stat-value.episodes {
+    color: #36A2EB; /* Azul Chart.js */
+}
+
+.tooltip-project-stat-value.guests {
+    color: #FFCE56; /* Amarelo Chart.js */
+}
+
+.tooltip-project-stat-value.creator {
+    color: #4BC0C0; /* Ciano Chart.js */
+}

@@ -1,0 +1,542 @@
+<!DOCTYPE html>
+<html lang="pt-pt">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Placar dos Youtubers V2</title>
+
+    <!-- Google Fonts: Inter & Bebas Neue -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Bebas+Neue&display=swap" rel="stylesheet">
+
+    <!-- Font Awesome para Ícones -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" xintegrity="sha512-DTOQO9RWCH3ppGqcWaEA1BIZOC6xxalwEsw9c2QQeAIftl+Vegovlnee1c9QX4TctnWMn13TZye+giMm8e2LwA==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+
+    <!-- Ligação para os nossos ficheiros de estilos CSS -->
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="projects.css">
+    <link rel="stylesheet" href="presentation.css">
+    <link rel="stylesheet" href="chart2D.css">
+    <link rel="stylesheet" href="chart3D.css">
+    <link rel="stylesheet" href="projectsChart2D.css">
+    <link rel="stylesheet" href="projectsBubbleChart.css">
+    <link rel="stylesheet" href="workerChart.css">
+    <link rel="stylesheet" href="infoInteligente.css">
+    <link rel="stylesheet" href="social.css">
+    <link rel="stylesheet" href="history.css"> 
+    <link rel="stylesheet" href="batalha.css">
+    <link rel="stylesheet" href="graficos.css">
+
+</head>
+<body>
+
+    <!-- CABEÇALHO E NAVEGAÇÃO PRINCIPAL -->
+    <header class="main-header">
+        <div class="container">
+            <!-- NAVEGAÇÃO PARA O PLACAR DOS YOUTUBERS -->
+            <nav id="nav-placar-youtubers" class="main-nav">
+                <a href="#" class="site-title">Placar dos <span>Youtubers</span></a>
+                <ul class="nav-menu">
+                    <li><a href="#" data-target="section-home" class="active">Menu Inicial</a></li>
+                    <li class="gerir-menu-item">
+                        <a href="#">Gerir</a>
+                        <ul id="gerir-submenu" class="submenu">
+                            <li><a href="#" data-target="section-gerir-perfis">Gerir Perfis</a></li>
+                            <li><a href="#" data-target="section-gerir-projetos">Gerir Projetos</a></li>
+                            <li><a href="#" data-target="section-gerir-social">Gerir Social</a></li>
+                            <li><a href="#" data-target="section-gerir-historico">Gerir Histórico</a></li>
+                        </ul>
+                    </li>
+                    <li class="plus-menu-item">
+                        <a href="#">Plus</a>
+                        <ul id="plus-submenu" class="submenu">
+                            <li><a href="#" data-target="section-info-inteligente">Info Inteligente</a></li>
+                            <li><a href="#" data-target="section-batalha">Batalha</a></li>
+                            <li><a href="#" data-target="section-graficos">Gráficos</a></li>
+                        </ul>
+                    </li>
+                    <li class="placar-menu-item">
+                        <a href="#">Placar dos Youtubers</a>
+                        <ul id="placar-submenu" class="submenu">
+                            <li><a href="#" data-target="section-apresentacao">Apresentacao</a></li>
+                            <li><a href="#" data-target="section-grafico-3d">Grafico 3D</a></li>
+                            <li><a href="#" data-target="section-grafico-2d">Grafico 2D</a></li>
+                            <li><a href="#" data-target="section-tabela">Tabela</a></li>
+                        </ul>
+                    </li>
+                    <li class="placar-projetos-menu-item">
+                        <a href="#">Placar dos Projetos</a>
+                        <ul id="placar-projetos-submenu" class="submenu">
+                            <li><a href="#" data-target="section-projetos-tabela">Tabela</a></li>
+                            <li><a href="#" data-target="section-projetos-grafico-2d">Gráfico 2D</a></li>
+                            <li><a href="#" data-target="section-projetos-grafico-bola">Gráfico de Bola</a></li>
+                            <li><a href="#" data-target="section-projetos-trabalhador">Trabalhador</a></li>
+                        </ul>
+                    </li>
+                </ul>
+                <ul class="nav-icons">
+                    <li><a href="#" id="notifications-icon" aria-label="Notificações"><i class="fas fa-bell"></i></a></li>
+                    <li><a href="#" id="settings-icon" aria-label="Definições"><i class="fas fa-cog"></i></a></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    <!-- CONTEÚDO PRINCIPAL ONDE AS SECÇÕES SÃO MOSTRADAS -->
+    <main class="main-content container">
+        <!-- Secção Home (Página Inicial) -->
+        <section id="section-home" class="content-section">
+            <div class="home-module-selection">
+                <h1>Selecione o Módulo</h1>
+                <div class="module-cards-container">
+                    <div class="module-card" id="select-placar-youtubers">
+                        <i class="fas fa-trophy module-icon"></i>
+                        <div class="module-card-content">
+                            <h2>Placar dos Youtubers</h2>
+                            <p>Análise e gestão de estatísticas de Youtubers.</p>
+                        </div>
+                    </div>
+                    <div class="module-card" id="select-o-caso">
+                        <i class="fas fa-file-alt module-icon"></i>
+                        <div class="module-card-content">
+                            <h2>O Caso</h2>
+                            <p>Um novo módulo com um tema diferente.</p>
+                        </div>
+                    </div>
+                    <div class="module-card" id="select-laboratorio-ia">
+                        <i class="fas fa-brain module-icon"></i>
+                        <div class="module-card-content">
+                            <h2>Laboratório IA</h2>
+                            <p>Ferramentas e modelos para análise com Inteligência Artificial.</p>
+                        </div>
+                    </div>
+                     <div class="module-card" id="select-video-maker">
+                        <i class="fas fa-magic module-icon"></i>
+                        <div class="module-card-content">
+                            <h2>Video Maker</h2>
+                            <p>Crie apresentações de vídeo dinâmicas com os seus dados.</p>
+                        </div>
+                    </div>
+                    <div class="module-card" id="select-universo-filmes">
+                        <i class="fas fa-film module-icon"></i>
+                        <div class="module-card-content">
+                            <h2>Universo Filmes</h2>
+                            <p>Crie e organize linhas do tempo de filmes e séries.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Secção para Gerir Perfis de Youtubers -->
+        <section id="section-gerir-perfis" class="content-section" style="display: none;">
+            <div class="toolbar">
+                <div class="search-bar">
+                    <i class="fas fa-search"></i>
+                    <input type="text" id="profile-search-input" placeholder="Pesquisar por nome...">
+                </div>
+                <div id="sort-controls" class="sort-controls">
+                    <button class="sort-button" data-sort="name"><span>Alfabeto</span><i class="fas fa-sort"></i></button>
+                    <button class="sort-button" data-sort="rank"><span>Rank</span><i class="fas fa-sort"></i></button>
+                    <button class="sort-button" data-sort="views"><span>Views</span><i class="fas fa-sort"></i></button>
+                </div>
+            </div>
+
+            <div class="profile-form-container">
+                <h3>Adicionar Novo Perfil</h3>
+                <form id="profile-form" class="form-grid">
+                    <div class="photo-uploader">
+                        <label for="photo-input">
+                            <img src="https://placehold.co/150x150/400414/a0a0a0?text=Foto" alt="Preview da foto" id="photo-preview">
+                            <span><i class="fas fa-camera"></i> Escolher Foto</span>
+                        </label>
+                        <input type="file" id="photo-input" accept="image/*" style="display: none;">
+                    </div>
+                    <div class="fields-grid">
+                        <div class="form-group"><label for="name-input">Nome do Youtuber</label><input type="text" id="name-input" required></div>
+                        <div class="form-group"><label for="content-type-input">Tipo de Conteúdo</label><input type="text" id="content-type-input" required></div>
+                        <div class="form-group"><label for="views-input">Visualizações</label><input type="text" id="views-input" required></div>
+                        <div class="form-group"><label for="points-input">Pontos</label><input type="number" id="points-input" required></div>
+                    </div>
+                    <button type="submit" class="submit-button">Criar Perfil</button>
+                </form>
+            </div>
+
+            <div id="profiles-list-container" class="profiles-list"></div>
+        </section>
+
+        <!-- Secção para Gerir Projetos -->
+        <section id="section-gerir-projetos" class="content-section" style="display: none;">
+            <div class="toolbar">
+                <div class="search-bar">
+                    <i class="fas fa-search"></i>
+                    <input type="text" id="project-search-input" placeholder="Pesquisar por nome do projeto...">
+                </div>
+                <div id="project-sort-controls" class="sort-controls">
+                    <button class="sort-button" data-sort="name"><span>Alfabeto</span><i class="fas fa-sort"></i></button>
+                    <button class="sort-button" data-sort="year"><span>Data</span><i class="fas fa-sort"></i></button>
+                    <button class="sort-button" data-sort="views"><span>Views</span><i class="fas fa-sort"></i></button>
+                </div>
+                <button id="add-project-btn" class="action-button"><i class="fas fa-plus"></i> Adicionar Projeto</button>
+            </div>
+            
+            <div id="projects-list-container" class="projects-list"></div>
+        </section>
+        
+        <!-- SECÇÃO GERIR SOCIAL -->
+        <section id="section-gerir-social" class="content-section" style="display: none;">
+            <div class="toolbar">
+                 <h2>Gerir Métricas Sociais</h2>
+                 <div class="search-bar">
+                    <i class="fas fa-search"></i>
+                    <input type="text" id="social-search-input" placeholder="Pesquisar por nome...">
+                </div>
+            </div>
+            <p style="margin-bottom: 2rem; color: var(--cor-texto-secundario);">Selecione um perfil para ver e editar as suas métricas detalhadas de todas as redes sociais.</p>
+            <div id="social-grid-container" class="social-grid"></div>
+        </section>
+
+        <!-- NOVA SECÇÃO PARA GERIR HISTÓRICO -->
+        <section id="section-gerir-historico" class="content-section" style="display: none;">
+            <div id="history-main-container"></div>
+        </section>
+        
+        <!-- Secção de Apresentação -->
+        <section id="section-apresentacao" class="content-section" style="display: none;">
+            <i class="fas fa-film presentation-intro-icon"></i>
+            <h2 class="presentation-intro-title">Modo de Apresentação</h2>
+            <p class="presentation-intro-text">Inicie a apresentação para revelar o ranking dos Youtubers num formato de ecrã inteiro, ideal para visualização em grupo.</p>
+            <div class="presentation-controls-wrapper">
+                <div class="form-group">
+                    <label for="presentation-month-input">Mês da Apresentação</label>
+                    <input type="text" id="presentation-month-input" placeholder="Ex: Agosto 2025">
+                </div>
+                <button id="start-presentation-btn" class="action-button"><i class="fas fa-play"></i> Iniciar Apresentação</button>
+            </div>
+        </section>
+
+        <!-- Secção do Gráfico 3D -->
+        <section id="section-grafico-3d" class="content-section" style="display: none;">
+            <h2>Gráfico 3D - Top 50 por Visualizações</h2>
+            <div id="chart-3d-container" class="chart-3d-container">
+                <div id="chart-3d-info-panel" class="chart-3d-info-panel"></div>
+            </div>
+        </section>
+
+        <!-- Secção do Gráfico 2D -->
+        <section id="section-grafico-2d" class="content-section" style="display: none;">
+            <h2>Gráfico 2D - Top 15 por Pontos</h2>
+            <div class="chart-container" style="position: relative; height:60vh; width:100%; margin-top: 2rem;">
+                <canvas id="points-chart-canvas"></canvas>
+            </div>
+        </section>
+
+        <!-- Secção da Tabela de Classificação -->
+        <section id="section-tabela" class="content-section" style="display: none;">
+            <div class="toolbar">
+                <h2>Tabela de Classificação</h2>
+                <div class="sort-controls">
+                    <button class="sort-button" id="table-sort-mode-btn"><i class="fas fa-trophy"></i> Melhores 50</button>
+                    <button class="sort-button" id="table-sort-direction-btn"><i class="fas fa-sort-amount-up"></i> 1-50</button>
+                </div>
+            </div>
+            <div class="table-container">
+                <table class="leaderboard-table">
+                    <thead>
+                        <tr>
+                            <th class="rank-col">Rank</th>
+                            <th class="name-col">Nome</th>
+                            <th>Estilo de Vídeo</th>
+                            <th>Views</th>
+                            <th>Último Mês</th>
+                            <th>Mês Anterior</th>
+                            <th>Mês Recuado</th>
+                        </tr>
+                    </thead>
+                    <tbody id="leaderboard-table-body"></tbody>
+                </table>
+            </div>
+        </section>
+        
+        <!-- Secções para o Placar dos Projetos -->
+        <section id="section-projetos-tabela" class="content-section" style="display: none;">
+            <div class="table-title-container">
+                 <h2>Top 50 Melhores Projetos (por Êxito)</h2>
+                 <button id="project-sort-toggle-btn" class="sort-button" title="Ordenar por Rank (Crescente)">
+                    <i class="fas fa-sort-down"></i>
+                </button>
+            </div>
+            <div class="table-container">
+                <table class="leaderboard-table projects-leaderboard-table">
+                    <thead>
+                        <tr>
+                            <th class="rank-col">Rank</th>
+                            <th class="name-col">Projeto</th>
+                            <th>Criador</th>
+                            <th>Episódios</th>
+                            <th>Views Totais</th>
+                            <th class="success-col">Views por Episódio</th>
+                        </tr>
+                    </thead>
+                    <tbody id="projects-leaderboard-table-body"></tbody>
+                </table>
+            </div>
+        </section>
+        <section id="section-projetos-grafico-2d" class="content-section" style="display: none;">
+            <h2>Gráfico 2D - Top 15 Projetos por Views</h2>
+            <div class="chart-container" style="position: relative; height:60vh; width:100%; margin-top: 2rem;">
+                <canvas id="projects-chart-canvas"></canvas>
+                <div id="projects-chart-tooltip"></div>
+            </div>
+        </section>
+        <section id="section-projetos-grafico-bola" class="content-section" style="display: none;">
+            <h2>Placar dos Projetos - Gráfico de Bolhas</h2>
+            <div id="bubble-chart-container" class="chart-container" style="height:70vh; width:100%; margin-top: 2rem;"></div>
+        </section>
+        <section id="section-projetos-trabalhador" class="content-section" style="display: none;">
+            <h2>Placar do Trabalhador - Top Criadores</h2>
+            <div class="toolbar">
+                <div class="search-bar">
+                    <i class="fas fa-search"></i>
+                    <input type="text" id="worker-search-input" placeholder="Pesquisar por criador...">
+                </div>
+                <div id="worker-sort-controls" class="sort-controls">
+                    <button class="sort-button" data-sort="rank"><span>Rank</span><i class="fas fa-sort"></i></button>
+                    <button class="sort-button" data-sort="name"><span>Nome</span><i class="fas fa-sort"></i></button>
+                    <button class="sort-button" data-sort="views"><span>Views</span><i class="fas fa-sort"></i></button>
+                    <button class="sort-button" data-sort="projects"><span>Projetos</span><i class="fas fa-sort"></i></button>
+                </div>
+            </div>
+            <div id="worker-chart-container"></div>
+        </section>
+
+        <!-- Secções Partilhadas (Plus) -->
+        <section id="section-info-inteligente" class="content-section" style="display: none;">
+            <div class="info-inteligente-container">
+                <div class="analysis-setup-container">
+                    <h2>Análise de Desempenho Inteligente</h2>
+                    <div class="selectors-grid">
+                        <div class="selector-group">
+                            <label for="youtuber-select">Youtuber</label>
+                            <select id="youtuber-select" disabled>
+                                <option>A carregar...</option>
+                            </select>
+                        </div>
+                        <div class="selector-group">
+                            <label for="month1-select">Comparar Mês</label>
+                            <select id="month1-select" disabled>
+                                <option>Selecione um youtuber</option>
+                            </select>
+                        </div>
+                        <div class="selector-group">
+                            <label for="month2-select">Com Mês</label>
+                            <select id="month2-select" disabled>
+                                <option>Selecione um youtuber</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="analysis-controls">
+                        <button id="analyze-btn" class="action-button" disabled><i class="fas fa-lightbulb"></i> Analisar Desempenho</button>
+                    </div>
+                </div>
+                <div id="analysis-results-container"></div>
+            </div>
+        </section>
+        <section id="section-batalha" class="content-section" style="display: none;"></section>
+        <section id="section-graficos" class="content-section" style="display: none;"></section>
+
+    </main>
+
+    <!-- OVERLAY E MODAIS (POPUPS) -->
+    <div id="modal-overlay" class="modal-overlay">
+        <!-- Modal de Detalhes do Perfil -->
+        <div id="details-modal" class="modal-content"><button id="details-modal-close" class="modal-close-btn">&times;</button><div id="details-modal-body"></div></div>
+        <!-- Modal de Confirmação de Perfil -->
+        <div id="confirm-modal" class="modal-content">
+            <h3 id="confirm-modal-title">Confirmar Eliminação</h3>
+            <p id="confirm-modal-text">Tem a certeza de que deseja eliminar este perfil?</p>
+            <div class="confirm-buttons"><button id="confirm-yes-btn" class="confirm-btn yes">Sim, eliminar</button><button id="confirm-no-btn" class="confirm-btn no">Cancelar</button></div>
+        </div>
+        
+        <!-- Modal de Detalhes do Projeto -->
+        <div id="project-details-modal" class="modal-content modal-lg">
+            <button id="project-details-modal-close" class="modal-close-btn">&times;</button>
+            <div id="project-details-modal-body"></div>
+        </div>
+        
+        <!-- Modal de Confirmação de Projeto -->
+        <div id="project-confirm-modal" class="modal-content">
+            <h3>Confirmar Eliminação</h3>
+            <p>Tem a certeza de que deseja eliminar este projeto?</p>
+            <div class="confirm-buttons">
+                <button id="project-confirm-yes-btn" class="confirm-btn yes">Sim, eliminar</button>
+                <button id="project-confirm-no-btn" class="confirm-btn no">Cancelar</button>
+            </div>
+        </div>
+
+        <!-- NOVO MODAL PARA O FORMULÁRIO DE PROJETOS -->
+        <div id="project-form-modal" class="modal-content modal-lg">
+            <button id="project-form-modal-close" class="modal-close-btn">&times;</button>
+            <div class="project-form-container">
+                <h3>Adicionar Novo Projeto</h3>
+                <form id="project-form" class="form-grid">
+                    <div class="photo-uploader">
+                        <label for="project-photo-input">
+                            <img src="https://placehold.co/150x150/400414/a0a0a0?text=Logo" alt="Preview do logo" id="project-photo-preview">
+                            <span><i class="fas fa-camera"></i> Escolher Logo</span>
+                        </label>
+                        <input type="file" id="project-photo-input" accept="image/*" style="display: none;">
+                    </div>
+                    <div class="fields-grid" style="grid-template-columns: 1fr 1fr;">
+                        <div class="form-group" style="grid-column: 1 / -1;"><label for="project-name-input">Nome do Projeto</label><input type="text" id="project-name-input" required></div>
+                        <div class="form-group"><label for="project-episodes-input">Nº de Episódios</label><input type="number" id="project-episodes-input" required></div>
+                        <div class="form-group"><label for="project-views-input">Total de Visualizações</label><input type="text" id="project-views-input" required></div>
+                        <div class="form-group"><label for="project-year-input">Ano de Lançamento</label><input type="number" id="project-year-input" placeholder="Ex: 2024" required></div>
+                        
+                        <div class="form-group">
+                            <label for="project-creator-input">Criador</label>
+                            <input type="text" id="project-creator-input" placeholder="Pesquisar e adicionar o criador...">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="project-guests-input">Convidados</label>
+                            <input type="text" id="project-guests-input" placeholder="Pesquisar e adicionar convidados...">
+                        </div>
+
+                        <div class="form-group" style="grid-column: 1 / -1;"><label for="project-description-input">Descrição do Projeto</label><textarea id="project-description-input" rows="4" placeholder="Fale um pouco sobre o projeto..."></textarea></div>
+                        
+                        <!-- NOVOS CAMPOS DE AVALIAÇÃO -->
+                        <div class="form-group" style="grid-column: 1 / -1;">
+                            <label>Avaliação Principal</label>
+                            <div class="star-rating-input" id="main-rating-stars">
+                                <!-- As estrelas serão geradas por JS -->
+                            </div>
+                        </div>
+
+                        <div class="form-group individual-ratings-form" style="grid-column: 1 / -1;">
+                            <label>Avaliações Individuais</label>
+                            <div class="individual-rating-adder">
+                                <input type="text" id="individual-rating-name" placeholder="Nome do Avaliador">
+                                <div class="star-rating-input" id="individual-rating-stars">
+                                    <!-- As estrelas serão geradas por JS -->
+                                </div>
+                                <button type="button" id="add-individual-rating-btn" class="action-button secondary">+</button>
+                            </div>
+                            <div id="individual-ratings-list" class="individual-ratings-display-list">
+                                <!-- Lista de avaliações individuais adicionadas -->
+                            </div>
+                        </div>
+                        <!-- FIM DOS NOVOS CAMPOS -->
+                    </div>
+                    <div class="form-actions">
+                        <button type="button" id="project-form-cancel-btn" class="action-button secondary">Cancelar</button>
+                        <button type="submit" class="submit-button action-button">Criar Projeto</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Modal de Definições -->
+        <div id="settings-modal" class="modal-content">
+            <button id="settings-modal-close" class="modal-close-btn">&times;</button>
+            <h3>Definições e Dados</h3>
+            <div class="settings-section">
+                <h4>Gestão de Dados</h4>
+                <p>Exporte todos os dados (perfis, projetos, sociais e histórico) para um ficheiro, ou importe de um backup.</p>
+                <div class="settings-buttons">
+                    <button id="export-data-btn" class="action-button"><i class="fas fa-file-export"></i> Exportar Dados</button>
+                    <button id="import-data-btn" class="action-button"><i class="fas fa-file-import"></i> Importar Dados</button>
+                    <input type="file" id="import-file-input" style="display: none;" accept=".json">
+                </div>
+            </div>
+            <div class="settings-section" style="border-color: var(--cor-vermelho-descida); margin-top: 1.5rem;">
+                <h4>Zona de Perigo</h4>
+                <p>Esta ação irá apagar permanentemente todos os dados da aplicação. Use com cuidado.</p>
+                <div class="settings-buttons">
+                    <button id="reset-data-btn" class="action-button danger"><i class="fas fa-exclamation-triangle"></i> Repor Aplicação</button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- MODAL PARA GERIR SOCIAL -->
+        <div id="social-modal" class="modal-content modal-lg">
+            <button id="social-modal-close-btn" class="modal-close-btn">&times;</button>
+            <div id="social-modal-body"></div>
+        </div>
+        
+        <!-- NOVO MODAL PARA NOME DO HISTÓRICO -->
+        <div id="history-name-modal" class="modal-content">
+            <h3>Arquivar Mês Atual</h3>
+            <p>Insira um nome para este registo do histórico (ex: Agosto 2025). As estatísticas de views e pontos de todos os perfis serão zeradas após arquivar.</p>
+            <div class="form-group" style="margin: 1rem 0;">
+                <label for="history-name-input">Nome do Mês</label>
+                <input type="text" id="history-name-input" class="social-input" placeholder="Ex: Agosto 2025">
+            </div>
+            <div class="confirm-buttons">
+                <button id="history-name-confirm-btn" class="confirm-btn yes">Arquivar e Zerar</button>
+                <button id="history-name-cancel-btn" class="confirm-btn no">Cancelar</button>
+            </div>
+        </div>
+
+        <!-- NOVO MODAL PARA DETALHES DO HISTÓRICO -->
+        <div id="history-details-modal" class="modal-content modal-lg">
+            <button id="history-details-modal-close" class="modal-close-btn">&times;</button>
+            <div id="history-details-modal-body"></div>
+        </div>
+        
+        <!-- NOVO MODAL DE CONFIRMAÇÃO DE RESET -->
+        <div id="reset-confirm-modal" class="modal-content">
+            <h3 style="color: var(--cor-vermelho-descida);"><i class="fas fa-exclamation-triangle"></i> Confirmar Reposição Total</h3>
+            <p><strong>Atenção!</strong> Esta ação é irreversível. Todos os perfis, projetos, históricos e batalhas serão <strong>eliminados permanentemente</strong>. Deseja continuar?</p>
+            <div class="confirm-buttons">
+                <button id="reset-confirm-yes-btn" class="confirm-btn yes">Sim, apagar tudo</button>
+                <button id="reset-confirm-no-btn" class="confirm-btn no">Cancelar</button>
+            </div>
+        </div>
+
+        <!-- NOVO MODAL PARA SELEÇÃO DE YOUTUBERS (GRÁFICOS) -->
+        <div id="graficos-select-modal" class="modal-content modal-lg">
+            <button id="graficos-select-modal-close" class="modal-close-btn">&times;</button>
+            <h3>Selecionar Youtubers para Comparar</h3>
+            <div id="graficos-select-modal-body"></div>
+            <div class="confirm-buttons" style="margin-top: 2rem;">
+                <button id="graficos-confirm-selection-btn" class="confirm-btn yes">Comparar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ECRÃ DE LOADING GLOBAL -->
+    <div id="loading-overlay" class="loading-overlay">
+        <div class="loading-spinner"></div>
+    </div>
+
+    <!-- BIBLIOTECAS JAVASCRIPT EXTERNAS -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tween.js/18.6.4/tween.umd.js"></script>
+    <script src="https://d3js.org/d3.v7.min.js"></script> <!-- BIBLIOTECA D3.JS -->
+
+    <!-- OS NOSSOS FICHEIROS JAVASCRIPT -->
+    <script src="main.js"></script>
+    <script src="dataManager.js"></script>
+    <script src="profiles.js"></script>
+    <script src="projects.js"></script>
+    <script src="social.js"></script>
+    <script src="history.js"></script>
+    <script src="table.js"></script>
+    <script src="presentation.js"></script>
+    <script src="chart2D.js"></script>
+    <script src="chart3D.js"></script>
+    <script src="projectsTable.js"></script>
+    <script src="projectsChart2D.js"></script>
+    <script src="projectsBubbleChart.js"></script>
+    <script src="workerChart.js"></script>
+    <script src="infoInteligente.js"></script>
+    <script src="batalha.js"></script>
+    <script src="graficos.js"></script>
+
+</body>
+</html>
+

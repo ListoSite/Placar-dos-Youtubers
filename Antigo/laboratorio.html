@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="pt-pt">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Laboratório IA</title>
+
+    <!-- Google Fonts: Inter & Bebas Neue -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Bebas+Neue&display=swap" rel="stylesheet">
+
+    <!-- Font Awesome para Ícones -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+    <!-- Ficheiros de Estilos Modulares -->
+    <link rel="stylesheet" href="ia-style.css">
+    <link rel="stylesheet" href="ia-dashboard.css">
+    <link rel="stylesheet" href="ia-galeria.css">
+</head>
+<body class="ia-body">
+
+    <div class="ia-container">
+        <!-- BARRA LATERAL DE NAVEGAÇÃO -->
+        <aside class="ia-sidebar">
+            <div class="sidebar-header">
+                <a href="#" class="site-title">Laboratório <span>IA</span></a>
+            </div>
+            <nav class="sidebar-nav">
+                <ul>
+                    <li><a href="#" class="nav-link active" data-target="section-dashboard"><i class="fas fa-border-all"></i> Dashboard</a></li>
+                    <li><a href="#" class="nav-link" data-target="section-galeria"><i class="fas fa-images"></i> Galeria</a></li>
+                    <li><a href="#" class="nav-link" data-target="section-geradores"><i class="fas fa-flask"></i> Geradores</a></li>
+                    <li><a href="#" class="nav-link" data-target="section-modelos"><i class="fas fa-brain"></i> Modelos</a></li>
+                    <li><a href="#" class="nav-link" data-target="section-settings"><i class="fas fa-cog"></i> Configurações</a></li>
+                </ul>
+            </nav>
+            <div class="sidebar-footer">
+                <a href="#"><i class="fas fa-arrow-left"></i> Voltar ao Início</a>
+            </div>
+        </aside>
+
+        <!-- CONTEÚDO PRINCIPAL -->
+        <main class="ia-main-content">
+            
+            <!-- SECÇÃO DASHBOARD -->
+            <section id="section-dashboard" class="content-section active">
+                <div class="dashboard-header">
+                    <h1>Bem-vindo ao seu Laboratório</h1>
+                    <p>Aqui pode ver um resumo da sua atividade e aceder rapidamente às suas ferramentas.</p>
+                </div>
+                <div class="dashboard-grid">
+                    <div class="stat-card">
+                        <div class="stat-icon" style="--icon-color: #00E0FF;"><i class="fas fa-folder"></i></div>
+                        <div class="stat-info"><span class="stat-value">3</span><span class="stat-label">Pastas de Projetos</span></div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon" style="--icon-color: #FF6B00;"><i class="fas fa-image"></i></div>
+                        <div class="stat-info"><span class="stat-value">48</span><span class="stat-label">Ficheiros Gerados</span></div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon" style="--icon-color: #A020F0;"><i class="fas fa-cogs"></i></div>
+                        <div class="stat-info"><span class="stat-value">4</span><span class="stat-label">Modelos Ativos</span></div>
+                    </div>
+                     <div class="action-card new-project-card">
+                        <i class="fas fa-plus-circle"></i><h3>Novo Projeto</h3><p>Comece a gerar novos conteúdos.</p>
+                    </div>
+                    <div class="recent-activity-card">
+                        <h3>Atividade Recente</h3>
+                        <ul>
+                            <li><i class="fas fa-check-circle"></i> Nova imagem gerada em 'Paisagens Futuristas'.</li>
+                            <li><i class="fas fa-chart-line"></i> Modelo 'Alpha' atingiu 95% de precisão.</li>
+                            <li><i class="fas fa-folder-open"></i> Novo projeto 'Músicas Lo-fi' iniciado.</li>
+                        </ul>
+                    </div>
+                </div>
+            </section>
+
+            <!-- SECÇÃO GALERIA -->
+            <section id="section-galeria" class="content-section">
+                 <!-- VISTA DAS PASTAS -->
+                 <div class="galeria-view">
+                     <div class="toolbar">
+                        <h2>Galeria de Projetos</h2>
+                        <div class="toolbar-actions">
+                            <div class="search-wrapper">
+                                <i class="fas fa-search"></i>
+                                <input type="text" id="folder-search-input" placeholder="Procurar pastas...">
+                            </div>
+                            <button id="add-folder-button" class="action-button"><i class="fas fa-folder-plus"></i> Nova Pasta</button>
+                        </div>
+                     </div>
+                     <div class="filter-toolbar">
+                        <div class="filter-group">
+                            <i class="fas fa-user-astronaut"></i>
+                            <select id="filter-personagens" class="filter-select"><option value="">Personagens</option></select>
+                        </div>
+                        <div class="filter-group">
+                            <i class="fas fa-users"></i>
+                            <select id="filter-pessoas" class="filter-select"><option value="">Pessoas</option></select>
+                        </div>
+                        <div class="filter-group">
+                            <i class="fas fa-map-marker-alt"></i>
+                            <select id="filter-locais" class="filter-select"><option value="">Locais</option></select>
+                        </div>
+                        <div class="filter-group">
+                            <i class="fas fa-tag"></i>
+                            <select id="filter-tipo" class="filter-select"><option value="">Tipo</option></select>
+                        </div>
+                        <button id="clear-filters-btn">Limpar Filtros</button>
+                     </div>
+                     <div class="tabs-container">
+                        <button class="galeria-tab-link active" data-category="Fotos" data-target="galeria-fotos"><i class="fas fa-image"></i> Fotos</button>
+                        <button class="galeria-tab-link" data-category="Vídeos" data-target="galeria-videos"><i class="fas fa-video"></i> Vídeos</button>
+                        <button class="galeria-tab-link" data-category="Músicas" data-target="galeria-musicas"><i class="fas fa-music"></i> Músicas</button>
+                        <button class="galeria-tab-link" data-category="Textos" data-target="galeria-textos"><i class="fas fa-file-alt"></i> Textos</button>
+                        <button class="galeria-tab-link" data-category="Outros" data-target="galeria-outros"><i class="fas fa-box"></i> Outros</button>
+                     </div>
+                     <div class="tab-content-container">
+                        <div id="galeria-fotos" class="galeria-tab-content active"></div>
+                        <div id="galeria-videos" class="galeria-tab-content"></div>
+                        <div id="galeria-musicas" class="galeria-tab-content"></div>
+                        <div id="galeria-textos" class="galeria-tab-content"></div>
+                        <div id="galeria-outros" class="galeria-tab-content"></div>
+                     </div>
+                 </div>
+
+                 <!-- VISTA DOS FICHEIROS DENTRO DE UMA PASTA -->
+                 <div id="folder-view-section" class="folder-view hidden">
+                     <div class="folder-view-header">
+                         <button id="back-to-gallery-btn" class="action-button secondary"><i class="fas fa-arrow-left"></i> Voltar à Galeria</button>
+                         <h2 id="folder-view-title"></h2>
+                     </div>
+                     <div class="toolbar">
+                        <div id="folder-view-description"></div>
+                        <button id="add-file-button" class="action-button"><i class="fas fa-plus"></i> Novo Ficheiro</button>
+                     </div>
+                     <div id="file-grid-container" class="file-grid">
+                         <!-- Cards dos ficheiros serão gerados por JS -->
+                     </div>
+                 </div>
+            </section>
+
+            <!-- Outras secções -->
+            <section id="section-geradores" class="content-section"><p class="section-placeholder">Secção de Geradores em construção.</p></section>
+            <section id="section-modelos" class="content-section"><p class="section-placeholder">Secção de Modelos em construção.</p></section>
+            <section id="section-settings" class="content-section"><p class="section-placeholder">Secção de Configurações em construção.</p></section>
+        </main>
+    </div>
+
+    <!-- MODAIS -->
+    <!-- Modal para Criar/Editar Pasta -->
+    <div id="folder-modal" class="modal-backdrop">
+        <div class="modal-container">
+            <div class="modal-header">
+                <h3 id="modal-title">Criar Nova Pasta</h3>
+                <button id="close-modal-btn" class="icon-button">&times;</button>
+            </div>
+            <form id="folder-form">
+                <input type="hidden" id="folder-id">
+                <div class="modal-body">
+                    <div class="modal-form-group">
+                        <label for="folder-name">Nome da Pasta</label>
+                        <input type="text" id="folder-name" required placeholder="Ex: Paisagens Futuristas">
+                    </div>
+                    <div class="modal-form-group">
+                        <label for="folder-description">Descrição</label>
+                        <textarea id="folder-description" rows="3" placeholder="Uma breve descrição do conteúdo..."></textarea>
+                    </div>
+                    <div class="modal-tags-group">
+                        <div class="modal-form-group"><label for="folder-tags-personagens">Tags de Personagens</label><input type="text" id="folder-tags-personagens" placeholder="Robô, Alien, ..."></div>
+                        <div class="modal-form-group"><label for="folder-tags-pessoas">Tags de Pessoas</label><input type="text" id="folder-tags-pessoas" placeholder="Homem, Mulher, ..."></div>
+                        <div class="modal-form-group"><label for="folder-tags-locais">Tags de Locais</label><input type="text" id="folder-tags-locais" placeholder="Cidade, Floresta, ..."></div>
+                        <div class="modal-form-group"><label for="folder-tags-tipo">Tags de Tipo</label><input type="text" id="folder-tags-tipo" placeholder="Arte 3D, Fotografia, ..."></div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" id="cancel-folder-btn" class="action-button secondary">Cancelar</button>
+                    <button type="submit" id="submit-folder-btn" class="action-button">Criar Pasta</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal para Adicionar/Editar Ficheiro -->
+    <div id="file-modal" class="modal-backdrop">
+        <div class="modal-container">
+            <div class="modal-header">
+                <h3 id="file-modal-title">Adicionar Novo Ficheiro</h3>
+                <button id="close-file-modal-btn" class="icon-button">&times;</button>
+            </div>
+            <form id="file-form">
+                <input type="hidden" id="file-id">
+                <div class="modal-body">
+                    <div class="modal-form-group">
+                        <label for="file-name">Nome do Ficheiro</label>
+                        <input type="text" id="file-name" required placeholder="Ex: Ciborgue na Chuva">
+                    </div>
+                    <!-- CAMPO DE UPLOAD DE FICHEIRO -->
+                    <div class="modal-form-group">
+                        <label>Ficheiro de Imagem</label>
+                        <div class="file-upload-wrapper">
+                            <input type="file" id="file-upload" accept="image/*">
+                            <div class="file-upload-text">
+                                <i class="fas fa-cloud-upload-alt"></i>
+                                <span>Arraste e solte ou clique para carregar</span>
+                            </div>
+                        </div>
+                        <div id="file-preview-container">
+                            <img id="file-preview" src="#" alt="Pré-visualização">
+                        </div>
+                    </div>
+                    <div class="modal-tags-group">
+                        <div class="modal-form-group"><label for="file-tags-personagens">Tags de Personagens</label><input type="text" id="file-tags-personagens" placeholder="Robô, Alien, ..."></div>
+                        <div class="modal-form-group"><label for="file-tags-pessoas">Tags de Pessoas</label><input type="text" id="file-tags-pessoas" placeholder="Homem, Mulher, ..."></div>
+                        <div class="modal-form-group"><label for="file-tags-locais">Tags de Locais</label><input type="text" id="file-tags-locais" placeholder="Cidade, Floresta, ..."></div>
+                        <div class="modal-form-group"><label for="file-tags-tipo">Tags de Tipo</label><input type="text" id="file-tags-tipo" placeholder="Arte 3D, Fotografia, ..."></div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" id="cancel-file-btn" class="action-button secondary">Cancelar</button>
+                    <button type="submit" id="submit-file-btn" class="action-button">Guardar Ficheiro</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal de Confirmação para Apagar -->
+    <div id="confirm-delete-modal" class="modal-backdrop">
+        <div class="modal-container confirm-modal-container">
+            <div class="modal-header"><h3>Confirmar Eliminação</h3></div>
+            <div class="modal-body"><p>Tem a certeza de que deseja apagar este item? Esta ação não pode ser revertida.</p></div>
+            <div class="modal-footer">
+                <button type="button" id="cancel-delete-btn" class="action-button secondary">Cancelar</button>
+                <button type="button" id="confirm-delete-btn" class="action-button delete">Apagar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts Modulares -->
+    <script src="ia-main.js"></script>
+    <script src="ia-dashboard.js"></script>
+    <script src="ia-galeria.js"></script>
+</body>
+</html>
+

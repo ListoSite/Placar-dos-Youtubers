@@ -1,0 +1,115 @@
+/* chart3D.css - Estilos para o Gráfico 3D e seus componentes */
+
+/* Estilo para o painel de informações que aparece sobre o gráfico */
+.chart-3d-info-panel {
+    position: absolute;
+    top: 20px;
+    left: 20px;
+    width: 320px;
+    background-color: rgba(38, 38, 38, 0.85); /* --cor-fundo com transparência */
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    border-radius: 12px;
+    border: 1px solid var(--cor-vermelho-escuro);
+    color: var(--cor-texto-principal);
+    padding: 1.5rem;
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.5);
+    
+    /* Transição suave para aparecer e desaparecer */
+    opacity: 0;
+    visibility: hidden;
+    transform: translateX(-20px);
+    transition: opacity 0.4s ease, transform 0.4s ease, visibility 0.4s;
+    z-index: 10;
+}
+
+/* Classe para tornar o painel visível */
+.chart-3d-info-panel.visible {
+    opacity: 1;
+    visibility: visible;
+    transform: translateX(0);
+}
+
+/* Cabeçalho do painel com a foto e nome */
+.info-panel-header {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid var(--cor-vermelho-escuro);
+}
+
+.info-panel-photo {
+    width: 70px;
+    height: 70px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 3px solid var(--cor-vermelho-principal);
+}
+
+.info-panel-title h3 {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 2rem;
+    line-height: 1.1;
+    color: var(--cor-texto-principal);
+    margin: 0;
+}
+
+.info-panel-title p {
+    font-size: 0.9rem;
+    color: var(--cor-texto-secundario);
+    margin: 0;
+}
+
+/* Corpo do painel com as estatísticas */
+.info-panel-body {
+    padding-top: 1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.info-panel-stat {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+}
+
+.info-panel-stat .label {
+    font-size: 0.9rem;
+    color: var(--cor-texto-secundario);
+}
+
+.info-panel-stat .value {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--cor-texto-principal);
+}
+
+.info-panel-stat .value.rank {
+    color: var(--cor-vermelho-destaque);
+}
+
+/* Botão para sair da vista detalhada */
+.info-panel-close-btn {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background: rgba(0,0,0,0.3);
+    color: var(--cor-texto-secundario);
+    border: none;
+    border-radius: 50%;
+    width: 30px;
+    height: 30px;
+    font-size: 1rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background-color 0.3s, color 0.3s;
+}
+
+.info-panel-close-btn:hover {
+    background-color: var(--cor-vermelho-principal);
+    color: white;
+}

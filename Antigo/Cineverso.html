@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="pt-PT">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Início - Cineverso</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="Cineverso.css">
+</head>
+<body class="bg-gray-900 text-gray-100 font-['Poppins',_sans-serif] antialiased">
+
+    <div class="main-layout">
+        <!-- Botão de Menu e Overlay para Mobile -->
+        <button class="mobile-menu-button">
+            <i data-lucide="menu"></i>
+        </button>
+        <div class="sidebar-overlay"></div>
+
+        <!-- Navegação Lateral (Sidebar) -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <i data-lucide="film" class="text-indigo-400 w-8 h-8"></i>
+                <h1 class="text-2xl font-bold tracking-wide">Cine<span class="text-indigo-400">verso</span></h1>
+            </div>
+            <nav>
+                <ul class="sidebar-menu">
+                    <li>
+                        <a href="Cineverso.html" class="nav-link active">
+                            <i data-lucide="home"></i>
+                            <span>Início</span>
+                            <span class="notification-dot"></span>
+                        </a>
+                    </li>
+                    <li><a href="universo-filmes.html" class="nav-link"><i data-lucide="swords"></i><span>Universos</span></a></li>
+                    <li><a href="playlists.html" class="nav-link"><i data-lucide="list-music"></i><span>Playlists</span></a></li>
+                    <li><a href="quero-ver.html" class="nav-link"><i data-lucide="bookmark"></i><span>Quero Ver</span></a></li>
+                </ul>
+            </nav>
+        </aside>
+
+        <!-- Conteúdo Principal -->
+        <main class="main-content">
+            <header class="content-header">
+                <div>
+                    <h2 class="text-4xl font-extrabold tracking-tight">O Teu Cineverso</h2>
+                    <p class="text-gray-400 mt-1">Bem-vindo ao teu painel de estatísticas e definições.</p>
+                </div>
+                <!-- Menu de Navegação das secções -->
+                <div class="tabs-navigation">
+                    <button class="tab-link active" data-tab="analytics">
+                        <i data-lucide="pie-chart"></i>
+                        <span>Análise</span>
+                    </button>
+                    <button class="tab-link" data-tab="settings">
+                        <i data-lucide="settings"></i>
+                        <span>Definições</span>
+                    </button>
+                </div>
+            </header>
+
+            <!-- Secção de Análise -->
+            <section id="analytics-section" class="tab-content active">
+                <!-- Sub-Navegação para Análise -->
+                <div class="sub-tabs-navigation">
+                    <button class="sub-tab-link active" data-sub-tab="personal">
+                        <i data-lucide="user"></i>
+                        <span>Análise Pessoal</span>
+                    </button>
+                    <button class="sub-tab-link" data-sub-tab="general">
+                        <i data-lucide="globe"></i>
+                        <span>Análise Geral</span>
+                    </button>
+                </div>
+
+                <!-- Conteúdo da Análise Pessoal -->
+                <div id="personal-analytics-content" class="sub-tab-content active">
+                    <div id="dashboard-container" class="hidden">
+                        <div class="dashboard-grid">
+                            <!-- Coluna 1: Visão Geral e Atividade -->
+                            <div class="dashboard-column">
+                                <div id="up-next-card" class="dashboard-card up-next">
+                                    <div class="card-header"><i data-lucide="play"></i><h3>Próximo a Ver</h3></div>
+                                    <div id="up-next-content" class="up-next-content"></div>
+                                </div>
+                                <div class="quick-stats-grid">
+                                    <div id="total-watched-stat" class="dashboard-card stat-card"></div>
+                                    <div id="total-runtime-stat" class="dashboard-card stat-card"></div>
+                                    <div id="average-rating-stat" class="dashboard-card stat-card"></div>
+                                    <div id="favorite-universe-stat" class="dashboard-card stat-card"></div>
+                                </div>
+                                 <div class="dashboard-card">
+                                    <div class="card-header"><i data-lucide="bar-chart-3"></i><h3>Atividade Anual</h3></div>
+                                    <div class="relative h-72 mt-4"><canvas id="activity-chart"></canvas></div>
+                                </div>
+                                <div class="dashboard-card">
+                                    <div class="card-header"><i data-lucide="calendar-range"></i><h3>Ritmo Semanal (minutos)</h3></div>
+                                    <div class="relative h-60 mt-4"><canvas id="weekly-pace-chart"></canvas></div>
+                                </div>
+                            </div>
+                            <!-- Coluna 2: Rankings e Análises -->
+                            <div class="dashboard-column">
+                                <div class="dashboard-card">
+                                    <div class="card-header"><i data-lucide="trending-up"></i><h3>Top 5 Avaliados</h3></div>
+                                    <div id="top-rated-list" class="top-rated-list"></div>
+                                </div>
+                                <div id="decade-chart-card" class="dashboard-card">
+                                    <div class="card-header"><i data-lucide="album"></i><h3>Viagem pelas Décadas</h3></div>
+                                    <div class="relative h-60 mt-4"><canvas id="decade-chart"></canvas></div>
+                                </div>
+                                <div class="dashboard-card">
+                                    <div class="card-header"><i data-lucide="pie-chart"></i><h3>Distribuição por Tipo</h3></div>
+                                    <div class="relative h-60 mt-4"><canvas id="type-distribution-chart"></canvas></div>
+                                </div>
+                                 <div class="dashboard-card">
+                                    <div class="card-header"><i data-lucide="star-half"></i><h3>Distribuição de Avaliações</h3></div>
+                                    <div class="relative h-60 mt-4"><canvas id="rating-distribution-chart"></canvas></div>
+                                </div>
+                                <!-- =================================================================== -->
+                                <!-- SECÇÃO DE DESTAQUES ATUALIZADA -->
+                                <!-- =================================================================== -->
+                                <div class="dashboard-card">
+                                    <div class="card-header">
+                                        <i data-lucide="sparkles"></i>
+                                        <h3>Destaques</h3>
+                                    </div>
+                                    <!-- O container agora está preparado para as animações -->
+                                    <div id="highlights-container" class="highlights-container mt-4">
+                                        <!-- Os destaques serão inseridos dinamicamente pelo JavaScript -->
+                                    </div>
+                                </div>
+                            </div>
+                            <!-- Coluna 3: Conquistas, Histórico e Curiosidades -->
+                            <div class="dashboard-column">
+                                <div class="dashboard-card">
+                                    <!-- O cabeçalho das conquistas será gerado pelo JS -->
+                                    <div id="achievements-container" class="achievements-container">
+                                        <!-- Os cartões de conquista serão inseridos aqui -->
+                                    </div>
+                                </div>
+                                <div class="dashboard-card">
+                                    <div class="card-header"><i data-lucide="history"></i><h3>Vistos Recentemente</h3></div>
+                                    <div id="recent-activity-list" class="recent-activity-list"></div>
+                                </div>
+                                <div class="dashboard-card">
+                                    <div class="card-header"><i data-lucide="hourglass"></i><h3>Duração dos Filmes</h3></div>
+                                    <div class="relative h-60 mt-4"><canvas id="runtime-distribution-chart"></canvas></div>
+                                </div>
+                                <div class="dashboard-card">
+                                    <div class="card-header"><i data-lucide="calendar-heart"></i><h3>Neste Dia na História</h3></div>
+                                    <div id="on-this-day-list" class="recent-activity-list"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div id="empty-dashboard-message" class="placeholder-card hidden">
+                        <div class="placeholder-content">
+                            <i data-lucide="film"></i>
+                            <h3 class="text-xl font-semibold mt-4">Começa a tua Jornada</h3>
+                            <p class="text-gray-400 mt-2">Adiciona conteúdo e marca-o como visto para veres as tuas estatísticas aqui!</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Conteúdo da Análise Geral -->
+                <div id="general-analytics-content" class="sub-tab-content hidden">
+                    <div id="general-dashboard-grid" class="dashboard-grid">
+                        <!-- Coluna 1: Personagens e Atores -->
+                         <div class="dashboard-column">
+                            <div class="dashboard-card">
+                                <div class="card-header"><i data-lucide="users"></i><h3>Top Personagens (Filmes)</h3></div>
+                                <div id="top-characters-movies-list" class="top-list"></div>
+                            </div>
+                             <div class="dashboard-card">
+                                <div class="card-header"><i data-lucide="users"></i><h3>Top Personagens (Séries)</h3></div>
+                                <div id="top-characters-series-list" class="top-list"></div>
+                            </div>
+                             <div class="dashboard-card">
+                                <div class="card-header"><i data-lucide="swords"></i><h3>Destaques de Universos</h3></div>
+                                <div class="space-y-4 mt-4">
+                                    <div id="top-rated-universe-card" class="highlight-card"></div>
+                                    <div id="longest-universe-card" class="highlight-card"></div>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- Coluna 2: Universos e Conteúdo -->
+                        <div class="dashboard-column">
+                            <div class="dashboard-card">
+                                <div class="card-header"><i data-lucide="swords"></i><h3>Maiores Universos</h3></div>
+                                <div id="top-universes-list" class="top-list"></div>
+                            </div>
+                             <div class="dashboard-card">
+                                <div class="card-header"><i data-lucide="package"></i><h3>Estatísticas de Conteúdo</h3></div>
+                                <div id="general-content-stats" class="quick-stats-grid mt-4"></div>
+                            </div>
+                            <div class="dashboard-card">
+                                <div class="card-header"><i data-lucide="scale"></i><h3>Filmes vs. Séries</h3></div>
+                                <div id="movie-vs-series-stats" class="movie-vs-series-comparison mt-4"></div>
+                            </div>
+                        </div>
+                        <!-- Coluna 3: Tags e Diversão -->
+                        <div class="dashboard-column">
+                            <div class="dashboard-card">
+                                <div class="card-header"><i data-lucide="tags"></i><h3>Tags Mais Populares</h3></div>
+                                <div id="top-tags-list" class="tag-cloud"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Secção de Definições -->
+            <section id="settings-section" class="tab-content hidden">
+                <div class="settings-grid">
+                    <div class="dashboard-card">
+                        <div class="card-header"><i data-lucide="database-zap"></i><h3>Gestão de Dados</h3></div>
+                        <div class="mt-4 p-4 bg-gray-800 rounded-lg">
+                            <h4 class="font-semibold text-lg text-white">Exportar Dados</h4>
+                            <p class="text-sm text-gray-400 mt-1 mb-3">Guarda uma cópia de segurança de todos os teus dados num ficheiro JSON.</p>
+                            <button id="export-btn" class="control-button primary wide"><i data-lucide="download"></i>Exportar Ficheiro de Backup</button>
+                        </div>
+                        <div class="mt-4 p-4 bg-gray-800 rounded-lg">
+                            <h4 class="font-semibold text-lg text-white">Importar Dados</h4>
+                            <p class="text-sm text-gray-400 mt-1 mb-3">Restaura os teus dados a partir de um ficheiro de backup. <strong class="text-amber-400">Atenção:</strong> Isto irá substituir todos os dados existentes.</p>
+                            <button id="import-btn" class="control-button wide"><i data-lucide="upload"></i>Importar Ficheiro de Backup</button>
+                            
+                            <!-- NOVO BOTÃO E DESCRIÇÃO -->
+                            <p class="text-sm text-gray-400 mt-4 mb-3">Usa esta opção para adicionar conteúdo novo e atualizar itens existentes a partir de um ficheiro, <strong class="text-teal-400">sem apagar os teus dados atuais</strong>.</p>
+                            <button id="import-merge-btn" class="control-button secondary wide"><i data-lucide="combine"></i>Importar e Atualizar</button>
+                        </div>
+                        <!-- NOVO: Zona de Perigo -->
+                        <div class="mt-4 p-4 bg-red-900/20 border border-red-500/30 rounded-lg">
+                             <h4 class="font-semibold text-lg text-red-300 flex items-center gap-2"><i data-lucide="alert-triangle"></i>Zona de Perigo</h4>
+                            <p class="text-sm text-red-300/80 mt-1 mb-3">Esta ação é irreversível. Todos os teus conteúdos, playlists, universos e conquistas serão permanentemente apagados.</p>
+                            <button id="delete-all-data-btn" class="control-button danger wide"><i data-lucide="trash-2"></i>Apagar Todos os Dados</button>
+                        </div>
+                    </div>
+                    <div class="dashboard-card">
+                        <div class="card-header"><i data-lucide="info"></i><h3>Sobre o Cineverso</h3></div>
+                        <div class="mt-4 space-y-3 text-sm text-gray-400">
+                           <p>Versão da Aplicação: <span class="font-semibold text-gray-200">1.2.0</span></p>
+                           <p>O Cineverso é uma ferramenta para te ajudar a organizar, explorar e analisar os teus universos cinematográficos e playlists de filmes/séries.</p>
+                           <p>Criado com paixão para todos os cinéfilos.</p>
+                        </div>
+                        <!-- Secção de Recursos Úteis -->
+                        <div class="mt-4 pt-4 border-t border-gray-700/50">
+                            <div class="bg-gray-800 rounded-lg p-4">
+                                <h4 class="font-semibold text-lg text-white">Recursos de Imagens</h4>
+                                <p class="text-sm text-gray-400 mt-1 mb-3">Procura posters, banners e informações no The Movie Database (TMDB).</p>
+                                <a href="https://www.themoviedb.org/" target="_blank" rel="noopener noreferrer" class="control-button primary wide no-underline">
+                                    <i data-lucide="external-link"></i>
+                                    <span>Visitar TMDB</span>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- Notificação de Conquista (Toast) -->
+    <div id="achievement-toast" class="fixed bottom-8 right-8 bg-gray-800 border border-amber-400/50 rounded-xl shadow-2xl p-4 flex items-start gap-4 w-full max-w-sm transform translate-x-[calc(100%_+_2rem)] transition-transform duration-500 ease-in-out z-[100] hidden">
+        <div id="achievement-toast-icon" class="achievement-icon-container tier-platina flex-shrink-0">
+            <!-- Ícone será inserido pelo JS -->
+        </div>
+        <div class="flex-grow">
+            <div class="flex justify-between items-center">
+                <h4 id="achievement-toast-title" class="font-bold text-amber-300">Nova Conquista!</h4>
+                <span id="new-achievements-count" class="new-achievements-count hidden"></span>
+            </div>
+            <p id="achievement-toast-desc" class="text-sm text-gray-300 mt-1">Vê o teu progresso na secção de Análise.</p>
+        </div>
+        <button id="achievement-toast-close" class="text-gray-500 hover:text-white transition-colors flex-shrink-0 ml-2">
+            <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+    </div>
+    
+    <script src="data-manager.js"></script>
+    <script src="Cineverso.js"></script>
+    <script>lucide.createIcons();</script>
+</body>
+</html>
+

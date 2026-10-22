@@ -1,0 +1,75 @@
+/* ocaso-settings.css - Estilos para a secção de Importar/Exportar */
+
+.settings-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+    gap: 2rem;
+    margin-top: 2rem;
+}
+
+.settings-card {
+    background: var(--ocaso-fundo-secundario);
+    border: 1px solid var(--ocaso-borda);
+    border-radius: 12px;
+    padding: 2.5rem 2rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    transition: all 0.3s ease;
+}
+
+.settings-card:hover {
+    transform: translateY(-5px);
+    border-color: var(--ocaso-principal);
+    box-shadow: 0 8px 25px rgba(0,0,0,0.3);
+}
+
+.settings-card .icon {
+    font-size: 3rem;
+    color: var(--ocaso-principal);
+    margin-bottom: 1.5rem;
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    display: grid;
+    place-items: center;
+    background: linear-gradient(145deg, var(--ocaso-escuro), var(--ocaso-fundo));
+    border: 1px solid var(--ocaso-borda);
+}
+
+.settings-card h3 {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 2rem;
+    letter-spacing: 1px;
+    margin-bottom: 1rem;
+    color: var(--ocaso-texto-principal);
+}
+
+.settings-card .settings-description {
+    color: var(--ocaso-texto-secundario);
+    line-height: 1.7;
+    margin-bottom: 2rem;
+    max-width: 400px;
+}
+
+.settings-card .settings-description strong {
+    color: var(--ocaso-erro);
+    font-weight: 600;
+}
+
+.settings-card .action-button-redesigned {
+    width: 100%;
+    max-width: 250px;
+}
+
+.file-name-display {
+    margin-top: 1rem;
+    color: var(--ocaso-texto-secundario);
+    font-style: italic;
+    font-size: 0.9rem;
+    max-width: 250px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}

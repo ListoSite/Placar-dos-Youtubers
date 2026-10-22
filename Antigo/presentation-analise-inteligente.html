@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="pt-pt">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Análise Inteligente - Apresentação 9:16</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&family=Bebas+Neue&family=Roboto+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root {
+            --color-primary: #D9073F;
+            --color-secondary: #FF7F50;
+            --color-accent: #FFD700;
+            --color-bg: #0A0B0D;
+            --color-surface: #14161A;
+            --color-text: #FFFFFF;
+            --color-text-secondary: #a0a0a0;
+            --color-border: rgba(217, 7, 63, 0.3);
+            --font-main: 'Inter', sans-serif;
+            --font-display: 'Bebas Neue', sans-serif;
+            --font-mono: 'Roboto Mono', monospace;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: var(--font-main); background-color: #000; color: var(--color-text); overflow: hidden; height: 100vh; width: 100vw; display: flex; align-items: center; justify-content: center; }
+        .presentation-container { width: 100%; height: 100%; max-width: 450px; max-height: 800px; aspect-ratio: 9 / 16; background-color: var(--color-bg); position: relative; overflow: hidden; box-shadow: 0 0 40px rgba(217, 7, 63, 0.5); border: 1px solid var(--color-border); }
+        .slide { position: absolute; width: 100%; height: 100%; display: none; flex-direction: column; align-items: center; justify-content: center; padding: 2rem; text-align: center; }
+        .slide.active { display: flex; }
+
+        /* --- SLIDE INTRO --- */
+        #intro-screen h1 { font-family: var(--font-display); font-size: 5rem; letter-spacing: 1px; color: var(--color-primary); }
+        #intro-screen p { font-family: var(--font-mono); font-size: 1.1rem; color: var(--color-text-secondary); }
+        .loading-bar { width: 80%; height: 3px; background-color: var(--color-border); margin-top: 2rem; border-radius: 2px; overflow: hidden; }
+        .loading-bar-inner { width: 0; height: 100%; background-color: var(--color-primary); animation: loading 3.5s ease-out forwards; }
+
+        /* --- SLIDE ANÁLISE --- */
+        #analysis-screen { justify-content: flex-start; gap: 1.5rem; }
+        .analysis-item { width: 100%; opacity: 0; transform: translateY(20px); } /* Para animação */
+        .profile-panel { display: flex; flex-direction: column; align-items: center; }
+        .profile-photo { width: 150px; height: 150px; border-radius: 50%; object-fit: cover; border: 4px solid var(--color-primary); margin-bottom: 1rem; }
+        .profile-name { font-family: var(--font-display); font-size: 3rem; line-height: 1.1; }
+
+        .months-display { font-family: var(--font-display); font-size: 2rem; color: var(--color-text-secondary); margin-top: 0.5rem; }
+        .months-display .highlight { color: var(--color-primary); }
+
+        .stat-card { background: var(--color-surface); border-radius: 12px; padding: 1.5rem; border: 1px solid var(--color-border); width: 100%; margin-top: 1rem; }
+        .stat-card-header { display: flex; align-items: center; gap: 0.75rem; margin-bottom: 1rem; font-size: 1.1rem; color: var(--color-text-secondary); }
+        .stat-card-header .fa-eye { color: var(--color-secondary); }
+        .stat-card-header .fa-star { color: var(--color-accent); }
+        .stat-value { font-family: var(--font-mono); font-size: 2.5rem; font-weight: 700; margin-bottom: 0.25rem; }
+        .stat-change { font-size: 1.2rem; font-weight: 700; }
+        .stat-change.positive { color: #20F0A0; }
+        .stat-change.negative { color: #F02050; }
+
+        .summary-container { margin-top: 1rem; }
+        .summary-text { font-size: 1.1rem; line-height: 1.6; color: var(--color-text-secondary); }
+        .summary-text strong { color: var(--color-text); }
+
+        #end-screen h1 { font-family: var(--font-display); font-size: 3rem; }
+        #end-screen p { color: var(--color-text-secondary); }
+
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes loading { from { width: 0; } to { width: 100%; } }
+        .animate-in { animation: fadeIn 0.8s ease-out forwards; }
+    </style>
+</head>
+<body>
+    <div class="presentation-container">
+        <div id="intro-screen" class="slide active">
+            <h1>Análise Inteligente</h1>
+            <p>A PROCESSAR DADOS...</p>
+            <div class="loading-bar"><div class="loading-bar-inner"></div></div>
+        </div>
+
+        <div id="analysis-screen" class="slide">
+            <!-- O conteúdo será gerado dinamicamente -->
+        </div>
+
+        <div id="end-screen" class="slide">
+            <h1>Análise Completa</h1>
+            <p>Criado com Video Maker</p>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            let allData = [];
+            let options = {};
+
+            const slides = {
+                intro: document.getElementById('intro-screen'),
+                analysis: document.getElementById('analysis-screen'),
+                end: document.getElementById('end-screen')
+            };
+
+            const parseViews = (v) => { if(typeof v!=='string'&&typeof v!=='number')return 0;const s=String(v).toUpperCase().replace(/,/g,'.');let n=parseFloat(s);if(s.includes('M'))n*=1e6;else if(s.includes('K'))n*=1e3;return isNaN(n)?0:parseInt(n,10); };
+            const formatNumber = (n, p=false) => n.toLocaleString('pt-PT', p?{style:'percent',minimumFractionDigits:1,maximumFractionDigits:1}:{});
+            const delay = ms => new Promise(res => setTimeout(res, ms));
+
+            function loadData() {
+                try {
+                    allData = JSON.parse(sessionStorage.getItem('placarDataV3') || '[]');
+                    options = JSON.parse(sessionStorage.getItem('presentationOptions') || '{}');
+                } catch (e) { console.error("Erro ao carregar dados:", e); }
+            }
+
+            function showSlide(slide) {
+                Object.values(slides).forEach(s => s.classList.remove('active'));
+                slide.classList.add('active');
+            }
+            
+            function animateElement(element, delayTime = 0) {
+                 return new Promise(resolve => {
+                    setTimeout(() => {
+                        element.style.animation = 'fadeIn 0.8s ease-out forwards';
+                        resolve();
+                    }, delayTime);
+                 });
+            }
+
+            function getAnalysisSubjects() {
+                if (options.analiseMode === 'aleatorio') {
+                    const profilesWithHistory = allData.filter(p => p.performanceHistory && p.performanceHistory.length >= 2);
+                    if (profilesWithHistory.length === 0) return null;
+                    const profile = profilesWithHistory[Math.floor(Math.random() * profilesWithHistory.length)];
+                    let index1, index2;
+                    do {
+                        index1 = Math.floor(Math.random() * profile.performanceHistory.length);
+                        index2 = Math.floor(Math.random() * profile.performanceHistory.length);
+                    } while (index1 === index2);
+                    return { profile, month1Index: index1, month2Index: index2 };
+                } else {
+                    const profile = allData.find(p => p.id === options.analiseYoutuberId);
+                    if (!profile) return null;
+                    return { profile, month1Index: options.analiseMonth1Index, month2Index: options.analiseMonth2Index };
+                }
+            }
+
+            async function run() {
+                loadData();
+                await delay(4000); 
+
+                const subjects = getAnalysisSubjects();
+                if (!subjects) {
+                    slides.intro.innerHTML = '<h1>Erro</h1><p>Não foi possível encontrar dados para a análise.</p>';
+                    return;
+                }
+                const { profile, month1Index, month2Index } = subjects;
+                const data1 = profile.performanceHistory[month1Index];
+                const data2 = profile.performanceHistory[month2Index];
+                const [oldData, newData] = [data1, data2].sort((a, b) => (new Date(a.createdAt) > new Date(b.createdAt)) ? 1 : -1);
+
+                showSlide(slides.analysis);
+                const container = slides.analysis;
+                container.innerHTML = ''; // Limpa o conteúdo anterior
+
+                // 1. Revelar o Youtuber
+                const profilePanel = document.createElement('div');
+                profilePanel.className = 'analysis-item profile-panel';
+                profilePanel.innerHTML = `
+                    <img src="${profile.photo}" class="profile-photo" onerror="this.src='https://placehold.co/150x150/14161A/FFF?text=?'">
+                    <h2 class="profile-name">${profile.name}</h2>
+                    <p class="months-display">A comparar <span class="highlight">${oldData.month}</span> vs <span class="highlight">${newData.month}</span></p>
+                `;
+                container.appendChild(profilePanel);
+                await animateElement(profilePanel);
+                await delay(2000);
+
+                // 2. Revelar as Views
+                const oldViews = parseViews(oldData.stats.views);
+                const newViews = parseViews(newData.stats.views);
+                const viewsChange = newViews - oldViews;
+                const viewsChangePercent = oldViews > 0 ? (viewsChange / oldViews) : (newViews > 0 ? 1 : 0);
+                
+                const viewsCard = document.createElement('div');
+                viewsCard.className = 'analysis-item stat-card';
+                viewsCard.innerHTML = `
+                    <div class="stat-card-header"><i class="fas fa-eye"></i> Views</div>
+                    <div class="stat-value">${formatNumber(newViews)}</div>
+                    <div class="stat-change ${viewsChange >= 0 ? 'positive' : 'negative'}">
+                        ${viewsChange >= 0 ? '+' : ''}${formatNumber(viewsChange)} (${formatNumber(viewsChangePercent, true)})
+                    </div>`;
+                container.appendChild(viewsCard);
+                await animateElement(viewsCard);
+                await delay(2000);
+
+                // 3. Revelar os Pontos
+                const oldPoints = oldData.stats.points || 0;
+                const newPoints = newData.stats.points || 0;
+                const pointsChange = newPoints - oldPoints;
+                const pointsChangePercent = oldPoints > 0 ? (pointsChange / oldPoints) : (newPoints > 0 ? 1 : 0);
+                
+                const pointsCard = document.createElement('div');
+                pointsCard.className = 'analysis-item stat-card';
+                pointsCard.innerHTML = `
+                     <div class="stat-card-header"><i class="fas fa-star"></i> Pontos</div>
+                    <div class="stat-value">${formatNumber(newPoints)}</div>
+                    <div class="stat-change ${pointsChange >= 0 ? 'positive' : 'negative'}">
+                        ${pointsChange >= 0 ? '+' : ''}${formatNumber(pointsChange)} (${formatNumber(pointsChangePercent, true)})
+                    </div>`;
+                container.appendChild(pointsCard);
+                await animateElement(pointsCard);
+                await delay(2000);
+
+                // 4. Revelar a Conclusão
+                const getSuggestion = (change, metric, metricPlural) => {
+                    if (change > 0) return `O <strong>aumento</strong> em ${metricPlural} é um ótimo sinal!`;
+                    if (change < 0) return `A <strong>queda</strong> em ${metricPlural} merece atenção.`;
+                    return `O número de ${metricPlural} manteve-se <strong>estável</strong>.`;
+                };
+
+                const summaryContainer = document.createElement('div');
+                summaryContainer.className = 'analysis-item summary-container';
+                summaryContainer.innerHTML = `<p class="summary-text">${getSuggestion(viewsChange, 'view', 'views')} ${getSuggestion(pointsChange, 'ponto', 'pontos')}</p>`;
+                container.appendChild(summaryContainer);
+                await animateElement(summaryContainer);
+
+                await delay(5000);
+                showSlide(slides.end);
+            }
+
+            run();
+        });
+    </script>
+</body>
+</html>
+

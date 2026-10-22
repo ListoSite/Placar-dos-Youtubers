@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="pt-pt">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Video Maker</title>
+
+    <!-- Google Fonts: Inter & Bebas Neue -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Bebas+Neue&display=swap" rel="stylesheet">
+
+    <!-- Font Awesome para Ícones -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+    <!-- Ficheiros de Estilos -->
+    <link rel="stylesheet" href="maker-style.css">
+    <style>
+        /* Estilos adicionais para o novo tema */
+        .category-selection-container {
+            margin-top: 3rem;
+            display: none; /* Começa escondido */
+        }
+
+        .category-selection-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+            gap: 1rem;
+            background-color: var(--maker-fundo);
+            padding: 1.5rem;
+            border-radius: 12px;
+            border: 1px solid var(--maker-borda);
+            margin-top: 1.5rem;
+            max-height: 250px;
+            overflow-y: auto;
+        }
+
+        .category-checkbox-item {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            background-color: var(--maker-fundo-secundario);
+            padding: 0.75rem 1rem;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            border: 1px solid var(--maker-borda);
+        }
+        .category-checkbox-item:hover {
+            background-color: var(--maker-fundo-terciario);
+            border-color: var(--maker-principal);
+        }
+        .category-checkbox-item input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            accent-color: var(--maker-principal);
+        }
+        .category-checkbox-item label {
+            font-weight: 500;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body class="maker-body">
+
+    <div class="maker-container">
+        <!-- BARRA LATERAL DE NAVEGAÇÃO -->
+        <aside class="maker-sidebar">
+            <div class="sidebar-header">
+                <a href="index.html" class="site-title">Video <span>Maker</span></a>
+            </div>
+            <div class="sidebar-progress">
+                <div class="sidebar-step active" data-step="1">
+                    <div class="step-circle">1</div>
+                    <div class="step-label">
+                        <h4>Passo 1</h4>
+                        <p>Categoria</p>
+                    </div>
+                </div>
+                <div class="step-connector"></div>
+                <div class="sidebar-step" data-step="2">
+                    <div class="step-circle">2</div>
+                    <div class="step-label">
+                        <h4>Passo 2</h4>
+                        <p>Tema</p>
+                    </div>
+                </div>
+                <div class="step-connector"></div>
+                <div class="sidebar-step" data-step="3">
+                    <div class="step-circle">3</div>
+                    <div class="step-label">
+                        <h4>Passo 3</h4>
+                        <p>Opções</p>
+                    </div>
+                </div>
+                 <div class="step-connector"></div>
+                <div class="sidebar-step" data-step="4">
+                    <div class="step-circle">4</div>
+                    <div class="step-label">
+                        <h4>Passo 4</h4>
+                        <p>Formato</p>
+                    </div>
+                </div>
+            </div>
+            <div class="sidebar-footer">
+                <button id="back-btn" class="back-button" style="display: none;"><i class="fas fa-arrow-left"></i> Voltar</button>
+                <a href="index.html" class="home-link"><i class="fas fa-home"></i> Voltar ao Início</a>
+            </div>
+        </aside>
+
+        <!-- CONTEÚDO PRINCIPAL -->
+        <main class="maker-main-content">
+            
+            <!-- PASSO 1: SELECIONAR CATEGORIA -->
+            <section id="step-1" class="content-section active" data-step="1">
+                <div class="section-header">
+                    <h2>Selecione a Categoria Principal</h2>
+                    <p>Escolha a fonte de dados para o seu vídeo.</p>
+                </div>
+                <div id="category-grid" class="category-grid">
+                    <div class="category-card" data-category-id="placar-youtubers">
+                        <i class="fas fa-trophy category-icon"></i>
+                        <h4>Placar dos Youtubers</h4>
+                        <p>Rankings, batalhas e estatísticas de Youtubers.</p>
+                    </div>
+                    <div class="category-card" data-category-id="placar-projetos">
+                        <i class="fas fa-film category-icon"></i>
+                        <h4>Placar dos Projetos</h4>
+                        <p>Análise de projetos, visualizações e sucesso.</p>
+                    </div>
+                    <div class="category-card" data-category-id="o-caso">
+                        <i class="fas fa-book category-icon"></i>
+                        <h4>O Caso</h4>
+                        <p>Casos, pessoas e a rede de conexões.</p>
+                    </div>
+                    <div class="category-card" data-category-id="laboratorio-ia">
+                        <i class="fas fa-brain category-icon"></i>
+                        <h4>Laboratório IA</h4>
+                        <p>Conteúdo gerado por inteligência artificial.</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- PASSO 2: SELECIONAR TEMA -->
+            <section id="step-2" class="content-section" data-step="2">
+                <div class="section-header">
+                    <h2>Selecione o Tema do Vídeo</h2>
+                    <p>Que tipo de história quer contar?</p>
+                </div>
+                <div id="theme-grid" class="theme-grid">
+                    <!-- Os temas serão inseridos aqui pelo JavaScript -->
+                </div>
+            </section>
+
+            <!-- PASSO 3: OPÇÕES DO TEMA -->
+            <section id="step-3" class="content-section" data-step="3">
+                 <div class="section-header">
+                    <h2>Opções do Tema</h2>
+                    <p>Personalize os detalhes do vídeo.</p>
+                </div>
+                
+                <!-- Opções para Ranking Geral -->
+                <div id="step-3-options" style="display: none;">
+                    <div class="options-group">
+                        <h4 class="options-label">Qual ranking quer apresentar?</h4>
+                        <div id="top-selection-grid" class="category-grid" style="grid-template-columns: repeat(4, 1fr);">
+                            <div class="category-card" data-top="top-50"><h4>Top 50</h4></div>
+                            <div class="category-card" data-top="top-25"><h4>Top 25</h4></div>
+                            <div class="category-card" data-top="top-10"><h4>Top 10</h4></div>
+                            <div class="category-card" data-top="top-5"><h4>Top 5</h4></div>
+                        </div>
+                    </div>
+                    <div id="month-selection-group" class="options-group" style="margin-top: 3rem; display: none;">
+                        <h4 class="options-label">Selecione o Mês (Baseado no Histórico)</h4>
+                        <div class="custom-select-wrapper">
+                             <select id="month-select" class="social-input"></select>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Opções para Ranking por Categoria -->
+                <div id="category-ranking-options" style="display: none;">
+                    <div class="options-group">
+                        <h4 class="options-label">Qual ranking quer apresentar?</h4>
+                        <div id="category-top-selection-grid" class="category-grid" style="grid-template-columns: repeat(4, 1fr);">
+                            <div class="category-card" data-top="top-50"><h4>Top 50</h4></div>
+                            <div class="category-card" data-top="top-25"><h4>Top 25</h4></div>
+                            <div class="category-card" data-top="top-10"><h4>Top 10</h4></div>
+                            <div class="category-card" data-top="top-5"><h4>Top 5</h4></div>
+                        </div>
+                    </div>
+
+                    <div id="category-mode-group" class="options-group" style="margin-top: 3rem; display: none;">
+                        <h4 class="options-label">Selecione as Categorias</h4>
+                         <div id="category-mode-selection" class="category-grid" style="grid-template-columns: 1fr 1fr;">
+                            <div class="category-card" data-mode="aleatorio"><h4><i class="fas fa-random"></i> Aleatória</h4></div>
+                            <div class="category-card" data-mode="escolher"><h4><i class="fas fa-check-double"></i> Escolher</h4></div>
+                        </div>
+                    </div>
+
+                    <div id="category-selection-container" class="category-selection-container">
+                        <h4 class="options-label">Quais categorias incluir?</h4>
+                        <div id="category-selection-list"></div>
+                    </div>
+
+                     <div id="category-month-selection-group" class="options-group" style="margin-top: 3rem; display: none;">
+                        <h4 class="options-label">Selecione o Mês (Baseado no Histórico)</h4>
+                        <div class="custom-select-wrapper">
+                             <select id="category-month-select" class="social-input"></select>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Opções para Batalha -->
+                <div id="battle-options" style="display: none;">
+                    <div class="options-group">
+                        <h4 class="options-label">Escolha o modo da batalha:</h4>
+                        <div id="battle-mode-selection" class="category-grid" style="grid-template-columns: 1fr 1fr;">
+                            <div class="category-card" data-mode="aleatorio"><h4><i class="fas fa-random"></i> Aleatória</h4></div>
+                            <div class="category-card" data-mode="escolher"><h4><i class="fas fa-user-check"></i> Escolher</h4></div>
+                        </div>
+                    </div>
+                    <div id="battle-youtuber-selection" class="options-group" style="margin-top: 3rem; display: none;">
+                        <h4 class="options-label">Selecione os dois Youtubers para a batalha:</h4>
+                        <div class="custom-select-wrapper" style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; max-width: none;">
+                             <select id="youtuber-select-1" class="social-input"></select>
+                             <select id="youtuber-select-2" class="social-input"></select>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- NOVO: Opções para Análise Inteligente -->
+                <div id="analise-inteligente-options" style="display: none;">
+                    <div class="options-group">
+                        <h4 class="options-label">Escolha o modo da análise:</h4>
+                        <div id="analise-mode-selection" class="category-grid" style="grid-template-columns: 1fr 1fr;">
+                            <div class="category-card" data-mode="aleatorio"><h4><i class="fas fa-random"></i> Aleatório</h4></div>
+                            <div class="category-card" data-mode="escolher"><h4><i class="fas fa-user-check"></i> Escolher</h4></div>
+                        </div>
+                    </div>
+                    <div id="analise-youtuber-selection" class="options-group" style="margin-top: 3rem; display: none;">
+                        <h4 class="options-label">Selecione o Youtuber para analisar:</h4>
+                        <div class="custom-select-wrapper">
+                             <select id="analise-youtuber-select" class="social-input"></select>
+                        </div>
+                    </div>
+                    <div id="analise-month-selection" class="options-group" style="margin-top: 3rem; display: none;">
+                        <h4 class="options-label">Selecione os dois meses para comparar:</h4>
+                        <div class="custom-select-wrapper" style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; max-width: none;">
+                             <select id="analise-month1-select" class="social-input"></select>
+                             <select id="analise-month2-select" class="social-input"></select>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Mensagem para outros temas -->
+                <div id="step-3-default" style="display: none;">
+                    <p style="font-size: 1.1rem; color: var(--maker-texto-secundario);">Este tema não tem opções personalizáveis. Avance para o próximo passo para escolher o formato.</p>
+                </div>
+            </section>
+
+            <!-- PASSO 4: SELECIONAR FORMATO -->
+            <section id="step-4" class="content-section" data-step="4">
+                <div class="section-header">
+                    <h2>Selecione o Formato Final</h2>
+                    <p>Como quer que o seu vídeo seja apresentado?</p>
+                </div>
+                <div id="format-grid" class="format-grid">
+                     <div class="format-card" data-format="16-9">
+                        <div class="format-preview landscape"></div>
+                        <h4>16:9</h4>
+                        <p>Formato paisagem (YouTube, TV)</p>
+                    </div>
+                    <div class="format-card" data-format="9-16">
+                        <div class="format-preview portrait"></div>
+                        <h4>9:16</h4>
+                        <p>Formato retrato (Shorts, TikTok, Reels)</p>
+                    </div>
+                </div>
+                <div class="generate-button-container">
+                    <button id="generate-video-btn" class="generate-btn" disabled>
+                        <i class="fas fa-magic"></i> Gerar Vídeo
+                    </button>
+                </div>
+            </section>
+
+        </main>
+    </div>
+
+    <!-- Scripts -->
+    <script src="maker-main.js"></script>
+</body>
+</html>

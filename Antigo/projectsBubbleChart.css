@@ -1,0 +1,163 @@
+/* projectsBubbleChart.css - Estilos para a Galáxia de Projetos (Versão 3.1 - Fullscreen e Zoom) */
+
+/* --- Container e Título --- */
+#bubble-chart-container {
+    position: relative;
+    width: 100%;
+    height: 80vh; /* Altura aumentada para uma experiência mais imersiva */
+    overflow: hidden;
+    border-radius: 12px;
+}
+
+#bubble-chart-container svg {
+    width: 100%;
+    height: 100%;
+    font-family: 'Inter', sans-serif;
+    background-color: #1c1c1c; /* Fundo um pouco mais escuro e sólido */
+    cursor: grab; /* Indica que o fundo pode ser arrastado */
+}
+
+#bubble-chart-container svg:active {
+    cursor: grabbing;
+}
+
+
+/* --- Estilos para os Nós (Sóis e Planetas) --- */
+.node {
+    cursor: pointer; /* Mudar para pointer para indicar que são clicáveis */
+    transition: filter 0.3s ease, stroke-width 0.3s ease;
+}
+
+.creator-node { /* Sol */
+    stroke: rgba(255, 255, 255, 0.3);
+    stroke-width: 2px;
+}
+
+.project-node { /* Planeta */
+    stroke: rgba(255, 255, 255, 0.5);
+    stroke-width: 1.5px;
+}
+
+.node:hover {
+    filter: drop-shadow(0 0 10px currentColor);
+    stroke-width: 3px;
+}
+
+.node-label {
+    fill: white;
+    font-size: 14px;
+    font-weight: 600;
+    text-anchor: middle;
+    pointer-events: none; /* Essencial para que o rato interaja com o círculo por baixo */
+    text-shadow: 0 1px 4px rgba(0,0,0,0.9);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.node.visible .node-label {
+    opacity: 1;
+}
+
+
+/* --- Tooltip --- */
+.bubble-tooltip {
+    opacity: 0;
+    visibility: hidden;
+    position: absolute;
+    background: rgba(30, 30, 30, 0.9);
+    color: white;
+    border-radius: 12px;
+    border: 1px solid var(--cor-principal);
+    width: 320px;
+    pointer-events: none;
+    transition: opacity 0.3s ease, visibility 0.3s ease, transform 0.3s ease;
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    box-shadow: 0 8px 25px rgba(0,0,0,0.5);
+    z-index: 10000;
+    overflow: hidden;
+    transform: scale(0.95);
+}
+
+.bubble-tooltip.visible {
+    opacity: 1;
+    visibility: visible;
+    transform: scale(1);
+}
+
+.tooltip-header {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1rem;
+    background: linear-gradient(145deg, rgba(0,0,0,0.4), rgba(0,0,0,0.2));
+    border-bottom: 1px solid var(--cor-escuro);
+}
+
+.tooltip-logo {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%; /* Circular para criadores */
+    object-fit: cover;
+    border: 2px solid var(--cor-principal);
+    flex-shrink: 0;
+}
+
+.tooltip-logo.project {
+    border-radius: 10px; /* Quadrado para projetos */
+}
+
+.tooltip-title-container {
+    text-align: left;
+}
+
+.tooltip-name {
+    font-family: 'Bebas Neue', sans-serif;
+    font-weight: 400;
+    font-size: 1.8rem;
+    line-height: 1.1;
+    color: var(--cor-texto-principal);
+    margin: 0;
+}
+
+.tooltip-subtitle {
+    font-size: 0.9rem;
+    color: var(--cor-texto-secundario);
+    margin: 0;
+    font-weight: 500;
+}
+
+.tooltip-body {
+    padding: 1rem;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.75rem;
+}
+
+.tooltip-stat {
+    display: flex;
+    flex-direction: column;
+    background-color: rgba(0,0,0,0.2);
+    padding: 0.75rem;
+    border-radius: 8px;
+    text-align: center;
+}
+
+.tooltip-stat-label {
+    font-size: 0.8rem;
+    color: var(--cor-texto-secundario);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 0.25rem;
+}
+
+.tooltip-stat-value {
+    font-size: 1.4rem;
+    font-weight: 700;
+    color: var(--cor-texto-principal);
+    line-height: 1.2;
+}
+
+.tooltip-stat-value.highlight {
+    color: var(--cor-destaque);
+}

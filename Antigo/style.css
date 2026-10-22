@@ -1,0 +1,1150 @@
+/* style.css */
+
+/* Variáveis de Cor Globais */
+:root {
+    /* Tema Padrão (Placar) */
+    --cor-principal: #A60522;
+    --cor-escuro: #590414;
+    --cor-destaque: #D9073F;
+    --cor-vinho: #400414;
+    --cor-fundo: #1a1a1a; /* Ligeiramente mais claro para um look mais suave */
+    --cor-texto-principal: #f0f0f0;
+    --cor-texto-secundario: #a0a0a0;
+    --cor-verde-subida: #28a745;
+    --cor-vermelho-descida: #dc3545;
+    --cor-cinza-neutro: #6c757d;
+}
+
+/* Reset Básico e Estilo Global */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Inter', sans-serif;
+    background-color: var(--cor-fundo);
+    color: var(--cor-texto-principal);
+    line-height: 1.6;
+    transition: background-color 0.5s ease;
+}
+
+/* --- ESTILOS PARA A SELEÇÃO DE MÓDulos NA HOME (REDESIGN V3 - ICON-FOCUSED) --- */
+.home-module-selection {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 90vh;
+    padding: 4rem 1rem;
+    text-align: center;
+}
+
+.home-module-selection h1 {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 4rem;
+    color: var(--cor-texto-principal);
+    margin-bottom: 4rem;
+    letter-spacing: 2px;
+    font-weight: 400;
+    text-transform: uppercase;
+    animation: fadeIn 1s ease-out;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+.module-cards-container {
+    display: flex;
+    gap: 1.5rem; /* Reduzido para caber 5 cartões */
+    justify-content: center;
+}
+
+.module-card {
+    width: 220px; /* Reduzido para caber 5 cartões */
+    height: 390px;
+    border-radius: 12px;
+    overflow: hidden;
+    cursor: pointer;
+    position: relative;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    transition: all 0.4s ease;
+    background-color: #222;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Cores específicas para cada módulo */
+#select-placar-youtubers {
+    --module-color: var(--cor-destaque);
+}
+
+#select-o-caso {
+    --module-color: #9932CC;
+}
+
+#select-laboratorio-ia {
+    --module-color: #FF6B00;
+}
+
+#select-video-maker {
+    --module-color: #1DB954;
+}
+
+/* NOVO: Cor para o Universo Filmes */
+#select-universo-filmes {
+    --module-color: #3b82f6; 
+}
+
+
+.module-card:hover {
+    transform: translateY(-10px);
+    border-color: var(--module-color);
+    box-shadow: 0 20px 30px rgba(0,0,0,0.3), 0 0 25px var(--module-color);
+}
+
+.module-icon {
+    font-size: 100px;
+    color: rgba(255, 255, 255, 0.5);
+    z-index: 1;
+    transition: all 0.4s ease;
+}
+
+.module-card:hover .module-icon {
+    font-size: 60px;
+    transform: translateY(-120px);
+    color: var(--module-color);
+}
+
+.module-card-content {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    padding: 1.5rem;
+    color: white;
+    z-index: 3;
+    text-align: left;
+}
+
+.module-card-content h2 {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 2.5rem;
+    font-weight: 400;
+    margin-bottom: 0.5rem;
+    line-height: 1.1;
+    text-shadow: 0 1px 5px rgba(0,0,0,0.8);
+    transform: translateY(150px); /* Começa fora da vista */
+    opacity: 0;
+    transition: all 0.4s ease;
+}
+
+.module-card-content p {
+    font-size: 0.95rem;
+    color: var(--cor-texto-secundario);
+    line-height: 1.5;
+    transform: translateY(150px);
+    opacity: 0;
+    transition: all 0.4s ease 0.1s; /* Atraso na transição */
+}
+
+.module-card:hover .module-card-content h2,
+.module-card:hover .module-card-content p {
+    transform: translateY(0);
+    opacity: 1;
+}
+
+
+/* --- FIM DOS ESTILOS PARA A SELEÇÃO DE MÓDULOS --- */
+
+
+/* Estrutura Principal */
+.container {
+    width: 90%;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+/* Cabeçalho e Navegação */
+.main-header {
+    background-color: var(--cor-vinho);
+    padding: 1rem 0;
+    border-bottom: 2px solid var(--cor-escuro);
+}
+
+.main-nav {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.site-title {
+    font-size: 1.8rem;
+    font-weight: 700;
+    color: var(--cor-texto-principal);
+    text-decoration: none;
+}
+
+.site-title span {
+    color: var(--cor-principal);
+}
+
+.nav-menu, .nav-icons {
+    list-style: none;
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+}
+
+.nav-menu a, .nav-icons a {
+    color: var(--cor-texto-secundario);
+    text-decoration: none;
+    font-size: 1rem;
+    font-weight: 500;
+    padding: 0.5rem 1rem;
+    border-radius: 6px;
+    transition: all 0.3s ease;
+    display: block;
+}
+
+.nav-menu a:hover, .nav-icons a:hover {
+    background-color: var(--cor-escuro);
+    color: var(--cor-texto-principal);
+}
+
+.nav-menu a.active {
+    background-color: var(--cor-principal);
+    color: white;
+    font-weight: 600;
+}
+
+.nav-icons a {
+    font-size: 1.2rem;
+}
+
+.gerir-menu-item, .plus-menu-item, .placar-menu-item, .placar-projetos-menu-item {
+    position: relative;
+}
+
+.submenu {
+    list-style: none;
+    position: absolute;
+    top: 100%;
+    left: 0;
+    background-color: var(--cor-vinho);
+    border: 1px solid var(--cor-escuro);
+    border-radius: 6px;
+    padding: 0.5rem 0;
+    margin-top: 0.5rem;
+    min-width: 200px;
+    z-index: 1000;
+    visibility: hidden;
+    opacity: 0;
+    transform: translateY(-10px);
+    transition: opacity 0.3s ease, transform 0.3s ease, visibility 0.3s;
+}
+
+.submenu.active {
+    visibility: visible;
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.submenu li a {
+    padding: 0.75rem 1.5rem;
+    white-space: nowrap;
+}
+
+/* Conteúdo Principal */
+.content-section {
+    padding: 3rem 0;
+}
+
+/* Estilos para a Barra de Ferramentas e Títulos de Tabela */
+.toolbar, .table-title-container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 2rem;
+}
+
+.search-bar {
+    display: flex;
+    align-items: center;
+    background-color: var(--cor-vinho);
+    border: 1px solid var(--cor-escuro);
+    border-radius: 8px;
+    padding: 0.5rem 1rem;
+    flex-grow: 1;
+    max-width: 450px;
+}
+
+.search-bar i {
+    color: var(--cor-texto-secundario);
+    margin-right: 0.75rem;
+}
+
+.search-bar input {
+    width: 100%;
+    background: none;
+    border: none;
+    outline: none;
+    color: var(--cor-texto-principal);
+    font-size: 1rem;
+    font-family: 'Inter', sans-serif;
+}
+
+.search-bar input::placeholder {
+    color: var(--cor-texto-secundario);
+    opacity: 0.8;
+}
+
+/* Estilos para os Controlos de Ordenação */
+.sort-controls {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.sort-button {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    background-color: transparent;
+    color: var(--cor-texto-secundario);
+    border: 1px solid var(--cor-escuro);
+    border-radius: 8px;
+    padding: 0.75rem 1rem;
+    font-size: 0.9rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.sort-button:hover {
+    background-color: var(--cor-escuro);
+    color: var(--cor-texto-principal);
+}
+
+.sort-button.active {
+    background-color: var(--cor-principal);
+    color: white;
+    border-color: var(--cor-principal);
+}
+
+.sort-button i {
+    transition: transform 0.3s ease;
+}
+
+/* Estilo para botões de ação genéricos */
+.action-button {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.75rem;
+    background-color: var(--cor-principal);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    padding: 0.85rem 2rem;
+    font-size: 1.1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    text-decoration: none;
+}
+
+.action-button:hover {
+    background-color: var(--cor-destaque);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+}
+
+.action-button.secondary {
+    background-color: var(--cor-cinza-neutro);
+}
+.action-button.secondary:hover {
+    background-color: #88929b;
+}
+
+.action-button.danger {
+    background-color: var(--cor-vermelho-descida);
+}
+
+.action-button.danger:hover {
+    background-color: #a50000;
+}
+
+
+/* Estilos para o Formulário de Perfis */
+.profile-form-container {
+    background-color: rgba(0,0,0,0.2);
+    padding: 2rem;
+    border-radius: 12px;
+    border: 1px solid var(--cor-escuro);
+    margin-bottom: 3rem;
+}
+
+.profile-form-container h3 {
+    font-size: 1.5rem;
+    font-weight: 600;
+    margin-bottom: 1.5rem;
+    color: var(--cor-texto-principal);
+}
+
+.form-grid {
+    display: grid;
+    grid-template-columns: 150px 1fr;
+    gap: 2rem;
+    align-items: flex-start;
+}
+
+.photo-uploader label {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    width: 150px;
+    height: 150px;
+    border: 2px dashed var(--cor-texto-secundario);
+    border-radius: 50%;
+    cursor: pointer;
+    transition: border-color 0.3s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.photo-uploader label:hover {
+    border-color: var(--cor-principal);
+}
+
+.photo-uploader img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 50%;
+}
+
+.photo-uploader span {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    background-color: rgba(0, 0, 0, 0.6);
+    color: white;
+    text-align: center;
+    padding: 0.5rem 0;
+    font-size: 0.9rem;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.photo-uploader label:hover span {
+    opacity: 1;
+}
+
+.fields-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+}
+
+.form-group label {
+    margin-bottom: 0.5rem;
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: var(--cor-texto-secundario);
+}
+
+.form-group input,
+.form-group textarea {
+    background-color: var(--cor-vinho);
+    border: 1px solid var(--cor-escuro);
+    border-radius: 6px;
+    padding: 0.75rem 1rem;
+    color: var(--cor-texto-principal);
+    font-size: 1rem;
+    font-family: 'Inter', sans-serif;
+    transition: border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+.form-group input:focus,
+.form-group textarea:focus {
+    outline: none;
+    border-color: var(--cor-principal);
+    box-shadow: 0 0 0 3px rgba(166, 5, 34, 0.3);
+}
+
+.submit-button {
+    grid-column: 2 / -1;
+    justify-self: end;
+    background-color: var(--cor-principal);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    padding: 0.75rem 2rem;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+.submit-button:hover {
+    background-color: var(--cor-destaque);
+}
+
+/* Estilos para a Lista de Perfis */
+.profiles-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 1.5rem;
+}
+
+.empty-list-message {
+    text-align: center;
+    color: var(--cor-texto-secundario);
+    padding: 2rem;
+    grid-column: 1 / -1;
+}
+
+.profile-card {
+    background-color: var(--cor-vinho);
+    border: 1px solid var(--cor-escuro);
+    border-radius: 12px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    position: relative;
+    cursor: pointer;
+}
+
+.profile-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 20px rgba(0,0,0,0.4);
+}
+
+/* Container para o rank e o indicador de mudança */
+.profile-card-rank-container {
+    position: absolute;
+    bottom: 4.5rem;
+    right: 1.5rem;
+    z-index: 2;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.profile-card-rank {
+    background-color: var(--cor-principal);
+    color: white;
+    padding: 0.5rem 1rem;
+    border-radius: 8px;
+    font-size: 1.1rem;
+    font-weight: 700;
+    border: 2px solid var(--cor-destaque);
+    box-shadow: 0 4px 10px rgba(0,0,0,0.5);
+}
+
+/* Estilos para o Indicador de Mudança de Rank */
+.rank-change-indicator {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 1rem;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.5);
+    transition: all 0.3s ease;
+}
+
+.rank-change-indicator.up {
+    background-color: var(--cor-verde-subida);
+}
+
+.rank-change-indicator.down {
+    background-color: var(--cor-vermelho-descida);
+}
+
+.rank-change-indicator.same {
+    background-color: var(--cor-cinza-neutro);
+    font-size: 1.2rem;
+    font-weight: bold;
+    line-height: 1;
+}
+
+.rank-change-indicator.level-medium {
+    transform: scale(1.1);
+    box-shadow: 0 0 10px 2px currentColor;
+}
+
+.rank-change-indicator.level-high {
+    transform: scale(1.2);
+    box-shadow: 0 0 15px 3px currentColor;
+    animation: pulse 1.5s infinite;
+}
+
+@keyframes pulse {
+    0% { box-shadow: 0 0 15px 3px currentColor; }
+    50% { box-shadow: 0 0 25px 8px currentColor; }
+    100% { box-shadow: 0 0 15px 3px currentColor; }
+}
+
+
+.profile-card-actions {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    display: flex;
+    gap: 0.5rem;
+    z-index: 2;
+}
+
+.profile-card-actions button {
+    background-color: rgba(0, 0, 0, 0.7);
+    color: white;
+    border: none;
+    width: 35px;
+    height: 35px;
+    border-radius: 50%;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background-color 0.3s ease;
+}
+
+.profile-card-actions button:hover {
+    background-color: var(--cor-principal);
+}
+
+.profile-card img {
+    width: 100%;
+    height: 180px;
+    object-fit: cover;
+}
+
+.profile-card-info {
+    padding: 1rem 1.5rem;
+    flex-grow: 1;
+}
+
+.profile-card-info h4 {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: var(--cor-texto-principal);
+    margin-bottom: 0.25rem;
+}
+
+.profile-card-info p {
+    font-size: 0.9rem;
+    color: var(--cor-texto-secundario);
+}
+
+.profile-card-stats {
+    display: flex;
+    justify-content: space-between;
+    padding: 1rem 1.5rem;
+    background-color: rgba(0,0,0,0.2);
+    border-top: 1px solid var(--cor-escuro);
+}
+
+.profile-card-stats span {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.9rem;
+    font-weight: 500;
+}
+
+.profile-card-stats span i {
+    color: var(--cor-principal);
+}
+
+/* Estilos para Modais (Popups) */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.8);
+    z-index: 2000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+    visibility: hidden;
+    opacity: 0;
+    transition: opacity 0.3s ease, visibility 0.3s ease;
+}
+
+.modal-overlay.active {
+    visibility: visible;
+    opacity: 1;
+}
+
+.modal-content {
+    background-color: var(--cor-fundo);
+    border: 1px solid var(--cor-escuro);
+    border-radius: 12px;
+    padding: 2.5rem;
+    width: 100%;
+    max-width: 650px;
+    position: relative;
+    transform: scale(0.95);
+    transition: transform 0.3s ease;
+    display: none;
+    max-height: 95vh; /* Adicionado para evitar overflow vertical */
+    overflow-y: auto;  /* Adicionado para permitir scroll */
+}
+
+.modal-overlay.active .modal-content {
+    transform: scale(1);
+}
+
+.modal-close-btn {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    background: none;
+    border: none;
+    color: var(--cor-texto-secundario);
+    font-size: 2rem;
+    cursor: pointer;
+    line-height: 1;
+}
+
+/* Estilos para Popup de Confirmação */
+#confirm-modal, #project-confirm-modal, #reset-confirm-modal {
+    text-align: center;
+}
+#confirm-modal h3, #project-confirm-modal h3, #reset-confirm-modal h3 {
+    font-size: 1.5rem;
+    margin-bottom: 1rem;
+}
+#confirm-modal p, #project-confirm-modal p, #reset-confirm-modal p {
+    color: var(--cor-texto-secundario);
+    margin-bottom: 2rem;
+}
+.confirm-buttons {
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+}
+.confirm-btn {
+    border: none;
+    padding: 0.75rem 1.5rem;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+    min-width: 120px;
+}
+.confirm-btn.yes {
+    background-color: var(--cor-principal);
+    color: white;
+}
+.confirm-btn.yes:hover {
+    background-color: var(--cor-destaque);
+}
+.confirm-btn.no {
+    background-color: #444;
+    color: white;
+}
+.confirm-btn.no:hover {
+    background-color: #555;
+}
+
+/* Estilos para o conteúdo do Popup de Detalhes de Perfil */
+.modal-details-main {
+    display: grid;
+    grid-template-columns: 180px 1fr;
+    gap: 0 2.5rem;
+    align-items: center;
+    text-align: left;
+    padding-bottom: 2rem;
+    margin-bottom: 2rem;
+    border-bottom: 1px solid var(--cor-escuro);
+}
+
+.modal-details-photo {
+    width: 180px;
+    height: 180px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 4px solid var(--cor-principal);
+    grid-row: 1 / 5;
+}
+
+.modal-details-info {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    height: 100%;
+}
+
+.modal-details-name {
+    font-size: 2.2rem;
+    font-weight: 700;
+    margin-bottom: 0;
+}
+
+.modal-details-content-type {
+    font-size: 1.1rem;
+    color: var(--cor-texto-secundario);
+    margin-bottom: 1.5rem;
+}
+
+.modal-details-rank {
+    font-size: 1.2rem;
+    font-weight: 600;
+    color: var(--cor-texto-principal);
+}
+
+.modal-details-stats {
+    display: flex;
+    justify-content: space-around;
+    background-color: rgba(0,0,0,0.2);
+    padding: 1.5rem;
+    border-radius: 8px;
+    text-align: center;
+}
+
+.stat-value {
+    font-size: 1.8rem;
+    font-weight: 700;
+}
+
+.stat-label {
+    font-size: 0.9rem;
+    color: var(--cor-texto-secundario);
+}
+
+/* Estilos para a secção de Histórico */
+.modal-details-history h4 {
+    font-size: 1.25rem;
+    font-weight: 600;
+    margin-bottom: 1rem;
+    text-align: center;
+}
+
+.history-list {
+    list-style: none;
+    padding: 0;
+    max-height: 200px;
+    overflow-y: auto;
+    padding-right: 1rem;
+}
+
+.history-item {
+    display: grid;
+    grid-template-columns: 2fr 1fr 1fr;
+    gap: 1rem;
+    align-items: center;
+    padding: 0.75rem 0;
+    border-bottom: 1px solid var(--cor-escuro);
+}
+
+.history-item:last-child {
+    border-bottom: none;
+}
+
+.history-month {
+    font-weight: 600;
+    color: var(--cor-texto-principal);
+    text-align: left;
+}
+
+.history-views {
+    color: var(--cor-texto-secundario);
+    text-align: center;
+}
+
+.history-rank {
+    font-weight: 600;
+    color: var(--cor-principal);
+    text-align: right;
+}
+
+.history-item-empty {
+    text-align: center;
+    color: var(--cor-texto-secundario);
+    padding: 1rem;
+}
+
+/* Estilos para o Popup de Gestão de Meses */
+.modal-lg {
+    max-width: 800px;
+}
+
+#months-modal h3 {
+    text-align: center;
+    font-size: 1.8rem;
+    margin-bottom: 2rem;
+}
+
+.months-modal-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 2rem;
+}
+
+.months-option-card {
+    background-color: rgba(0,0,0,0.2);
+    padding: 1.5rem;
+    border-radius: 12px;
+    border: 1px solid var(--cor-escuro);
+    display: flex;
+    flex-direction: column;
+}
+
+.months-option-card h4 {
+    font-size: 1.2rem;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+    color: var(--cor-texto-principal);
+}
+
+.months-option-card h4 i {
+    margin-right: 0.5rem;
+    color: var(--cor-principal);
+}
+
+.months-option-card p {
+    font-size: 0.9rem;
+    color: var(--cor-texto-secundario);
+    flex-grow: 1;
+    margin-bottom: 1.5rem;
+}
+
+.months-option-card .form-group {
+    margin-bottom: 1.5rem;
+}
+
+.months-option-card .action-button {
+    width: 100%;
+    justify-content: center;
+}
+
+/* Estilos para o Popup de Definições */
+#settings-modal h3 {
+    text-align: center;
+    font-size: 1.8rem;
+    margin-bottom: 2rem;
+}
+
+.settings-section {
+    background-color: rgba(0,0,0,0.2);
+    padding: 1.5rem;
+    border-radius: 12px;
+    border: 1px solid var(--cor-escuro);
+}
+
+.settings-section h4 {
+    font-size: 1.2rem;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+}
+
+.settings-section p {
+    font-size: 0.9rem;
+    color: var(--cor-texto-secundario);
+    margin-bottom: 1.5rem;
+}
+
+.settings-buttons {
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+}
+
+/* Estilos para a Tabela de Classificação */
+.table-container {
+    overflow-x: auto;
+}
+
+.leaderboard-table {
+    width: 100%;
+    border-collapse: collapse;
+    background-color: var(--cor-vinho);
+}
+
+.leaderboard-table th, .leaderboard-table td {
+    padding: 1rem 1.5rem;
+    text-align: left;
+    border-bottom: 1px solid var(--cor-escuro);
+    vertical-align: middle;
+}
+
+.leaderboard-table thead {
+    background-color: rgba(0,0,0,0.4);
+}
+
+.leaderboard-table th {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--cor-texto-secundario);
+    text-transform: uppercase;
+}
+
+.leaderboard-table .rank-col {
+    width: 80px;
+    text-align: center;
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--cor-principal);
+}
+
+.leaderboard-table .name-col {
+    width: 30%;
+    font-weight: 600;
+}
+
+.leaderboard-table .views-cell {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.leaderboard-table .history-cell {
+    padding: 0.75rem 1.5rem;
+}
+
+.history-data {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    text-align: left;
+}
+
+.history-data-month {
+    font-weight: 600;
+    color: var(--cor-texto-principal);
+    font-size: 0.9rem;
+    white-space: nowrap;
+}
+
+.history-data-stats {
+    display: flex;
+    gap: 0.5rem;
+    align-items: baseline;
+}
+
+.history-data-stats .rank {
+    color: var(--cor-principal);
+    font-weight: 700;
+    font-size: 1rem;
+}
+
+.history-data-stats .views {
+    font-size: 0.85rem;
+    color: var(--cor-texto-secundario);
+}
+
+/* Estilos para a tabela de projetos */
+.projects-leaderboard-table .name-col {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.projects-leaderboard-table .project-logo {
+    width: 40px;
+    height: 40px;
+    border-radius: 8px;
+    object-fit: cover;
+}
+
+.projects-leaderboard-table .success-col {
+    font-weight: 700;
+    color: var(--cor-verde-subida);
+    background-color: rgba(40, 167, 69, 0.1);
+    text-align: center;
+}
+
+/* Estilos para o Modal de Detalhes do Projeto */
+.project-details-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 2rem;
+    margin-top: 1.5rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--cor-escuro);
+}
+
+.project-details-section h4 {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--cor-texto-secundario);
+    margin-bottom: 0.5rem;
+}
+.project-details-section p {
+    color: var(--cor-texto-principal);
+}
+
+.guest-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+.guest-tag {
+    background-color: var(--cor-escuro);
+    color: var(--cor-texto-principal);
+    padding: 0.25rem 0.75rem;
+    border-radius: 6px;
+    font-size: 0.9rem;
+}
+
+/* Estilos para o contentor do Gráfico 3D */
+.chart-3d-container {
+    position: relative;
+    width: 100%;
+    height: 70vh; /* Altura generosa para o gráfico */
+    margin-top: 2rem;
+    background-color: rgba(0,0,0,0.2);
+    border-radius: 12px;
+    border: 1px solid var(--cor-escuro);
+    overflow: hidden; /* Garante que o canvas fica dentro das bordas */
+}
+
+/* --- Estilos para o Loading Overlay Global --- */
+.loading-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.8);
+    z-index: 9999; /* Mais alto que tudo */
+    display: none; /* Escondido por defeito */
+    align-items: center;
+    justify-content: center;
+}
+
+.loading-overlay .loading-spinner {
+    border: 5px solid rgba(255, 255, 255, 0.2);
+    border-left-color: var(--cor-principal);
+    border-radius: 50%;
+    width: 60px;
+    height: 60px;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+"
+

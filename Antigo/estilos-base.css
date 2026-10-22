@@ -1,0 +1,66 @@
+/* estilos-base.css - Ficheiro de estilos globais para a aplicação */
+
+/* --- Reset Básico & Tipografia --- */
+*, *::before, *::after {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    font-family: 'Inter', sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+/* --- Barra de Ferramentas Superior (Toolbar) --- */
+.toolbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-bottom: 1.5rem;
+    margin-bottom: 2rem;
+    border-bottom: 1px solid var(--ocaso-borda);
+}
+
+.toolbar h2 {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 2.5rem;
+    color: var(--ocaso-texto-principal);
+    letter-spacing: 1.5px;
+}
+
+/* --- Botão de Ação Principal --- */
+.action-button {
+    background: var(--ocaso-principal);
+    color: white;
+    padding: 0.8rem 1.5rem;
+    border-radius: 8px;
+    border: none;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 15px rgba(160, 32, 240, 0.2);
+}
+
+.action-button:hover {
+    background: var(--ocaso-principal-hover);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(160, 32, 240, 0.4);
+}
+
+/* --- Mensagem de Lista Vazia --- */
+.empty-list-message {
+    grid-column: 1 / -1; /* Ocupa todas as colunas do grid */
+    text-align: center;
+    color: var(--ocaso-texto-secundario);
+    padding: 4rem 2rem;
+    font-size: 1.1rem;
+    border: 2px dashed var(--ocaso-borda);
+    border-radius: 12px;
+    margin-top: 1rem;
+}

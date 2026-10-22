@@ -1,0 +1,127 @@
+/* workerChart.css - Estilos para o Placar do Trabalhador (Versão 2.1 - Ajustes Finais) */
+
+#worker-chart-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+    gap: 2rem;
+    padding-top: 1rem;
+}
+
+.worker-card {
+    background: linear-gradient(145deg, #2e2e2e, #1e1e1e);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 16px;
+    display: flex;
+    flex-direction: column;
+    transition: transform 0.3s ease, box-shadow 0.4s ease;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.4);
+    overflow: hidden; /* Garante que os gradientes e bordas fiquem contidos */
+}
+
+.worker-card:hover {
+    transform: translateY(-10px);
+    box-shadow: 0 20px 40px rgba(0,0,0,0.6), 0 0 20px var(--cor-destaque);
+}
+
+.worker-header {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+    padding: 1.5rem;
+    background: rgba(0,0,0,0.2);
+}
+
+.worker-photo {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 4px solid var(--cor-principal);
+    box-shadow: 0 0 15px var(--cor-principal);
+    flex-shrink: 0; /* Impede que a imagem encolha */
+}
+
+.worker-info {
+    flex-grow: 1;
+    text-align: left;
+}
+
+.worker-name {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 2.5rem;
+    font-weight: 400;
+    margin: 0;
+    line-height: 1.1;
+    color: var(--cor-texto-principal);
+}
+
+.worker-rank {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 4rem;
+    color: var(--cor-principal); /* CORREÇÃO: Cor destacada e não transparente */
+    text-shadow: 0 0 10px var(--cor-destaque); /* Adiciona um brilho subtil */
+    line-height: 1;
+    text-align: right;
+}
+
+.worker-stats-container {
+    padding: 1.5rem;
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+.worker-stat-highlight {
+    background: linear-gradient(145deg, var(--cor-principal), var(--cor-escuro));
+    color: white;
+    padding: 1.25rem;
+    border-radius: 12px;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+    /* CORREÇÃO: Usar flexbox para garantir o alinhamento perfeito */
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    flex-grow: 1; /* Permite que ocupe o espaço disponível */
+}
+
+.worker-stat-highlight .stat-value {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 4rem;
+    line-height: 1;
+}
+
+.worker-stat-highlight .stat-label {
+    font-size: 1rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: rgba(255, 255, 255, 0.8);
+}
+
+.worker-stats-secondary {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+    text-align: center;
+}
+
+.worker-stat-item {
+    background-color: rgba(0, 0, 0, 0.2);
+    padding: 1rem;
+    border-radius: 8px;
+}
+
+.worker-stat-item .stat-value {
+    font-size: 1.8rem;
+    font-weight: 700;
+    display: block;
+    line-height: 1.2;
+    color: var(--cor-texto-principal);
+}
+
+.worker-stat-item .stat-label {
+    font-size: 0.8rem;
+    color: var(--cor-texto-secundario);
+    text-transform: uppercase;
+}

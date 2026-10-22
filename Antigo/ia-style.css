@@ -1,0 +1,231 @@
+/* css/ia-style.css - Estilos globais e de layout para o Laboratório IA */
+
+/* --- Variáveis de Cor (Paleta Profissional) --- */
+:root {
+    --ia-principal: #FF6B00; /* Laranja Vibrante */
+    --ia-principal-hover: #FF8833;
+    --ia-destaque-secundario: #00E0FF; /* Ciano Elétrico */
+    --ia-fundo: #0A0B0D; /* Quase Preto */
+    --ia-fundo-secundario: #14161A;
+    --ia-fundo-terciario: #1F2228;
+    --ia-texto-principal: #F0F2F5;
+    --ia-texto-secundario: #8A94A6;
+    --ia-borda: #2a2e37;
+    --ia-sucesso: #20F0A0;
+    --ia-erro: #F02050;
+    --font-principal: 'Inter', sans-serif;
+    --font-destaque: 'Bebas Neue', sans-serif;
+}
+
+/* --- Reset e Estilos de Base --- */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+.ia-body {
+    background-color: var(--ia-fundo);
+    color: var(--ia-texto-principal);
+    font-family: var(--font-principal);
+    display: flex;
+    overflow: hidden;
+}
+
+/* --- Layout Principal --- */
+.ia-container {
+    display: flex;
+    width: 100%;
+    height: 100vh;
+}
+
+/* --- Barra Lateral (Sidebar) --- */
+.ia-sidebar {
+    width: 260px;
+    background: var(--ia-fundo-secundario);
+    border-right: 1px solid var(--ia-borda);
+    display: flex;
+    flex-direction: column;
+    padding: 1.5rem;
+    flex-shrink: 0;
+    transition: width 0.3s ease;
+}
+
+.sidebar-header .site-title {
+    font-family: var(--font-destaque);
+    font-size: 2.2rem;
+    color: var(--ia-texto-principal);
+    text-decoration: none;
+    text-shadow: 0 0 10px var(--ia-principal);
+}
+
+.sidebar-header .site-title span {
+    color: var(--ia-principal);
+}
+
+.sidebar-nav {
+    margin-top: 3rem;
+}
+
+.sidebar-nav ul {
+    list-style: none;
+}
+
+.sidebar-nav .nav-link {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1rem;
+    margin-bottom: 0.5rem;
+    border-radius: 8px;
+    text-decoration: none;
+    color: var(--ia-texto-secundario);
+    font-weight: 500;
+    font-size: 1.1rem;
+    transition: all 0.2s ease;
+    border-left: 3px solid transparent;
+}
+
+.sidebar-nav .nav-link:hover {
+    background-color: rgba(255, 107, 0, 0.08);
+    color: var(--ia-texto-principal);
+}
+
+.sidebar-nav .nav-link.active {
+    background: linear-gradient(90deg, rgba(255, 107, 0, 0.15) 0%, rgba(255, 107, 0, 0) 100%);
+    color: var(--ia-principal);
+    font-weight: 600;
+    border-left-color: var(--ia-principal);
+}
+
+.sidebar-nav .nav-link i {
+    width: 20px;
+    text-align: center;
+    font-size: 1rem;
+}
+
+.sidebar-footer {
+    margin-top: auto;
+}
+
+.sidebar-footer a {
+    color: var(--ia-texto-secundario);
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 1rem;
+    border-radius: 8px;
+    transition: all 0.2s ease;
+}
+
+.sidebar-footer a:hover {
+    background-color: rgba(255, 255, 255, 0.05);
+    color: var(--ia-texto-principal);
+}
+
+/* --- Conteúdo Principal --- */
+.ia-main-content {
+    flex-grow: 1;
+    padding: 2.5rem 3.5rem;
+    overflow-y: auto;
+}
+
+.ia-main-content .content-section {
+    display: none;
+}
+
+.ia-main-content .content-section.active {
+    display: block;
+    animation: fadeIn 0.4s ease-out;
+}
+
+/* --- Componentes Globais --- */
+.toolbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2.5rem;
+}
+
+.toolbar h2 {
+    font-family: var(--font-destaque);
+    font-size: 2.8rem;
+    letter-spacing: 1px;
+    margin: 0;
+    color: var(--ia-texto-principal);
+}
+
+.action-button {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.75rem;
+    background: var(--ia-principal);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    padding: 0.8rem 1.8rem;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    text-decoration: none;
+    box-shadow: 0 4px 15px rgba(255, 107, 0, 0.2);
+}
+
+.action-button:hover {
+    background-color: var(--ia-principal-hover);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(255, 107, 0, 0.3);
+}
+
+.action-button.secondary {
+    background: var(--ia-fundo-terciario);
+    color: var(--ia-texto-secundario);
+    box-shadow: none;
+    border: 1px solid var(--ia-borda);
+}
+
+.action-button.secondary:hover {
+    background: var(--ia-borda);
+    color: var(--ia-texto-principal);
+}
+
+.icon-button {
+    background: none;
+    border: none;
+    color: var(--ia-texto-secundario);
+    font-size: 1.2rem;
+    cursor: pointer;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: grid;
+    place-items: center;
+    transition: all 0.2s ease;
+}
+.icon-button:hover {
+    background-color: var(--ia-borda);
+    color: var(--ia-texto-principal);
+}
+
+
+.section-placeholder {
+    text-align: center;
+    color: var(--ia-texto-secundario);
+    font-size: 1.1rem;
+    margin-top: 5rem;
+    font-style: italic;
+}
+
+/* --- Animações --- */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(15px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}

@@ -1,0 +1,92 @@
+/* ocaso-grupos.css - Estilos para a nova secção de Gestão de Grupos */
+
+/* --- Layout do Formulário de Grupos --- */
+.grupo-form-container .form-grid-half {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: 1.5rem;
+}
+
+#grupo-selected-members {
+    min-height: 80px; /* Garante espaço para arrastar membros */
+}
+
+
+/* --- Card de Grupo --- */
+.grupo-card {
+    padding: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    border-left: 4px solid var(--ocaso-texto-secundario); /* Cor padrão para neutro */
+}
+
+/* Cores específicas por tipo de grupo */
+.grupo-card[data-type="amigos"] {
+    border-left-color: var(--ocaso-sucesso);
+}
+.grupo-card[data-type="rivais"] {
+    border-left-color: var(--ocaso-erro);
+}
+
+.grupo-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid var(--ocaso-borda);
+}
+
+.grupo-info h3 {
+    font-size: 1.5rem;
+    color: var(--ocaso-texto-principal);
+    margin: 0;
+}
+
+.grupo-type-tag {
+    font-size: 0.8rem;
+    font-weight: 600;
+    padding: 0.3rem 0.8rem;
+    border-radius: 20px;
+    text-transform: capitalize;
+    color: white;
+    background-color: var(--ocaso-texto-secundario);
+}
+
+.grupo-type-tag.type-amigos { background-color: var(--ocaso-sucesso); }
+.grupo-type-tag.type-rivais { background-color: var(--ocaso-erro); }
+.grupo-type-tag.type-neutro { background-color: var(--ocaso-texto-secundario); }
+
+
+.grupo-card-body h4 {
+    font-size: 0.9rem;
+    color: var(--ocaso-texto-secundario);
+    margin-bottom: 0.75rem;
+    font-weight: 500;
+}
+
+.member-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+}
+
+.member-avatar {
+    width: 45px;
+    height: 45px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid var(--ocaso-fundo);
+    transition: transform 0.2s ease;
+}
+
+.member-avatar:hover {
+    transform: scale(1.1);
+}
+
+.grupo-card-footer {
+    margin-top: auto;
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.5rem;
+}

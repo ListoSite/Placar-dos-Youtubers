@@ -1,0 +1,577 @@
+/* presentation.css - Estilos para o Modo de Apresentação (Versão 3.1 - Correção de Layout) */
+
+/* --- Estilos para a página de introdução da apresentação (REDESIGN) --- */
+
+#section-apresentacao {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 80vh; /* Aumenta a altura para melhor centralização vertical */
+    text-align: center;
+    padding: 2rem;
+}
+
+.presentation-intro-container {
+    max-width: 750px; /* Aumentado para um visual mais imponente */
+    width: 100%;
+    padding: 3.5rem 4.5rem; /* Mais espaçamento interno */
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    background: linear-gradient(145deg, #2e2e2e, #1e1e1e); /* Gradiente mais suave */
+    border-radius: 20px; /* Bordas mais arredondadas */
+    animation: fadeInIntro 1s ease-out;
+    box-shadow: 0 15px 40px rgba(0,0,0,0.5), 0 0 10px rgba(0,0,0,0.3); /* Sombra mais pronunciada */
+    position: relative;
+    overflow: hidden;
+}
+
+/* Efeito de brilho subtil */
+.presentation-intro-container::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: radial-gradient(circle, rgba(217, 7, 63, 0.15), transparent 40%);
+    animation: rotateGlow 10s linear infinite;
+}
+
+@keyframes rotateGlow {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+.presentation-intro-icon {
+    font-size: 4.5rem;
+    color: var(--cor-principal);
+    margin-bottom: 2rem;
+    display: inline-block;
+    text-shadow: 0 0 20px var(--cor-destaque);
+    animation: pulseIcon 2.5s infinite ease-in-out;
+}
+
+.presentation-intro-title {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 4rem; /* Aumentado */
+    color: var(--cor-texto-principal);
+    margin-bottom: 1.5rem;
+    letter-spacing: 1px;
+}
+
+.presentation-intro-text {
+    color: var(--cor-texto-secundario);
+    margin-bottom: 3rem;
+    font-size: 1.1rem;
+    line-height: 1.7;
+    max-width: 550px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+/* NOVO: Wrapper para os controlos de início */
+.presentation-controls-wrapper {
+    margin-top: 2rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1.5rem;
+    width: 100%;
+    max-width: 450px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.presentation-controls-wrapper .form-group {
+    width: 100%;
+    text-align: left;
+}
+
+.presentation-controls-wrapper .form-group label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-weight: 500;
+    color: var(--cor-texto-secundario);
+    padding-left: 0.5rem;
+}
+
+.presentation-controls-wrapper input[type="text"] {
+    width: 100%;
+    background-color: var(--cor-vinho);
+    border: 1px solid var(--cor-escuro);
+    border-radius: 8px;
+    padding: 0.85rem 1rem;
+    color: var(--cor-texto-principal);
+    font-size: 1rem;
+    font-family: 'Inter', sans-serif;
+    transition: all 0.3s ease;
+}
+
+.presentation-controls-wrapper input[type="text"]:focus {
+    outline: none;
+    border-color: var(--cor-principal);
+    box-shadow: 0 0 0 3px rgba(166, 5, 34, 0.3);
+}
+
+.presentation-controls-wrapper .action-button {
+    width: 100%;
+    justify-content: center; /* Centra o ícone e o texto dentro do botão */
+}
+
+@keyframes fadeInIntro {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes pulseIcon {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.1); }
+    100% { transform: scale(1); }
+}
+
+/* --- Estilos do Modo de Apresentação (Ecrã Inteiro) --- */
+
+#presentation-container {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 5000;
+    color: white;
+    font-family: 'Inter', sans-serif;
+    overflow: hidden;
+    background-color: #121212; /* Fundo escuro sólido */
+}
+
+.presentation-background {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: radial-gradient(ellipse at center, var(--cor-vinho) 0%, #121212 70%);
+    opacity: 0.7;
+    z-index: 1;
+}
+
+.presentation-content {
+    position: relative;
+    z-index: 3;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: space-between;
+    text-align: center;
+    padding: 2rem;
+}
+
+/* --- Estilos das Fases --- */
+.presentation-phase {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+.intro-phase h1 {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 9rem; /* Aumentado */
+    color: white; 
+    text-shadow: 0 0 25px var(--cor-destaque), 0 0 10px white;
+}
+
+.intro-phase p {
+    font-size: 2.2rem;
+    color: var(--cor-texto-secundario);
+}
+
+.phase-title {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 5.5rem; /* Aumentado */
+    color: var(--cor-texto-principal);
+    line-height: 1.1;
+    text-shadow: 0 2px 10px rgba(0,0,0,0.5);
+}
+
+.phase-subtitle {
+    font-family: 'Inter', sans-serif;
+    font-size: 1.6rem;
+    color: var(--cor-texto-secundario);
+    margin-top: -1rem;
+    font-weight: 500;
+}
+
+.phase-title-container {
+    z-index: 10;
+    width: 100%;
+    text-align: center;
+    flex-shrink: 0;
+    padding-top: 1rem;
+}
+
+/* --- Grelha para os Cartões de Revelação --- */
+#reveal-cards-grid {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 2.5rem; /* Aumentado */
+    flex-grow: 1;
+    width: 100%;
+}
+
+/* --- Design do Cartão de Revelação Vertical --- */
+.youtuber-reveal-card {
+    background: linear-gradient(145deg, #2a2a2a, #202020);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 16px;
+    padding: 2rem;
+    width: 320px;
+    height: 580px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+    transition: transform 0.4s ease, box-shadow 0.4s ease;
+}
+
+.youtuber-reveal-card:hover {
+    transform: translateY(-12px) scale(1.03);
+    box-shadow: 0 20px 40px rgba(0,0,0,0.7), 0 0 20px var(--cor-destaque);
+    border-color: var(--cor-principal);
+}
+
+.youtuber-reveal-card .card-header {
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 1.5rem;
+}
+
+.youtuber-reveal-card .rank-number {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 5rem;
+    color: #fff;
+    line-height: 1;
+    text-shadow: 0 0 5px #fff, 
+                 0 0 10px var(--cor-destaque), 
+                 0 0 15px var(--cor-destaque);
+}
+
+.youtuber-photo-frame {
+    padding: 7px;
+    background: linear-gradient(to bottom right, var(--cor-principal), var(--cor-escuro));
+    border-radius: 50%;
+    margin-bottom: 2rem;
+    box-shadow: 0 0 30px rgba(217, 7, 63, 0.5);
+}
+
+.youtuber-reveal-card .youtuber-photo {
+    width: 200px;
+    height: 200px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 4px solid #1a1a1a;
+}
+
+.youtuber-reveal-card .youtuber-details {
+    text-align: center;
+    width: 100%;
+    margin-top: auto;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    min-height: 140px;
+    justify-content: center;
+}
+
+.youtuber-reveal-card .youtuber-name {
+    font-size: 2.2rem;
+    font-weight: 700;
+    line-height: 1.2;
+    color: var(--cor-texto-principal);
+    word-break: break-word;
+    max-width: 100%;
+}
+
+.youtuber-content-type {
+    font-size: 1rem;
+    color: var(--cor-texto-secundario);
+    font-weight: 500;
+    margin-top: 0.5rem;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+}
+
+.youtuber-reveal-card .youtuber-views {
+    background: linear-gradient(145deg, var(--cor-principal), var(--cor-escuro));
+    padding: 0.75rem 2rem;
+    border-radius: 12px;
+    display: inline-flex;
+    flex-direction: column;
+    align-items: center;
+    margin-top: 2rem;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    box-shadow: 0 5px 15px rgba(0,0,0,0.5);
+    transition: all 0.3s ease;
+    min-width: 180px;
+    justify-content: center;
+}
+
+.youtuber-views-number {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 2.5rem;
+    color: #fff;
+    text-shadow: 0 2px 5px rgba(0,0,0,0.7);
+    line-height: 1;
+}
+
+.youtuber-views-text {
+    font-size: 0.85rem;
+    font-weight: 500;
+    color: rgba(255, 255, 255, 0.7);
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+}
+
+.youtuber-reveal-card .youtuber-views:hover {
+    transform: scale(1.05);
+    box-shadow: 0 8px 20px rgba(0,0,0,0.7);
+}
+
+/* --- Estilos do Pódio Final --- */
+.final-top-youtubers {
+    display: grid;
+    grid-template-columns: 1fr 1.2fr 1fr; /* Coluna central maior */
+    grid-template-areas: "left center right";
+    align-items: flex-end; /* Alinha pela base */
+    gap: 2rem;
+    flex-grow: 1;
+    width: 100%;
+    max-width: 1400px;
+    justify-content: center;
+}
+
+.top-youtuber-card {
+    background: linear-gradient(145deg, #333, #222);
+    border: 3px solid;
+    border-radius: 20px;
+    padding: 2rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    backdrop-filter: blur(15px);
+    visibility: hidden; /* Começa invisível para a animação JS */
+}
+
+.top-youtuber-card.rank-1 { grid-area: center; border-color: #FFD700; min-height: 550px; }
+.top-youtuber-card.rank-2 { grid-area: right; border-color: #C0C0C0; min-height: 500px; }
+.top-youtuber-card.rank-3 { grid-area: left; border-color: #CD7F32; min-height: 500px; }
+
+.top-youtuber-card .rank-number {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 6rem;
+    margin-bottom: 1.5rem;
+}
+.top-youtuber-card.rank-1 .rank-number { color: #FFD700; text-shadow: 0 0 25px #FFD700; }
+.top-youtuber-card.rank-2 .rank-number { color: #C0C0C0; text-shadow: 0 0 20px #C0C0C0; }
+.top-youtuber-card.rank-3 .rank-number { color: #CD7F32; text-shadow: 0 0 20px #CD7F32; }
+
+.top-youtuber-card .youtuber-photo {
+    width: 180px;
+    height: 180px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 6px solid;
+    margin-bottom: 2rem;
+}
+.top-youtuber-card.rank-1 .youtuber-photo { border-color: #FFD700; }
+.top-youtuber-card.rank-2 .youtuber-photo { border-color: #C0C0C0; }
+.top-youtuber-card.rank-3 .youtuber-photo { border-color: #CD7F32; }
+
+.top-youtuber-card .youtuber-name {
+    font-size: 2.2rem;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+}
+
+.top-youtuber-card .youtuber-content-type {
+    font-size: 1rem;
+    color: var(--cor-texto-secundario);
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    margin-bottom: 1.5rem;
+}
+
+.top-podium-views {
+    background: rgba(0, 0, 0, 0.5);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 14px;
+    padding: 1rem 2rem;
+    margin-top: auto; /* Empurra para o fundo */
+    display: inline-flex;
+    align-items: center;
+    gap: 1rem;
+    transition: all 0.3s ease;
+}
+
+.top-podium-views:hover {
+    transform: scale(1.05);
+    background: rgba(0, 0, 0, 0.7);
+    box-shadow: 0 0 20px rgba(255, 255, 255, 0.2);
+}
+
+.top-podium-views .views-icon {
+    font-size: 1.8rem;
+}
+
+.top-podium-views .views-number {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 2.5rem;
+    font-weight: 400;
+    line-height: 1;
+}
+
+/* Cores específicas para cada rank */
+.rank-1 .top-podium-views .views-icon,
+.rank-1 .top-podium-views .views-number {
+    color: #FFD700;
+    text-shadow: 0 0 10px #FFD700;
+}
+
+.rank-2 .top-podium-views .views-icon,
+.rank-2 .top-podium-views .views-number {
+    color: #C0C0C0;
+    text-shadow: 0 0 10px #C0C0C0;
+}
+
+.rank-3 .top-podium-views .views-icon,
+.rank-3 .top-podium-views .views-number {
+    color: #CD7F32;
+    text-shadow: 0 0 10px #CD7F32;
+}
+
+/* --- Estilos para a Tela Final da Apresentação --- */
+.end-screen-container {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem;
+}
+
+.end-screen-box {
+    background: linear-gradient(145deg, #2a2a2a, #202020);
+    border: 2px solid var(--cor-destaque);
+    border-radius: 20px;
+    padding: 4rem 5rem;
+    text-align: center;
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    box-shadow: 0 15px 50px rgba(0,0,0,0.7), 0 0 35px var(--cor-destaque);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
+}
+
+.end-screen-icon {
+    font-size: 5rem;
+    color: #FFD700;
+    text-shadow: 0 0 20px #FFD700;
+    margin-bottom: 1.5rem;
+    animation: pulseIcon 2.5s infinite ease-in-out;
+}
+
+.end-screen-box .final-message {
+    margin-top: 0;
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 6rem;
+    color: var(--cor-texto-principal);
+    text-shadow: 0 0 15px var(--cor-destaque);
+    line-height: 1.1;
+}
+
+.end-screen-subtitle {
+    font-size: 1.3rem;
+    color: var(--cor-texto-secundario);
+    font-weight: 500;
+    margin-top: 0.5rem;
+}
+
+/* --- Estilos para o efeito de partículas --- */
+#particle-container {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    overflow: hidden;
+    z-index: 2;
+}
+
+.particle {
+    position: absolute;
+    border-radius: 50%;
+    opacity: 0;
+    animation: celebrate 4s linear infinite;
+}
+
+@keyframes celebrate {
+    0% {
+        transform: translateY(110vh) scale(1);
+        opacity: 1;
+    }
+    100% {
+        transform: translateY(-10vh) scale(0.5);
+        opacity: 0;
+    }
+}
+
+/* --- Estilos para os Botões de Controlo --- */
+#presentation-controls-wrapper {
+    display: flex;
+    justify-content: center;
+    gap: 2rem;
+    width: 100%;
+    z-index: 20;
+    flex-shrink: 0;
+    padding-bottom: 1rem;
+}
+
+#presentation-controls-wrapper .action-button {
+    padding: 1.1rem 3rem;
+    font-size: 1.25rem;
+    font-family: 'Inter', sans-serif;
+    font-weight: 600;
+    backdrop-filter: blur(10px);
+    background-color: rgba(26, 26, 26, 0.5);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+#presentation-controls-wrapper .action-button:hover {
+    background-color: var(--cor-principal);
+    border-color: var(--cor-destaque);
+}
+
+/* --- Animações --- */
+@keyframes fadeInUp {
+    from { opacity: 0; transform: translate3d(0, 50px, 0); }
+    to { opacity: 1; transform: translate3d(0, 0, 0); }
+}
+
+.animated {
+    animation-duration: 0.9s;
+    animation-fill-mode: both;
+}
+
+.fadeInUp { animation-name: fadeInUp; }

@@ -1,0 +1,570 @@
+/* ========= ESTILOS GERAIS PARA O NOVO DESIGN DA GRELHA ========= */
+
+/* Remove o anel de foco padrão para os selects, pois já temos um personalizado */
+select:focus {
+    outline: none;
+}
+
+/* Transição suave para os itens da grelha ao filtrar/ordenar */
+#watchlist-container > * {
+    transition: transform 0.3s ease, opacity 0.3s ease;
+}
+
+/* Header */
+.content-header {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+    margin-bottom: 1.5rem;
+}
+
+.content-header > div:first-child {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    flex-wrap: wrap;
+    gap: 1rem;
+}
+
+
+/* Estilos para o filtro de Playlists */
+.playlist-filters {
+    display: flex;
+    gap: 0.75rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid #374151; /* Separador */
+    overflow-x: auto;
+    scrollbar-width: none; /* Firefox */
+}
+.playlist-filters::-webkit-scrollbar {
+    display: none; /* Chrome, Safari, and Opera */
+}
+.playlist-filter-btn {
+    background-color: #374151;
+    color: #d1d5db;
+    border: 1px solid #4b5563;
+    border-radius: 9999px; /* Pill shape */
+    padding: 0.5rem 1.25rem;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    white-space: nowrap;
+    transition: all 0.2s ease;
+    cursor: pointer;
+}
+.playlist-filter-btn:hover {
+    background-color: #4b5563;
+    border-color: #6b7280;
+}
+.playlist-filter-btn.active {
+    background-color: var(--accent-primary);
+    color: white;
+    border-color: #6366f1;
+    box-shadow: 0 0 10px var(--accent-glow);
+}
+.playlist-filter-btn i {
+    width: 1rem;
+    height: 1rem;
+}
+
+
+/* ========= ESTILOS DOS CARTÕES DE CONTEÚDO (FILMES/SÉRIES) ========= */
+
+.watchlist-card {
+    position: relative;
+    background-color: var(--bg-card);
+    border-radius: 0.75rem;
+    overflow: hidden;
+    cursor: pointer;
+    transition: transform 0.3s cubic-bezier(0.25, 0.8, 0.25, 1), box-shadow 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+}
+
+.watchlist-card:hover {
+    transform: scale(1.05);
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.4), 0 0 15px var(--accent-glow);
+    z-index: 10;
+}
+
+.card-cover {
+    width: 100%;
+    aspect-ratio: 2 / 3;
+    object-fit: cover;
+    transition: filter 0.3s ease;
+}
+
+/* ========= SOBREPOSIÇÃO (OVERLAY) QUE APARECE NO HOVER ========= */
+
+.card-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(to top, rgba(17, 24, 39, 1) 20%, rgba(17, 24, 39, 0.7) 60%, rgba(17, 24, 39, 0) 100%);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    padding: 1rem;
+}
+
+.watchlist-card:hover .card-overlay {
+    opacity: 1;
+}
+
+.card-title {
+    font-size: 1.125rem;
+    font-weight: 700;
+    line-height: 1.3;
+    color: var(--text-primary);
+    transform: translateY(20px);
+    opacity: 0;
+    transition: transform 0.3s ease 0.1s, opacity 0.3s ease 0.1s;
+}
+
+.card-meta {
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-top: 0.25rem;
+    transform: translateY(20px);
+    opacity: 0;
+    transition: transform 0.3s ease 0.15s, opacity 0.3s ease 0.15s;
+}
+
+.card-actions {
+    margin-top: 1rem;
+    display: flex;
+    gap: 0.5rem;
+    transform: translateY(20px);
+    opacity: 0;
+    transition: transform 0.3s ease 0.2s, opacity 0.3s ease 0.2s;
+}
+
+.watchlist-card:hover .card-title,
+.watchlist-card:hover .card-meta,
+.watchlist-card:hover .card-actions {
+    transform: translateY(0);
+    opacity: 1;
+}
+
+.card-action-btn {
+    flex-grow: 1;
+    border: 1px solid transparent;
+    border-radius: 0.5rem;
+    padding: 0.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    font-weight: 600;
+    transition: all 0.2s ease;
+}
+
+.card-action-btn .btn-text {
+    display: none;
+}
+
+@media (min-width: 1024px) {
+    .card-action-btn .btn-text {
+        display: inline;
+    }
+}
+
+
+.card-action-btn.watching-btn {
+    background-color: #312e81;
+    color: #e0e7ff;
+}
+.card-action-btn.watching-btn:hover {
+    background-color: #4338ca;
+    color: white;
+}
+
+.card-action-btn.watched-btn {
+    background-color: rgba(55, 65, 81, 0.5);
+    color: #d1d5db;
+    border-color: #4b5563;
+}
+.card-action-btn.watched-btn:hover {
+    background-color: #166534;
+    border-color: #22c55e;
+    color: white;
+}
+
+.card-action-btn.view-episodes-btn {
+    background-color: #312e81;
+    color: #e0e7ff;
+}
+.card-action-btn.view-episodes-btn:hover {
+    background-color: #4338ca;
+    color: white;
+}
+
+
+/* ========= BADGE DE ESTADO NO CANTO DO CARTÃO ========= */
+.card-status-badge {
+    position: absolute;
+    top: 0.75rem;
+    right: 0.75rem;
+    z-index: 5;
+    width: 2.25rem;
+    height: 2.25rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    border: 2px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 0 2px 5px rgba(0,0,0,0.4);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    transition: all 0.3s ease;
+}
+
+.card-status-badge i {
+    width: 1.125rem;
+    height: 1.125rem;
+    color: white;
+}
+
+.watchlist-card:hover .card-status-badge {
+    transform: scale(1.1);
+    border-color: rgba(255, 255, 255, 0.3);
+}
+
+.card-status-badge.watching {
+    background-color: rgba(59, 130, 246, 0.7);
+}
+
+.card-status-badge.want {
+    background-color: rgba(168, 85, 247, 0.7);
+}
+
+/* ========= MODAIS (AVALIAção E EPISÓDIOS) ========= */
+.modal-base {
+    transition: opacity 0.3s ease;
+}
+
+.modal-content-base {
+    background-color: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 1rem;
+    width: 100%;
+    position: relative;
+    box-shadow: 0 25px 50px -12px rgba(0,0,0,0.75);
+    transform: scale(0.95);
+    opacity: 0;
+    animation: fadeInScale 0.3s ease forwards;
+}
+
+@keyframes fadeInScale {
+    to {
+        transform: scale(1);
+        opacity: 1;
+    }
+}
+
+.modal-base.hidden .modal-content-base {
+    animation: fadeOutScale 0.3s ease forwards;
+}
+
+@keyframes fadeOutScale {
+    from {
+        transform: scale(1);
+        opacity: 1;
+    }
+    to {
+        transform: scale(0.95);
+        opacity: 0;
+    }
+}
+
+.rating-modal-content {
+    max-width: 400px;
+    padding: 2.5rem 2rem 2rem;
+}
+
+.episodes-modal-content {
+    max-width: 700px;
+    max-height: 90vh;
+    display: flex;
+    flex-direction: column;
+}
+
+.episodes-modal-header {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+    padding: 1.5rem 2rem;
+    border-bottom: 1px solid var(--border-color);
+    flex-shrink: 0;
+}
+#episodes-modal-cover {
+    width: 80px;
+    height: 120px;
+    object-fit: cover;
+    border-radius: 0.75rem;
+    flex-shrink: 0;
+}
+#episodes-modal-title { font-size: 2rem; font-weight: 800; line-height: 1.2; }
+#episodes-modal-stats { font-size: 0.875rem; color: var(--text-secondary); margin-top: 0.25rem; }
+.episodes-modal-list {
+    overflow-y: auto;
+    padding: 1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+.episode-item {
+    background-color: var(--bg-secondary);
+    border-radius: 0.75rem;
+    padding: 1rem 1.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1.5rem;
+    border: 1px solid var(--border-color);
+}
+.episode-info { flex-grow: 1; }
+.episode-number { font-size: 0.8rem; font-weight: 700; color: #a5b4fc; margin-bottom: 0.125rem; }
+.episode-title { font-size: 1.125rem; font-weight: 600; color: var(--text-primary); }
+.episode-actions { display: flex; align-items: center; gap: 0.75rem; }
+.episode-visto-btn {
+    background-color: #4b5563;
+    color: #e5e7eb;
+    border-radius: 9999px;
+    padding: 0.5rem 1rem;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    transition: all 0.2s ease;
+}
+.episode-visto-btn:hover { background-color: #16a34a; color: white; }
+
+/* ========= SISTEMA DE CLASSIFICAÇÃO MELHORADO ========= */
+.rating-wrapper { position: relative; display: flex; align-items: center; gap: 0.75rem; }
+.star-rating-input { display: flex; align-items: center; background-color: var(--bg-secondary); border-radius: 0.5rem; padding: 0.5rem; gap: 0.25rem; }
+.star-rating-input button { position: relative; background: none; border: none; padding: 0.25rem; cursor: pointer; transition: all 0.2s cubic-bezier(0.25, 0.8, 0.25, 1); color: #6b7280; }
+.star-rating-input:hover button { color: var(--color-amber); transform: scale(1.1); }
+.star-rating-input button:hover ~ button { color: #6b7280; transform: scale(1.0); }
+.star-rating-input button.active { color: var(--color-amber); transform: scale(1.15); }
+.star-rating-input button.star-half { color: var(--color-amber); }
+.star-rating-input button.star-half i { fill: currentColor; clip-path: polygon(0 0, 50% 0, 50% 100%, 0 100%); }
+.na-rating-btn { border-left: 1px solid var(--border-color); margin-left: 0.5rem; padding-left: 0.75rem; font-size: 0.8rem; font-weight: 700; color: var(--text-secondary); display: flex; align-items: center; gap: 0.25rem; }
+.na-rating-btn i { width: 1.25rem; height: 1.25rem; }
+.na-rating-btn.active { color: #22c55e; transform: scale(1.1); }
+.rating-feedback-display { position: absolute; top: -2.5rem; left: 50%; transform: translateX(-50%) translateY(10px) scale(0.9); background-color: var(--bg-secondary); color: var(--text-primary); padding: 0.25rem 0.75rem; border-radius: 0.375rem; font-size: 0.9rem; font-weight: 700; border: 1px solid var(--border-color); opacity: 0; transition: all 0.2s ease-out; pointer-events: none; box-shadow: 0 5px 15px rgba(0,0,0,0.3); white-space: nowrap; }
+.rating-wrapper:hover .rating-feedback-display.show-feedback { opacity: 1; transform: translateX(-50%) translateY(0) scale(1); }
+.rating-feedback-display.is-na { color: #4ade80; }
+.episode-actions .star-rating-input { padding: 0.25rem; gap: 0; }
+.episode-actions .star-rating-input button i { width: 1.25rem; height: 1.25rem; }
+.episode-actions .na-rating-btn { font-size: 0.7rem; }
+.episode-actions .na-rating-btn i { width: 1rem; height: 1rem; }
+.episode-rating-confirm-btn { background-color: #166534; color: white; border: none; border-radius: 50%; width: 28px; height: 28px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s ease; opacity: 0; transform: scale(0.8); pointer-events: none; }
+.episode-rating-confirm-btn.visible { opacity: 1; transform: scale(1); pointer-events: auto; }
+.episode-rating-confirm-btn:hover { background-color: #15803d; }
+.episode-rating-confirm-btn i { width: 1rem; height: 1rem; }
+
+/* =================================================================== */
+/* =================== MEDIA QUERIES (TABLET) ======================== */
+/* =================================================================== */
+
+@media (max-width: 1024px) {
+    #watchlist-container {
+        grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+        gap: 1rem;
+    }
+    
+    .content-header > div:first-child {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 1rem;
+    }
+    
+    .content-header form {
+        flex-wrap: wrap;
+    }
+}
+
+
+/* =================================================================== */
+/* ============ NOVO DESIGN EXCLUSIVO PARA SMARTPHONES =============== */
+/* =================================================================== */
+
+@media (max-width: 767px) {
+    /* === LAYOUT GERAL === */
+    .main-content {
+        padding-bottom: 6rem; /* Garante espaço para o botão de menu flutuante */
+    }
+
+    /* === CABEÇALHO FIXO E FILTROS (CORRIGIDO) === */
+    .content-header {
+        position: sticky;
+        top: 0;
+        background-color: var(--bg-primary);
+        padding: 1.5rem 1rem 1rem 1rem;
+        z-index: 20;
+        /* As margens e width que causavam o problema foram removidas */
+        border-bottom: 1px solid var(--border-color);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+    }
+    
+    .content-header > div:first-child {
+        flex-direction: column;
+        align-items: center; /* Centraliza tudo */
+        text-align: center;
+        gap: 1.25rem;
+    }
+
+    .content-header h2 { font-size: 2rem; }
+    .content-header p { margin-top: -0.5rem; font-size: 0.9rem; }
+    
+    .content-header form {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 0.75rem;
+        width: 100%;
+    }
+    
+    .content-header form > div:nth-child(3) { /* Seleciona o terceiro filtro (ordenar) */
+        grid-column: 1 / -1; /* Faz com que ocupe a linha toda */
+    }
+    
+    .content-header select {
+        width: 100%;
+        padding: 0.8rem;
+        font-size: 1rem;
+    }
+
+    /* === FILTRO DE PLAYLISTS (MODIFICADO PARA LAYOUT MULTI-LINHA) === */
+    .playlist-filters {
+        flex-wrap: wrap; /* Chave da mudança: permite que os botões passem para a linha de baixo */
+        justify-content: center; /* Alinha os botões ao centro, fica mais harmonioso */
+        overflow-x: visible; /* Desativa o scroll horizontal */
+
+        /* Ajustes de espaçamento e bordas para o novo layout */
+        margin-top: 1rem;
+        padding-top: 1rem;
+        padding-bottom: 0.25rem; /* Reduz o espaço inferior para ficar mais compacto */
+        border-top: 1px solid var(--border-color);
+        border-bottom: none; /* Remove a borda inferior que já não é necessária */
+    }
+
+    .playlist-filter-btn {
+        padding: 0.6rem 1.25rem;
+        flex-shrink: 1; /* Boa prática, embora com wrap não seja crítico */
+        /* O 'gap' do container pai já trata do espaçamento, não precisamos de margens aqui */
+    }
+
+    /* === CONTEÚDO PRINCIPAL (GRELHA) === */
+    .content-body {
+        padding-top: 1.5rem; /* Espaço abaixo do cabeçalho fixo */
+    }
+
+    #watchlist-container {
+        grid-template-columns: repeat(2, 1fr); /* Grelha 2xN */
+        gap: 1rem;
+    }
+    
+    /* Remove hover effects em mobile e torna a informação sempre visível */
+    .watchlist-card:hover {
+        transform: none;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+    }
+    
+    .card-overlay {
+        opacity: 1;
+        background: linear-gradient(to top, rgba(17, 24, 39, 1) 25%, rgba(17, 24, 39, 0.8) 60%, transparent 100%);
+        padding: 0.75rem;
+        transition: none;
+    }
+    
+    .card-title, .card-meta, .card-actions {
+        transform: none;
+        opacity: 1;
+        transition: none;
+    }
+
+    .card-title {
+        font-size: 0.9rem;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+    }
+    .card-meta { font-size: 0.75rem; }
+    .card-actions { margin-top: 0.5rem; }
+    .card-action-btn .btn-text { display: none; }
+    .card-action-btn.view-episodes-btn { flex-grow: 1; }
+
+    /* === MODAIS AJUSTADOS PARA MOBILE === */
+    .modal-content-base {
+        max-width: calc(100vw - 2rem);
+        max-height: calc(100vh - 4rem); /* Adiciona margem vertical para não colar nas bordas */
+        animation: none;
+    }
+     .episodes-modal-header {
+        /* Revertendo para um layout de linha, mais parecido com o desktop, mas adaptado */
+        flex-direction: row;
+        align-items: center; /* Alinha a capa e o texto verticalmente */
+        text-align: left;
+        gap: 1rem;
+        padding: 1rem 1.25rem; /* Padding ajustado */
+    }
+    #episodes-modal-title {
+        /* Tamanho da fonte ajustado para caber ao lado da imagem */
+        font-size: 1.3rem; 
+        font-weight: 700;
+        line-height: 1.3;
+    }
+    #episodes-modal-cover {
+        /* Um tamanho intermédio, que dá destaque mas não ocupa o ecrã todo */
+        width: 90px;
+        height: 135px;
+        flex-shrink: 0; /* Evita que a imagem seja esmagada */
+        border-radius: 0.5rem;
+        box-shadow: 0 6px 12px rgba(0,0,0,0.3);
+        border: none;
+    }
+    #episodes-modal-stats {
+        font-size: 0.8rem;
+        margin-top: 0.25rem; /* Espaçamento menor entre título e stats */
+    }
+
+    /* --- Melhoras na Lista de Episódios --- */
+    .episodes-modal-list {
+        padding: 0.5rem;
+    }
+    .episode-item {
+        flex-direction: column; /* Empilha a informação e as ações */
+        align-items: flex-start; /* Alinha tudo à esquerda */
+        gap: 0.75rem;
+        padding: 0.75rem;
+    }
+    .episode-title {
+        font-size: 1rem;
+    }
+    .episode-actions {
+        width: 100%;
+        flex-wrap: wrap; /* Permite que os controlos quebrem a linha se não couberem */
+        justify-content: space-between; /* Espaça os controlos */
+    }
+    .episode-actions .rating-wrapper {
+        flex-grow: 1; /* Permite que o rating ocupe o espaço disponível */
+    }
+    .episode-actions .star-rating-input button i {
+        width: 1rem; /* Estrelas de rating mais pequenas */
+        height: 1rem;
+    }
+    .episode-visto-btn {
+        padding: 0.5rem 0.75rem; /* Botão 'Visto' mais compacto */
+        font-size: 0.875rem;
+    }
+}
+

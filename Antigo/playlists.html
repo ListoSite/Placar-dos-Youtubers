@@ -1,0 +1,588 @@
+<!DOCTYPE html>
+<html lang="pt-PT">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Playlists - Cineverso</title>
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts: Poppins -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- Ícones (Lucide Icons) -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <!-- Ficheiros de estilos -->
+    <link rel="stylesheet" href="Cineverso.css">
+    <link rel="stylesheet" href="playlists.css">
+</head>
+<body class="bg-gray-900 text-gray-100 font-['Poppins',_sans-serif] antialiased">
+
+    <div class="main-layout">
+        <!-- Overlay da Sidebar para Mobile -->
+        <div class="sidebar-overlay"></div>
+
+        <!-- Navegação Lateral (Sidebar) -->
+        <nav class="sidebar">
+            <div class="sidebar-header">
+                <i data-lucide="film" class="text-indigo-400 w-8 h-8"></i>
+                <h1 class="text-2xl font-bold tracking-wide">Cine<span class="text-indigo-400">verso</span></h1>
+            </div>
+            <ul class="sidebar-menu">
+                <li><a href="Cineverso.html" class="nav-link"><i data-lucide="home"></i><span>Início</span></a></li>
+                <li><a href="universo-filmes.html" class="nav-link"><i data-lucide="swords"></i><span>Universos</span></a></li>
+                <li><a href="playlists.html" class="nav-link active"><i data-lucide="list-music"></i><span>Playlists</span></a></li>
+                <li><a href="quero-ver.html" class="nav-link"><i data-lucide="bookmark"></i><span>Quero Ver</span></a></li>
+            </ul>
+        </nav>
+
+        <!-- Conteúdo Principal -->
+        <main class="main-content">
+            <div class="playlists-page-layout">
+                <!-- Coluna de Playlists -->
+                <aside id="playlists-sidebar" class="playlists-sidebar">
+                    <div class="playlist-header">
+                        <h3 class="text-xl font-bold">Minhas Playlists</h3>
+                        <div class="playlist-header-actions">
+                             <button id="toggle-edit-mode-btn" class="playlist-action-button" title="Editar Playlists">
+                                <i data-lucide="grip-vertical"></i>
+                            </button>
+                            <button id="add-playlist-btn" class="add-playlist-button" title="Criar Nova Playlist">
+                                <i data-lucide="plus"></i>
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- INFORMAÇÃO DE PROGRESSO (COM BARRA VISUAL) -->
+                    <div id="playlist-progress-container" class="playlist-progress-container hidden">
+                        <div class="progress-info">
+                            <span id="progress-text">Vistos 0 de 0</span>
+                            <span id="progress-percentage">0%</span>
+                        </div>
+                        <!-- BARRA DE PROGRESSO VISUAL ADICIONADA -->
+                        <div class="w-full bg-gray-700 rounded-full h-1.5 mt-1">
+                            <div id="progress-bar-fill" class="bg-indigo-500 h-1.5 rounded-full transition-all duration-300" style="width: 0%"></div>
+                        </div>
+                    </div>
+
+                    <div id="playlists-list" class="playlists-list">
+                        <!-- A lista de playlists será inserida aqui -->
+                    </div>
+                </aside>
+
+                <!-- Área de Conteúdo -->
+                <div class="content-area">
+                    <header class="content-header">
+                        <div class="header-top-row">
+                            <div>
+                                <h2 id="current-playlist-title" class="text-4xl font-extrabold tracking-tight">Todos os Conteúdos</h2>
+                                <p id="current-playlist-description" class="text-gray-400 mt-1">Conteúdos que ainda não foram adicionados a uma playlist.</p>
+                            </div>
+                            <div class="flex items-center gap-3">
+                                <div class="relative flex-grow">
+                                    <input type="search" id="search-content-input" placeholder="Pesquisar conteúdos..." class="search-input">
+                                    <i data-lucide="search" class="search-input-icon"></i>
+                                </div>
+                                <!-- BOTÃO DE FILTROS PARA MOBILE -->
+                                <button id="mobile-filter-btn" class="md:hidden flex-shrink-0 bg-gray-700/80 backdrop-blur-sm p-3.5 rounded-lg text-gray-300 hover:bg-gray-600 hover:text-white transition-colors">
+                                    <i data-lucide="sliders-horizontal" class="w-6 h-6"></i>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Container para Filtros Rápidos -->
+                        <div id="quick-filters-container" class="flex flex-wrap gap-2 pt-4">
+                            <!-- Botões de filtro rápido serão inseridos aqui -->
+                        </div>
+
+                        <div id="filters-container" class="filters-container">
+                            <!-- Filtro de Tipo (Multi-seleção) -->
+                            <div class="relative filter-dropdown-container" data-filter-category="type">
+                                <button class="filter-btn">
+                                    <span class="filter-btn-label">Tipo</span>
+                                    <i data-lucide="chevron-down" class="filter-btn-icon"></i>
+                                </button>
+                                <div class="filter-options hidden">
+                                    <!-- Options populated by JS -->
+                                </div>
+                            </div>
+                            <!-- Filtro de Universo (Multi-seleção) -->
+                            <div class="relative filter-dropdown-container" data-filter-category="universe">
+                                <button class="filter-btn">
+                                    <span class="filter-btn-label">Universo</span>
+                                    <i data-lucide="chevron-down" class="filter-btn-icon"></i>
+                                </button>
+                                <div class="filter-options hidden">
+                                    <!-- Options populated by JS -->
+                                </div>
+                            </div>
+                             <!-- Filtro de Personagem (Multi-seleção) -->
+                            <div class="relative filter-dropdown-container" data-filter-category="character">
+                                <button class="filter-btn">
+                                    <span class="filter-btn-label">Personagem</span>
+                                    <i data-lucide="chevron-down" class="filter-btn-icon"></i>
+                                </button>
+                                <div class="filter-options hidden">
+                                    <!-- Options populated by JS -->
+                                </div>
+                            </div>
+                             <!-- Filtro de Tag (Multi-seleção) -->
+                            <div class="relative filter-dropdown-container" data-filter-category="tag">
+                                <button class="filter-btn">
+                                    <span class="filter-btn-label">Tag</span>
+                                    <i data-lucide="chevron-down" class="filter-btn-icon"></i>
+                                </button>
+                                <div class="filter-options hidden">
+                                    <!-- Options populated by JS -->
+                                </div>
+                            </div>
+                            
+                            <select id="sort-by-year" class="filter-select">
+                                <option value="newest">Mais Recentes</option>
+                                <option value="oldest">Mais Antigos</option>
+                            </select>
+                            <button id="clear-filters-btn" class="clear-filters-button">
+                                <i data-lucide="x"></i>
+                                <span>Limpar</span>
+                            </button>
+                        </div>
+                    </header>
+                    <div id="content-grid" class="content-grid">
+                        <!-- Os conteúdos serão inseridos aqui -->
+                    </div>
+                     <!-- Mensagem para quando a grelha está vazia -->
+                    <div id="empty-content-message" class="hidden text-center py-20">
+                        <i data-lucide="film" class="mx-auto h-20 w-20 text-gray-600"></i>
+                        <h3 class="mt-6 text-2xl font-semibold">Nenhum conteúdo encontrado...</h3>
+                        <p class="mt-2 text-gray-400">Tenta alterar os filtros ou adiciona novo conteúdo.</p>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+    
+    <!-- **** MODAL PARA FILTROS EM MOBILE **** -->
+    <div id="mobile-filters-modal" class="mobile-filters-modal-overlay hidden">
+        <div class="mobile-filters-modal-content">
+            <div class="mobile-filters-modal-header">
+                <h3 class="text-xl font-bold">Filtros</h3>
+                <button id="close-mobile-filters-btn" class="text-gray-400 hover:text-white">
+                    <i data-lucide="x" class="w-6 h-6"></i>
+                </button>
+            </div>
+            <div id="mobile-filters-container" class="mobile-filters-modal-body">
+                <!-- O #filters-container será movido para aqui via JS em mobile -->
+            </div>
+        </div>
+    </div>
+
+
+    <!-- Botão Flutuante para Adicionar Conteúdo -->
+    <button id="add-content-btn" class="fixed bottom-8 right-8 bg-indigo-600 hover:bg-indigo-500 text-white p-4 rounded-full shadow-lg shadow-indigo-600/30 transform hover:scale-110 transition-all duration-300 z-40">
+        <i data-lucide="plus" class="w-8 h-8"></i>
+    </button>
+    
+    <!-- BOTÃO DO MENU HAMBÚRGUER PARA MOBILE -->
+    <button class="mobile-menu-button md:hidden fixed bottom-8 right-8 bg-gray-700/80 backdrop-blur-sm hover:bg-gray-600 text-white p-4 rounded-full shadow-lg z-40">
+        <i data-lucide="menu" class="w-8 h-8"></i>
+    </button>
+
+    <!-- Modal para Adicionar/Editar Conteúdo -->
+    <div id="item-modal" class="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 hidden z-50">
+        <div class="bg-gray-800 border border-gray-700/50 rounded-2xl shadow-2xl p-8 w-full max-w-5xl relative max-h-[90vh] overflow-y-auto">
+             <button id="close-item-modal-btn" class="absolute top-4 right-4 text-gray-500 hover:text-white transition-colors">
+                <i data-lucide="x" class="w-6 h-6"></i>
+            </button>
+            <h2 id="item-modal-title" class="text-3xl font-bold mb-6">Adicionar Novo Conteúdo</h2>
+            <form id="item-form" novalidate>
+                <input type="hidden" id="item-id">
+                <input type="hidden" id="item-type" value="movie">
+                <input type="hidden" id="item-status" value="not_watched">
+                <input type="hidden" id="item-rating" value="0">
+                
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-x-8 gap-y-6">
+                    <!-- Coluna Esquerda: Título e Imagens -->
+                    <div class="space-y-6">
+                        <div class="modal-field-group">
+                            <label for="item-title" class="modal-label">Título</label>
+                            <input type="text" id="item-title" placeholder="Ex: O Início da Saga" class="form-input" required>
+                        </div>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                            <div class="modal-field-group">
+                                <label class="modal-label">Capa (Vertical)</label>
+                                <div id="cover-preview" class="image-preview"><i data-lucide="image" class="w-10 h-10 text-gray-500"></i></div>
+                                <input type="url" id="item-cover" placeholder="URL da Capa..." class="form-input mt-2">
+                            </div>
+                            <div class="modal-field-group">
+                                <label class="modal-label">Banner (Horizontal)</label>
+                                <div id="banner-preview" class="image-preview"><i data-lucide="image" class="w-10 h-10 text-gray-500"></i></div>
+                                <input type="url" id="item-banner" placeholder="URL do Banner..." class="form-input mt-2">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Coluna Direita: Detalhes -->
+                    <div class="space-y-6">
+                         <div class="modal-field-group">
+                            <label class="modal-label">Tipo</label>
+                            <div id="item-type-selector" class="button-group">
+                                <button type="button" data-value="movie" data-type="primary" class="active"><i data-lucide="film"></i>Filme</button>
+                                <button type="button" data-value="series" data-type="primary"><i data-lucide="tv"></i>Série</button>
+                                <button type="button" data-value="short" data-type="primary"><i data-lucide="clapperboard"></i>Curta</button>
+                                <button type="button" data-value="especial" data-type="primary"><i data-lucide="award"></i>Especial</button>
+                                <button type="button" data-value="trailer" data-type="secondary"><i data-lucide="video"></i>Trailer</button>
+                                <button type="button" data-value="extra" data-type="secondary"><i data-lucide="plus-circle"></i>Extra</button>
+                                <button type="button" data-value="intro" data-type="secondary"><i data-lucide="log-in"></i>Intro</button>
+                                <button type="button" data-value="plus" data-type="secondary"><i data-lucide="plus"></i>Plus</button>
+                            </div>
+                        </div>
+                        
+                        <div class="modal-field-group">
+                            <label for="item-year" class="modal-label">Ano de Lançamento</label>
+                            <input type="number" id="item-year" placeholder="Ex: 2023" class="form-input">
+                        </div>
+
+                        <div class="modal-field-group">
+                            <label class="modal-label">Estado</label>
+                            <div id="item-status-selector" class="button-group">
+                                <button type="button" data-value="not_watched" class="active"><i data-lucide="circle"></i>Não Visto</button>
+                                <button type="button" data-value="want_to_watch"><i data-lucide="bookmark"></i>Quero Ver</button>
+                                <button type="button" data-value="watching"><i data-lucide="eye"></i>A Ver</button>
+                                <button type="button" data-value="watched"><i data-lucide="check"></i>Visto</button>
+                            </div>
+                        </div>
+
+                        <div class="modal-field-group">
+                            <label for="item-runtime" class="modal-label">Duração (h:m)</label>
+                            <input type="text" id="item-runtime" placeholder="Ex: 2:30" class="form-input">
+                        </div>
+                         <div class="modal-field-group">
+                             <label class="modal-label">Classificação</label>
+                             <div class="rating-wrapper">
+                                 <div id="star-rating-container" class="star-rating-input">
+                                     <!-- Estrelas e botão N/A aqui -->
+                                 </div>
+                                 <div id="rating-feedback" class="rating-feedback-display">--/10</div>
+                             </div>
+                         </div>
+                    </div>
+                </div>
+
+                <!-- Secção de Informação da Série (só para séries) -->
+                <div id="series-info-section" class="hidden mt-6 pt-6 border-t border-gray-700/50">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                        <!-- Duração Total -->
+                        <div class="modal-field-group">
+                            <label class="modal-label">Duração Total</label>
+                            <div id="series-runtime-output" class="bg-gray-700/50 border border-gray-600 rounded-lg p-3 text-center">
+                                <div class="flex items-center justify-center gap-2 text-lg font-semibold text-gray-200">
+                                    <i data-lucide="clock" class="w-5 h-5"></i>
+                                    <span>N/A</span>
+                                </div>
+                                <p class="text-xs text-gray-400 mt-1">Soma automática dos episódios</p>
+                            </div>
+                        </div>
+                         <!-- Classificação Média -->
+                        <div class="modal-field-group">
+                            <label class="modal-label">Classificação Média</label>
+                            <div id="series-rating-output" class="bg-gray-700/50 border border-gray-600 rounded-lg p-4 text-center">
+                                <div class="flex items-center justify-center gap-2 text-2xl font-bold">
+                                    <i data-lucide="star" class="w-6 h-6"></i>
+                                    <span>N/A</span>
+                                </div>
+                                <p class="text-xs text-gray-400 mt-1">Média automática dos episódios</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                 <!-- NOVA: Secção para Anexar Conteúdo Secundário -->
+                <div id="attachment-section" class="hidden mt-6 pt-6 border-t border-gray-700/50">
+                     <h3 class="text-lg font-semibold mb-3 text-gray-300">Anexar a Conteúdo Principal</h3>
+                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                         <div class="modal-field-group">
+                            <label for="item-attach-to" class="modal-label">Anexar a:</label>
+                            <select id="item-attach-to" class="form-input bg-gray-700">
+                                <!-- Options will be populated by JS -->
+                            </select>
+                         </div>
+                         <div class="modal-field-group">
+                            <label for="item-order" class="modal-label">Ordem / Número</label>
+                            <input type="number" id="item-order" placeholder="Ex: 1" class="form-input">
+                         </div>
+                     </div>
+                </div>
+
+
+                <!-- Linha de Tags e Personagens -->
+                 <div class="grid grid-cols-1 sm:grid-cols-3 gap-6 mt-6 pt-6 border-t border-gray-700/50">
+                    <!-- Universo -->
+                    <div class="modal-field-group">
+                        <label for="item-universe-input" class="modal-label">Universo</label>
+                         <div class="relative">
+                            <div id="item-universe-container" class="tag-input-container">
+                                <input type="text" id="item-universe-input" placeholder="Adicionar universo..." class="form-input-tags">
+                            </div>
+                            <div id="universe-suggestions" class="suggestions-list"></div>
+                        </div>
+                    </div>
+                    <!-- Personagens -->
+                    <div class="modal-field-group">
+                        <label for="item-characters-input" class="modal-label">Personagens</label>
+                         <div class="relative">
+                            <div id="item-characters-container" class="tag-input-container">
+                                <input type="text" id="item-characters-input" placeholder="Adicionar e pressionar Enter..." class="form-input-tags">
+                            </div>
+                            <div id="characters-suggestions" class="suggestions-list"></div>
+                        </div>
+                    </div>
+                    <!-- Tags -->
+                     <div class="modal-field-group">
+                        <label for="item-tags-input" class="modal-label">Tags</label>
+                         <div class="relative">
+                            <div id="item-tags-container" class="tag-input-container">
+                                <input type="text" id="item-tags-input" placeholder="Adicionar e pressionar Enter..." class="form-input-tags">
+                            </div>
+                            <div id="tags-suggestions" class="suggestions-list"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Secção de Associações -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-6 mt-6 pt-6 border-t border-gray-700/50">
+                    <!-- Secção de Playlists -->
+                    <div>
+                        <label class="modal-label">Associar a Playlists</label>
+                        <div id="item-playlists-container" class="space-y-2">
+                            <!-- As checkboxes das playlists serão inseridas aqui pelo JS -->
+                        </div>
+                    </div>
+                    <!-- NOVO: Secção de Universos -->
+                    <div>
+                        <label class="modal-label">Associar a Universos</label>
+                        <div id="item-universes-container" class="space-y-2">
+                            <!-- As associações de universos serão inseridas aqui pelo JS -->
+                        </div>
+                        <button type="button" id="add-to-universe-btn" class="mt-2 w-full bg-gray-700 hover:bg-gray-600 text-gray-300 font-semibold py-2 px-4 rounded-lg transition-colors flex items-center justify-center space-x-2">
+                            <i data-lucide="plus" class="w-5 h-5"></i>
+                            <span>Adicionar a um Universo</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- SECÇÃO ATUALIZADA: Cronologia de Visualização -->
+                <div id="watched-dates-section" class="mt-6 pt-6 border-t border-gray-700/50">
+                    <div class="flex justify-between items-center mb-3">
+                        <label class="modal-label mb-0">Cronologia de Visualização</label>
+                        <div class="bg-gray-700 text-gray-300 text-xs font-bold px-2 py-1 rounded-full flex items-center gap-1.5">
+                            <i data-lucide="eye" class="w-4 h-4"></i>
+                            <span>Visto <span id="watched-dates-count">0</span> vez(es)</span>
+                        </div>
+                    </div>
+                    <div id="watched-dates-list" class="space-y-2 mb-3 max-h-40 overflow-y-auto pr-2">
+                        <!-- As datas de visualização serão inseridas aqui -->
+                    </div>
+                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <button type="button" id="add-current-watched-date-btn" class="history-btn">
+                            <i data-lucide="calendar-plus" class="w-5 h-5"></i>
+                            <span>Adicionar Data Atual</span>
+                        </button>
+                        <button type="button" id="add-manual-watched-date-btn" class="history-btn">
+                            <i data-lucide="edit" class="w-5 h-5"></i>
+                            <span>Adicionar Manualmente</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Caixa de Comentários -->
+                <div class="mt-6 pt-6 border-t border-gray-700/50">
+                    <label for="item-comment" class="modal-label">Comentário Pessoal</label>
+                    <textarea id="item-comment" rows="3" placeholder="Adiciona as tuas notas, pensamentos ou críticas aqui..." class="form-input"></textarea>
+                </div>
+
+                <!-- Secção de Episódios (só para séries) -->
+                <div id="episodes-section" class="mt-8 hidden">
+                    <h3 class="text-xl font-bold mb-4 text-gray-200 border-t border-gray-700/50 pt-6">Gerir Episódios</h3>
+                    <div id="episodes-list" class="space-y-3 max-h-60 overflow-y-auto pr-2 mb-4">
+                        <!-- Lista de episódios será inserida aqui -->
+                    </div>
+                    <div class="flex gap-3">
+                        <input type="text" id="new-episode-title" placeholder="Nome do novo episódio..." class="form-input flex-grow">
+                        <button type="button" id="add-episode-btn" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold p-3 rounded-lg transition-all">
+                            <i data-lucide="plus" class="w-5 h-5"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="mt-8 flex justify-between items-center">
+                    <button type="button" id="clear-item-form-btn" class="bg-red-600/20 hover:bg-red-600/40 text-red-400 font-bold py-3 px-6 rounded-lg transition-all flex items-center space-x-2">
+                        <i data-lucide="rotate-ccw" class="w-5 h-5"></i>
+                        <span>Limpar</span>
+                    </button>
+                    <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-6 rounded-lg transition-all">
+                        <i data-lucide="save" class="w-5 h-5 inline-block -ml-1 mr-2"></i>
+                        <span id="item-save-btn-text">Guardar Conteúdo</span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+     <!-- Modal para Adicionar Data Manualmente -->
+    <div id="manual-date-modal" class="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 hidden z-[60]">
+        <form id="manual-date-form" class="bg-gray-800 border border-gray-700 rounded-xl p-6 w-full max-w-sm space-y-4">
+            <h3 class="text-lg font-bold">Adicionar Data Manualmente</h3>
+            <div>
+                <label for="manual-date-input" class="modal-label">Data</label>
+                <input type="date" id="manual-date-input" class="form-input">
+            </div>
+            <div>
+                <label for="manual-time-input" class="modal-label">Hora</label>
+                <input type="time" id="manual-time-input" class="form-input">
+            </div>
+            <div class="flex justify-end gap-3 pt-2">
+                <button type="button" id="cancel-manual-date-btn" class="bg-gray-600/50 hover:bg-gray-600/80 text-gray-300 font-bold py-2 px-4 rounded-lg transition-all">Cancelar</button>
+                <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded-lg transition-all">Confirmar</button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Modal para Visualizar Episódios -->
+    <div id="episodes-viewer-modal" class="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 hidden z-50">
+        <div class="episodes-viewer-content">
+            <button id="close-episodes-viewer-btn" class="absolute top-4 right-4 text-gray-500 hover:text-white transition-colors z-20">
+                <i data-lucide="x" class="w-6 h-6"></i>
+            </button>
+            <div id="episodes-viewer-header" class="episodes-viewer-header">
+                <img id="episodes-viewer-cover" src="" alt="Capa da Série" class="w-24 h-36 object-cover rounded-lg shadow-lg">
+                <div class="flex-grow">
+                    <h2 id="episodes-viewer-title" class="text-3xl font-bold">Episódios</h2>
+                    <p id="episodes-viewer-stats" class="text-sm text-gray-400 mt-1"></p>
+                </div>
+            </div>
+            <div class="episodes-viewer-body">
+                <div id="episodes-viewer-list" class="episodes-viewer-list"></div>
+                <div id="episode-editor-panel" class="episode-editor-panel">
+                    <form id="episode-editor-form">
+                        <input type="hidden" id="editing-series-id">
+                        <input type="hidden" id="editing-episode-index">
+                        <h3 class="text-xl font-bold mb-4">Editar Episódio</h3>
+                        <div class="space-y-4">
+                            <div>
+                                <label for="ep-editor-title" class="modal-label">Título do Episódio</label>
+                                <input type="text" id="ep-editor-title" class="form-input">
+                            </div>
+                            <div>
+                                <label class="modal-label">Duração (h:m)</label>
+                                <input type="text" id="ep-editor-runtime" class="form-input" placeholder="Ex: 1:30">
+                            </div>
+                            <div>
+                                <label class="modal-label">Classificação</label>
+                                <div class="rating-wrapper">
+                                     <div id="ep-editor-rating" class="star-rating-input"></div>
+                                     <div id="ep-rating-feedback" class="rating-feedback-display">--/10</div>
+                                </div>
+                            </div>
+                            <div>
+                                <label class="modal-label">Estado</label>
+                                <div id="ep-editor-status" class="button-group"></div>
+                            </div>
+                            <div>
+                                <label for="ep-editor-comment" class="modal-label">Comentário</label>
+                                <textarea id="ep-editor-comment" rows="4" class="form-input" placeholder="Adicione uma nota pessoal..."></textarea>
+                            </div>
+                        </div>
+
+                        <!-- NOVO: Secção de Cronologia para Episódios -->
+                        <div id="ep-watched-dates-section" class="mt-6 pt-6 border-t border-gray-700/50">
+                            <div class="flex justify-between items-center mb-3">
+                                <label class="modal-label mb-0">Cronologia de Visualização</label>
+                                <div class="bg-gray-700 text-gray-300 text-xs font-bold px-2 py-1 rounded-full flex items-center gap-1.5">
+                                    <i data-lucide="eye" class="w-4 h-4"></i>
+                                    <span>Visto <span id="ep-watched-dates-count">0</span> vez(es)</span>
+                                </div>
+                            </div>
+                            <div id="ep-watched-dates-list" class="space-y-2 mb-3 max-h-24 overflow-y-auto pr-2">
+                                <!-- As datas de visualização do episódio serão inseridas aqui -->
+                            </div>
+                             <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                <button type="button" id="ep-add-current-watched-date-btn" class="history-btn">
+                                    <i data-lucide="calendar-plus" class="w-5 h-5"></i>
+                                    <span>Adicionar Data Atual</span>
+                                </button>
+                                <button type="button" id="ep-add-manual-watched-date-btn" class="history-btn">
+                                    <i data-lucide="edit" class="w-5 h-5"></i>
+                                    <span>Adicionar Manualmente</span>
+                                </button>
+                            </div>
+                        </div>
+                        <!-- FIM DA NOVA SECÇÃO -->
+
+                        <div class="mt-6 flex justify-end gap-3">
+                            <button type="button" id="cancel-episode-edit-btn" class="bg-gray-600/50 hover:bg-gray-600/80 text-gray-300 font-bold py-2 px-4 rounded-lg transition-all">Cancelar</button>
+                            <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded-lg transition-all">Guardar</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Modal para Visualizar Comentário -->
+    <div id="comment-viewer-modal" class="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 hidden z-50">
+        <div class="comment-viewer-content">
+             <button id="close-comment-viewer-btn" class="absolute top-4 right-4 text-gray-500 hover:text-white transition-colors">
+                <i data-lucide="x" class="w-6 h-6"></i>
+            </button>
+            <h2 id="comment-viewer-title" class="text-2xl font-bold mb-4">Comentário Pessoal</h2>
+            <div id="comment-viewer-text" class="text-gray-300"></div>
+        </div>
+    </div>
+
+    <!-- NOVO: Modal para Visualizar Anexos -->
+    <div id="attachments-viewer-modal" class="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 hidden z-50">
+        <div class="attachments-viewer-content">
+             <button id="close-attachments-viewer-btn" class="absolute top-4 right-4 text-gray-500 hover:text-white transition-colors">
+                <i data-lucide="x" class="w-6 h-6"></i>
+            </button>
+            <div id="attachments-viewer-header">
+                <!-- Header content will be injected by JS -->
+            </div>
+            <div id="attachments-viewer-list" class="attachments-viewer-list">
+                <!-- Attachment items will be injected by JS -->
+            </div>
+        </div>
+    </div>
+
+
+    <!-- Modal para Adicionar a Universo -->
+    <div id="add-to-universe-modal" class="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 hidden z-50">
+        <div class="bg-gray-800 border border-gray-700/50 rounded-2xl shadow-2xl p-8 w-full max-w-lg relative">
+             <button id="close-add-to-universe-btn" class="absolute top-4 right-4 text-gray-500 hover:text-white transition-colors">
+                <i data-lucide="x" class="w-6 h-6"></i>
+            </button>
+            <h2 id="add-to-universe-title" class="text-3xl font-bold mb-6">Adicionar a um Universo</h2>
+            <div id="universe-selection-list" class="space-y-3 max-h-80 overflow-y-auto">
+                <!-- Lista de universos será inserida aqui -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Notificação de Erro de Armazenamento -->
+    <div id="storage-error-toast" class="fixed top-8 right-8 bg-red-600 text-white p-4 rounded-lg shadow-lg flex items-center gap-4 transform translate-x-[calc(100%_+_2rem)] transition-transform duration-500 ease-in-out z-50">
+        <i data-lucide="server-crash" class="w-6 h-6"></i>
+        <div>
+            <h4 class="font-bold">Erro de Armazenamento!</h4>
+            <p class="text-sm">O armazenamento local está cheio. Apague alguns itens para continuar a guardar.</p>
+        </div>
+    </div>
+
+    <script src="data-manager.js"></script> <!-- Adicionado e colocado primeiro -->
+    <script src="playlists.js"></script>
+    <script>
+      lucide.createIcons();
+    </script>
+</body>
+</html>

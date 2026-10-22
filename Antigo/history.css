@@ -1,0 +1,145 @@
+/* history.css - Estilos para a página de Gestão de Histórico (Versão 3.1 - Redesign) */
+
+.history-subtitle {
+    margin-bottom: 2rem;
+    color: var(--cor-texto-secundario);
+    text-align: center;
+    max-width: 800px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+#history-snapshots-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 2rem;
+}
+
+/* --- NOVO DESIGN PARA AS PASTAS DE HISTÓRICO --- */
+.snapshot-folder-card {
+    background-color: #282828;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    padding: 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+}
+
+.snapshot-folder-card:hover {
+    transform: translateY(-8px);
+    box-shadow: 0 15px 30px rgba(0,0,0,0.4);
+    border-color: var(--cor-principal);
+}
+
+.folder-icon {
+    font-size: 3rem;
+    color: var(--cor-principal);
+    background-color: rgba(0,0,0,0.2);
+    width: 70px;
+    height: 70px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 12px;
+    flex-shrink: 0;
+}
+
+.folder-info {
+    flex-grow: 1;
+    text-align: left;
+}
+
+.folder-info h3 {
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: var(--cor-texto-principal);
+    margin-bottom: 0.5rem;
+    line-height: 1.2;
+}
+
+.folder-info span {
+    display: block;
+    font-size: 0.9rem;
+    color: var(--cor-texto-secundario);
+    margin-bottom: 0.25rem;
+}
+
+.folder-info span i {
+    margin-right: 0.5rem;
+    width: 16px; 
+}
+
+.folder-actions button {
+    background: rgba(0,0,0,0.2);
+    border: 1px solid var(--cor-vermelho-escuro);
+    color: var(--cor-texto-secundario);
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    cursor: pointer;
+    font-size: 1rem;
+    transition: all 0.3s ease;
+    flex-shrink: 0;
+}
+
+.folder-actions button:hover {
+    background-color: var(--cor-vermelho-descida);
+    color: white;
+}
+
+#history-main-container .toolbar {
+    margin-bottom: 1.5rem;
+}
+
+#history-main-container .toolbar h2 {
+    flex-grow: 1;
+    text-align: center;
+}
+
+/* --- ESTILOS PARA O SEPARADOR DE HISTÓRICO NO MODAL SOCIAL --- */
+
+.history-actions-container {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
+    padding: 1rem;
+    background-color: rgba(0,0,0,0.2);
+    border-radius: 8px;
+    margin-bottom: 2rem;
+}
+
+.history-action-box {
+    padding: 1.5rem;
+    border: 1px solid var(--cor-vermelho-escuro);
+    border-radius: 8px;
+    display: flex;
+    flex-direction: column;
+    text-align: center;
+}
+
+.history-action-box h4 {
+    font-size: 1.2rem;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+}
+
+.history-action-box p {
+    font-size: 0.9rem;
+    color: var(--cor-texto-secundario);
+    flex-grow: 1;
+    margin-bottom: 1.5rem;
+}
+
+#update-snapshot-controls {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+#update-snapshot-controls select {
+    margin-bottom: 0.5rem;
+}

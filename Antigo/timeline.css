@@ -1,0 +1,723 @@
+/* ========= ESTILOS GERAIS E FUNDO (Mantidos) ========= */
+#page-timeline #page-background {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    z-index: -1;
+    transition: opacity 0.5s ease-in-out;
+    opacity: 0;
+}
+#page-timeline #page-background::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: radial-gradient(circle at center, rgba(17, 24, 39, 0.85) 0%, rgba(17, 24, 39, 1) 100%);
+    backdrop-filter: blur(10px);
+}
+
+/* ========= SEPARAÇÃO DESKTOP/MOBILE (NOVO) ========= */
+.mobile-overlays { display: none; }
+.desktop-only { display: block; }
+
+/* ========= TIMELINE (Mantido) ========= */
+#page-timeline .timeline-container {
+    position: relative;
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 50px 20px;
+    transition: padding-right 0.5s ease-in-out;
+}
+
+#page-timeline .timeline-container::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 40px;
+    width: 4px;
+    height: 100%;
+    transform: translateX(-50%);
+    background: linear-gradient(180deg, #3730a3, #4f46e5 50%, #3730a3);
+    border-radius: 2px;
+    box-shadow: 0 0 15px rgba(79, 70, 229, 0.7), 0 0 30px rgba(79, 70, 229, 0.5);
+    animation: flow 4s ease-in-out infinite;
+}
+
+@keyframes flow {
+    0% { background-position: 0 0; }
+    50% { background-position: 0 100%; }
+    100% { background-position: 0 0; }
+}
+
+#page-timeline .timeline-item {
+    position: relative;
+    padding-left: 85px;
+    padding-bottom: 50px;
+    transition: opacity 0.6s ease-out, transform 0.6s ease-out;
+    opacity: 0;
+    transform: translateY(20px);
+}
+#page-timeline .timeline-item:last-child { padding-bottom: 0; }
+#page-timeline .timeline-item.is-visible { opacity: 1; transform: translateY(0); }
+
+#page-timeline .timeline-dot {
+    position: absolute;
+    width: 22px;
+    height: 22px;
+    background-color: #111827;
+    border: 5px solid #4f46e5;
+    border-radius: 50%;
+    left: 40px;
+    top: 2rem;
+    transform: translateX(-50%);
+    z-index: 1;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+#page-timeline .timeline-item:hover .timeline-dot {
+    transform: translateX(-50%) scale(1.25);
+    box-shadow: 0 0 15px #818cf8;
+}
+
+/* ========= CARTÕES DA TIMELINE (Mantido) ========= */
+#page-timeline .timeline-card {
+    position: relative;
+    border-radius: 1.25rem;
+    overflow: hidden;
+    display: flex;
+    flex-direction: row-reverse;
+    background-color: #1f2937;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 0 10px 40px rgba(0,0,0,0.6);
+    transition: transform 0.4s ease, box-shadow 0.4s ease, border-color 0.4s ease;
+    cursor: pointer;
+}
+#page-timeline .timeline-card:hover {
+    transform: scale(1.02) translateX(10px);
+    box-shadow: 0 20px 50px rgba(79, 70, 229, 0.35);
+    border-color: rgba(79, 70, 229, 0.8);
+}
+
+#page-timeline .timeline-card.selected {
+    border-color: #a78bfa;
+    transform: scale(1.02) translateX(10px);
+    box-shadow: 0 0 40px rgba(167, 139, 250, 0.5);
+}
+
+#page-timeline .timeline-card.filter-match {
+    border-color: #a78bfa;
+    box-shadow: 0 0 30px rgba(167, 139, 250, 0.5);
+}
+#page-timeline .timeline-card.current-focus {
+    transform: scale(1.03) translateX(10px);
+    border-color: #f59e0b; /* Laranja para destaque extra */
+    box-shadow: 0 0 40px rgba(245, 158, 11, 0.6);
+}
+
+#page-timeline .card-cover-container { 
+    flex-basis: 220px; 
+    flex-shrink: 0; 
+}
+#page-timeline .card-cover-image { width: 100%; height: 100%; object-fit: cover; display: block; }
+#page-timeline .card-info-container { flex-grow: 1; position: relative; display: flex; flex-direction: column; justify-content: space-between; min-height: 280px; overflow: hidden; }
+#page-timeline .card-background { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background-size: cover; background-position: center; transition: transform 0.4s ease, filter 0.4s ease; filter: brightness(0.6); }
+#page-timeline .timeline-card:hover .card-background { transform: scale(1.05); filter: brightness(0.8); }
+#page-timeline .card-gradient { position: absolute; bottom: 0; left: 0; width: 100%; height: 100%; background: linear-gradient(to top, rgba(31, 41, 55, 1) 20%, rgba(31, 41, 55, 0.7) 60%, transparent); z-index: 1; }
+#page-timeline .card-info {
+    position: relative;
+    z-index: 2;
+    padding: 1.5rem 2rem;
+    text-shadow: 1px 1px 5px rgba(0,0,0,0.8);
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end; /* Empurra o conteúdo principal para baixo */
+    flex-grow: 1;
+}
+
+/* Elementos posicionados de forma absoluta */
+#page-timeline .card-counter {
+    position: absolute;
+    top: 1.5rem;
+    left: 2rem;
+    z-index: 3;
+    background: rgba(0,0,0,0.5);
+    padding: 0.2rem 0.6rem;
+    border-radius: 9999px;
+    font-size: 0.8rem;
+    font-weight: 600;
+}
+#page-timeline .card-info-right {
+    position: absolute;
+    top: 1.5rem;
+    right: 5.5rem; /* Espaço para os botões de ação */
+    z-index: 3;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 0.5rem;
+}
+
+/* CORREÇÃO APLICADA COM MAIOR ESPECIFICIDADE PARA EVITAR CONFLITOS */
+#page-timeline .timeline-item .timeline-card .card-status-badge {
+    position: absolute;
+    top: auto;
+    left: auto;
+    width: auto;
+    height: auto;
+    bottom: 1.5rem;
+    right: 2rem;
+    z-index: 3;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.3rem 0.8rem;
+    border-radius: 9999px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    border: 1px solid;
+    background: none; 
+}
+#page-timeline .card-status-badge.watched { background-color: rgba(34, 197, 94, 0.2); border-color: rgba(34, 197, 94, 0.5); color: #4ade80; }
+#page-timeline .card-status-badge.watching { background-color: rgba(59, 130, 246, 0.2); border-color: rgba(59, 130, 246, 0.5); color: #60a5fa; }
+#page-timeline .card-status-badge.want_to_watch { background-color: rgba(167, 139, 250, 0.2); border-color: rgba(167, 139, 250, 0.5); color: #c4b5fd; }
+
+#page-timeline .card-actions { display: none; } 
+#page-timeline .icon-button { background-color: rgba(17, 24, 39, 0.6); backdrop-filter: blur(5px); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 9999px; padding: 0.5rem; color: #d1d5db; transition: all 0.2s ease; cursor: pointer; }
+#page-timeline .icon-button:hover { background-color: rgba(79, 70, 229, 0.8); color: white; transform: scale(1.1); }
+#page-timeline .icon-button:disabled { opacity: 0.3; cursor: not-allowed; background-color: rgba(17, 24, 39, 0.4); color: #6b7280; transform: none; }
+
+#page-timeline .card-main-details {
+    margin-right: 120px; 
+}
+#page-timeline .card-title-block {
+    margin-bottom: 1rem;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+}
+#page-timeline .card-year { font-size: 0.9rem; font-weight: 600; color: #818cf8; margin-bottom: 0.25rem; order: 1; }
+#page-timeline .card-title { font-size: 1.75rem; font-weight: 800; line-height: 1.2; order: 2; }
+#page-timeline .episode-identifier {
+    background-color: rgba(79, 70, 229, 0.2);
+    border: 1px solid rgba(99, 102, 241, 0.5);
+    color: #c7d2fe;
+    padding: 0.25rem 0.75rem;
+    border-radius: 9999px;
+    font-size: 0.8rem;
+    font-weight: 700;
+    display: inline-block;
+    margin-top: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    order: 3;
+}
+
+#page-timeline .card-comment {
+    display: flex; align-items: flex-start; gap: 0.5rem; color: #d1d5db; font-size: 0.8rem;
+    margin-bottom: 1rem; padding: 0.5rem 0.75rem; background-color: rgba(17, 24, 39, 0.4);
+    border-left: 3px solid #4f46e5; border-radius: 0.375rem; max-height: 5em;
+    overflow-y: auto; font-style: italic;
+}
+#page-timeline .card-comment i { width: 0.9rem; height: 0.9rem; flex-shrink: 0; margin-top: 2px; color: #818cf8; }
+#page-timeline .card-comment p { margin: 0; line-height: 1.4; white-space: pre-wrap; }
+#page-timeline .card-meta { display: flex; gap: 1.5rem; flex-wrap: wrap; padding-top: 1rem; border-top: 1px solid rgba(255, 255, 255, 0.15); }
+#page-timeline .meta-item { display: flex; align-items: center; gap: 0.5rem; font-size: 0.875rem; font-weight: 500; color: #d1d5db; }
+#page-timeline .meta-item i { width: 1rem; height: 1rem; }
+#page-timeline .detail-item { display: flex; align-items: center; gap: 0.5rem; font-size: 0.8rem; color: #9ca3af; }
+#page-timeline .detail-item i { width: 0.9rem; height: 0.9rem; flex-shrink: 0; }
+#page-timeline .universe-tag { background-color: rgba(139, 92, 246, 0.1); border: 1px solid rgba(139, 92, 246, 0.3); color: #c4b5fd; padding: 0.15rem 0.5rem; border-radius: 9999px; font-weight: 500; }
+#page-timeline .characters-list {
+    display: flex; 
+    align-items: center; 
+    gap: 0.5rem;
+}
+#page-timeline .character-pills { display: flex; flex-wrap: wrap; gap: 0.3rem; justify-content: flex-end; }
+#page-timeline .character-pill { background-color: rgba(55, 65, 81, 0.6); padding: 0.15rem 0.5rem; border-radius: 9999px; font-weight: 500; }
+
+/* ========= PAINEL LATERAL DE DETALHES (Mantido) ========= */
+.details-panel {
+    position: fixed;
+    top: 0;
+    right: 0;
+    width: 420px;
+    height: 100%;
+    border-left: 1px solid #374151;
+    z-index: 100;
+    transform: translateX(100%);
+    transition: transform 0.5s cubic-bezier(0.25, 0.8, 0.25, 1);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.details-panel::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background-image: var(--panel-bg-image);
+    background-size: cover;
+    background-position: center;
+    transform: scale(1.15);
+    filter: blur(20px) brightness(0.4);
+    z-index: -2;
+    transition: background-image 0.5s ease;
+}
+
+.details-panel::after {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: radial-gradient(circle at top, rgba(17, 24, 39, 0.6) 0%, rgba(17, 24, 39, 0.9) 100%);
+    z-index: -1;
+}
+
+.details-panel.is-active {
+    transform: translateX(0);
+}
+
+.panel-content { padding: 2rem; overflow-y: auto; flex-grow: 1; }
+.panel-cover { width: 100%; height: 200px; object-fit: cover; border-radius: 1rem; margin-bottom: 1.5rem; box-shadow: 0 10px 30px rgba(0,0,0,0.4); }
+.panel-title { font-size: 1.75rem; font-weight: 800; line-height: 1.2; margin-bottom: 1rem; }
+.panel-close-btn { position: absolute; top: 1rem; right: 1rem; background-color: rgba(17, 24, 39, 0.6); border-radius: 50%; padding: 0.5rem; color: #9ca3af; transition: all 0.2s ease; }
+.panel-close-btn:hover { background-color: #4b5563; color: white; }
+
+/* ========= BOTÕES E AVALIAÇÃO (ATUALIZADO) ========= */
+.panel-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    padding-top: 1.5rem;
+    margin-top: 1.5rem;
+    border-top: 1px solid #374151;
+}
+
+.panel-status-btn {
+    width: 100%;
+    padding: 0.75rem;
+    border-radius: 0.75rem;
+    font-size: 1rem;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.75rem;
+    transition: all 0.2s ease;
+}
+.panel-status-btn.mark-watched { background-color: #16a34a; color: white; }
+.panel-status-btn.mark-watched:hover { background-color: #15803d; }
+
+.panel-action-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.75rem;
+    padding: 0.8rem 1rem;
+    border-radius: 0.75rem;
+    font-size: 0.95rem;
+    font-weight: 600;
+    border: 1px solid #4b5563;
+    background-color: #374151;
+    color: #e5e7eb;
+    cursor: pointer;
+    transition: all 0.2s cubic-bezier(0.25, 0.8, 0.25, 1);
+    box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+}
+.panel-action-btn:hover {
+    transform: translateY(-2px);
+    filter: brightness(1.1);
+    box-shadow: 0 6px 20px rgba(79, 70, 229, 0.25);
+    border-color: #4f46e5;
+}
+.panel-action-btn:active {
+    transform: translateY(0);
+    filter: brightness(0.9);
+}
+.panel-action-btn:disabled {
+    background-color: #2b3544;
+    color: #6b7280;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+    filter: none;
+    border-color: #4b5563;
+}
+.panel-action-btn.delete {
+    background-color: rgba(239, 68, 68, 0.15);
+    color: #fca5a5;
+    border-color: rgba(239, 68, 68, 0.4);
+}
+.panel-action-btn.delete:hover {
+    background-color: rgba(239, 68, 68, 0.3);
+    color: #ef4444;
+    border-color: #ef4444;
+}
+
+.panel-action-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.75rem;
+}
+
+/* ========= NOVOS ESTILOS PARA AVALIAÇÃO COM INPUT ========= */
+.panel-rating {
+    background-color: #1f2937;
+    border-radius: 0.75rem;
+    padding: 1rem;
+}
+
+.rating-input-group {
+    display: flex;
+    align-items: center;
+    background-color: #374151;
+    border-radius: 0.5rem;
+    border: 1px solid #4b5563;
+    transition: border-color 0.2s ease;
+}
+.rating-input-group:focus-within {
+    border-color: #4f46e5;
+    box-shadow: 0 0 0 2px rgba(79, 70, 229, 0.4);
+}
+
+.panel-rating-input {
+    flex-grow: 1;
+    background: none;
+    border: none;
+    color: #e5e7eb;
+    padding: 0.75rem;
+    font-size: 1.1rem;
+    font-weight: 700;
+    text-align: center;
+    -moz-appearance: textfield; /* Firefox */
+    outline: none;
+}
+.panel-rating-input::-webkit-outer-spin-button,
+.panel-rating-input::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+.panel-rating-input::placeholder {
+    color: #6b7280;
+    font-weight: 500;
+}
+
+.panel-rating-save-btn {
+    background-color: #4f46e5;
+    color: white;
+    border: none;
+    padding: 0.75rem;
+    cursor: pointer;
+    border-top-right-radius: 0.4rem;
+    border-bottom-right-radius: 0.4rem;
+    transition: background-color 0.2s ease, transform 0.2s ease;
+}
+.panel-rating-save-btn:hover {
+    background-color: #4338ca;
+}
+.panel-rating-save-btn:active {
+    transform: scale(0.95);
+}
+.panel-rating-save-btn:disabled {
+    background-color: #374151;
+    cursor: not-allowed;
+}
+.panel-rating-save-btn i {
+    width: 1.25rem;
+    height: 1.25rem;
+    display: block;
+}
+
+/* Animação para erro de input */
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-5px); }
+  75% { transform: translateX(5px); }
+}
+.panel-rating-input.input-error {
+    animation: shake 0.3s ease-in-out;
+}
+.rating-input-group.input-error {
+    border-color: #ef4444;
+}
+
+/* ========= ESTILOS PARA FILTROS (Mantido) ========= */
+#page-timeline .filter-section { display: flex; flex-direction: column; gap: 0.5rem; }
+#page-timeline .filter-pill { background-color: #374151; color: #d1d5db; border: 1px solid #4b5563; padding: 0.35rem 0.75rem; border-radius: 0.5rem; font-size: 0.875rem; font-weight: 500; cursor: pointer; transition: all 0.2s ease; width: 100%; display: flex; justify-content: space-between; align-items: center; }
+#page-timeline .filter-pill:hover { background-color: #4b5563; }
+#page-timeline .filter-pill.active { background-color: #4f46e5; color: white; border-color: #6366f1; }
+#page-timeline .filter-count { background-color: rgba(0,0,0,0.2); color: #9ca3af; font-size: 0.75rem; font-weight: 600; padding: 0.1rem 0.4rem; border-radius: 0.375rem; }
+#page-timeline .filter-pill.active .filter-count { background-color: rgba(255,255,255,0.2); color: white; }
+#page-timeline .active-filter-pill { background-color: #4f46e5; color: white; padding: 0.25rem 0.75rem; border-radius: 9999px; font-size: 0.8rem; font-weight: 500; display: inline-flex; align-items: center; gap: 0.3rem; }
+
+/* ========= NOVO: Estilos para Conteúdo Secundário (Anexos) na Timeline */
+#page-timeline .timeline-item.is-attachment {
+    padding-left: 110px; /* Mais indentado */
+    padding-bottom: 30px;
+    margin-top: -20px; /* Puxa para mais perto do item principal */
+}
+
+#page-timeline .timeline-item.is-attachment .timeline-dot {
+    left: 60px; /* Alinha com a nova indentação */
+    width: 16px;
+    height: 16px;
+    border-width: 4px;
+    background-color: #374151; /* bg-gray-700 */
+    border-color: #a5b4fc; /* indigo-300 */
+}
+
+#page-timeline .timeline-item.is-attachment:hover .timeline-dot {
+    box-shadow: 0 0 10px #a5b4fc;
+}
+
+#page-timeline .timeline-item.is-attachment .timeline-card {
+    border-radius: 1rem;
+    min-height: auto; /* Altura automática */
+}
+#page-timeline .timeline-item.is-attachment .card-info-container {
+    min-height: auto;
+}
+
+#page-timeline .timeline-item.is-attachment .card-cover-container {
+    flex-basis: 120px; /* Capa mais pequena */
+}
+#page-timeline .timeline-item.is-attachment .card-title {
+    font-size: 1.25rem;
+}
+#page-timeline .timeline-item.is-attachment .card-year {
+    font-size: 0.8rem;
+}
+
+/* Badge de Ordem (para anexos) */
+.card-order-badge {
+    position: absolute;
+    top: 1rem;
+    left: -28px; /* Posiciona à esquerda do cartão */
+    z-index: 3;
+    background-color: #4f46e5;
+    color: white;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.8rem;
+    font-weight: 700;
+    border: 2px solid #1f2937;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+}
+
+/* =================================================================== */
+/* ========= INÍCIO DO DESIGN RESPONSIVO (MOBILE-FIRST) ========= */
+/* =================================================================== */
+
+/* Move a regra de padding para uma media query para não afetar o mobile */
+@media (min-width: 768px) {
+    .details-panel.is-active ~ main .timeline-container {
+        transition: padding-right 0.5s cubic-bezier(0.25, 0.8, 0.25, 1);
+        padding-right: 440px; /* 420px do painel + 20px de margem */
+    }
+}
+
+/* Tablets e Ecrãs Menores (a partir de 1024px) */
+@media (max-width: 1024px) {
+    /* O painel lateral ocupa mais espaço em ecrãs de tablet */
+    .details-panel {
+        width: 380px;
+    }
+    @media (min-width: 768px) {
+        .details-panel.is-active ~ main .timeline-container {
+            padding-right: 400px;
+        }
+    }
+}
+
+/* Telemóveis (até 767px) - BLOCO CORRIGIDO */
+@media (max-width: 767px) {
+    /* -- Esconde/Mostra elementos específicos -- */
+    .desktop-only {
+        display: none !important; /* Garante que os elementos de desktop são escondidos */
+    }
+    .mobile-overlays {
+        display: block;
+    }
+
+    /* -- Ajustes no Header -- */
+    header nav {
+        flex-wrap: wrap;
+        row-gap: 0.75rem;
+        padding-left: 1rem;
+        padding-right: 1rem;
+    }
+    header nav .relative:has(#search-input) {
+        order: 3;
+        width: 100%;
+    }
+    header nav #search-input {
+        width: 100%;
+    }
+
+    /* -- Ajustes no Container da Timeline -- */
+    #page-timeline .timeline-container {
+        padding-left: 0.5rem;
+        padding-right: 0.5rem;
+        padding-top: 20px;
+    }
+    #page-timeline .timeline-container::before { left: 20px; }
+    #page-timeline .timeline-item { padding-left: 50px; padding-bottom: 30px; }
+    #page-timeline .timeline-dot { left: 20px; }
+
+    /* -- Ajustes nos Cartões -- */
+    #page-timeline .timeline-card {
+        flex-direction: column-reverse; /* Imagem em cima, info em baixo */
+    }
+    #page-timeline .timeline-card:hover {
+        transform: scale(1.02);
+    }
+    #page-timeline .card-cover-container {
+        flex-basis: 220px;
+        position: relative; /* Contexto para os overlays */
+    }
+    #page-timeline .card-info-container { 
+        min-height: auto;
+        position: relative; /* Adicionado para contexto de posicionamento */
+    }
+    /* Aumenta a altura dos cartões de episódio */
+    #page-timeline .timeline-item.is-episode .card-info-container {
+        min-height: 200px; /* Aumentado para um valor mais notável */
+    }
+    #page-timeline .card-info { padding: 1rem 1.25rem; }
+    #page-timeline .card-main-details { margin-right: 0; }
+    #page-timeline .card-title { font-size: 1.25rem; }
+    #page-timeline .card-year { font-size: 0.8rem; }
+    
+    /* Ajustes para o bloco do título do episódio */
+    #page-timeline .card-title-block {
+        flex-direction: row; /* Alinha itens na horizontal */
+        flex-wrap: wrap; /* Permite que quebrem a linha se não couberem */
+        align-items: baseline; /* Alinha o texto pela base */
+        column-gap: 0.5rem; /* Espaço entre o título e o identificador */
+    }
+    #page-timeline .card-year {
+        width: 100%; /* Faz o ano ocupar a linha toda, empurrando o resto para baixo */
+        margin-bottom: 0.25rem; /* Pequeno espaço abaixo do ano */
+    }
+    #page-timeline .episode-identifier {
+        margin-top: 0; /* Remove a margem que tinha no desktop */
+    }
+    
+    /* -- Estilos dos Overlays Mobile (CORRIGIDO) -- */
+    .mobile-overlays {
+        position: absolute;
+        inset: 0;
+        z-index: 2;
+    }
+    /* Gradiente para garantir legibilidade dos elementos sobre a imagem */
+    .mobile-overlays::after {
+        content: '';
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(to top, rgba(31, 41, 55, 0.9) 0%, rgba(31, 41, 55, 0.2) 40%, transparent 60%);
+        pointer-events: none;
+    }
+    .mobile-overlays .card-counter {
+        position: absolute;
+        top: 1rem;
+        left: 1rem;
+    }
+    /* Posiciona o status no canto superior direito com maior especificidade */
+    #page-timeline .timeline-card .mobile-overlays .card-status-badge {
+        position: absolute;
+        top: 1rem;
+        right: 1rem;
+        bottom: auto;
+        left: auto;
+        background-color: rgba(0,0,0,0.5); /* Fundo para melhor contraste */
+        border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+    /* Posiciona as personagens no canto inferior direito com maior especificidade */
+    #page-timeline .timeline-card .mobile-overlays .card-info-right {
+        position: absolute;
+        bottom: 1rem;
+        left: auto; /* Alterado para posicionar à direita */
+        right: 1rem;
+        top: auto;
+        width: auto;
+        display: flex;
+        justify-content: flex-end;
+    }
+     /* NOVO: Posiciona o status do episódio no canto superior direito */
+    #page-timeline .timeline-item.is-episode .card-info-container .card-status-badge {
+        top: 1rem;
+        right: 1.25rem;
+        bottom: auto;
+    }
+    
+    .mobile-overlays .characters-list {
+        color: white;
+        text-shadow: 1px 1px 3px rgba(0,0,0,0.7);
+    }
+    .mobile-overlays .universe-tag { display: none; }
+
+    /* -- Ajustes para Anexos -- */
+    #page-timeline .timeline-item.is-attachment { padding-left: 65px; }
+    #page-timeline .timeline-item.is-attachment .timeline-dot { left: 40px; }
+    .card-order-badge { left: -14px; }
+    #page-timeline .timeline-item.is-attachment .card-title { font-size: 1.1rem; }
+
+    /* -- Painel de Detalhes (REESCRITA PARA MOBILE) -- */
+    .details-panel {
+        width: 100%;
+        height: 90vh;
+        max-height: 90vh;
+        top: auto;
+        bottom: 0;
+        transform: translateY(100%);
+        border-left: none;
+        border-top: 1px solid #374151;
+        border-top-left-radius: 1.5rem;
+        border-top-right-radius: 1.5rem;
+    }
+    .details-panel.is-active {
+        transform: translateY(0);
+    }
+    .details-panel::after {
+        content: '';
+        position: absolute;
+        top: 0.75rem;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 40px;
+        height: 4px;
+        background-color: #4b5563;
+        border-radius: 2px;
+        z-index: 10;
+    }
+    .panel-content { padding: 1rem; padding-top: 2rem; }
+    .panel-cover { height: 150px; }
+    .panel-title { font-size: 1.5rem; }
+
+    /* -- Barra de Filtros Flutuante -- */
+    #filter-nav {
+        width: calc(100% - 2rem);
+        left: 1rem;
+        bottom: 1rem;
+        transform: translateX(0);
+        justify-content: space-between;
+    }
+}
+
+/* Ecrãs muito pequenos */
+@media (max-width: 400px) {
+    #page-timeline .timeline-item { padding-left: 40px; }
+    #page-timeline .timeline-item.is-attachment { padding-left: 55px; }
+    #page-timeline .card-meta { gap: 0.75rem; }
+     #page-timeline .meta-item { font-size: 0.75rem; }
+}
+

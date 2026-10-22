@@ -1,0 +1,366 @@
+/* social.css - Estilos para a página Gerir Social (Versão 3.1 - Melhoria de Contraste) */
+
+/* --- Estilos da Página Principal (REDESIGN) --- */
+#social-grid-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 2rem;
+    margin-top: 1rem;
+}
+
+.social-main-card {
+    background-color: #282828;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    padding: 2rem;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+}
+
+.social-main-card:hover {
+    transform: translateY(-8px);
+    box-shadow: 0 15px 30px rgba(0,0,0,0.4);
+    border-color: var(--cor-principal);
+}
+
+.social-main-photo {
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 4px solid var(--cor-principal);
+    margin-bottom: 1.5rem;
+    transition: transform 0.3s ease;
+}
+
+.social-main-card:hover .social-main-photo {
+    transform: scale(1.05);
+}
+
+.social-main-name {
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: var(--cor-texto-principal);
+    margin-bottom: 1rem;
+    line-height: 1.2;
+}
+
+.social-main-cta {
+    font-size: 0.9rem;
+    color: var(--cor-texto-secundario);
+    font-weight: 500;
+    background-color: rgba(255, 255, 255, 0.05);
+    padding: 0.6rem 1.2rem;
+    border-radius: 20px;
+    transition: all 0.3s ease;
+}
+
+.social-main-card:hover .social-main-cta {
+    background-color: var(--cor-principal);
+    color: white;
+}
+
+
+/* --- Estilos do Modal de Edição --- */
+.social-modal-header {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+    padding-bottom: 1.5rem;
+    margin-bottom: 1.5rem;
+    border-bottom: 1px solid var(--cor-vermelho-escuro);
+}
+
+.social-modal-photo {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    object-fit: cover;
+}
+
+.social-modal-title {
+    font-size: 2rem;
+    font-weight: 700;
+    margin: 0;
+}
+
+.social-modal-subtitle {
+    font-size: 1rem;
+    color: var(--cor-texto-secundario);
+    margin: 0;
+}
+
+/* Abas de Navegação */
+.social-modal-tabs {
+    display: flex;
+    gap: 0.5rem;
+    margin-bottom: 1.5rem;
+    border-bottom: 1px solid var(--cor-vermelho-escuro);
+    flex-wrap: wrap; 
+}
+
+.social-tab-btn {
+    background: none;
+    border: none;
+    color: var(--cor-texto-secundario);
+    padding: 0.75rem 1.5rem;
+    font-size: 1rem;
+    font-weight: 500;
+    cursor: pointer;
+    border-bottom: 3px solid transparent;
+    transition: color 0.3s ease, border-color 0.3s ease;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.social-tab-btn:hover {
+    color: var(--cor-texto-principal);
+}
+
+.social-tab-btn.active {
+    color: var(--cor-vermelho-principal);
+    border-bottom-color: var(--cor-vermelho-principal);
+}
+
+.social-tab-content {
+    display: none; 
+}
+
+/* Grelha do Formulário */
+.social-form-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
+}
+
+.social-form-grid.auto-stats {
+    grid-template-columns: 1fr 1fr; /* MUDANÇA: de 4 para 2 colunas para melhor organização. */
+    margin-top: 1.5rem;
+    border-top: 1px solid var(--cor-vermelho-escuro);
+    padding-top: 1.5rem;
+}
+
+
+.social-input, select.social-input {
+    width: 100%;
+    background-color: var(--cor-vinho-escuro);
+    border: 1px solid var(--cor-vermelho-escuro);
+    border-radius: 6px;
+    padding: 0.75rem 1rem;
+    color: var(--cor-texto-principal);
+    font-size: 1rem;
+    font-family: 'Inter', sans-serif; /* Garante a mesma fonte */
+}
+
+.social-input::placeholder {
+    color: var(--cor-texto-secundario);
+    opacity: 0.6;
+}
+
+/* NOVA REGRA PARA MELHORAR O CONTRASTE DO DROPDOWN */
+select.social-input option {
+    background-color: #2a2a2a;
+    color: var(--cor-texto-principal);
+}
+
+.form-group.readonly input {
+    background-color: rgba(0,0,0,0.3);
+    color: var(--cor-texto-secundario);
+    cursor: not-allowed;
+}
+
+.social-modal-footer {
+    padding-top: 1.5rem;
+    margin-top: 1.5rem;
+    border-top: 1px solid var(--cor-vermelho-escuro);
+    text-align: right;
+}
+
+/* ESTILOS PARA AÇÕES DE LINK */
+.link-actions-group {
+    margin-bottom: 1.5rem;
+}
+
+.input-with-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.input-with-actions input {
+    flex-grow: 1;
+}
+
+.social-action-btn {
+    background-color: var(--cor-fundo);
+    border: 1px solid var(--cor-vermelho-escuro);
+    color: var(--cor-texto-secundario);
+    width: 40px;
+    height: 40px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 1rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    transition: all 0.3s ease;
+}
+
+.social-action-btn:hover {
+    background-color: var(--cor-vermelho-principal);
+    color: white;
+    border-color: var(--cor-vermelho-principal);
+}
+
+/* --- Estilos para o Histórico no Modal Social --- */
+.history-actions-container {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
+}
+.history-action-box {
+    background-color: rgba(0,0,0,0.2);
+    padding: 1.5rem;
+    border-radius: 8px;
+    border: 1px solid var(--cor-vermelho-escuro);
+}
+
+.history-action-box h4 {
+    margin-bottom: 0.5rem;
+}
+.history-action-box p {
+    font-size: 0.9rem;
+    color: var(--cor-texto-secundario);
+    margin-bottom: 1rem;
+}
+
+#update-snapshot-controls {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+
+#history-log-container {
+    max-height: 400px;
+    overflow-y: auto;
+    padding-right: 1rem;
+}
+
+.history-log-item {
+    background-color: rgba(0,0,0,0.2);
+    border: 1px solid var(--cor-vermelho-escuro);
+    border-radius: 8px;
+    margin-bottom: 1rem;
+    overflow: hidden;
+    transition: all 0.3s ease;
+}
+
+.history-log-header {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    background-color: rgba(0,0,0,0.3);
+    padding: 0.75rem 1rem;
+    font-size: 1.2rem;
+    font-weight: 600;
+}
+
+.history-log-preview {
+    padding: 1rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.9rem;
+    color: var(--cor-texto-secundario);
+}
+
+.preview-stats {
+    display: flex;
+    flex-direction: column;
+}
+
+.history-log-actions {
+    display: flex;
+    gap: 0.75rem;
+}
+
+.history-log-actions button {
+    background: none;
+    border: none;
+    color: var(--cor-texto-secundario);
+    font-size: 1.1rem;
+    cursor: pointer;
+    transition: color 0.3s ease;
+    padding: 0.25rem;
+}
+
+.history-log-actions .view-details-btn:hover {
+    color: var(--cor-vermelho-principal);
+}
+
+.history-log-actions .delete-history-entry-btn:hover {
+    color: var(--cor-vermelho-descida);
+}
+
+
+/* --- Estilos para o Modal de Detalhes do Histórico --- */
+.history-details-header {
+    text-align: center;
+    padding-bottom: 1.5rem;
+    margin-bottom: 1.5rem;
+    border-bottom: 1px solid var(--cor-vermelho-escuro);
+}
+.history-details-header h2 {
+    font-size: 2rem;
+    font-weight: 700;
+}
+.history-details-header p {
+    color: var(--cor-texto-secundario);
+}
+
+.history-details-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1.5rem;
+}
+
+.history-details-box {
+    background-color: rgba(0,0,0,0.2);
+    border-radius: 8px;
+    padding: 1.5rem;
+    border: 1px solid var(--cor-vermelho-escuro);
+}
+
+.history-details-box.main-stats {
+    grid-column: 1 / -1;
+    text-align: center;
+}
+
+.history-details-box h4 {
+    font-size: 1.2rem;
+    font-weight: 600;
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.history-details-box p {
+    margin-bottom: 0.5rem;
+    color: var(--cor-texto-secundario);
+}
+
+.history-details-box p strong {
+    color: var(--cor-texto-principal);
+    font-weight: 500;
+}
+

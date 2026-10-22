@@ -1,0 +1,413 @@
+<!DOCTYPE html>
+<html lang="pt-pt">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>O Caso - Gestão de Casos</title>
+
+    <!-- Google Fonts: Inter & Bebas Neue -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Bebas+Neue&display=swap" rel="stylesheet">
+
+    <!-- Font Awesome para Ícones -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+    <!-- Ficheiros de Estilos -->
+    <link rel="stylesheet" href="estilos-base.css">
+    <link rel="stylesheet" href="ocaso-geral.css">
+    <link rel="stylesheet" href="ocaso-pessoas.css">
+    <link rel="stylesheet" href="ocaso-casos.css">
+    <link rel="stylesheet" href="ocaso-eventos.css">
+    <link rel="stylesheet" href="ocaso-settings.css">
+    <link rel="stylesheet" href="ocaso-analise.css">
+    <link rel="stylesheet" href="ocaso-conexoes.css">
+    <link rel="stylesheet" href="ocaso-grupos.css">
+    <link rel="stylesheet" href="ocaso-dashboard.css">
+</head>
+<body class="ocaso-body">
+
+    <div class="ocaso-container">
+        <!-- BARRA LATERAL DE NAVEGAÇÃO -->
+        <aside class="ocaso-sidebar">
+            <div class="sidebar-header">
+                <a href="index.html" class="site-title">O <span>Caso</span></a>
+            </div>
+            <nav class="sidebar-nav">
+                <ul>
+                    <li><a href="#" class="nav-link" data-target="section-casos"><i class="fas fa-book"></i> Casos</a></li>
+                    <li><a href="#" class="nav-link" data-target="section-pessoas"><i class="fas fa-users"></i> Pessoas</a></li>
+                    <li><a href="#" class="nav-link" data-target="section-grupos"><i class="fas fa-user-friends"></i> Grupos</a></li>
+                    <li><a href="#" class="nav-link" data-target="section-conexoes"><i class="fas fa-project-diagram"></i> Rede de Conexões</a></li>
+                    <li><a href="#" class="nav-link" data-target="section-dashboard"><i class="fas fa-chart-line"></i> Análise Estratégica</a></li>
+                    <li><a href="#" class="nav-link" data-target="section-eventos"><i class="fas fa-cogs"></i> Gerir Eventos</a></li>
+                    <li><a href="#" class="nav-link" data-target="section-settings"><i class="fas fa-save"></i> Importar / Exportar</a></li>
+                </ul>
+            </nav>
+            <div class="sidebar-footer">
+                <a href="index.html"><i class="fas fa-arrow-left"></i> Voltar ao Início</a>
+            </div>
+        </aside>
+
+        <!-- CONTEÚDO PRINCIPAL -->
+        <main class="ocaso-main-content">
+            
+            <!-- SECÇÃO PARA GERIR CASOS -->
+            <section id="section-casos" class="content-section">
+                <div class="toolbar">
+                    <h2>Gestão de Casos</h2>
+                    <button id="add-caso-btn" class="action-button"><i class="fas fa-plus"></i> Novo Caso</button>
+                </div>
+
+                <div class="form-container redesigned caso-form-container" style="display:none;">
+                    <h3 id="caso-form-title">Adicionar Novo Caso</h3>
+                    <form id="caso-form">
+                        <div id="caso-timeline-container">
+                            <!-- A timeline de eventos do caso será renderizada aqui -->
+                        </div>
+
+                        <div class="form-group">
+                            <label for="caso-title-input">Título do Caso</label>
+                            <input type="text" id="caso-title-input" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="caso-participant-search">Participantes (Arraste para atribuir papéis)</label>
+                            <div id="caso-participants-container" class="participants-container">
+                                <div id="caso-selected-participants" class="selected-participants-grid"></div>
+                                <div class="search-container">
+                                    <input type="text" id="caso-participant-search" placeholder="Procurar e adicionar pessoas...">
+                                    <div id="caso-participant-search-results" class="search-results"></div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="caso-type-select">Adicionar Evento à Timeline</label>
+                            <select id="caso-type-select">
+                                <option value="selecionar">-- Selecione uma categoria --</option>
+                            </select>
+                        </div>
+
+                        <div id="aura-calculator-section" class="aura-calculator-section" style="display: none;">
+                             <div class="form-group">
+                                <label>Qual foi a situação específica?</label>
+                                <div id="sub-situations-container" class="sub-situations-grid"></div>
+                            </div>
+
+                            <div id="role-assignment-section" class="role-assignment-section" style="display: none;"></div>
+
+                            <div class="aura-results-container">
+                                <h5>Pré-visualização do Evento</h5>
+                                <div id="aura-results-preview"></div>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="caso-description-input">Descrição Geral do Caso</label>
+                            <textarea id="caso-description-input" rows="4"></textarea>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="caso-links-input">Links de Fontes (separados por vírgula)</label>
+                            <input type="text" id="caso-links-input" placeholder="https://..., https://...">
+                        </div>
+
+                        <div class="form-actions-redesigned">
+                            <button type="button" class="action-button-redesigned secondary" id="cancel-caso-btn">Cancelar</button>
+                            <button type="button" class="action-button-redesigned primary" id="continue-caso-btn" style="display:none;"><i class="fas fa-plus"></i> Adicionar à Timeline</button>
+                            <button type="submit" class="action-button-redesigned primary">Guardar Caso</button>
+                        </div>
+                    </form>
+                </div>
+                
+                <div class="tabs">
+                    <button class="tab-link active" data-target="casos-atuais">Temas Atuais</button>
+                    <button class="tab-link" data-target="casos-arquivo">Arquivo</button>
+                </div>
+                
+                <div id="casos-atuais" class="tab-content active">
+                    <div class="list-container" id="casos-atuais-list"></div>
+                </div>
+                <div id="casos-arquivo" class="tab-content">
+                    <div class="list-container" id="casos-arquivo-list"></div>
+                </div>
+            </section>
+
+            <!-- SECÇÃO PARA GERIR PESSOAS -->
+            <section id="section-pessoas" class="content-section">
+                 <div class="toolbar">
+                    <h2>Gestão de Pessoas</h2>
+                    <div class="list-controls">
+                        <div class="search-bar">
+                            <i class="fas fa-search"></i>
+                            <input type="text" id="pessoa-search-input" placeholder="Procurar por nome...">
+                        </div>
+                        <div class="filter-group">
+                            <div class="select-wrapper">
+                                <select id="pessoa-sort-select">
+                                    <option value="a-z">Ordem: A-Z</option>
+                                    <option value="z-a">Ordem: Z-A</option>
+                                    <option value="novo-antigo">Idade: Mais Novo</option>
+                                    <option value="antigo-novo">Idade: Mais Velho</option>
+                                </select>
+                            </div>
+                             <div class="select-wrapper">
+                                <select id="pessoa-social-filter-select">
+                                    <option value="todos">Todos</option>
+                                    <option value="youtube">YouTube</option>
+                                    <option value="instagram">Instagram</option>
+                                    <option value="tiktok">TikTok</option>
+                                    <option value="twitch">Twitch</option>
+                                    <option value="outra">Outra</option>
+                                </select>
+                             </div>
+                        </div>
+                        <button id="add-pessoa-btn" class="action-button"><i class="fas fa-plus"></i> Nova Pessoa</button>
+                    </div>
+                </div>
+
+                <div class="form-container redesigned pessoa-form-container" style="display:none;">
+                    <h3>Adicionar Nova Pessoa</h3>
+                    <form id="pessoa-form">
+                        <div class="form-row">
+                            <div class="photo-uploader-redesigned">
+                                <label for="pessoa-photo-input">
+                                    <img src="https://placehold.co/160x160/301934/EAE6F0?text=Foto" alt="Preview" id="pessoa-photo-preview">
+                                    <div class="overlay"><i class="fas fa-camera"></i></div>
+                                </label>
+                                <input type="file" id="pessoa-photo-input" accept="image/*" style="display: none;">
+                            </div>
+                            <div class="form-group-vertical">
+                                <div class="form-group">
+                                    <label for="pessoa-artistic-name-input">Nome Artístico / Público</label>
+                                    <input type="text" id="pessoa-artistic-name-input" required>
+                                </div>
+                                <div class="form-group">
+                                    <label for="pessoa-real-name-input">Nome Verdadeiro</label>
+                                    <input type="text" id="pessoa-real-name-input">
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label for="pessoa-dob-input">Data de Nascimento</label>
+                                <input type="date" id="pessoa-dob-input">
+                            </div>
+                            <div class="form-group">
+                                <label>Idade</label>
+                                <div id="pessoa-age-display" class="age-display-redesigned">--</div>
+                            </div>
+                             <div class="form-group">
+                                <label for="pessoa-social-select">Principal Rede Social</label>
+                                <select id="pessoa-social-select">
+                                    <option value="nenhuma">Nenhuma</option>
+                                    <option value="youtube">YouTube</option>
+                                    <option value="instagram">Instagram</option>
+                                    <option value="tiktok">TikTok</option>
+                                    <option value="twitch">Twitch</option>
+                                    <option value="outra">Outra</option>
+                                </select>
+                            </div>
+                             <div class="form-group" id="pessoa-occupation-group" style="display: none;">
+                                <label for="pessoa-occupation-select">Profissão / Ocupação</label>
+                                <select id="pessoa-occupation-select">
+                                    <option value="">Selecionar...</option>
+                                    <option value="Ator/Atriz">Ator/Atriz</option>
+                                    <option value="Músico/Cantor(a)">Músico/Cantor(a)</option>
+                                    <option value="Político(a)">Político(a)</option>
+                                    <option value="Empresário(a)">Empresário(a)</option>
+                                    <option value="Jornalista">Jornalista</option>
+                                    <option value="Figura Pública">Figura Pública</option>
+                                    <option value="Outro">Outro</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="association-section-redesigned">
+                            <h4><i class="fas fa-link"></i> Associação com Placar dos Youtubers</h4>
+                            <div class="form-group">
+                                <label for="youtuber-link-search">Procurar e Associar Perfil de Youtuber</label>
+                                <div id="youtuber-association-container">
+                                    <input type="text" id="youtuber-link-search" placeholder="Comece a escrever um nome...">
+                                    <div id="youtuber-search-results"></div>
+                                    <div id="youtuber-linked-profile"></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="form-actions-redesigned">
+                            <button type="button" class="action-button-redesigned secondary" id="cancel-pessoa-btn">Cancelar</button>
+                            <button type="submit" class="action-button-redesigned primary">Guardar Pessoa</button>
+                        </div>
+                    </form>
+                </div>
+
+                <div class="list-container" id="pessoas-list-container">
+                    <!-- Os cards de pessoas serão inseridos aqui pelo JavaScript -->
+                </div>
+            </section>
+            
+            <!-- SECÇÃO PARA GERIR GRUPOS -->
+            <section id="section-grupos" class="content-section">
+                <div class="toolbar">
+                    <h2>Gestão de Grupos</h2>
+                    <button id="add-grupo-btn" class="action-button"><i class="fas fa-plus"></i> Novo Grupo</button>
+                </div>
+
+                <div class="form-container redesigned grupo-form-container" style="display:none;">
+                    <h3 id="grupo-form-title">Criar Novo Grupo</h3>
+                    <form id="grupo-form">
+                        <div class="form-grid-half">
+                            <div class="form-group">
+                                <label for="grupo-name-input">Nome do Grupo</label>
+                                <input type="text" id="grupo-name-input" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="grupo-type-select">Tipo de Afiliação</label>
+                                <select id="grupo-type-select">
+                                    <option value="amigos">Grupo de Amigos</option>
+                                    <option value="rivais">Grupo de Rivais</option>
+                                    <option value="neutro">Grupo Neutro / Organização</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="grupo-member-search">Adicionar Membros</label>
+                            <div class="search-container">
+                                <input type="text" id="grupo-member-search" placeholder="Procurar pessoas para adicionar...">
+                                <div id="grupo-member-search-results" class="search-results"></div>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                             <label>Membros Atuais</label>
+                             <div id="grupo-selected-members" class="selected-participants-grid">
+                                <!-- As "pills" dos membros serão inseridas aqui -->
+                             </div>
+                        </div>
+                        <div class="form-actions-redesigned">
+                            <button type="button" class="action-button-redesigned secondary" id="cancel-grupo-btn">Cancelar</button>
+                            <button type="submit" class="action-button-redesigned primary">Guardar Grupo</button>
+                        </div>
+                    </form>
+                </div>
+                
+                <div class="list-container" id="grupos-list-container">
+                    <!-- Os cards dos grupos serão inseridos aqui -->
+                </div>
+            </section>
+
+            <!-- SECÇÃO PARA REDE DE CONEXÕES -->
+            <section id="section-conexoes" class="content-section">
+                <div class="conexoes-container">
+                    <div class="conexoes-graph-wrapper">
+                        <canvas id="conexoes-canvas"></canvas>
+                        <div class="graph-legend">
+                            <h5>Legenda da Relação</h5>
+                            <div class="legend-item"><div class="legend-color-box" style="background-color: var(--ocaso-sucesso);"></div> Positiva</div>
+                            <div class="legend-item"><div class="legend-color-box" style="background-color: var(--ocaso-erro);"></div> Negativa</div>
+                            <div class="legend-item"><div class="legend-color-box" style="background-color: var(--ocaso-texto-secundario);"></div> Neutra</div>
+                        </div>
+                    </div>
+                    <aside id="conexoes-comparison-sidebar" class="conexoes-sidebar">
+                        <div class="toolbar">
+                            <div class="search-bar">
+                                <i class="fas fa-search"></i>
+                                <input type="text" id="conexoes-search-input" placeholder="Analisar pessoa...">
+                                <div id="conexoes-search-results" class="search-results"></div>
+                            </div>
+                        </div>
+                        <!-- Os painéis de comparação serão inseridos aqui -->
+                    </aside>
+                </div>
+            </section>
+
+            <!-- [NOVO] SECÇÃO DASHBOARD DE ANÁLISE ESTRATÉGICA -->
+            <section id="section-dashboard" class="content-section">
+                <!-- O conteúdo do dashboard será gerado pelo ocaso-dashboard.js -->
+            </section>
+            
+            <!-- SECÇÃO PARA GERIR EVENTOS -->
+            <section id="section-eventos" class="content-section">
+                <div class="toolbar">
+                    <h2>Gerir Tipos de Eventos</h2>
+                    <button id="add-category-btn" class="action-button"><i class="fas fa-plus"></i> Nova Categoria</button>
+                </div>
+                
+                <div class="form-container redesigned" id="new-category-form" style="display:none;">
+                     <h3>Criar Nova Categoria de Evento</h3>
+                     <form id="category-form-content">
+                        <div class="form-group">
+                           <label for="new-category-name">Nome da Categoria</label>
+                           <input type="text" id="new-category-name" placeholder="Ex: Conflito, Colaboração, Polémica..." required>
+                        </div>
+                        <div class="form-actions-redesigned">
+                           <button type="button" class="action-button-redesigned secondary" id="cancel-category-btn">Cancelar</button>
+                           <button type="submit" class="action-button-redesigned primary">Criar Categoria</button>
+                        </div>
+                     </form>
+                </div>
+
+                <div id="event-categories-list">
+                    <!-- Os cards das categorias serão inseridos aqui -->
+                </div>
+            </section>
+
+            <!-- SECÇÃO DE ANÁLISE DE CASO -->
+            <section id="section-analise" class="content-section">
+                <!-- Conteúdo da secção de Análise gerado dinamicamente -->
+            </section>
+
+            <!-- SECÇÃO PARA IMPORTAR E EXPORTAR -->
+            <section id="section-settings" class="content-section">
+                <div class="toolbar">
+                    <h2>Importar & Exportar Dados</h2>
+                </div>
+                <div class="settings-container">
+                    <div class="settings-card">
+                        <i class="fas fa-file-export icon"></i>
+                        <h3>Exportar Dados</h3>
+                        <p class="settings-description">
+                            Guarde todos os seus dados (pessoas, casos e tipos de eventos) num único ficheiro JSON.
+                            Pode usar este ficheiro como backup ou para transferir os seus dados para outro dispositivo.
+                        </p>
+                        <button id="export-data-btn" class="action-button-redesigned primary">Exportar Ficheiro</button>
+                    </div>
+
+                    <div class="settings-card">
+                        <i class="fas fa-file-import icon"></i>
+                        <h3>Importar Dados</h3>
+                        <p class="settings-description">
+                            Carregue um ficheiro JSON de backup para restaurar os seus dados.
+                            <strong>Atenção:</strong> Esta ação irá substituir todos os dados existentes na aplicação.
+                        </p>
+                        <input type="file" id="import-data-input" accept=".json" style="display: none;">
+                        <button id="import-data-btn" class="action-button-redesigned secondary">Selecionar Ficheiro</button>
+                        <span id="import-file-name" class="file-name-display">Nenhum ficheiro selecionado.</span>
+                    </div>
+                </div>
+            </section>
+
+        </main>
+    </div>
+
+    <!-- 
+      [CORREÇÃO] Removida a linha <script src="dataManager.js"></script> 
+      Este ficheiro não foi fornecido e estava a causar um erro. 
+      A lógica necessária está no ocasoDataManager.js.
+    -->
+    <script src="ocasoDataManager.js"></script>
+    
+    <!-- Scripts do Módulo O Caso -->
+    <script src="ocaso-geral.js"></script>
+    <script src="ocaso-pessoas.js"></script>
+    <script src="ocaso-casos.js"></script>
+    <script src="ocaso-eventos.js"></script>
+    <script src="ocaso-settings.js"></script>
+    <script src="ocaso-analise.js"></script>
+    <script src="ocaso-conexoes.js"></script>
+    <script src="ocaso-grupos.js"></script>
+    <script src="ocaso-dashboard.js"></script>
+</body>
+</html>

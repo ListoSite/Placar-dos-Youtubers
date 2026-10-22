@@ -1,0 +1,155 @@
+/* ocaso-eventos.css - Estilos para o novo gestor de eventos e papéis (v1.0) */
+
+.category-toolbar {
+    display: flex;
+    gap: 1rem;
+    align-items: stretch;
+    margin-bottom: 2rem;
+}
+
+.category-toolbar .form-group {
+    flex-grow: 1;
+}
+
+#new-category-name {
+    width: 100%;
+    background-color: var(--ocaso-input-fundo);
+    border: 1px solid var(--ocaso-borda);
+    color: var(--ocaso-texto-principal);
+    padding: 0.8rem 1rem;
+    border-radius: 8px;
+    font-size: 1rem;
+    transition: all 0.3s ease;
+}
+
+#new-category-name:focus {
+    outline: none;
+    border-color: var(--ocaso-principal);
+    box-shadow: 0 0 10px rgba(160, 32, 240, 0.6);
+}
+
+.category-card {
+    background-color: var(--ocaso-fundo-secundario);
+    border: 1px solid var(--ocaso-borda);
+    border-radius: 12px;
+    margin-bottom: 2rem;
+    overflow: hidden;
+    animation: fadeIn 0.5s ease;
+}
+
+.category-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem 1.5rem;
+    background-color: rgba(0,0,0,0.2);
+}
+
+.category-header h3 {
+    font-size: 1.5rem;
+    color: var(--ocaso-texto-principal);
+    margin: 0;
+}
+
+.management-section {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0; /* O gap é substituído por uma borda */
+}
+
+.management-column {
+    padding: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+.management-column:first-child {
+    border-right: 1px solid var(--ocaso-borda);
+}
+
+.management-column h4 {
+    font-size: 1.2rem;
+    color: var(--ocaso-principal);
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin: 0;
+}
+
+.management-column ul {
+    list-style: none;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    min-height: 100px;
+}
+
+.situation-item, .role-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background-color: var(--ocaso-input-fundo);
+    padding: 0.75rem 1rem;
+    border-radius: 8px;
+    animation: fadeIn 0.3s;
+}
+
+.item-details {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.item-details .points {
+    font-weight: 700;
+    padding: 0.2rem 0.6rem;
+    border-radius: 5px;
+    font-size: 0.9rem;
+}
+
+.item-details .points.positive {
+    background-color: rgba(32, 240, 160, 0.1);
+    color: var(--ocaso-sucesso);
+}
+
+.item-details .points.negative {
+    background-color: rgba(240, 32, 80, 0.1);
+    color: var(--ocaso-erro);
+}
+
+.add-item-form {
+    display: flex;
+    gap: 0.75rem;
+    margin-top: auto; /* Empurra o formulário para o fundo da coluna */
+}
+
+.add-item-form .item-name-input {
+    flex-grow: 1;
+    min-width: 100px;
+}
+.add-item-form .item-points-input {
+    width: 90px;
+}
+
+.add-item-form input {
+    background-color: var(--ocaso-fundo);
+    border: 1px solid var(--ocaso-borda);
+    color: var(--ocaso-texto-principal);
+    padding: 0.6rem 0.8rem;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    transition: all 0.3s ease;
+}
+
+.add-item-form input:focus {
+    outline: none;
+    border-color: var(--ocaso-principal);
+}
+
+.add-item-form button {
+    padding: 0.6rem 1rem;
+    font-size: 0.9rem;
+}
+

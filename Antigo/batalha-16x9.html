@@ -1,0 +1,396 @@
+<!DOCTYPE html>
+<html lang="pt-pt">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Batalha de Youtubers - 16:9</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&family=Bebas+Neue&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        :root {
+            --color-p1: #D9073F;
+            --color-p1-glow: rgba(217, 7, 63, 0.7);
+            --color-p2: #36A2EB;
+            --color-p2-glow: rgba(54, 162, 235, 0.7);
+            --color-background: #0A0A0E;
+            --color-surface: #14141A;
+            --color-text-primary: #FFFFFF;
+            --color-text-secondary: #b3b3b3;
+            --color-border: #3b3b3b;
+            --color-gold: #FFD700;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #000;
+            color: var(--color-text-primary);
+            overflow: hidden;
+            height: 100vh;
+            width: 100vw;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .battle-container {
+            width: 100%;
+            height: 100%;
+            max-width: 1280px;
+            max-height: 720px;
+            aspect-ratio: 16 / 9;
+            background-color: var(--color-background);
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 0 40px rgba(0,0,0,0.7);
+        }
+
+        .glow-background {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 150%;
+            height: 150%;
+            background: radial-gradient(circle, rgba(217, 7, 63, 0.1), transparent 60%);
+            animation: rotateGlow 25s linear infinite;
+        }
+
+        @keyframes rotateGlow {
+            from { transform: translate(-50%, -50%) rotate(0deg); }
+            to { transform: translate(-50%, -50%) rotate(360deg); }
+        }
+
+        .slide {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            padding: 2rem;
+        }
+
+        .slide.active { display: flex; }
+
+        /* --- VS Screen --- */
+        #vs-screen { flex-direction: row; justify-content: space-around; }
+        .vs-card { display: flex; flex-direction: column; align-items: center; opacity: 0; animation: slideIn 1s cubic-bezier(0.25, 1, 0.5, 1) forwards; }
+        .vs-card.p1 { animation-delay: 0.2s; }
+        .vs-card.p2 { animation-delay: 0.4s; }
+        .vs-photo { width: 250px; height: 250px; border-radius: 50%; object-fit: cover; border: 5px solid; box-shadow: 0 0 30px; }
+        .vs-card.p1 .vs-photo { border-color: var(--color-p1); box-shadow: 0 0 30px var(--color-p1); }
+        .vs-card.p2 .vs-photo { border-color: var(--color-p2); box-shadow: 0 0 30px var(--color-p2); }
+        .vs-name { font-family: 'Bebas Neue', sans-serif; font-size: 4rem; margin-top: 1.5rem; text-shadow: 0 2px 10px rgba(0,0,0,0.5); }
+        .vs-text { font-family: 'Bebas Neue', sans-serif; font-size: 15rem; opacity: 0; animation: popIn 0.8s 1.2s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
+
+        /* --- [HUD V4 - IMPACTO 16x9] Arena Screen --- */
+        #arena-screen { 
+            justify-content: space-between; 
+            padding: 2rem; 
+            background: #0A0A0E url('data:image/svg+xml,%3Csvg xmlns=\"http://www.w3.org/2000/svg\" width=\"100\" height=\"100\" viewBox=\"0 0 100 100\"%3E%3Cg fill-rule=\"evenodd\"%3E%3Cg fill=\"%231a1a1a\" fill-opacity=\"0.4\"%3E%3Cpath opacity=\".5\" d=\"M96 95h4v1h-4v-1zm-7 5h4v1h-4v-1zm7 5h4v1h-4v-1zm-7 5h4v1h-4v-1zm7 5h4v1h-4v-1zm-7 5h4v1h-4v-1zm7 5h4v1h-4v-1zm-7 5h4v1h-4v-1zm7 5h4v1h-4v-1zm-7 5h4v1h-4v-1zm7 5h4v1h-4v-1zm-7 5h4v1h-4v-1zm7 5h4v1h-4v-1zm-7 5h4v1h-4v-1zm7 5h4v1h-4v-1zm-7 5h4v1h-4v-1z\"/%3E%3Cpath d=\"M6 5V0h4v5H6zM6 15V10h4v5H6zM6 25V20h4v5H6zM6 35V30h4v5H6zM6 45V40h4v5H6zM6 55V50h4v5H6zM6 65V60h4v5H6zM6 75V70h4v5H6zM6 85V80h4v5H6zM6 95V90h4v5H6zM6 105V100h4v5H6zM16 5V0h4v5h-4zM16 15V10h4v5h-4zM16 25V20h4v5h-4zM16 35V30h4v5h-4zM16 45V40h4v5h-4zM16 55V50h4v5h-4zM16 65V60h4v5h-4zM16 75V70h4v5h-4zM16 85V80h4v5h-4zM16 95V90h4v5h-4zM16 105V100h4v5h-4zM26 5V0h4v5h-4zM26 15V10h4v5h-4zM26 25V20h4v5h-4zM26 35V30h4v5h-4zM26 45V40h4v5h-4zM26 55V50h4v5h-4zM26 65V60h4v5h-4zM26 75V70h4v5h-4zM26 85V80h4v5h-4zM26 95V90h4v5h-4zM26 105V100h4v5h-4zM36 5V0h4v5h-4zM36 15V10h4v5h-4zM36 25V20h4v5h-4zM36 35V30h4v5h-4zM36 45V40h4v5h-4zM36 55V50h4v5h-4zM36 65V60h4v5h-4zM36 75V70h4v5h-4zM36 85V80h4v5h-4zM36 95V90h4v5h-4zM36 105V100h4v5h-4zM46 5V0h4v5h-4zM46 15V10h4v5h-4zM46 25V20h4v5h-4zM46 35V30h4v5h-4zM46 45V40h4v5h-4zM46 55V50h4v5h-4zM46 65V60h4v5h-4zM46 75V70h4v5h-4zM46 85V80h4v5h-4zM46 95V90h4v5h-4zM46 105V100h4v5h-4zM56 5V0h4v5h-4zM56 15V10h4v5h-4zM56 25V20h4v5h-4zM56 35V30h4v5h-4zM56 45V40h4v5h-4zM56 55V50h4v5h-4zM56 65V60h4v5h-4zM56 75V70h4v5h-4zM56 85V80h4v5h-4zM56 95V90h4v5h-4zM56 105V100h4v5h-4zM66 5V0h4v5h-4zM66 15V10h4v5h-4zM66 25V20h4v5h-4zM66 35V30h4v5h-4zM66 45V40h4v5h-4zM66 55V50h4v5h-4zM66 65V60h4v5h-4zM66 75V70h4v5h-4zM66 85V80h4v5h-4zM66 95V90h4v5h-4zM66 105V100h4v5h-4zM76 5V0h4v5h-4zM76 15V10h4v5h-4zM76 25V20h4v5h-4zM76 35V30h4v5h-4zM76 45V40h4v5h-4zM76 55V50h4v5h-4zM76 65V60h4v5h-4zM76 75V70h4v5h-4zM76 85V80h4v5h-4zM76 95V90h4v5h-4zM76 105V100h4v5h-4zM86 5V0h4v5h-4zM86 15V10h4v5h-4zM86 25V20h4v5h-4zM86 35V30h4v5h-4zM86 45V40h4v5h-4zM86 55V50h4v5h-4zM86 65V60h4v5h-4zM86 75V70h4v5h-4zM86 85V80h4v5h-4zM86 95V90h4v5h-4zM86 105V100h4v5h-4zM96 5V0h4v5h-4zM96 15V10h4v5h-4zM96 25V20h4v5h-4zM96 35V30h4v5h-4zM96 45V40h4v5h-4zM96 55V50h4v5h-4zM96 65V60h4v5h-4zM96 75V70h4v5h-4zM96 85V80h4v5h-4zM96 95V90h4v5h-4zM96 105V100h4v5h-4z\"/%3E%3C/g%3E%3C/g%3E%3C/svg%3E');
+        }
+        .arena-hud-top {
+            position: absolute;
+            width: 100%;
+            top: 2rem;
+            left: 0;
+            padding: 0 2rem;
+            z-index: 10;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+        }
+        .player-display-top {
+            width: 400px;
+            height: 100px;
+            background-color: var(--color-surface);
+            border: 1px solid var(--color-border);
+            display: flex;
+            align-items: center;
+            padding: 1rem;
+            gap: 1rem;
+        }
+        .player-display-top.p1 {
+            clip-path: polygon(0 0, 100% 0, 90% 100%, 0% 100%);
+            padding-left: 2rem;
+        }
+        .player-display-top.p2 {
+            clip-path: polygon(10% 0, 100% 0, 100% 100%, 0% 100%);
+            padding-right: 2rem;
+            flex-direction: row-reverse;
+        }
+        .hud-photo-top {
+            width: 70px;
+            height: 70px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 4px solid;
+            flex-shrink: 0;
+        }
+        .p1 .hud-photo-top { border-color: var(--color-p1); }
+        .p2 .hud-photo-top { border-color: var(--color-p2); }
+        .hud-details-top { flex-grow: 1; }
+        .p2 .hud-details-top { text-align: right; }
+        .hud-name-top { font-size: 1.8rem; font-weight: 700; }
+        .hud-score-top { font-family: 'Bebas Neue', sans-serif; font-size: 4rem; line-height: 1; }
+        .p1 .hud-score-top { color: var(--color-p1); }
+        .p2 .hud-score-top { color: var(--color-p2); }
+        .score-update { animation: scorePop 0.6s ease-out; }
+
+        .comparison-area {
+            width: 100%;
+            max-width: 950px;
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+            flex-grow: 1;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .comparison-row { opacity: 0; width: 100%; }
+        .comparison-label { font-family: 'Bebas Neue', sans-serif; font-size: 4rem; letter-spacing: 2px; color: var(--color-text-secondary); margin-bottom: 1.5rem; text-align: center; }
+        .comparison-pods { display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; width: 100%; }
+        .stat-pod { background-color: var(--color-surface); padding: 1.5rem; border-radius: 12px; border-bottom: 5px solid var(--color-border); text-align: center; box-shadow: 0 5px 20px rgba(0,0,0,0.3); }
+        .stat-pod.p1 { border-color: var(--color-p1); }
+        .stat-pod.p2 { border-color: var(--color-p2); }
+        .stat-pod.winner { animation: winnerPulse 0.8s ease-in-out; }
+        .pod-value { font-size: 3.5rem; font-weight: 900; }
+        .p1 .pod-value { color: var(--color-p1); }
+        .p2 .pod-value { color: var(--color-p2); }
+        .pod-name { font-size: 1.1rem; font-weight: 500; color: var(--color-text-secondary); margin-top: 0.5rem; }
+
+        #progress-bar-container { position: absolute; bottom: 1.5rem; left: 2rem; right: 2rem; height: 10px; background-color: var(--color-surface); border-radius: 10px; overflow: hidden; }
+        #progress-bar { width: 0%; height: 100%; background-color: var(--color-p1); transition: width 0.5s ease; }
+        
+        #winner-screen .winner-photo { width: 280px; height: 280px; border-radius: 50%; object-fit: cover; border: 6px solid; margin-bottom: 2rem; }
+        #winner-screen h2 { font-size: 2.5rem; color: var(--color-text-secondary); }
+        #winner-screen .winner-name { font-family: 'Bebas Neue', sans-serif; font-size: 10rem; letter-spacing: 2px; line-height: 1; margin: 0.5rem 0 2rem 0; }
+        .final-score { font-family: 'Bebas Neue', sans-serif; font-size: 4rem; }
+
+        @keyframes slideIn { from { opacity: 0; transform: translateY(40px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes popIn { from { opacity: 0; transform: scale(0.5); } to { opacity: 1; transform: scale(1); } }
+        @keyframes scorePop { 0% { transform: scale(1); } 50% { transform: scale(1.3); } 100% { transform: scale(1); } }
+        @keyframes rowIn { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes winnerPulse { 0% { box-shadow: 0 0 0 0 var(--color-gold); } 50% { box-shadow: 0 0 25px 8px transparent; } 100% { box-shadow: 0 0 0 0 var(--color-gold); } }
+
+    </style>
+</head>
+<body>
+    <div class="battle-container">
+        <div class="glow-background"></div>
+        <div id="vs-screen" class="slide active"></div>
+        <div id="arena-screen" class="slide"></div>
+        <div id="winner-screen" class="slide"></div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const vsScreen = document.getElementById('vs-screen');
+            const arenaScreen = document.getElementById('arena-screen');
+            const winnerScreen = document.getElementById('winner-screen');
+            
+            let allData = [];
+            let options = {};
+
+            function loadData() {
+                try {
+                    allData = JSON.parse(sessionStorage.getItem('placarDataV3') || '[]');
+                    options = JSON.parse(sessionStorage.getItem('presentationOptions') || '{}');
+                } catch (e) { console.error("Erro ao carregar dados da batalha:", e); }
+            }
+
+            function parseStat(value) {
+                if (typeof value !== 'string' && typeof value !== 'number') return 0;
+                const stringValue = String(value).toUpperCase().replace(/,/g, '.');
+                let number = parseFloat(stringValue);
+                if (stringValue.includes('M')) number *= 1000000;
+                else if (stringValue.includes('K')) number *= 1000;
+                return isNaN(number) ? 0 : parseInt(number, 10);
+            }
+            
+            function formatStat(value) {
+                if (value === undefined || value === null) return '-';
+                const num = Number(value);
+                if (num >= 1000000) return (num / 1000000).toFixed(1).replace('.0', '') + 'M';
+                if (num >= 1000) return (num / 1000).toFixed(1).replace('.0', '') + 'K';
+                return num.toLocaleString('pt-PT');
+            }
+
+            function getCombatants() {
+                if (options.battleMode === 'aleatorio') {
+                    if (allData.length < 2) return null;
+                    let p1, p2;
+                    do {
+                        p1 = allData[Math.floor(Math.random() * allData.length)];
+                        p2 = allData[Math.floor(Math.random() * allData.length)];
+                    } while (p1.id === p2.id);
+                    return [p1, p2];
+                } else if (options.battleMode === 'escolher') {
+                    const p1 = allData.find(p => p.id === options.youtuber1);
+                    const p2 = allData.find(p => p.id === options.youtuber2);
+                    return p1 && p2 ? [p1, p2] : null;
+                }
+                return null;
+            }
+
+            function getComparisonCategories(p1, p2) {
+                const categories = [
+                    { label: 'Views do Mês', value1: parseStat(p1.stats?.views), value2: parseStat(p2.stats?.views) },
+                    { label: 'Pontos do Mês', value1: p1.stats?.points, value2: parseStat(p2.stats?.points) },
+                    { label: 'Subscritores', value1: p1.socials?.youtube?.subs, value2: p2.socials?.youtube?.subs },
+                    { label: 'Seguidores (Insta)', value1: p1.socials?.instagram?.followers, value2: p2.socials?.instagram?.followers },
+                    { label: 'Seguidores (TikTok)', value1: p1.socials?.tiktok?.followers, value2: p2.socials?.tiktok?.followers },
+                    { label: 'Nº de Projetos', value1: p1.projects?.length, value2: p2.projects?.length },
+                ];
+                return categories.filter(c => (c.value1 !== undefined && c.value1 !== null && c.value1 !== 0) || (c.value2 !== undefined && c.value2 !== null && c.value2 !== 0));
+            }
+
+            function compareStats(val1, val2) {
+                const num1 = Number(val1) || 0;
+                const num2 = Number(val2) || 0;
+                if (num1 === num2) return { winner: 'tie', points: 0 };
+                const winner = num1 > num2 ? 'p1' : 'p2';
+                const difference = Math.abs(num1 - num2);
+                const average = (num1 + num2) / 2;
+                const points = (average > 0 && (difference / average) > 0.5) ? 2 : 1;
+                return { winner, points };
+            }
+            
+            async function runBattle() {
+                loadData();
+                const combatants = getCombatants();
+                if (!combatants) {
+                    vsScreen.innerHTML = '<h1>Erro ao selecionar combatentes.</h1>';
+                    return;
+                }
+                const [p1, p2] = combatants;
+
+                // 1. VS Screen
+                vsScreen.innerHTML = `
+                    <div class="vs-card p1">
+                        <img src="${p1.photo}" class="vs-photo" onerror="this.src='https://placehold.co/250x250/D9073F/FFFFFF?text=P1'">
+                        <h2 class="vs-name">${p1.name}</h2>
+                    </div>
+                    <div class="vs-text">VS</div>
+                    <div class="vs-card p2">
+                        <img src="${p2.photo}" class="vs-photo" onerror="this.src='https://placehold.co/250x250/36A2EB/FFFFFF?text=P2'">
+                        <h2 class="vs-name" style="color: var(--color-p2);">${p2.name}</h2>
+                    </div>
+                `;
+                await new Promise(res => setTimeout(res, 3500));
+
+                // 2. Transition to Arena
+                vsScreen.style.display = 'none';
+                arenaScreen.classList.add('active');
+                arenaScreen.innerHTML = `
+                    <div class="arena-hud-top">
+                        <div class="player-display-top p1">
+                            <img src="${p1.photo}" class="hud-photo-top" onerror="this.src='https://placehold.co/70x70/D9073F/FFFFFF?text=P1'">
+                            <div class="hud-details-top">
+                                <div class="hud-name-top">${p1.name}</div>
+                                <div class="hud-score-top" id="score-p1">0</div>
+                            </div>
+                        </div>
+                        <div class="player-display-top p2">
+                             <img src="${p2.photo}" class="hud-photo-top" onerror="this.src='https://placehold.co/70x70/36A2EB/FFFFFF?text=P2'">
+                            <div class="hud-details-top">
+                                <div class="hud-name-top">${p2.name}</div>
+                                <div class="hud-score-top" id="score-p2">0</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="comparison-area"></div>
+                    <div id="progress-bar-container"><div id="progress-bar"></div></div>
+                `;
+                
+                const comparisonArea = arenaScreen.querySelector('.comparison-area');
+                const scoreP1El = document.getElementById('score-p1');
+                const scoreP2El = document.getElementById('score-p2');
+                const progressBar = document.getElementById('progress-bar');
+                let scoreP1 = 0;
+                let scoreP2 = 0;
+
+                // 3. Compare stats
+                const categories = getComparisonCategories(p1, p2);
+                for (let i = 0; i < categories.length; i++) {
+                    const cat = categories[i];
+                    const result = compareStats(cat.value1, cat.value2);
+                    
+                    const row = document.createElement('div');
+                    row.className = `comparison-row`;
+                    row.innerHTML = `
+                        <h3 class="comparison-label">${cat.label}</h3>
+                        <div class="comparison-pods">
+                            <div class="stat-pod p1">
+                                <div class="pod-value">${formatStat(cat.value1)}</div>
+                                <div class="pod-name">${p1.name}</div>
+                            </div>
+                             <div class="stat-pod p2">
+                                <div class="pod-value">${formatStat(cat.value2)}</div>
+                                <div class="pod-name">${p2.name}</div>
+                            </div>
+                        </div>
+                    `;
+                    comparisonArea.innerHTML = '';
+                    comparisonArea.appendChild(row);
+                    row.style.animation = 'rowIn 0.5s ease-out forwards';
+                    
+                    await new Promise(res => setTimeout(res, 800));
+
+                    if (result.winner === 'p1') {
+                        scoreP1 += result.points;
+                        scoreP1El.textContent = scoreP1;
+                        scoreP1El.classList.add('score-update');
+                        row.querySelector('.stat-pod.p1').classList.add('winner');
+                    } else if (result.winner === 'p2') {
+                        scoreP2 += result.points;
+                        scoreP2El.textContent = scoreP2;
+                        scoreP2El.classList.add('score-update');
+                        row.querySelector('.stat-pod.p2').classList.add('winner');
+                    }
+                    
+                    progressBar.style.width = `${((i + 1) / categories.length) * 100}%`;
+                    
+                    await new Promise(res => setTimeout(res, 2200));
+                    scoreP1El.classList.remove('score-update');
+                    scoreP2El.classList.remove('score-update');
+                }
+
+                await new Promise(res => setTimeout(res, 1000));
+                
+                // 4. Winner Screen
+                arenaScreen.style.display = 'none';
+                winnerScreen.classList.add('active');
+                
+                let winner, winnerColor;
+                if (scoreP1 > scoreP2) {
+                    winner = p1;
+                    winnerColor = 'var(--color-p1)';
+                } else if (scoreP2 > scoreP1) {
+                    winner = p2;
+                    winnerColor = 'var(--color-p2)';
+                } else {
+                    winner = {name: "Empate!"};
+                    winnerColor = 'var(--color-text-secondary)';
+                }
+
+                winnerScreen.innerHTML = `
+                     ${winner.photo ? `<img src="${winner.photo}" class="winner-photo" style="border-color: ${winnerColor}; box-shadow: 0 0 30px ${winnerColor};">` : '<i class="fas fa-handshake" style="font-size: 200px; margin-bottom: 2rem;"></i>'}
+                    <h2>${winner.name !== "Empate!" ? 'O Vencedor é' : ''}</h2>
+                    <h1 class="winner-name" style="color: ${winnerColor}; text-shadow: 0 0 20px ${winnerColor};">${winner.name}</h1>
+                    <div class="final-score">${scoreP1} - ${scoreP2}</div>
+                `;
+            }
+
+            runBattle();
+        });
+    </script>
+</body>
+</html>
+

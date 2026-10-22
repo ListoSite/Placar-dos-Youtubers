@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="pt-PT">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Análise do Universo - Universo dos Filmes</title>
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts: Poppins -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- Ícones (Lucide Icons) -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <!-- Chart.js para gráficos dinâmicos -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
+
+
+    <!-- Ficheiros de estilos -->
+    <link rel="stylesheet" href="universo-filmes.css">
+    <link rel="stylesheet" href="analytics.css">
+</head>
+<body class="bg-gray-900 text-gray-100 font-['Poppins',_sans-serif] antialiased">
+
+    <div id="page-background" class="fixed inset-0 z-[-1] transition-opacity duration-1000 opacity-0"></div>
+
+    <!-- Cabeçalho -->
+    <header class="bg-gray-900/50 backdrop-blur-lg sticky top-0 z-50 border-b border-gray-700/50">
+        <nav class="container mx-auto px-6 py-4 flex justify-between items-center">
+            <a id="back-to-timeline-btn" href="timeline.html" class="flex items-center space-x-3 group">
+                <i data-lucide="arrow-left" class="text-gray-300 group-hover:text-white w-6 h-6 transition-transform group-hover:-translate-x-1"></i>
+                <div>
+                    <h1 id="universe-title" class="text-xl font-bold tracking-wide">Análise do Universo</h1>
+                    <p id="universe-subtitle" class="text-xs text-gray-400">A carregar dados...</p>
+                </div>
+            </a>
+            <div class="w-12"></div>
+        </nav>
+    </header>
+
+    <!-- Conteúdo Principal -->
+    <main id="analytics-container" class="container mx-auto px-6 py-10 opacity-0 transition-opacity duration-500">
+        <!-- Secção de Destaques -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-10">
+            <div class="stat-card">
+                <div class="stat-header">
+                    <i data-lucide="clapperboard" class="stat-icon text-purple-400"></i>
+                    <span>Total de Itens</span>
+                </div>
+                <div id="total-items" class="stat-value">0</div>
+                <p id="watched-items" class="stat-description">0 vistos</p>
+            </div>
+            <div class="stat-card">
+                <div class="stat-header">
+                    <i data-lucide="clock" class="stat-icon text-sky-400"></i>
+                    <span>Tempo de Ecrã</span>
+                </div>
+                <div id="total-runtime" class="stat-value">0h 0m</div>
+                <p class="stat-description">Tempo total de conteúdo visto</p>
+            </div>
+            <div class="stat-card">
+                <div class="stat-header">
+                    <i data-lucide="star" class="stat-icon text-amber-400"></i>
+                    <span>Classificação Média</span>
+                </div>
+                <div id="average-rating" class="stat-value">0.0</div>
+                <p class="stat-description">Média de todos os itens classificados</p>
+            </div>
+            <div class="stat-card">
+                <div class="stat-header">
+                    <i data-lucide="calendar" class="stat-icon text-emerald-400"></i>
+                    <span>Período Ativo</span>
+                </div>
+                <div id="active-period" class="stat-value text-4xl">N/A</div>
+                <p class="stat-description">Do primeiro ao último lançamento</p>
+            </div>
+        </div>
+
+        <!-- Secção de Gráficos e Rankings -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <!-- Coluna Principal (2/3) -->
+            <div class="lg:col-span-2 space-y-8">
+                 <!-- Melhores e Piores -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <div id="highest-rated-card" class="rating-card best">
+                        <!-- Conteúdo dinâmico -->
+                    </div>
+                    <div id="lowest-rated-card" class="rating-card worst">
+                        <!-- Conteúdo dinâmico -->
+                    </div>
+                </div>
+
+                <!-- Conteúdo Mais Longo e Mais Curto -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <div id="longest-item-card" class="rating-card longest">
+                        <!-- Conteúdo dinâmico -->
+                    </div>
+                    <div id="shortest-item-card" class="rating-card shortest">
+                        <!-- Conteúdo dinâmico -->
+                    </div>
+                </div>
+                
+                <!-- Gráfico de Distribuição de Classificações -->
+                <div class="chart-container">
+                    <h3 class="chart-title">Distribuição de Classificações</h3>
+                    <div class="relative h-72">
+                        <canvas id="ratings-distribution-chart"></canvas>
+                    </div>
+                </div>
+            </div>
+            <!-- Coluna Lateral (1/3) -->
+            <div class="space-y-8">
+                <!-- Gráfico de Tipos de Conteúdo -->
+                <div class="chart-container">
+                    <h3 class="chart-title">Itens por Tipo</h3>
+                    <div class="relative h-72">
+                        <canvas id="types-breakdown-chart"></canvas>
+                    </div>
+                </div>
+
+                <!-- Ranking de Personagens -->
+                <div class="ranking-container">
+                    <h3 class="chart-title">Personagens em Destaque</h3>
+                    <div id="characters-ranking" class="ranking-list">
+                        <!-- Conteúdo dinâmico -->
+                    </div>
+                </div>
+                 <!-- Ranking de Tags -->
+                <div class="ranking-container">
+                    <h3 class="chart-title">Tags Mais Usadas</h3>
+                    <div id="tags-ranking" class="ranking-list">
+                        <!-- Conteúdo dinâmico -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Mensagem de Universo Vazio -->
+    <div id="empty-universe-message" class="hidden text-center py-20 container mx-auto">
+        <i data-lucide="search-x" class="mx-auto h-20 w-20 text-gray-600"></i>
+        <h3 class="mt-6 text-2xl font-semibold">Sem dados para analisar</h3>
+        <p class="mt-2 text-gray-400">Este universo ainda não tem itens na timeline. Adiciona alguns para veres as estatísticas.</p>
+    </div>
+
+    <script src="analytics.js"></script>
+    <script>
+        lucide.createIcons();
+    </script>
+</body>
+</html>
+

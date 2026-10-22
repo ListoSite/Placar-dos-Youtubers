@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="pt-PT">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Linha do Tempo - Universo dos Filmes</title>
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <link rel="stylesheet" href="timeline.css">
+    <link rel="stylesheet" href="universo-filmes.css">
+
+</head>
+<body id="page-timeline" class="bg-gray-900 text-gray-100 font-['Poppins',_sans-serif] antialiased">
+
+    <div id="page-background"></div>
+
+    <header class="bg-gray-900/50 backdrop-blur-lg sticky top-0 z-50 border-b border-gray-700/50">
+        <nav class="container mx-auto px-6 py-4 flex justify-between items-center">
+            <a href="universo-filmes.html" class="flex items-center space-x-3 group">
+                <i data-lucide="arrow-left" class="text-gray-300 group-hover:text-white w-6 h-6 transition-transform group-hover:-translate-x-1"></i>
+                <div>
+                    <h1 id="universe-title" class="text-xl font-bold tracking-wide">Nome do Universo</h1>
+                    <p id="universe-subtitle" class="text-xs text-gray-400">Linha do Tempo do Universo</p>
+                </div>
+            </a>
+            <div class="flex items-center gap-2">
+                <div class="relative">
+                    <input type="search" id="search-input" placeholder="Pesquisar na timeline..." class="bg-gray-800 border border-gray-700 rounded-full py-2 pl-10 pr-4 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 w-full sm:w-64 transition-all duration-300">
+                    <i data-lucide="search" class="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-500"></i>
+                </div>
+                <div class="relative">
+                     <button id="filter-btn" class="p-2.5 bg-gray-800 hover:bg-gray-700 rounded-full text-blue-400 hover:text-blue-300 transition-colors" title="Filtrar Conteúdo">
+                        <i data-lucide="filter" class="w-5 h-5"></i>
+                    </button>
+                    <div id="filter-dropdown" class="hidden absolute right-0 mt-2 w-72 bg-gray-800 border border-gray-700 rounded-lg shadow-xl z-[60] p-4 max-h-96 overflow-y-auto">
+                        <h4 class="text-sm font-semibold text-gray-300 mb-2">Filtrar por Universo</h4>
+                        <div id="filter-universes" class="filter-section"></div>
+                        <h4 class="text-sm font-semibold text-gray-300 mt-4 mb-2">Filtrar por Personagem</h4>
+                        <div id="filter-characters" class="filter-section"></div>
+                        <h4 class="text-sm font-semibold text-gray-300 mt-4 mb-2">Filtrar por Tag</h4>
+                        <div id="filter-tags" class="filter-section"></div>
+                    </div>
+                </div>
+                <a href="analytics.html" id="analytics-btn" class="p-2.5 bg-gray-800 hover:bg-gray-700 rounded-full text-amber-400 hover:text-amber-300 transition-colors" title="Ver Análises">
+                    <i data-lucide="star" class="w-5 h-5"></i>
+                </a>
+            </div>
+        </nav>
+    </header>
+
+    <main class="container mx-auto px-6 py-10">
+        <div id="timeline" class="timeline-container">
+        </div>
+
+        <div id="empty-timeline-message" class="hidden text-center py-20">
+             <i data-lucide="film" class="mx-auto h-20 w-20 text-gray-600"></i>
+             <h3 class="mt-6 text-2xl font-semibold">Linha do tempo vazia...</h3>
+             <p class="mt-2 text-gray-400">Adiciona o primeiro filme ou série para começares a construir a história deste universo.</p>
+        </div>
+    </main>
+
+    <div id="filter-nav" class="hidden fixed bottom-6 left-1/2 -translate-x-1/2 bg-gray-800/80 backdrop-blur-md border border-gray-700/50 rounded-full shadow-lg z-40 p-2 text-white flex items-center gap-3">
+        <div id="active-filters-container" class="flex items-center gap-2 pl-2">
+        </div>
+        <div class="flex items-center gap-1 bg-gray-900/50 rounded-full">
+            <button id="prev-match-btn" class="p-2 rounded-full hover:bg-white/10 disabled:opacity-50 disabled:cursor-not-allowed">
+                <i data-lucide="arrow-up" class="w-5 h-5"></i>
+            </button>
+            <span id="match-counter" class="px-2 text-sm font-semibold">0 / 0</span>
+            <button id="next-match-btn" class="p-2 rounded-full hover:bg-white/10 disabled:opacity-50 disabled:cursor-not-allowed">
+                <i data-lucide="arrow-down" class="w-5 h-5"></i>
+            </button>
+        </div>
+         <button id="clear-filters-btn" class="p-2 rounded-full bg-red-500/20 hover:bg-red-500/40 text-red-400">
+            <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+    </div>
+    
+    <!-- NOVO: Overlay para o painel de detalhes em mobile -->
+    <div id="details-panel-overlay" class="details-panel-overlay"></div>
+    
+    <aside id="details-panel" class="details-panel">
+    </aside>
+
+    <script src="data-manager.js"></script>
+    <script src="timeline.js"></script>
+    <script>
+        lucide.createIcons();
+    </script>
+
+</body>
+</html>
+

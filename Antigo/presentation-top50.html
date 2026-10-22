@@ -1,0 +1,561 @@
+<!DOCTYPE html>
+<html lang="pt-pt">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ranking dos Youtubers - Apresentação</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&family=Bebas+Neue&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --cor-principal: #A60522;
+            --cor-destaque: #D9073F;
+            --cor-fundo: #121212;
+            --cor-texto-principal: #f0f0f0;
+            --cor-texto-secundario: #a0a0a0;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--cor-fundo);
+            color: var(--cor-texto-principal);
+            overflow: hidden;
+            height: 100vh;
+            width: 100vw;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .presentation-container {
+            width: 100%;
+            height: 100%;
+            max-width: 450px; /* Proporção 9:16 baseada numa altura de 800px */
+            max-height: 800px;
+            aspect-ratio: 9 / 16;
+            background-color: var(--cor-fundo);
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 0 30px rgba(0,0,0,0.5);
+            border: 2px solid var(--cor-destaque);
+        }
+
+        .slide {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.8s ease-in-out, visibility 0.8s;
+            overflow: hidden;
+        }
+
+        .slide.active {
+            opacity: 1;
+            visibility: visible;
+        }
+        
+        .glow-background {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(166, 5, 34, 0.2), transparent 50%);
+            animation: rotateGlow 20s linear infinite;
+        }
+
+        .month-display {
+            position: absolute;
+            top: 2rem;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: rgba(0,0,0,0.5);
+            backdrop-filter: blur(5px);
+            padding: 0.5rem 1.5rem;
+            border-radius: 20px;
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: var(--cor-texto-secundario);
+            z-index: 100;
+        }
+
+        @keyframes rotateGlow {
+            from { transform: translate(-50%, -50%) rotate(0deg); }
+            to { transform: translate(-50%, -50%) rotate(360deg); }
+        }
+
+        #start-screen h1 {
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 4rem;
+            letter-spacing: 2px;
+            color: var(--cor-destaque);
+            margin-bottom: 2rem;
+            animation: fadeInDown 1s ease-out both;
+        }
+        
+        #start-screen p {
+            font-size: 1.5rem;
+            color: var(--cor-texto-secundario);
+            margin-bottom: 3rem;
+            animation: fadeInDown 1s 0.2s ease-out both;
+        }
+
+        .start-button {
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 2rem;
+            background: var(--cor-principal);
+            color: white;
+            border: none;
+            padding: 1rem 3rem;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            letter-spacing: 1px;
+            animation: fadeInUp 1s 0.5s ease-out both;
+        }
+
+        .start-button:hover {
+            background-color: var(--cor-destaque);
+            transform: scale(1.05);
+            box-shadow: 0 0 20px var(--cor-destaque);
+        }
+
+        #hook-screen {
+            justify-content: center;
+            padding: 2rem;
+        }
+
+        .hook-text {
+            font-size: 2.2rem;
+            font-weight: 700;
+            color: var(--cor-texto-secundario);
+            opacity: 0;
+            animation: fadeInText 1.5s ease-out forwards;
+        }
+        .hook-text strong {
+            display: block;
+            margin: 1.5rem 0;
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 6rem;
+            letter-spacing: 2px;
+            background: -webkit-linear-gradient(45deg, var(--cor-destaque), #ff8a00);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-shadow: 0 0 25px rgba(217, 7, 63, 0.5);
+            opacity: 0;
+            animation: fadeInText 1.5s 1s ease-out forwards;
+        }
+        
+        .hook-text.small {
+            font-size: 1.8rem;
+             animation-delay: 2s;
+        }
+         .hook-text.main-title {
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 3rem;
+            color: var(--cor-texto-principal);
+            animation-delay: 0.5s;
+        }
+
+        @keyframes fadeInText {
+            to { opacity: 1; }
+        }
+
+        #reveal-screen {
+            transition: none;
+        }
+
+        .reveal-card {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem;
+            opacity: 0;
+        }
+        
+        .reveal-card.animate-in { animation: revealIn 0.8s ease-out forwards; }
+        .reveal-card.animate-out { animation: revealOut 0.8s ease-in forwards; }
+
+        .youtuber-photo-container {
+            position: relative;
+            width: 250px;
+            height: 250px;
+            margin-bottom: 1.5rem;
+        }
+        
+        .youtuber-photo {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 5px solid var(--cor-principal);
+            box-shadow: 0 0 25px rgba(166, 5, 34, 0.7);
+        }
+
+        .rank-display {
+            position: absolute;
+            top: -20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: rgba(18, 18, 18, 0.8);
+            backdrop-filter: blur(5px);
+            color: var(--cor-texto-principal);
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 3rem;
+            padding: 0.5rem 1.5rem;
+            border-radius: 30px;
+            border: 2px solid var(--cor-destaque);
+            z-index: 10;
+        }
+
+        .youtuber-name {
+            font-size: 2.8rem;
+            font-weight: 900;
+            line-height: 1.2;
+            margin-bottom: 0.5rem;
+        }
+        
+        .youtuber-type {
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: var(--cor-texto-secundario);
+            margin-bottom: 1.5rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .views-box {
+            background-color: var(--cor-fundo);
+            border: 2px solid var(--cor-borda);
+            padding: 0.8rem 2rem;
+            border-radius: 10px;
+            font-weight: 700;
+            font-size: 1.8rem;
+        }
+        .views-box span {
+            font-size: 1rem;
+            color: var(--cor-texto-secundario);
+            margin-left: 0.5rem;
+        }
+
+        @keyframes fadeInDown {
+            from { opacity: 0; transform: translateY(-30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes revealIn {
+            from { opacity: 0; transform: scale(0.9) translateY(30px); }
+            to { opacity: 1; transform: scale(1) translateY(0); }
+        }
+
+        @keyframes revealOut {
+            from { opacity: 1; transform: scale(1) translateY(0); }
+            to { opacity: 0; transform: scale(1.1) translateY(-30px); }
+        }
+
+    </style>
+</head>
+<body>
+
+    <div class="presentation-container">
+        <div class="glow-background"></div>
+        <div id="month-display" class="month-display" style="display: none;"></div>
+
+        <div id="start-screen" class="slide active">
+            <h1 id="start-title">Top Youtubers</h1>
+            <p id="start-subtitle">Ranking de Desempenho</p>
+            <button id="start-button" class="start-button">Iniciar</button>
+        </div>
+
+        <div id="hook-screen" class="slide">
+             <p class="hook-text main-title" id="hook-title">O Youtuber #1...</p>
+             <p class="hook-text small" id="hook-pre-value">acumulou</p>
+             <p class="hook-text"><strong id="hook-views">--</strong></p>
+             <p class="hook-text small" id="hook-post-value">visualizações este mês!</p>
+        </div>
+
+        <div id="reveal-screen" class="slide">
+        </div>
+
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            let allProfilesData = [];
+            let sortedYoutubers = [];
+            let currentIndex = 50; 
+            let presentationOptions = {};
+
+            const startButton = document.getElementById('start-button');
+            const startScreen = document.getElementById('start-screen');
+            const startTitle = document.getElementById('start-title');
+            const startSubtitle = document.getElementById('start-subtitle');
+            const hookScreen = document.getElementById('hook-screen');
+            const revealScreen = document.getElementById('reveal-screen');
+            const hookViews = document.getElementById('hook-views');
+            const hookTitle = document.getElementById('hook-title');
+            const hookPreValue = document.getElementById('hook-pre-value');
+            const hookPostValue = document.getElementById('hook-post-value');
+            const monthDisplay = document.getElementById('month-display');
+
+            function parseViews(viewsStr) {
+                if (typeof viewsStr !== 'string' && typeof viewsStr !== 'number') return 0;
+                const stringValue = String(viewsStr).toUpperCase();
+                let number = parseFloat(stringValue.replace(',', '.'));
+                if (stringValue.includes('M')) number *= 1000000;
+                else if (stringValue.includes('K')) number *= 1000;
+                return isNaN(number) ? 0 : parseInt(number, 10);
+            }
+
+            function formatViews(num) {
+                if (isNaN(num)) return '0';
+                if (num >= 1000000) return (num / 1000000).toFixed(1).replace(/\.0$/, '') + 'M';
+                if (num >= 1000) return Math.floor(num / 1000) + 'K';
+                return num.toString();
+            }
+
+            function loadAndPrepareData() {
+                try {
+                    allProfilesData = JSON.parse(sessionStorage.getItem('placarDataV3') || '[]');
+                    presentationOptions = JSON.parse(sessionStorage.getItem('presentationOptions') || '{}');
+                } catch (e) {
+                    console.error("Erro ao carregar dados:", e);
+                }
+
+                if (!allProfilesData || allProfilesData.length === 0) {
+                     allProfilesData = Array.from({ length: 50 }, (_, i) => ({
+                        id: `yt_${i}`, name: `Youtuber #${i + 1}`, contentType: 'Entretenimento',
+                        photo: `https://placehold.co/250x250/A60522/FFFFFF?text=YT+${i + 1}`,
+                        stats: { views: `${Math.floor(Math.random() * 500)}K` }
+                    }));
+                }
+
+                let dataForRanking = [];
+                const selectedMonth = presentationOptions.month;
+
+                if (selectedMonth && selectedMonth !== 'current') {
+                    allProfilesData.forEach(profile => {
+                        const historyEntry = (profile.performanceHistory || []).find(h => h.month === selectedMonth);
+                        if (historyEntry && historyEntry.stats) {
+                            dataForRanking.push({ ...profile, stats: historyEntry.stats });
+                        }
+                    });
+                     startSubtitle.textContent = `Ranking de ${selectedMonth}`;
+                     monthDisplay.textContent = selectedMonth;
+                     monthDisplay.style.display = 'block';
+                } else {
+                    dataForRanking = allProfilesData.filter(p => p && p.stats);
+                    startSubtitle.textContent = `Ranking do Mês Atual`;
+                    monthDisplay.style.display = 'none';
+                }
+                
+                if (presentationOptions.theme === 'ranking-piores') {
+                    sortedYoutubers = dataForRanking
+                        .sort((a, b) => parseViews(a.stats.views) - parseViews(b.stats.views))
+                        .map((profile, index) => ({ ...profile, rank: index + 1 }));
+                } else {
+                    sortedYoutubers = dataForRanking
+                        .sort((a, b) => parseViews(b.stats.views) - parseViews(a.stats.views))
+                        .map((profile, index) => ({ ...profile, rank: index + 1 }));
+                }
+
+                const topCount = parseInt(String(presentationOptions.top).replace('top-', ''), 10) || 50;
+                sortedYoutubers = sortedYoutubers.slice(0, topCount);
+                
+                currentIndex = sortedYoutubers.length;
+                
+                if (presentationOptions.theme === 'ranking-piores') {
+                    startTitle.textContent = `Piores ${currentIndex} Youtubers`;
+                } else {
+                    startTitle.textContent = `Top ${currentIndex} Youtubers`;
+                }
+            }
+            
+            function prepareHookScreen() {
+                 if(sortedYoutubers.length < 2) {
+                    hookTitle.textContent = "A apresentar o ranking...";
+                    hookPreValue.style.display = 'none';
+                    hookViews.style.display = 'none';
+                    hookPostValue.style.display = 'none';
+                    return;
+                }
+
+                let hooks = [];
+                if (presentationOptions.theme === 'ranking-piores') {
+                    const worstPerformer = sortedYoutubers[0];
+                    const bestOfWorst = sortedYoutubers[sortedYoutubers.length - 1];
+                    hooks = [
+                        {
+                            title: `O Youtuber com o pior desempenho...`,
+                            preValue: "fez apenas",
+                            getValue: () => formatViews(parseViews(worstPerformer?.stats?.views)),
+                            postValue: "visualizações este mês."
+                        },
+                        {
+                            title: "Para Sair Desta Lista...",
+                            preValue: `seriam necessárias mais de`,
+                            getValue: () => formatViews(parseViews(bestOfWorst?.stats?.views)),
+                            postValue: `visualizações!`
+                        },
+                        {
+                            title: "Um Esforço Coletivo...",
+                            preValue: "Juntos, estes Youtubers somaram apenas",
+                            getValue: (data) => {
+                                const totalViews = data.reduce((sum, p) => sum + parseViews(p.stats?.views), 0);
+                                return formatViews(totalViews);
+                            },
+                            postValue: "visualizações."
+                        },
+                        {
+                            title: "A Média de Desempenho",
+                            preValue: "Em média, um Youtuber nesta lista fez",
+                            getValue: (data) => {
+                                const totalViews = data.reduce((sum, p) => sum + parseViews(p.stats?.views), 0);
+                                return data.length > 0 ? formatViews(totalViews / data.length) : '0';
+                            },
+                            postValue: "visualizações."
+                        },
+                        {
+                            title: "Abaixo dos 10K",
+                            preValue: "Impressionante (ou não),",
+                            getValue: (data) => data.filter(p => parseViews(p.stats?.views) < 10000).length,
+                            postValue: "criadores não chegaram sequer às 10.000 views."
+                        },
+                        {
+                            title: "A Disparidade na Base",
+                            preValue: "A diferença entre o último e o primeiro desta lista é de",
+                            getValue: (data) => {
+                                const worstViews = parseViews(data[0]?.stats?.views);
+                                const bestOfWorstViews = parseViews(data[data.length - 1]?.stats?.views);
+                                return formatViews(bestOfWorstViews - worstViews);
+                            },
+                            postValue: "visualizações."
+                        },
+                        {
+                            title: "Até tu podias entrar!",
+                            preValue: "O último classificado fez apenas",
+                            getValue: (data) => {
+                                const bestOfWorstViews = parseViews(data[data.length - 1]?.stats?.views);
+                                return formatViews(bestOfWorstViews);
+                            },
+                            postValue: "views. A competição está renhida... em baixo."
+                        }
+                    ];
+                } else {
+                    hooks = [
+                        {
+                            title: `O Youtuber #1 de ${presentationOptions.month || 'Portugal'}...`,
+                            preValue: "acumulou",
+                            getValue: (data) => formatViews(parseViews(data[0]?.stats?.views)),
+                            postValue: "visualizações este mês!"
+                        },
+                        {
+                            title: "A Diferença é Brutal!",
+                            preValue: `O #1 fez`,
+                            getValue: (data) => {
+                                const topViews = parseViews(data[0]?.stats?.views);
+                                const bottomViews = parseViews(data[data.length - 1]?.stats?.views);
+                                return bottomViews > 0 ? `${(topViews / bottomViews).toFixed(1)}x` : 'Incontáveis';
+                            },
+                            postValue: `mais views que o #${sortedYoutubers.length}!`
+                        }
+                    ];
+                }
+
+                const randomHook = hooks[Math.floor(Math.random() * hooks.length)];
+                
+                hookTitle.textContent = randomHook.title;
+                hookPreValue.textContent = randomHook.preValue;
+                hookPostValue.textContent = randomHook.postValue;
+                hookViews.textContent = randomHook.getValue(sortedYoutubers) || '--';
+                hookPreValue.style.display = randomHook.preValue ? 'block' : 'none';
+                hookPostValue.style.display = randomHook.postValue ? 'block' : 'none';
+            }
+
+            function showSlide(slide) {
+                document.querySelectorAll('.slide').forEach(s => s.classList.remove('active'));
+                slide.classList.add('active');
+            }
+
+            function createRevealCard(youtuber) {
+                const card = document.createElement('div');
+                card.className = 'reveal-card';
+                const views = youtuber.stats ? youtuber.stats.views : 0;
+                const contentType = youtuber.contentType || 'Criador de Conteúdo';
+                card.innerHTML = `
+                    <div class="youtuber-photo-container">
+                        <div class="rank-display">#${youtuber.rank}</div>
+                        <img src="${youtuber.photo}" class="youtuber-photo" onerror="this.src='https://placehold.co/250x250/400414/a0a0a0?text=Foto'">
+                    </div>
+                    <h2 class="youtuber-name">${youtuber.name}</h2>
+                    <p class="youtuber-type">${contentType}</p>
+                    <div class="views-box">${formatViews(parseViews(views))} <span>views</span></div>
+                `;
+                return card;
+            }
+
+            async function startRevealSequence() {
+                showSlide(revealScreen);
+                
+                async function nextYoutuber() {
+                    if (currentIndex < 1) {
+                        startScreen.innerHTML = '<h1>Fim!</h1><p>Obrigado por assistir.</p>';
+                        showSlide(startScreen);
+                        return;
+                    }
+
+                    const youtuber = sortedYoutubers.find(p => p.rank === currentIndex);
+                    
+                    if (youtuber) {
+                        const card = createRevealCard(youtuber);
+                        revealScreen.innerHTML = '';
+                        revealScreen.appendChild(card);
+                        
+                        card.classList.add('animate-in');
+                        await new Promise(resolve => setTimeout(resolve, 3000)); 
+                        card.classList.remove('animate-in');
+                        card.classList.add('animate-out');
+                        await new Promise(resolve => setTimeout(resolve, 800)); 
+                    }
+                    
+                    currentIndex--;
+                    await nextYoutuber();
+                }
+
+                await nextYoutuber();
+            }
+
+            startButton.addEventListener('click', async () => {
+                prepareHookScreen();
+                showSlide(hookScreen);
+                await new Promise(resolve => setTimeout(resolve, 5000));
+                startRevealSequence();
+            });
+
+            loadAndPrepareData();
+        });
+    </script>
+</body>
+</html>
+

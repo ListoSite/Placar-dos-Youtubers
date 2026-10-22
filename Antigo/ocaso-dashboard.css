@@ -1,0 +1,194 @@
+/* ocaso-dashboard.css - Estilos para o novo Dashboard de Análise Estratégica */
+
+:root {
+    --ocaso-alerta-fundo: rgba(240, 32, 80, 0.1);
+    --ocaso-alerta-borda: rgba(240, 32, 80, 0.5);
+    --ocaso-tensao-fundo: rgba(255, 165, 0, 0.1);
+    --ocaso-tensao-borda: rgba(255, 165, 0, 0.5);
+    --ocaso-alianca-fundo: rgba(32, 240, 160, 0.1);
+    --ocaso-alianca-borda: rgba(32, 240, 160, 0.5);
+    --ocaso-chave-fundo: rgba(77, 130, 240, 0.1);
+    --ocaso-chave-borda: rgba(77, 130, 240, 0.5);
+}
+
+.dashboard-grid {
+    display: grid;
+    grid-template-columns: repeat(12, 1fr);
+    grid-template-rows: auto;
+    gap: 2rem;
+    animation: fadeIn 0.6s ease-out;
+}
+
+.dashboard-card {
+    background: linear-gradient(160deg, var(--ocaso-fundo-secundario), #1a1525);
+    border: 1px solid var(--ocaso-borda);
+    border-radius: 16px;
+    padding: 1.5rem 2rem;
+    box-shadow: 0 8px 30px rgba(0,0,0,0.5);
+    display: flex;
+    flex-direction: column;
+}
+
+/* --- Tamanhos dos Cards --- */
+.card-full { grid-column: 1 / -1; }
+.card-large { grid-column: span 8; }
+.card-medium { grid-column: span 6; }
+.card-small { grid-column: span 4; }
+
+.dashboard-card-header {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid var(--ocaso-borda);
+}
+
+.dashboard-card-header .icon {
+    font-size: 1.5rem;
+    width: 45px;
+    height: 45px;
+    border-radius: 50%;
+    display: grid;
+    place-items: center;
+}
+
+.dashboard-card-header h3 {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 1.8rem;
+    letter-spacing: 1px;
+    margin: 0;
+}
+
+/* --- Estilos Específicos por Tipo de Card --- */
+.card-conflito .icon { background-color: var(--ocaso-alerta-fundo); color: var(--ocaso-erro); }
+.card-conflito h3 { color: var(--ocaso-erro); }
+
+.card-tensao .icon { background-color: var(--ocaso-tensao-fundo); color: orange; }
+.card-tensao h3 { color: orange; }
+
+.card-alianca .icon { background-color: var(--ocaso-alianca-fundo); color: var(--ocaso-sucesso); }
+.card-alianca h3 { color: var(--ocaso-sucesso); }
+
+.card-chave .icon { background-color: var(--ocaso-chave-fundo); color: var(--ocaso-neutro); }
+.card-chave h3 { color: var(--ocaso-neutro); }
+
+.dashboard-card-content {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    overflow-y: auto;
+}
+
+.dashboard-placeholder {
+    text-align: center;
+    color: var(--ocaso-texto-secundario);
+    margin: auto;
+    font-style: italic;
+}
+
+/* --- Item de Relação (Conflito, Tensão) --- */
+.relation-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background-color: var(--ocaso-input-fundo);
+    padding: 1rem;
+    border-radius: 8px;
+    border-left: 4px solid;
+}
+.relation-item.conflito { border-color: var(--ocaso-erro); }
+.relation-item.tensao { border-color: orange; }
+.relation-item.alianca { border-color: var(--ocaso-sucesso); }
+
+.relation-pair {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.relation-pair img {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    object-fit: cover;
+}
+
+.relation-pair .separator {
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: var(--ocaso-texto-secundario);
+}
+
+.relation-score {
+    font-size: 1.3rem;
+    font-weight: 700;
+}
+.relation-score.negative { color: var(--ocaso-erro); }
+
+/* --- Item de Aliança --- */
+.alliance-item {
+    background-color: var(--ocaso-input-fundo);
+    padding: 1rem;
+    border-radius: 8px;
+    border-left: 4px solid var(--ocaso-sucesso);
+}
+.alliance-header {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 0.75rem;
+}
+.alliance-header img {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+}
+.alliance-header .plus { font-size: 1.5rem; color: var(--ocaso-texto-secundario); }
+.alliance-reason {
+    font-size: 0.9rem;
+    color: var(--ocaso-texto-secundario);
+    margin-left: 0.5rem;
+}
+.alliance-reason strong {
+    color: var(--ocaso-erro);
+    font-weight: 600;
+}
+
+/* --- Item de Pessoa-Chave --- */
+.key-person-item {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+    background-color: var(--ocaso-input-fundo);
+    padding: 1rem;
+    border-radius: 8px;
+    border-left: 4px solid var(--ocaso-neutro);
+}
+
+.key-person-info {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+.key-person-info img {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+}
+
+.key-person-groups {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+.group-tag {
+    font-size: 0.8rem;
+    font-weight: 600;
+    padding: 0.3rem 0.8rem;
+    border-radius: 20px;
+    background-color: var(--ocaso-escuro);
+    border: 1px solid var(--ocaso-borda);
+    color: var(--ocaso-texto-secundario);
+}
+

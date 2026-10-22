@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="pt-PT">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Perfil e Estatísticas - Universo dos Filmes</title>
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- Google Fonts: Poppins -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <!-- Ícones (Lucide Icons) -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <!-- Ficheiros de estilos -->
+    <link rel="stylesheet" href="universo-filmes.css">
+    <link rel="stylesheet" href="perfil.css">
+</head>
+<body class="bg-gray-900 text-gray-100 font-['Poppins',_sans-serif] antialiased">
+
+    <!-- Cabeçalho -->
+    <header class="bg-gray-900/70 backdrop-blur-lg sticky top-0 z-50 border-b border-gray-700/50">
+        <nav class="container mx-auto px-6 py-4 flex justify-between items-center">
+            <a href="universo-filmes.html" class="flex items-center space-x-3 group">
+                <i data-lucide="arrow-left" class="text-gray-400 group-hover:text-indigo-400 transition-colors w-6 h-6"></i>
+                <span class="text-lg font-semibold text-gray-300 group-hover:text-white">Voltar</span>
+            </a>
+            <h1 class="text-2xl font-bold tracking-wide">Meu Perfil</h1>
+            <div class="w-12"></div>
+        </nav>
+    </header>
+
+    <!-- Conteúdo Principal -->
+    <main class="container mx-auto px-6 py-10">
+        <!-- Secção do Perfil -->
+        <div class="flex flex-col sm:flex-row items-center space-y-4 sm:space-y-0 sm:space-x-6 bg-gray-800/50 border border-gray-700/50 p-6 rounded-2xl mb-10">
+            <div class="relative group">
+                <img id="profile-picture" src="https://placehold.co/128x128/1f2937/4f46e5?text=Perfil" alt="Foto de Perfil" class="w-32 h-32 rounded-full object-cover border-4 border-gray-700">
+                <label for="profile-picture-input" class="absolute inset-0 bg-black/50 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer">
+                    <i data-lucide="camera" class="w-8 h-8 text-white"></i>
+                </label>
+                <input type="file" id="profile-picture-input" class="hidden" accept="image/*">
+            </div>
+            <div>
+                <h2 class="text-4xl font-bold">As Tuas Estatísticas</h2>
+                <p class="text-gray-400 mt-1">Um resumo da tua jornada cinematográfica.</p>
+            </div>
+        </div>
+
+        <!-- Secção de Gestão de Dados -->
+        <div class="mb-10">
+             <h3 class="text-2xl font-bold mb-4">Gestão de Dados</h3>
+             <div class="bg-gray-800/50 border border-gray-700/50 p-6 rounded-2xl flex flex-col sm:flex-row items-center justify-between gap-4">
+                <p class="text-gray-400 max-w-2xl">Guarda uma cópia de segurança de todos os teus universos e estatísticas ou restaura a partir de um ficheiro. Isto é útil para transferir os teus dados entre navegadores ou dispositivos.</p>
+                <div class="flex items-center space-x-3 flex-shrink-0">
+                    <button id="import-btn" class="bg-gray-700 hover:bg-gray-600 text-white font-bold py-2.5 px-5 rounded-lg transition-all duration-300 flex items-center space-x-2">
+                        <i data-lucide="upload" class="w-5 h-5"></i>
+                        <span>Importar</span>
+                    </button>
+                    <button id="export-btn" class="bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-2.5 px-5 rounded-lg transition-all duration-300 flex items-center space-x-2">
+                        <i data-lucide="download" class="w-5 h-5"></i>
+                        <span>Exportar</span>
+                    </button>
+                </div>
+             </div>
+        </div>
+
+        <!-- Grelha de Estatísticas -->
+        <div id="stats-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <!-- Os cartões de estatísticas serão inseridos aqui -->
+        </div>
+    </main>
+
+    <script src="perfil.js"></script>
+    <script>
+        lucide.createIcons();
+    </script>
+</body>
+</html>
+

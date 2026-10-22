@@ -1,0 +1,449 @@
+<!DOCTYPE html>
+<html lang="pt-pt">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ranking Piores da Categoria - 16:9</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&family=Bebas+Neue&family=Roboto+Mono:wght@700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        :root {
+            --theme-color: #D9073F; /* Vermelho Principal */
+            --theme-color-secondary: #ff7f50; /* Coral (secundária) */
+            --theme-glow: rgba(217, 7, 63, 0.7);
+            --bg-color: #0A0B0D;
+            --surface-color: #14161A;
+            --border-color: rgba(217, 7, 63, 0.3);
+            --text-primary: #FFFFFF;
+            --text-secondary: #a0a0a0;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #000;
+            color: var(--text-primary);
+            overflow: hidden;
+            height: 100vh;
+            width: 100vw;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .presentation-container {
+            width: 100%;
+            height: 100%;
+            max-width: 1280px;
+            max-height: 720px;
+            aspect-ratio: 16 / 9;
+            background-color: var(--bg-color);
+            position: relative;
+            overflow: hidden;
+            border: 2px solid var(--border-color);
+            box-shadow: 0 0 40px var(--theme-glow);
+        }
+
+        .presentation-container::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image:
+                linear-gradient(var(--border-color) 1px, transparent 1px),
+                linear-gradient(to right, var(--border-color) 1px, transparent 1px);
+            background-size: 40px 40px;
+            opacity: 0.2;
+            animation: pan-grid 60s linear infinite;
+        }
+        
+        @keyframes pan-grid {
+            0% { background-position: 0 0; }
+            100% { background-position: -480px -480px; }
+        }
+
+        .slide {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 3rem;
+            text-align: center;
+        }
+        .slide.active { display: flex; animation: fadeIn 1s ease-out; }
+
+        /* --- TELA INICIAL --- */
+        #start-screen .intro-logo {
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 10rem;
+            color: var(--text-primary);
+            margin-bottom: 2rem;
+            position: relative;
+            animation: flicker-in 2s ease-in-out;
+        }
+        #start-screen .intro-logo::before {
+            content: 'RANKING';
+            position: absolute; top: 0; left: 0; color: var(--theme-color);
+            text-shadow: 0 0 15px var(--theme-glow); clip-path: polygon(0 0, 100% 0, 100% 50%, 0 50%);
+            animation: glitch-top 2s ease-in-out infinite;
+        }
+        #start-screen .intro-logo::after {
+            content: 'RANKING';
+            position: absolute; top: 0; left: 0; color: var(--theme-color-secondary);
+            text-shadow: 0 0 15px rgba(255, 127, 80, 0.7); clip-path: polygon(0 50%, 100% 50%, 100% 100%, 0 100%);
+            animation: glitch-bottom 2s ease-in-out infinite;
+        }
+
+        #start-screen p {
+            font-size: 2rem; color: var(--text-secondary); margin-bottom: 3rem;
+            animation: fadeIn 1.5s 1s ease-out both;
+        }
+        #start-screen .start-button {
+            font-family: 'Bebas Neue', sans-serif; font-size: 2.5rem; background: transparent; color: var(--theme-color);
+            border: 2px solid var(--theme-color); padding: 1.2rem 4rem; border-radius: 50px; cursor: pointer; transition: all 0.3s ease;
+            letter-spacing: 2px; box-shadow: 0 0 25px var(--theme-glow);
+            animation: popIn 1s 1.8s ease-out both;
+        }
+        #start-screen .start-button:hover {
+            background: var(--theme-color); color: var(--bg-color); box-shadow: 0 0 40px var(--theme-glow); transform: scale(1.05);
+        }
+
+        /* --- ECRÃ DE SELEÇÃO (CARD FLIP) --- */
+        #random-select-screen .scanner-title {
+            font-family: 'Roboto Mono', monospace; font-size: 1.5rem; color: var(--text-secondary); margin-bottom: 3rem;
+            opacity: 0; animation: fadeIn 1s 0.5s forwards; letter-spacing: 2px;
+        }
+        .category-grid {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 1.5rem;
+            perspective: 1000px;
+        }
+        .category-card {
+            width: 150px; height: 210px;
+            position: relative; transform-style: preserve-3d;
+            transition: transform 0.8s, opacity 0.5s, filter 0.5s; cursor: pointer;
+        }
+        .category-card.flipped { transform: rotateY(180deg); }
+        .card-face {
+            position: absolute; width: 100%; height: 100%;
+            backface-visibility: hidden; display: flex; align-items: center; justify-content: center;
+            border-radius: 10px; font-family: 'Bebas Neue', sans-serif;
+        }
+        .card-front {
+            background: linear-gradient(45deg, var(--surface-color), #2a2c2e);
+            border: 2px solid var(--border-color);
+        }
+        .card-front i { font-size: 3rem; color: var(--theme-color); text-shadow: 0 0 10px var(--theme-glow); }
+        .card-back {
+            background: var(--theme-color); color: var(--bg-color); font-size: 2rem;
+            padding: 0.5rem; transform: rotateY(180deg); box-shadow: 0 0 20px var(--theme-glow);
+        }
+        .scanner-result { margin-top: 3rem; opacity: 0; transition: opacity 1s ease; }
+        .scanner-result.visible { opacity: 1; }
+        .scanner-result h3 { font-family: 'Roboto Mono', monospace; font-size: 1.2rem; color: var(--text-secondary); }
+        .scanner-result h1 { font-family: 'Bebas Neue', sans-serif; font-size: 6rem; color: var(--theme-color); text-shadow: 0 0 15px var(--theme-glow); }
+
+        /* --- ECRÃS DE TRANSIÇÃO E RANKING --- */
+        .transition-screen { justify-content: center; }
+        .transition-screen h2 {
+            font-family: 'Roboto Mono', monospace; font-size: 2.5rem; color: var(--text-secondary); line-height: 1.6; max-width: 900px;
+        }
+        .transition-screen h2 .highlight { 
+            color: var(--theme-color); font-family: 'Bebas Neue', sans-serif; font-size: 5rem;
+            letter-spacing: 1px; display: block; margin: 0.5rem 0; text-shadow: 0 0 10px var(--theme-glow);
+        }
+        
+        #ranking-screen { justify-content: center; align-items: center; }
+        .reveal-container { width: 100%; height: 100%; position: relative; display: flex; justify-content: center; align-items: center; }
+        
+        .rank-countdown {
+            font-family: 'Roboto Mono', monospace; font-size: 15rem; font-weight: 700; color: var(--theme-color);
+            text-shadow: 0 0 25px var(--theme-glow); opacity: 0; position: absolute; z-index: 5;
+            animation: countdown-anim 1.5s ease-in-out forwards;
+        }
+        
+        .reveal-card-v2 {
+            display: flex; align-items: center; justify-content: center; gap: 3rem;
+            width: 100%; max-width: 900px; position: absolute; opacity: 0;
+            animation: card-enter 0.8s 0.8s cubic-bezier(0.165, 0.84, 0.44, 1) forwards, card-exit 0.8s 5s cubic-bezier(0.76, 0, 0.24, 1) forwards;
+        }
+
+        .hexagon {
+            position: relative; width: 300px; height: 345px;
+            background-color: var(--surface-color); clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
+            display: grid; place-items: center; flex-shrink: 0;
+        }
+        .hexagon::before {
+            content: ''; position: absolute; top: -4px; left: -4px; width: calc(100% + 8px); height: calc(100% + 8px);
+            background: linear-gradient(45deg, var(--theme-color), var(--theme-color-secondary));
+            clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
+            z-index: -1; animation: spin 4s linear infinite;
+        }
+        .reveal-photo { width: 288px; height: 288px; border-radius: 50%; object-fit: cover; }
+        .reveal-info { text-align: left; }
+        .reveal-name { font-family: 'Bebas Neue', sans-serif; font-size: 5rem; font-weight: 700; line-height: 1.1; }
+        .reveal-views {
+            font-family: 'Roboto Mono', monospace; font-size: 4rem; color: var(--theme-color);
+            margin-top: 1.5rem; padding: 1rem 2rem; border: 2px solid var(--border-color); border-radius: 12px;
+            background-color: rgba(20,22,26,0.5); display: inline-block;
+        }
+
+        #end-screen h1 { font-family: 'Bebas Neue', sans-serif; font-size: 6rem; text-shadow: 0 0 15px white; }
+        #end-screen p { font-size: 1.5rem; margin-top: 1rem; color: var(--text-secondary);}
+
+        /* Animações */
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes popIn { from { opacity: 0; transform: scale(0.8); } to { opacity: 1; transform: scale(1); } }
+        @keyframes flicker-in { 0%, 10%, 20%, 30%, 40%, 50%, 60%, 80%, 100% { opacity: 1; text-shadow: 0 0 25px var(--theme-glow); } 5%, 15%, 25%, 35%, 45%, 55%, 75%, 95% { opacity: 0.8; text-shadow: none; } }
+        @keyframes glitch-top { 2%, 64% { transform: translate(2px, -2px); } 4%, 60% { transform: translate(-2px, 2px); } 62% { transform: translate(12px, -1px) skew(-13deg); } }
+        @keyframes glitch-bottom { 2%, 64% { transform: translate(-2px, 0); } 4%, 60% { transform: translate(0, 2px); } 62% { transform: translate(-2px, 5px) skew(21deg); } }
+        @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+        @keyframes countdown-anim { 0% { opacity: 0; transform: scale(0.5); } 30%, 60% { opacity: 1; transform: scale(1.2); } 100% { opacity: 0; transform: scale(2.5); visibility: hidden; } }
+        @keyframes card-enter { from { opacity: 0; transform: translateX(50px) scale(0.9); } to { opacity: 1; transform: translateX(0) scale(1); } }
+        @keyframes card-exit { from { opacity: 1; transform: translateX(0) scale(1); } to { opacity: 0; transform: translateX(-50px) scale(0.9); } }
+    </style>
+</head>
+<body>
+    <div class="presentation-container">
+        <!-- Slides -->
+        <div id="start-screen" class="slide active">
+            <h1 class="intro-logo" data-text="RANKING">RANKING</h1>
+            <p>Os Piores Desempenhos de cada Categoria</p>
+            <button id="start-button" class="start-button">INICIAR ANÁLISE</button>
+        </div>
+        <div id="random-select-screen" class="slide">
+             <h2 id="scanner-title" class="scanner-title">A SELECIONAR CATEGORIA...</h2>
+             <div id="category-grid" class="category-grid"></div>
+             <div id="scanner-result" class="scanner-result">
+                 <h3>CATEGORIA SELECIONADA:</h3>
+                 <h1 id="final-category"></h1>
+             </div>
+        </div>
+        <div id="transition-screen" class="slide"></div>
+        <div id="ranking-screen" class="slide"></div>
+        <div id="end-screen" class="slide">
+             <h1>RANKING COMPLETO</h1>
+            <p>A análise de dados terminou.</p>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', async () => {
+            let allData = [];
+            let options = {};
+            const slides = {
+                start: document.getElementById('start-screen'),
+                randomSelect: document.getElementById('random-select-screen'),
+                transition: document.getElementById('transition-screen'),
+                ranking: document.getElementById('ranking-screen'),
+                end: document.getElementById('end-screen')
+            };
+
+            const parseViews = (viewsStr) => {
+                if (typeof viewsStr !== 'string' && typeof viewsStr !== 'number') return 0;
+                const s = String(viewsStr).toUpperCase().replace(/,/g, '.');
+                let n = parseFloat(s);
+                if (s.includes('M')) n *= 1e6; else if (s.includes('K')) n *= 1e3;
+                return isNaN(n) ? 0 : parseInt(n, 10);
+            };
+            const formatViews = (v) => {
+                const n = Number(v);
+                if (n >= 1e6) return (n / 1e6).toFixed(1).replace('.0', '') + 'M';
+                if (n >= 1e3) return (n / 1e3).toFixed(1).replace('.0', '') + 'K';
+                return n.toLocaleString('pt-PT');
+            };
+            const loadData = () => {
+                try {
+                    allData = JSON.parse(sessionStorage.getItem('placarDataV3') || '[]');
+                    options = JSON.parse(sessionStorage.getItem('presentationOptions') || '{}');
+                } catch (e) { console.error("Erro ao carregar dados:", e); }
+            };
+            const showSlide = (slide) => {
+                Object.values(slides).forEach(s => s.classList.remove('active'));
+                slide.classList.add('active');
+            };
+            const animateText = (element, text) => {
+                 const wrappedMessage = text.replace(/(<span class="highlight">[^<]+<\/span>)|(\S+)/g, (match, highlight, word) => {
+                    if (highlight) return highlight;
+                    if (word) return `<span class="word" style="opacity:0; display:inline-block;">${word}</span>`;
+                    return '';
+                });
+
+                element.innerHTML = wrappedMessage;
+                const words = element.querySelectorAll('span.word, span.highlight');
+                words.forEach((word, index) => {
+                    word.style.animation = `fadeIn 0.5s ${index * 0.08}s ease-out forwards`;
+                });
+            };
+
+            const showTransition = async (message, duration = 4000) => {
+                const h2 = document.createElement('h2');
+                slides.transition.innerHTML = '';
+                slides.transition.appendChild(h2);
+                animateText(h2, message);
+                showSlide(slides.transition);
+                await new Promise(res => setTimeout(res, duration));
+            };
+
+            const revealRankingsForCategory = async (category) => {
+                const topCount = parseInt(String(options.categoryTop).replace('top-', ''), 10) || 10;
+                let dataForRanking = (options.categoryMonth && options.categoryMonth !== 'current')
+                    ? allData.map(p => {
+                        const h = (p.performanceHistory || []).find(h => h.month === options.categoryMonth);
+                        return h ? { ...p, stats: h.stats } : null;
+                      }).filter(Boolean)
+                    : allData;
+
+                const sorted = dataForRanking.filter(p => p.contentType === category)
+                    .sort((a, b) => parseViews(a.stats.views) - parseViews(b.stats.views));
+                const topProfiles = sorted.slice(0, topCount);
+                
+                showSlide(slides.ranking);
+                const container = slides.ranking;
+
+                for (let i = 0; i < topProfiles.length; i++) {
+                    const profile = topProfiles[i];
+                    const rank = i + 1;
+                    container.innerHTML = `<div class="reveal-container"><div class="rank-countdown">#${rank}</div></div>`;
+                    await new Promise(res => setTimeout(res, 1500)); 
+                    
+                    const cardHTML = `
+                        <div class="reveal-container">
+                            <div class="reveal-card-v2">
+                                <div class="hexagon">
+                                    <img src="${profile.photo}" class="reveal-photo" onerror="this.src='https://placehold.co/288x288/14161A/FFF?text=?'">
+                                </div>
+                                <div class="reveal-info">
+                                    <h3 class="reveal-name">${profile.name}</h3>
+                                    <div class="reveal-views">${formatViews(parseViews(profile.stats.views))}</div>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                    container.innerHTML = cardHTML;
+                    await new Promise(res => setTimeout(res, 5800)); 
+                }
+            };
+            
+            const getDynamicTransitionPhrase = (category, data) => {
+                const phrases = [
+                    `Quem ficou na <span class="highlight">ZONA VERMELHA</span> de <span class="highlight">${category}</span>?`,
+                    `Vamos analisar os números! Estes são os <span class="highlight">MENOS VISTOS</span> de <span class="highlight">${category}</span>!`,
+                    `A competição é feroz, mas nem todos conseguem brilhar. Estes são os piores de <span class="highlight">${category}</span>.`,
+                    `Com apenas <span class="highlight">${formatViews(data.reduce((acc, p) => acc + parseViews(p.stats.views), 0))}</span> views, este grupo ficou para trás em <span class="highlight">${category}</span>.`,
+                    `Descobre os <span class="highlight">${data.length}</span> Youtubers de <span class="highlight">${category}</span> que precisam do teu apoio!`
+                ];
+                return phrases[Math.floor(Math.random() * phrases.length)];
+            };
+            
+            const runRandomSelection = async () => {
+                const allContentTypes = Array.from(new Set(allData.map(p => p.contentType).filter(Boolean)));
+                if (allContentTypes.length === 0) {
+                    await showTransition("Nenhuma categoria encontrada para o sorteio.", 3000);
+                    return null;
+                }
+
+                showSlide(slides.randomSelect);
+                const grid = document.getElementById('category-grid');
+                grid.innerHTML = '';
+                
+                const maxCards = Math.min(9, allContentTypes.length * 3);
+                let categoriesToShow = [];
+                 for(let i=0; i < maxCards; i++){
+                    categoriesToShow.push(allContentTypes[i % allContentTypes.length]);
+                 }
+                 categoriesToShow.sort(() => 0.5 - Math.random());
+
+                const selectedCategory = categoriesToShow[Math.floor(Math.random() * categoriesToShow.length)];
+                
+                categoriesToShow.forEach(type => {
+                    const card = document.createElement('div');
+                    card.className = 'category-card';
+                    if (type === selectedCategory) {
+                        card.dataset.winner = "true";
+                    }
+                    card.innerHTML = `
+                        <div class="card-face card-front"><i class="fas fa-question"></i></div>
+                        <div class="card-face card-back">${type}</div>
+                    `;
+                    grid.appendChild(card);
+                });
+
+                await new Promise(res => setTimeout(res, 1000));
+
+                const cards = Array.from(grid.children);
+                
+                for(let i = 0; i < 3; i++){
+                    cards.sort(() => Math.random() - 0.5).forEach(c => grid.appendChild(c));
+                    await new Promise(res => setTimeout(res, 400));
+                }
+                
+                await new Promise(res => setTimeout(res, 1000));
+
+                const selectedCard = grid.querySelector('[data-winner="true"]');
+
+                cards.forEach(card => {
+                    if(card !== selectedCard) {
+                       card.style.opacity = '0.3';
+                       card.style.filter = 'grayscale(80%)';
+                       card.style.transform = 'scale(0.9)';
+                    }
+                });
+                
+                await new Promise(res => setTimeout(res, 500));
+                
+                if (selectedCard) {
+                    selectedCard.classList.add('flipped');
+                }
+
+                const resultContainer = document.getElementById('scanner-result');
+                const finalCategoryEl = document.getElementById('final-category');
+                finalCategoryEl.textContent = selectedCategory;
+                resultContainer.classList.add('visible');
+                
+                await new Promise(res => setTimeout(res, 4000));
+                return selectedCategory;
+            }
+
+            const runPresentation = async () => {
+                let categoriesToRank = [];
+                if (options.categoryMode === 'aleatorio') {
+                    const selectedCategory = await runRandomSelection();
+                    if(selectedCategory) {
+                        categoriesToRank.push(selectedCategory);
+                    }
+                } else if (options.categoryMode === 'escolher' && Array.isArray(options.contentTypes)) {
+                    categoriesToRank = options.contentTypes;
+                }
+
+                if(categoriesToRank.length === 0){
+                     await showTransition("Não foram encontradas categorias para o ranking.");
+                     showSlide(slides.end);
+                     return;
+                }
+
+                for (const category of categoriesToRank) {
+                    const categoryData = allData.filter(p => p.contentType === category);
+                    await showTransition(getDynamicTransitionPhrase(category, categoryData));
+                    await revealRankingsForCategory(category);
+                }
+
+                showSlide(slides.end);
+            };
+
+            // Inicialização
+            loadData();
+            document.getElementById('start-button').addEventListener('click', runPresentation, { once: true });
+        });
+    </script>
+</body>
+</html>

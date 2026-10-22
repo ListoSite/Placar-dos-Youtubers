@@ -1,0 +1,90 @@
+/* chart2D.css - Estilos para o Gráfico 2D e seus componentes */
+
+/* --- Estilos para o Tooltip Personalizado --- */
+
+/* Oculta o tooltip por defeito */
+#chartjs-tooltip-v2 {
+    opacity: 0;
+    position: absolute;
+    background: rgba(38, 38, 38, 0.9); /* Cor de fundo --cor-fundo com transparência */
+    color: white;
+    border-radius: 12px;
+    border: 1px solid var(--cor-vermelho-principal);
+    width: 280px;
+    pointer-events: none;
+    transition: opacity 0.2s ease-in-out;
+    backdrop-filter: blur(5px);
+    -webkit-backdrop-filter: blur(5px);
+    box-shadow: 0 5px 15px rgba(0,0,0,0.5);
+    z-index: 10000;
+    overflow: hidden; /* Garante que os cantos arredondados se aplicam a tudo */
+}
+
+/* Estilo do cabeçalho do tooltip com a foto */
+.tooltip-header {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1rem;
+    background-color: rgba(0,0,0,0.2);
+    border-bottom: 1px solid var(--cor-vermelho-escuro);
+}
+
+.tooltip-photo {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid var(--cor-vermelho-principal);
+}
+
+.tooltip-title-container {
+    display: flex;
+    flex-direction: column;
+}
+
+.tooltip-name {
+    font-family: 'Inter', sans-serif;
+    font-weight: 700;
+    font-size: 1.1rem;
+    color: var(--cor-texto-principal);
+    margin: 0;
+}
+
+.tooltip-content-type {
+    font-size: 0.85rem;
+    color: var(--cor-texto-secundario);
+    margin: 0;
+}
+
+/* Estilo do corpo do tooltip com as estatísticas */
+.tooltip-body {
+    padding: 1rem;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.75rem;
+}
+
+.tooltip-stat {
+    display: flex;
+    flex-direction: column;
+}
+
+.tooltip-stat-label {
+    font-size: 0.8rem;
+    color: var(--cor-texto-secundario);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.tooltip-stat-value {
+    font-size: 1.2rem;
+    font-weight: 600;
+    color: var(--cor-texto-principal);
+}
+
+/* Cor especial para os pontos */
+.tooltip-stat-value.points {
+    color: var(--cor-vermelho-destaque);
+    font-weight: 700;
+}

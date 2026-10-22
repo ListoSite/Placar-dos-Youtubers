@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="pt-PT">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Universos - Cineverso</title>
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts: Poppins -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- Ícones (Lucide Icons) -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <!-- Ficheiros de estilos -->
+    <link rel="stylesheet" href="universo-filmes.css">
+    <link rel="stylesheet" href="Cineverso.css">
+</head>
+<body class="bg-gray-900 text-gray-100 font-['Poppins',_sans-serif] antialiased">
+
+    <div class="main-layout">
+        <!-- Botão de Menu e Overlay para Mobile -->
+        <button class="mobile-menu-button">
+            <i data-lucide="menu"></i>
+        </button>
+        <div class="sidebar-overlay"></div>
+
+        <!-- Navegação Lateral (Sidebar) - A classe foi alterada de 'nav' para 'aside' e adicionada a classe 'sidebar' -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <i data-lucide="film" class="text-indigo-400 w-8 h-8"></i>
+                <h1 class="text-2xl font-bold tracking-wide">Cine<span class="text-indigo-400">verso</span></h1>
+            </div>
+            <nav>
+                <ul class="sidebar-menu">
+                    <li>
+                        <a href="Cineverso.html" class="nav-link">
+                            <i data-lucide="home"></i>
+                            <span>Início</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="universo-filmes.html" class="nav-link active">
+                            <i data-lucide="swords"></i>
+                            <span>Universos</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="playlists.html" class="nav-link">
+                            <i data-lucide="list-music"></i>
+                            <span>Playlists</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="quero-ver.html" class="nav-link">
+                            <i data-lucide="bookmark"></i>
+                            <span>Quero Ver</span>
+                        </a>
+                    </li>
+                </ul>
+            </nav>
+        </aside>
+
+        <!-- Conteúdo Principal -->
+        <main class="main-content">
+            <header class="content-header">
+                <div>
+                    <h2 class="text-4xl font-extrabold tracking-tight">Meus Universos</h2>
+                    <p class="text-gray-400 mt-1">Navega e gere todas as tuas sagas e coleções de filmes.</p>
+                </div>
+                <!-- Botão de adicionar movido para o cabeçalho para consistência -->
+                <button id="add-universe-btn" class="control-button primary">
+                    <i data-lucide="plus"></i>
+                    <span>Adicionar Universo</span>
+                </button>
+            </header>
+            
+            <div class="content-body">
+                <!-- Grelha para os Universos -->
+                <div id="universe-grid" class="universe-grid-container">
+                    <!-- Os cartões dos universos serão inseridos aqui via JavaScript -->
+                </div>
+
+                <!-- Mensagem para quando a grelha está vazia -->
+                <div id="empty-grid-message" class="hidden text-center py-20">
+                    <i data-lucide="telescope" class="mx-auto h-20 w-20 text-gray-600"></i>
+                    <h3 class="mt-6 text-2xl font-semibold">Nenhum universo por aqui...</h3>
+                    <p class="mt-2 text-gray-400">Clica no botão 'Adicionar Universo' para criares o teu primeiro.</p>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- O botão flutuante foi removido daqui -->
+
+    <div id="universe-modal" class="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 hidden z-50">
+        <div id="universe-modal-content" class="bg-gray-800 border border-gray-700 rounded-2xl shadow-2xl p-8 w-full max-w-lg relative transform transition-all duration-300">
+            <button id="close-modal-btn" class="absolute top-4 right-4 text-gray-500 hover:text-white transition-colors">
+                <i data-lucide="x" class="w-6 h-6"></i>
+            </button>
+            <h2 id="modal-title" class="text-3xl font-bold mb-6">Adicionar Novo Universo</h2>
+            <form id="universe-form" novalidate>
+                <input type="hidden" id="universe-id">
+                <div class="space-y-5">
+                    <div>
+                        <label for="universe-name" class="block text-sm font-medium text-gray-300 mb-2">Nome do Universo</label>
+                        <input type="text" id="universe-name" placeholder="Ex: Marvel Cinematic Universe" class="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2.5 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 transition" required>
+                    </div>
+                    <div>
+                        <label for="universe-cover" class="block text-sm font-medium text-gray-300 mb-2">URL da Imagem de Capa</label>
+                        <input type="url" id="universe-cover" placeholder="https://..." class="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2.5 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 transition">
+                    </div>
+                     <div>
+                        <label for="universe-description" class="block text-sm font-medium text-gray-300 mb-2">Descrição</label>
+                        <textarea id="universe-description" rows="3" placeholder="Uma breve descrição sobre este universo..." class="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2.5 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 transition" required></textarea>
+                    </div>
+                    <!-- NOVO: Seletor de Status -->
+                    <div>
+                        <label for="universe-status" class="block text-sm font-medium text-gray-300 mb-2">Estado</label>
+                         <select id="universe-status" class="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2.5 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 transition">
+                            <option value="auto">Automático</option>
+                            <option value="planned">Planeado</option>
+                            <option value="watching">A Ver</option>
+                            <option value="watched">Visto</option>
+                        </select>
+                        <p class="text-xs text-gray-500 mt-1.5">"Automático" define o estado com base no progresso dos conteúdos.</p>
+                    </div>
+                </div>
+                <div class="mt-8 flex justify-end">
+                    <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-6 rounded-lg transition-all duration-300 flex items-center space-x-2">
+                        <i data-lucide="save" class="w-5 h-5"></i>
+                        <span id="save-btn-text">Guardar Universo</span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="data-manager.js"></script>
+    <script src="universo-filmes.js"></script>
+    <script>
+      lucide.createIcons();
+    </script>
+</body>
+</html>

@@ -1,0 +1,2235 @@
+/* ========= LAYOUT GERAL DA PÁGINA DE PLAYLISTS ========= */
+.playlists-page-layout {
+    display: flex;
+    gap: 2rem; /* Espaçamento entre a sidebar de playlists e a área de conteúdo */
+    height: calc(100vh - 5rem); /* Altura total menos o padding do main-content */
+}
+
+/* ========= SIDEBAR DE PLAYLISTS (COLUNA ESQUERDA) ========= */
+.playlists-sidebar {
+    width: 320px;
+    flex-shrink: 0;
+    background-color: #1f2937; /* bg-gray-800 */
+    border-radius: 1rem;
+    padding: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    border: 1px solid #374151; /* border-gray-700 */
+}
+
+.playlist-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    /* margin-bottom e border-bottom removidos, serão geridos pelo container de progresso */
+}
+
+.playlist-header-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.playlist-action-button {
+    background-color: transparent;
+    border: 1px solid #4b5563; /* border-gray-600 */
+    color: #9ca3af; /* text-gray-400 */
+    border-radius: 50%;
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+}
+
+.playlist-action-button:hover {
+    border-color: #6366f1;
+    color: #a5b4fc;
+}
+
+.playlist-action-button.active {
+    background-color: #4f46e5;
+    border-color: #4f46e5;
+    color: white;
+}
+
+
+.add-playlist-button {
+    background-color: transparent;
+    border: 1px solid #4f46e5;
+    color: #a5b4fc; /* indigo-300 */
+    border-radius: 50%;
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+}
+
+.add-playlist-button:hover {
+    background-color: #4f46e5;
+    color: white;
+    transform: rotate(90deg);
+}
+
+/* ========= BARRA DE PROGRESSO DA PLAYLIST (NA SIDEBAR) ========= */
+.playlist-progress-container {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    margin-top: 1rem; /* Espaço abaixo do header */
+    padding-bottom: 1rem;
+    margin-bottom: 1rem;
+    border-bottom: 1px solid #374151; /* Separador */
+}
+
+.playlist-progress-container.hidden {
+    display: none;
+}
+
+.progress-info {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.8rem; /* text-xs */
+    color: #9ca3af; /* text-gray-400 */
+}
+
+#progress-text {
+    font-weight: 600; /* font-semibold */
+}
+
+#progress-percentage {
+    font-weight: 700; /* font-bold */
+    color: #e5e7eb; /* text-gray-200 */
+}
+
+.playlists-list {
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    /* Estilização da scrollbar para a lista */
+    scrollbar-width: thin;
+    scrollbar-color: #4f46e5 #1f2937;
+}
+
+.playlist-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.75rem 1rem;
+    border-radius: 0.5rem;
+    cursor: pointer;
+    transition: background-color 0.2s ease, border-color 0.2s;
+    border: 2px solid transparent;
+    position: relative;
+}
+
+.playlist-item:hover {
+    background-color: #374151; /* bg-gray-700 */
+}
+
+.playlist-item.active {
+    background-color: #4f46e520; /* indigo-600 com opacidade */
+    border-color: #4f46e5;
+    font-weight: 600;
+    color: #e5e7eb; /* text-gray-200 */
+}
+
+.playlist-item .item-info {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    flex-grow: 1; /* Permite que o nome ocupe espaço */
+    min-width: 0; /* Evita que o nome empurre outros elementos */
+}
+.playlist-item .item-info .playlist-name {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+
+.playlist-item .item-count {
+    background-color: #374151;
+    font-size: 0.75rem;
+    padding: 0.1rem 0.5rem;
+    border-radius: 0.5rem;
+    flex-shrink: 0;
+}
+
+.playlist-item.active .item-count {
+    background-color: #4f46e5;
+    color: white;
+}
+
+/* Ações de Edição */
+.playlist-item-actions {
+    display: none;
+    align-items: center;
+    gap: 0.5rem;
+    margin-left: 0.5rem;
+}
+
+.playlists-sidebar.edit-mode .playlist-item-actions {
+    display: flex;
+}
+
+.playlist-item-actions button {
+    background: none;
+    border: none;
+    color: #9ca3af;
+    padding: 0.25rem;
+    border-radius: 50%;
+    transition: all 0.2s ease;
+}
+.playlist-item-actions button:hover {
+    background-color: #4b5563;
+    color: white;
+}
+.playlist-item-actions button.delete:hover {
+    background-color: #ef4444;
+}
+
+/* Ícone de Arrastar */
+.drag-handle {
+    cursor: grab;
+    color: #6b7280;
+    display: none; /* Escondido por padrão */
+    margin-right: 0.75rem;
+}
+.playlists-sidebar.edit-mode .playlist-item[data-id="all"] {
+    pointer-events: none; /* Desativa a seleção do "Todos" em modo de edição */
+    opacity: 0.5;
+}
+
+.playlists-sidebar.edit-mode .drag-handle {
+    display: block;
+}
+
+/* Estilos para Drag and Drop */
+.playlist-item.dragging {
+    opacity: 0.5;
+    background: #4f46e5;
+}
+.drag-over-indicator {
+    height: 2px;
+    background-color: #818cf8;
+    margin: -4px 0;
+    border-radius: 1px;
+}
+
+
+/* ========= ÁREA DE CONTEÚDO (COLUNA DIREITA) ========= */
+.content-area {
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+.content-header {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem; /* Espaço entre a linha do título e os filtros */
+}
+
+.header-top-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start; /* Alinha no topo */
+}
+
+/* NOVO: FILTROS RÁPIDOS */
+.quick-filter-btn {
+    background-color: #374151;
+    border: 1px solid #4b5563;
+    color: #d1d5db;
+    padding: 0.375rem 0.875rem;
+    border-radius: 9999px;
+    font-size: 0.875rem;
+    font-weight: 500;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.375rem;
+    cursor: pointer;
+    transition: all 0.2s ease-in-out;
+}
+
+.quick-filter-btn:hover {
+    background-color: #4b5563;
+    border-color: #6b7280;
+    color: white;
+}
+
+.quick-filter-btn.active {
+    background-color: #4f46e5;
+    border-color: #6366f1;
+    color: white;
+    box-shadow: 0 0 15px rgba(79, 70, 229, 0.3);
+}
+
+.quick-filter-btn i {
+    width: 1rem;
+    height: 1rem;
+}
+
+/* MODIFICADO: Container dos Filtros */
+.filters-container {
+    display: flex;
+    flex-wrap: wrap; 
+    gap: 0.75rem;
+    align-items: center;
+    padding-bottom: 1.5rem;
+    border-bottom: 1px solid #374151; /* Separador visual */
+}
+
+/* ========= NOVO: ESTILOS PARA FILTROS MULTI-SELEÇÃO ========= */
+.filter-btn {
+    background-color: #1f2937;
+    border: 1px solid #374151;
+    border-radius: 0.5rem;
+    padding: 0.5rem 1rem;
+    color: #d1d5db;
+    font-weight: 500;
+    transition: all 0.2s ease;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+.filter-btn:hover {
+    border-color: #4b5563;
+}
+.filter-btn.active {
+    background-color: #4f46e5;
+    border-color: #6366f1;
+    color: white;
+}
+.filter-btn .filter-btn-icon {
+    width: 1.125rem;
+    height: 1.125rem;
+    transition: transform 0.2s ease;
+}
+.filter-btn.open .filter-btn-icon {
+    transform: rotate(180deg);
+}
+
+.filter-options {
+    position: absolute;
+    top: calc(100% + 0.5rem);
+    left: 0;
+    background-color: #2b3546; /* Um pouco mais claro que o bg-gray-800 */
+    border: 1px solid #4b5563;
+    border-radius: 0.75rem;
+    padding: 0.75rem;
+    width: 250px;
+    z-index: 50;
+    box-shadow: 0 10px 20px rgba(0,0,0,0.3);
+    max-height: 300px;
+    overflow-y: auto;
+}
+
+.filter-option-label {
+    display: flex;
+    align-items: center;
+    width: 100%;
+    padding: 0.5rem 0.75rem;
+    border-radius: 0.5rem;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+}
+.filter-option-label:hover {
+    background-color: #374151;
+}
+.filter-option-label input {
+    position: absolute;
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+.filter-checkbox {
+    width: 18px;
+    height: 18px;
+    border: 2px solid #6b7280;
+    border-radius: 0.25rem;
+    margin-right: 0.75rem;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+}
+.filter-checkbox::after {
+    content: '';
+    width: 10px;
+    height: 10px;
+    background-color: white;
+    transform: scale(0);
+    transition: transform 0.1s ease;
+    clip-path: polygon(14% 44%, 0 65%, 50% 100%, 100% 16%, 80% 0%, 43% 62%);
+}
+.filter-option-label input:checked + .filter-checkbox {
+    background-color: #4f46e5;
+    border-color: #6366f1;
+}
+.filter-option-label input:checked + .filter-checkbox::after {
+    transform: scale(1);
+}
+/* =============================================================== */
+
+.filter-select {
+    background-color: #1f2937;
+    border: 1px solid #374151;
+    border-radius: 0.5rem;
+    padding: 0.5rem 2.5rem 0.5rem 1rem;
+    color: #d1d5db;
+    font-weight: 500;
+    transition: all 0.2s ease;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
+    background-position: right 0.75rem center;
+    background-repeat: no-repeat;
+    background-size: 1.25em 1.25em;
+    cursor: pointer;
+}
+
+.filter-select:focus {
+    outline: none;
+    border-color: #4f46e5;
+    box-shadow: 0 0 0 2px #4f46e560;
+}
+
+.filter-select:hover {
+    border-color: #4b5563;
+}
+
+.clear-filters-button {
+    background-color: #374151;
+    border: 1px solid #4b5563;
+    color: #9ca3af;
+    border-radius: 0.5rem;
+    padding: 0.5rem 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-weight: 500;
+    transition: all 0.2s ease;
+    margin-left: auto;
+}
+
+.clear-filters-button:hover {
+    background-color: #ef4444;
+    border-color: #f87171;
+    color: white;
+}
+
+.clear-filters-button i {
+    width: 1rem;
+    height: 1rem;
+}
+
+.search-input {
+    background-color: #1f2937;
+    border: 1px solid #374151;
+    border-radius: 0.5rem;
+    padding: 0.75rem 1rem 0.75rem 2.5rem;
+    color: white;
+    width: 300px;
+    transition: all 0.2s ease;
+}
+
+.search-input:focus {
+    outline: none;
+    border-color: #4f46e5;
+    box-shadow: 0 0 0 2px #4f46e560;
+}
+
+.search-input-icon {
+    position: absolute;
+    left: 0.75rem;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #6b7280;
+    width: 1.25rem;
+    height: 1.25rem;
+}
+
+.content-grid {
+    flex-grow: 1;
+    overflow-y: auto;
+    padding-top: 1.5rem;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 1.5rem;
+    align-content: start;
+}
+
+/* ========= ESTILOS DOS CARTÕES DE CONTEÚDO (REDESENHADOS E CORRIGIDOS) ========= */
+.content-card {
+    position: relative;
+    height: 300px;
+    width: 200px;
+    justify-self: center;
+}
+
+.card-expander {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    background-color: #1f2937;
+    border-radius: 1rem;
+    border: 1px solid #374151;
+    overflow: hidden;
+    transition: width 0.4s cubic-bezier(0.25, 0.8, 0.25, 1),
+                left 0.4s cubic-bezier(0.25, 0.8, 0.25, 1),
+                box-shadow 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
+    z-index: 5;
+}
+
+.content-card:hover .card-expander {
+    width: 450px;
+    box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+    border-color: #4f46e5;
+    z-index: 10;
+}
+
+.content-card.expand-left:hover .card-expander {
+    left: -250px;
+}
+
+
+/* ----- Parte da Capa (sempre visível) ----- */
+.card-cover-container {
+    flex-shrink: 0;
+    width: 200px;
+    height: 100%;
+    position: relative;
+}
+
+.card-cover-image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.card-cover-overlay {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(to top, rgba(17, 24, 39, 1) 10%, transparent 60%);
+}
+
+.card-cover-info {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    padding: 1rem;
+    text-shadow: 1px 1px 3px rgba(0,0,0,0.7);
+}
+
+.card-title { font-weight: 700; font-size: 1.1rem; line-height: 1.3; color: white; }
+.card-year { font-size: 0.8rem; color: #9ca3af; }
+
+/* ----- Parte dos Detalhes (expande) ----- */
+.card-details-container {
+    flex-grow: 1;
+    width: 250px;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    overflow: hidden;
+}
+
+.card-details-background {
+    position: absolute;
+    inset: 0;
+    background-size: cover;
+    background-position: center;
+    filter: brightness(0.6);
+    transition: transform 0.4s ease;
+}
+.content-card:hover .card-details-background {
+    transform: scale(1.05);
+}
+
+.card-details-gradient {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(to top, rgba(31, 41, 55, 1) 30%, rgba(31, 41, 55, 0.7) 70%, transparent);
+}
+
+.card-actions {
+    position: absolute;
+    top: 0.75rem;
+    right: 0.75rem;
+    display: flex;
+    gap: 0.5rem;
+}
+
+.card-action-btn {
+    background-color: rgba(17, 24, 39, 0.7);
+    backdrop-filter: blur(4px);
+    border-radius: 50%;
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #d1d5db;
+    transition: all 0.2s ease;
+}
+.card-action-btn:hover {
+    background-color: #4f46e5;
+    color: white;
+}
+
+.card-details-info {
+    position: relative;
+    z-index: 2;
+    padding: 1.5rem;
+    margin-top: auto;
+}
+
+.card-details-info .card-title { font-size: 1.4rem; margin-bottom: 0.75rem; }
+
+.card-meta {
+    display: flex;
+    gap: 1.5rem;
+    flex-wrap: wrap;
+    padding-top: 0.75rem;
+    border-top: 1px solid rgba(255, 255, 255, 0.15);
+}
+.meta-item { display: flex; align-items: center; gap: 0.5rem; font-size: 0.875rem; font-weight: 500; color: #d1d5db; }
+.meta-item i { width: 1rem; height: 1rem; }
+
+
+/* ========= NOVO: BADGE DE ESTADO NO CARTÃO ========= */
+.card-status-badge {
+    position: absolute;
+    top: 0.75rem;
+    right: 0.75rem;
+    z-index: 6;
+    display: flex;
+    align-items: center;
+    gap: 0.375rem;
+    padding: 0.25rem 0.6rem;
+    border-radius: 9999px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    background-color: rgba(17, 24, 39, 0.7);
+    backdrop-filter: blur(4px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: #d1d5db;
+}
+
+.card-status-badge i {
+    width: 0.875rem;
+    height: 0.875rem;
+}
+
+/* Cores específicas para cada estado */
+.card-status-badge.watched {
+    background-color: rgba(34, 197, 94, 0.2);
+    border-color: rgba(34, 197, 94, 0.5);
+    color: #4ade80;
+}
+
+.card-status-badge.watching {
+    background-color: rgba(59, 130, 246, 0.2);
+    border-color: rgba(59, 130, 246, 0.5);
+    color: #60a5fa;
+}
+
+.card-status-badge.want_to_watch {
+    background-color: rgba(167, 139, 250, 0.2);
+    border-color: rgba(167, 139, 250, 0.5);
+    color: #c4b5fd;
+}
+
+
+/* ========= Estilos para Drag and Drop ========= */
+.card-expander.dragging {
+    opacity: 0.4;
+    border: 2px dashed #4f46e5;
+}
+.playlist-item.drag-over {
+    background-color: #4f46e540;
+    border-color: #4f46e5;
+}
+
+
+/* ========= Estilos para o Modal (Reutilizados/Adaptados) ========= */
+.modal-label { display: block; font-size: 0.875rem; font-weight: 500; color: #9ca3af; margin-bottom: 0.5rem; }
+.form-input { width: 100%; background-color: #374151; border: 1px solid #4b5563; border-radius: 0.5rem; padding: 0.75rem 1rem; color: white; transition: all 0.2s; }
+.form-input:focus { outline: none; border-color: #6366f1; box-shadow: 0 0 0 2px #4f46e5; }
+.image-preview { width: 100%; aspect-ratio: 2 / 3; background-color: #374151; border: 2px dashed #4b5563; border-radius: 0.75rem; display: flex; align-items: center; justify-content: center; background-size: cover; background-position: center; }
+#banner-preview { aspect-ratio: 16 / 9; }
+.button-group { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+.button-group button { background-color: #374151; color: #d1d5db; border: 1px solid #4b5563; border-radius: 0.5rem; padding: 0.75rem; font-weight: 500; display: flex; align-items: center; justify-content: center; gap: 0.5rem; transition: all 0.2s; flex: 1 1 auto; }
+.button-group button.active { background-color: #4f46e5; color: white; border-color: #6366f1; }
+
+/* ========= ATUALIZADO: SISTEMA DE CLASSIFICAÇÃO POR ESTRELAS MELHORADO ========= */
+.rating-wrapper {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.75rem;
+}
+
+.star-rating-input {
+    display: flex;
+    align-items: center;
+    background-color: #374151;
+    border-radius: 0.5rem;
+    padding: 0.5rem;
+    gap: 0.25rem;
+}
+
+.star-rating-input button {
+    position: relative;
+    background: none;
+    border: none;
+    padding: 0.25rem;
+    cursor: pointer;
+    transition: all 0.2s cubic-bezier(0.25, 0.8, 0.25, 1);
+    color: #6b7280; /* Cor de estrela vazia */
+}
+
+/* Efeito de hover que preenche as estrelas */
+.star-rating-input:hover button {
+    color: #f59e0b; /* Cor de estrela cheia */
+    transform: scale(1.1);
+}
+.star-rating-input button:hover ~ button {
+    color: #6b7280; /* Retorna as seguintes ao estado original */
+    transform: scale(1.0);
+}
+
+/* Estrelas ativas */
+.star-rating-input button.active {
+    color: #f59e0b;
+    transform: scale(1.15);
+}
+
+.star-rating-input button.star-half {
+    color: #f59e0b;
+}
+
+/* Ícone de meia estrela (SVG Lucide usa fill) */
+.star-rating-input button.star-half i {
+    fill: currentColor;
+    clip-path: polygon(0 0, 50% 0, 50% 100%, 0 100%);
+}
+
+/* Botão N/A */
+.na-rating-btn {
+    border-left: 1px solid #4b5563;
+    margin-left: 0.5rem;
+    padding-left: 0.75rem;
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: #9ca3af;
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+}
+.na-rating-btn i {
+    width: 1.25rem;
+    height: 1.25rem;
+}
+.na-rating-btn.active {
+    color: #22c55e; /* green-500 */
+    transform: scale(1.1);
+}
+
+/* Feedback numérico */
+.rating-feedback-display {
+    position: absolute;
+    top: -2.25rem;
+    left: 0;
+    background-color: #111827;
+    color: #e5e7eb;
+    padding: 0.25rem 0.75rem;
+    border-radius: 0.375rem;
+    font-size: 0.9rem;
+    font-weight: 700;
+    border: 1px solid #4b5563;
+    opacity: 0;
+    transform: translateY(10px) scale(0.9);
+    transition: all 0.2s ease-out;
+    pointer-events: none;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+}
+
+.rating-wrapper:hover .rating-feedback-display.show-feedback {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+}
+
+.rating-feedback-display.is-na {
+    color: #4ade80; /* green-400 */
+}
+
+
+/* Estilos para Séries e Episódios no Modal */
+#episodes-section .episode-item {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+#episodes-section .episode-number {
+    font-weight: 600;
+    color: #9ca3af;
+    min-width: 2rem;
+    text-align: right;
+}
+
+#episodes-section .episode-runtime-input { width: 6rem; }
+#episodes-section .episode-rating-input { width: 5rem; }
+
+#episodes-section .remove-episode-btn {
+    background: none;
+    border: none;
+    color: #ef4444;
+    padding: 0.5rem;
+    border-radius: 9999px;
+    transition: background-color 0.2s, color 0.2s;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+#episodes-section .remove-episode-btn:hover {
+    background-color: rgba(239, 68, 68, 0.1);
+    color: #f87171;
+}
+
+/* Estilos para a nova secção de info da série */
+#series-info-section .modal-field-group > div {
+    background-color: #37415190;
+    border: 1px solid #4b5563;
+    border-radius: 0.5rem;
+    padding: 0.75rem 1rem;
+    text-align: center;
+}
+
+/* ========= ESTILOS PARA O SELETOR DE PLAYLISTS NO MODAL (NOVO DESIGN) ========= */
+.playlist-checkbox-label {
+    display: block;
+    position: relative;
+    cursor: pointer;
+}
+
+.playlist-selector-card {
+    background-color: #374151;
+    border: 2px solid #4b5563;
+    border-radius: 0.75rem;
+    padding: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    transition: all 0.2s cubic-bezier(0.25, 0.8, 0.25, 1);
+}
+
+.playlist-checkbox-label:hover .playlist-selector-card {
+    border-color: #6366f1;
+    transform: translateY(-4px);
+    box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+}
+
+.playlist-selector-card .icon-container {
+    flex-shrink: 0;
+    width: 40px;
+    height: 40px;
+    background-color: rgba(0,0,0,0.2);
+    border-radius: 0.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #9ca3af;
+    transition: all 0.2s ease;
+}
+
+.playlist-selector-card .playlist-name {
+    font-weight: 600;
+    color: #e5e7eb;
+    transition: color 0.2s ease;
+}
+
+.playlist-checkbox-label input[type="checkbox"] {
+    position: absolute;
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.playlist-selector-card::after {
+    content: '';
+    position: absolute;
+    top: 0.75rem;
+    right: 0.75rem;
+    width: 24px;
+    height: 24px;
+    background-color: #1f2937;
+    border: 2px solid #4b5563;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    transform: scale(0);
+    opacity: 0;
+    transition: all 0.2s ease;
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='20 6 9 17 4 12'%3e%3c/polyline%3e%3c/svg%3e");
+    background-size: 14px 14px;
+    background-repeat: no-repeat;
+    background-position: center;
+}
+
+
+/* ESTADO SELECIONADO */
+.playlist-checkbox-label input[type="checkbox"]:checked + .playlist-selector-card {
+    background-color: #4f46e520;
+    border-color: #4f46e5;
+    box-shadow: 0 0 20px rgba(79, 70, 229, 0.3);
+}
+
+.playlist-checkbox-label input[type="checkbox"]:checked + .playlist-selector-card .icon-container {
+    background-color: #4f46e5;
+    color: white;
+}
+
+.playlist-checkbox-label input[type="checkbox"]:checked + .playlist-selector-card .playlist-name {
+    color: white;
+}
+
+.playlist-checkbox-label input[type="checkbox"]:checked + .playlist-selector-card::after {
+    transform: scale(1);
+    opacity: 1;
+    background-color: #4f46e5;
+    border-color: #818cf8;
+}
+
+/* ========= NOVO: ESTILOS PARA INPUT DE TAGS (Universo, Personagens, Tags) ========= */
+.tag-input-container {
+    background-color: #374151;
+    border: 1px solid #4b5563;
+    border-radius: 0.5rem;
+    padding: 0.5rem;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    align-items: center;
+    cursor: text;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    min-height: 46px;
+}
+
+.tag-input-container:focus-within {
+    border-color: #6366f1;
+    box-shadow: 0 0 0 2px #4f46e5;
+}
+
+.tag-item {
+    color: white;
+    border-radius: 0.375rem;
+    padding: 0.25rem 0.5rem;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.375rem;
+    font-size: 0.875rem;
+    font-weight: 500;
+}
+
+#item-universe-container .tag-item { background-color: #8b5cf6; }
+#item-characters-container .tag-item { background-color: #3b82f6; }
+#item-tags-container .tag-item { background-color: #22c55e; }
+
+.tag-item button {
+    background: none;
+    border: none;
+    color: #ddd6fe;
+    cursor: pointer;
+    padding: 0;
+    display: flex;
+    transition: color 0.2s;
+}
+
+#item-characters-container .tag-item button { color: #bfdbfe; }
+#item-tags-container .tag-item button { color: #bbf7d0; }
+
+.tag-item button:hover {
+    color: white;
+}
+
+.tag-item i {
+    width: 1rem;
+    height: 1rem;
+}
+
+.form-input-tags {
+    background: none;
+    border: none;
+    outline: none;
+    color: white;
+    flex-grow: 1;
+    min-width: 120px;
+    padding: 0.25rem;
+}
+
+.suggestions-list {
+    position: absolute;
+    background-color: #2b3546;
+    border: 1px solid #4b5563;
+    border-radius: 0.5rem;
+    margin-top: 0.5rem;
+    width: 100%;
+    z-index: 55;
+    max-height: 200px;
+    overflow-y: auto;
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(-10px);
+    transition: opacity 0.2s ease, transform 0.2s ease, visibility 0.2s;
+    box-shadow: 0 10px 20px rgba(0,0,0,0.3);
+}
+
+.suggestions-list.visible {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+}
+
+.suggestions-header {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: #9ca3af;
+    text-transform: uppercase;
+    padding: 0.75rem 1rem 0.25rem;
+    border-bottom: 1px solid #4b5563;
+}
+
+.suggestion-item {
+    padding: 0.75rem 1rem;
+    cursor: pointer;
+    color: #d1d5db;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+.suggestion-item:hover, .suggestion-item.active {
+    background-color: #4f46e5;
+    color: white;
+}
+.suggestion-item-create {
+    color: #a5b4fc;
+}
+.suggestion-item-create:hover {
+    color: white;
+}
+
+/* ========= SECÇÃO ATUALIZADA: VISUALIZADOR DE EPISÓDIOS (NOVO DESIGN) ========= */
+.episodes-viewer-content {
+    background-color: #1f2937;
+    border: 1px solid #374151;
+    border-radius: 1.5rem;
+    width: 100%;
+    max-width: 1280px;
+    max-height: 90vh;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    padding: 2rem;
+    box-shadow: 0 25px 50px -12px rgba(0,0,0,0.75);
+}
+
+.episodes-viewer-header {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+    margin-bottom: 1.5rem;
+    padding-bottom: 1.5rem;
+    border-bottom: 1px solid #374151;
+}
+#episodes-viewer-cover {
+    width: 80px;
+    height: 120px;
+    object-fit: cover;
+    border-radius: 0.75rem;
+    flex-shrink: 0;
+}
+#episodes-viewer-title {
+    font-size: 2rem;
+    font-weight: 800;
+    line-height: 1.2;
+}
+#episodes-viewer-stats {
+    font-size: 0.875rem;
+    color: #9ca3af;
+}
+
+.episodes-viewer-body {
+    flex-grow: 1;
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 2rem;
+    overflow: hidden;
+    position: relative;
+    transition: grid-template-columns 0.4s ease;
+}
+
+.episodes-viewer-body.editor-visible {
+    grid-template-columns: 1fr 0.8fr;
+}
+
+.episodes-viewer-list {
+    position: relative;
+    padding-left: 1rem;
+    display: flex;
+    flex-direction: column;
+}
+.episodes-viewer-list::before {
+    content: '';
+    position: absolute;
+    top: 2rem;
+    bottom: 2rem;
+    left: 8px;
+    width: 2px;
+    background-color: #374151;
+    z-index: 1;
+}
+
+.episode-viewer-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 1rem;
+    padding: 0.5rem 0;
+}
+.episode-viewer-dot {
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background-color: #374151;
+    flex-shrink: 0;
+    margin-top: 1.75rem;
+    border: 3px solid #1f2937;
+    transition: all 0.2s ease;
+    z-index: 2;
+}
+
+.episode-viewer-item.is-editing .episode-viewer-dot {
+    background-color: #4f46e5;
+    box-shadow: 0 0 10px #4f46e5;
+}
+
+.episode-viewer-card {
+    background-color: #2b3546;
+    background-size: cover;
+    background-position: center;
+    border-radius: 0.75rem;
+    flex-grow: 1;
+    position: relative;
+    overflow: hidden;
+    border: 1px solid #374151;
+    transition: all 0.3s ease;
+    min-height: 90px;
+}
+.episode-viewer-item.is-editing .episode-viewer-card {
+    border-color: #4f46e5;
+    box-shadow: 0 0 15px rgba(79, 70, 229, 0.4);
+}
+
+.episode-card-overlay {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(90deg, rgba(31, 41, 55, 0.95) 50%, rgba(31, 41, 55, 0.7) 100%);
+    backdrop-filter: blur(2px);
+    transition: background-color 0.3s ease;
+}
+.episode-viewer-card:hover .episode-card-overlay {
+    background: linear-gradient(90deg, rgba(31, 41, 55, 0.9) 50%, rgba(31, 41, 55, 0.6) 100%);
+}
+
+.episode-card-content {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1rem 1.5rem;
+    width: 100%;
+    gap: 1rem;
+}
+
+.episode-card-info {
+    flex-grow: 1;
+}
+
+.ep-number {
+    font-size: 0.75rem;
+    color: #9ca3af;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+.ep-title {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: #e5e7eb;
+    line-height: 1.3;
+}
+
+.episode-card-meta {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+    flex-shrink: 0;
+}
+.ep-meta-item {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    color: #9ca3af;
+    font-weight: 500;
+}
+.ep-meta-item i {
+    width: 1.125rem;
+    height: 1.125rem;
+}
+
+.episode-card-meta .card-status-badge {
+    position: static;
+    top: auto;
+    right: auto;
+    padding: 0.2rem 0.5rem;
+    font-size: 0.7rem;
+}
+
+.episode-card-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    border-left: 1px solid #374151;
+    padding-left: 1rem;
+    margin-left: 0.5rem;
+}
+
+.episode-action-btn {
+    background-color: transparent;
+    border: none;
+    color: #9ca3af;
+    transition: all 0.2s;
+    border-radius: 50%;
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.episode-action-btn:hover {
+    color: #6366f1;
+    background-color: #4f46e520;
+}
+.episode-viewer-item.is-editing .episode-viewer-edit-btn {
+    color: #6366f1;
+    background-color: #4f46e520;
+}
+
+/* Painel de Edição */
+.episode-editor-panel {
+    background-color: #111827;
+    border-left: 1px solid #374151;
+    padding: 1.5rem;
+    border-radius: 1rem;
+    width: 0;
+    opacity: 0;
+    visibility: hidden;
+    overflow-y: auto;
+    transition: width 0.4s ease, opacity 0.4s ease, visibility 0.4s;
+    display: flex;
+    flex-direction: column;
+}
+
+.episodes-viewer-body.editor-visible .episode-editor-panel {
+    width: 100%;
+    opacity: 1;
+    visibility: visible;
+}
+
+#ep-editor-form {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+#ep-editor-form .grid {
+    display: block;
+}
+#ep-editor-form .space-y-6 > div:not(:last-child) {
+    margin-bottom: 1.5rem;
+}
+
+/* ATUALIZADO: Estilos de classificação para o editor de episódios */
+#ep-editor-rating.star-rating-input {
+    padding: 0;
+    background-color: transparent;
+    justify-content: flex-start;
+}
+
+.episode-editor-actions {
+    margin-top: auto;
+    padding-top: 1.5rem;
+    border-top: 1px solid #374151;
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.75rem;
+}
+
+/* ========= ESTILOS PARA NOTIFICAÇÃO DE ERRO (NOVO) ========= */
+#storage-error-toast {
+    transition: transform 0.5s ease-in-out;
+}
+
+#storage-error-toast.toast-visible {
+    transform: translateX(0);
+}
+
+/* ========= NOVO: ESTILOS PARA MODAL DE COMENTÁRIO ========= */
+.comment-viewer-content {
+    background-color: #1f2937; /* bg-gray-800 */
+    border: 1px solid #374151; /* border-gray-700 */
+    border-radius: 1rem; /* rounded-xl */
+    width: 100%;
+    max-width: 600px; /* max-w-2xl */
+    position: relative;
+    padding: 2rem; /* p-8 */
+    box-shadow: 0 25px 50px -12px rgba(0,0,0,0.75);
+}
+
+#comment-viewer-title {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    color: #e5e7eb; /* text-gray-200 */
+}
+
+#comment-viewer-text {
+    background-color: #111827; /* bg-gray-900 */
+    padding: 1rem;
+    border-radius: 0.5rem; /* rounded-lg */
+    margin-top: 1rem;
+    min-height: 100px;
+    white-space: pre-wrap; /* Mantém a formatação do texto, como quebras de linha */
+    line-height: 1.6;
+    color: #d1d5db; /* text-gray-300 */
+}
+
+/* ========= SECÇÃO ATUALIZADA: ASSOCIAÇÃO A UNIVERSOS NO MODAL ========= */
+
+/* Container para a lista de universos já associados */
+#item-universes-container {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem; /* 12px */
+    max-height: 200px;
+    overflow-y: auto;
+    padding-right: 0.5rem; /* Espaço para a scrollbar */
+}
+
+/* Cada item na lista de associações */
+.universe-association-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background-color: #374151; /* bg-gray-700 */
+    padding: 0.75rem 1rem;
+    border-radius: 0.5rem; /* rounded-lg */
+    border: 1px solid #4b5563; /* border-gray-600 */
+}
+
+.universe-association-item .universe-name {
+    font-weight: 600;
+    color: #e5e7eb; /* text-gray-200 */
+}
+
+/* Controlos para aumentar/diminuir a contagem */
+.universe-count-controls {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem; /* 12px */
+}
+
+.universe-count-btn {
+    background-color: #1f2937; /* bg-gray-800 */
+    border: 1px solid #4b5563; /* border-gray-600 */
+    color: #d1d5db; /* text-gray-300 */
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    font-size: 1.25rem;
+    line-height: 1;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.universe-count-btn:hover {
+    background-color: #4f46e5; /* bg-indigo-600 */
+    color: white;
+}
+
+.universe-count-display {
+    font-size: 1.125rem; /* text-lg */
+    font-weight: 700;
+    color: white;
+    min-width: 24px;
+    text-align: center;
+}
+
+/* ========= ESTILOS PARA O MODAL DE SELEÇÃO DE UNIVERSO (NOVO) ========= */
+
+/* Reutiliza o design dos cards de playlist para consistência */
+.universe-selector-card {
+    background-color: #374151;
+    border: 2px solid #4b5563;
+    border-radius: 0.75rem;
+    padding: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    cursor: pointer;
+    transition: all 0.2s cubic-bezier(0.25, 0.8, 0.25, 1);
+}
+
+.universe-selector-card:hover {
+    border-color: #8b5cf6; /* Cor roxa para diferenciar de playlists (indigo) */
+    transform: translateY(-4px);
+    box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+}
+
+.universe-selector-card .icon-container {
+    flex-shrink: 0;
+    width: 40px;
+    height: 40px;
+    background-color: rgba(0,0,0,0.2);
+    border-radius: 0.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #9ca3af;
+    transition: all 0.2s ease;
+}
+
+.universe-selector-card:hover .icon-container {
+    background-color: #8b5cf6;
+    color: white;
+}
+
+.universe-selector-card .universe-name {
+    font-weight: 600;
+    color: #e5e7eb;
+}
+
+.universe-selector-card:hover .universe-name {
+    color: white;
+}
+
+/* NOVO: Estilos Melhorados para a Cronologia de Visualização */
+#watched-dates-list {
+    position: relative;
+    padding-left: 1.25rem; /* 20px */
+}
+/* Linha da timeline */
+#watched-dates-list::before {
+    content: '';
+    position: absolute;
+    left: 5px;
+    top: 0.5rem;
+    bottom: 0.5rem;
+    width: 2px;
+    background-color: #4b5563; /* border-gray-600 */
+}
+.watched-date-item {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.5rem 0.75rem;
+    border-radius: 0.375rem;
+    transition: background-color 0.2s ease;
+}
+.watched-date-item:hover {
+    background-color: rgba(255, 255, 255, 0.05);
+}
+/* Ponto na timeline */
+.watched-date-item::before {
+    content: '';
+    position: absolute;
+    left: -17px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background-color: #6366f1; /* indigo-500 */
+    border: 2px solid #1f2937; /* bg-gray-800 */
+}
+
+.watched-date-item .watched-date-text {
+    font-weight: 500;
+    color: #d1d5db;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.watched-date-item .remove-watched-date-btn {
+    background: none;
+    border: none;
+    color: #9ca3af;
+    cursor: pointer;
+    padding: 0.25rem;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0.5;
+    transition: all 0.2s ease;
+}
+
+.watched-date-item:hover .remove-watched-date-btn {
+    opacity: 1;
+}
+
+.watched-date-item .remove-watched-date-btn:hover {
+    background-color: #ef4444;
+    color: white;
+}
+
+/* NOVO: Estilos para os botões do histórico */
+.history-btn {
+    background-color: rgba(79, 70, 229, 0.1);
+    border: 1px solid rgba(99, 102, 241, 0.4);
+    color: #c7d2fe;
+    font-weight: 600;
+    padding: 0.625rem 1rem;
+    border-radius: 0.5rem;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    cursor: pointer;
+}
+.history-btn:hover {
+    background-color: rgba(79, 70, 229, 0.2);
+    border-color: rgba(99, 102, 241, 0.6);
+    color: white;
+}
+
+/* NOVO: Estilos para a cronologia de séries */
+#watched-dates-list:has(.series-chronology-item) {
+    display: flex;
+    flex-direction: row;
+    gap: 1rem;
+    padding-left: 0;
+    flex-wrap: wrap;
+}
+
+#watched-dates-list:has(.series-chronology-item)::before {
+    display: none;
+}
+
+.series-chronology-item {
+    flex: 1;
+    min-width: 150px;
+    background-color: #374151;
+    border-radius: 0.75rem;
+    padding: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    border: 1px solid #4b5563;
+    transition: all 0.2s ease;
+}
+
+.series-chronology-item:hover {
+    border-color: #6366f1;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+}
+
+.series-chronology-item i {
+    color: #a5b4fc;
+    width: 1.75rem;
+    height: 1.75rem;
+    flex-shrink: 0;
+}
+
+.series-chronology-item > div {
+    display: flex;
+    flex-direction: column;
+}
+
+.chronology-label {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: #9ca3af;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: 0.125rem;
+}
+
+.chronology-date {
+    font-size: 1rem;
+    font-weight: 600;
+    color: #e5e7eb;
+}
+
+/* NOVO: Badge de Ordem para Conteúdo Secundário */
+.card-order-badge {
+    position: absolute;
+    top: 0.75rem;
+    left: 0.75rem;
+    z-index: 6;
+    background-color: rgba(79, 70, 229, 0.8); /* indigo-600 com opacidade */
+    backdrop-filter: blur(4px);
+    color: white;
+    font-size: 0.8rem;
+    font-weight: 700;
+    padding: 0.25rem 0.6rem;
+    border-radius: 9999px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+}
+
+/* ATUALIZADO: Contadores de Conteúdo Anexado (agora é um botão) */
+.card-attachment-counters {
+    margin-top: 1rem;
+    padding: 0.5rem;
+    padding-top: 0.75rem;
+    border-top: 1px solid rgba(255, 255, 255, 0.15);
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    width: 100%;
+    background: none;
+    border-radius: 0.5rem;
+    transition: background-color 0.2s;
+    cursor: pointer;
+}
+
+.card-attachment-counters:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+}
+
+.attachment-counter-item {
+    display: flex;
+    align-items: center;
+    gap: 0.375rem;
+    background-color: rgba(17, 24, 39, 0.7);
+    backdrop-filter: blur(4px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    padding: 0.25rem 0.6rem;
+    border-radius: 9999px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: #d1d5db; /* text-gray-300 */
+    transition: all 0.2s ease;
+    pointer-events: none; /* Para o clique passar para o botão pai */
+}
+
+.attachment-counter-item i {
+    width: 0.875rem;
+    height: 0.875rem;
+}
+
+/* NOVO: Modal para Visualizar Anexos */
+.attachments-viewer-content {
+    background-color: #1f2937;
+    border: 1px solid #374151;
+    border-radius: 1.5rem;
+    width: 100%;
+    max-width: 700px;
+    max-height: 90vh;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    padding: 2rem;
+    box-shadow: 0 25px 50px -12px rgba(0,0,0,0.75);
+}
+
+.attachments-viewer-header {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+    padding-bottom: 1.5rem;
+    margin-bottom: 1.5rem;
+    border-bottom: 1px solid #374151;
+    flex-shrink: 0;
+}
+
+.attachments-viewer-list {
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    padding-right: 0.5rem;
+}
+
+.attachment-item-card {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background-color: #374151;
+    border: 1px solid #4b5563;
+    border-radius: 0.75rem;
+    padding: 1rem 1.5rem;
+    transition: all 0.2s ease;
+}
+
+.attachment-item-card:hover {
+    border-color: #6366f1;
+    background-color: #4338ca20;
+}
+
+.attachment-item-info {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.attachment-item-type {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: #9ca3af;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.attachment-item-type i {
+    width: 1rem;
+    height: 1rem;
+    color: #a5b4fc;
+}
+
+.attachment-item-title {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: #e5e7eb;
+}
+
+.attachment-item-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.attachment-action-btn {
+    background-color: transparent;
+    border: none;
+    color: #9ca3af;
+    transition: all 0.2s;
+    border-radius: 50%;
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+}
+
+.attachment-action-btn:hover {
+    color: white;
+    background-color: #4f46e5;
+}
+
+/* =================================================================== */
+/* ============= MODAL DE FILTROS PARA MOBILE ======================== */
+/* =================================================================== */
+.mobile-filters-modal-overlay {
+    position: fixed;
+    inset: 0;
+    background-color: rgba(0, 0, 0, 0.7);
+    backdrop-filter: blur(4px);
+    z-index: 100;
+    display: flex;
+    align-items: flex-end; /* Alinha o modal na parte inferior */
+    justify-content: center;
+    opacity: 1;
+    transition: opacity 0.3s ease;
+}
+
+.mobile-filters-modal-overlay.hidden {
+    opacity: 0;
+    pointer-events: none;
+}
+
+.mobile-filters-modal-content {
+    background-color: #1f2937;
+    width: 100%;
+    min-height: 50vh; /* Aumenta a altura do modal */
+    border-top-left-radius: 1.5rem;
+    border-top-right-radius: 1.5rem;
+    padding: 1.5rem;
+    padding-bottom: calc(env(safe-area-inset-bottom, 1.5rem)); /* Espaço para a barra de navegação do iOS */
+    border-top: 1px solid #374151;
+    transform: translateY(0);
+    transition: transform 0.3s ease;
+}
+
+.mobile-filters-modal-overlay.hidden .mobile-filters-modal-content {
+    transform: translateY(100%);
+}
+
+.mobile-filters-modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+}
+
+.mobile-filters-modal-body {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+/* Força que o container de filtros dentro do modal ocupe o espaço e alinhe */
+.mobile-filters-modal-body #filters-container {
+    flex-direction: column;
+    align-items: stretch;
+    border-bottom: none;
+    padding-bottom: 0;
+    width: 100%;
+}
+
+.mobile-filters-modal-body #filters-container .clear-filters-button {
+    margin-top: 0.5rem;
+}
+
+/* =================================================================== */
+/* =================== MEDIA QUERIES (TABLET) ======================== */
+/* =================================================================== */
+@media (max-width: 1024px) {
+    .playlists-page-layout {
+        flex-direction: column;
+        height: auto;
+    }
+    .playlists-sidebar {
+        width: 100%;
+        height: auto;
+    }
+    .content-grid {
+        grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    }
+    .content-card {
+        width: 180px;
+        height: 270px;
+    }
+    .content-card:hover .card-expander {
+        width: 380px;
+    }
+    .content-card.expand-left:hover .card-expander {
+        left: -200px;
+    }
+}
+
+
+/* =================================================================== */
+/* ============ NOVO DESIGN EXCLUSIVO PARA SMARTPHONES =============== */
+/* =================================================================== */
+@media (max-width: 767px) {
+    .main-content {
+        padding: 1rem;
+        padding-bottom: 6rem; /* Garante espaço para o botão flutuante */
+    }
+
+    .playlists-page-layout {
+        flex-direction: column;
+        gap: 1.5rem;
+    }
+
+    .playlists-sidebar {
+        width: 100%;
+        padding: 1rem;
+    }
+
+    .playlist-header h3 {
+        font-size: 1.25rem;
+    }
+
+    .playlists-list {
+        flex-direction: row;
+        overflow-x: auto;
+        padding-bottom: 1rem;
+        scrollbar-width: none;
+    }
+    .playlists-list::-webkit-scrollbar {
+        display: none;
+    }
+
+    .playlist-item {
+        flex-shrink: 0;
+        width: 150px;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.5rem;
+        padding: 0.75rem;
+    }
+    
+    .playlist-item .item-info {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.25rem;
+    }
+    .playlist-item .item-info .playlist-name {
+        white-space: normal;
+    }
+    
+    .playlists-sidebar.edit-mode .playlist-item {
+        border: 2px dashed #4b5563;
+    }
+    .drag-handle { display: none; }
+
+    .content-area {
+        padding: 0;
+    }
+
+    /* === REVERSÃO DO HEADER PARA O ESTILO FLUTUANTE === */
+    .header-top-row {
+        flex-direction: column;
+        gap: 1rem;
+        align-items: stretch;
+    }
+    
+    #current-playlist-title {
+        font-size: 2rem;
+    }
+    
+    .search-input {
+        width: 100%;
+    }
+
+    .filters-container {
+        padding-bottom: 1rem;
+        justify-content: space-between;
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+    }
+    
+    .filter-btn {
+        padding: 0.5rem 0.75rem;
+        font-size: 0.875rem;
+        flex-grow: 1;
+    }
+    
+    .filter-select {
+        flex-grow: 1;
+    }
+
+    .clear-filters-button {
+        margin-left: 0;
+        width: 100%;
+        grid-column: 1 / -1;
+        justify-content: center;
+    }
+
+    .content-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 1rem;
+        padding-top: 1.5rem;
+    }
+    
+    .content-card {
+        width: 100%;
+        height: auto;
+        aspect-ratio: 2 / 3;
+    }
+
+    .card-expander,
+    .content-card:hover .card-expander {
+        width: 100%;
+        left: 0;
+        box-shadow: none;
+        border-color: #374151;
+    }
+
+    .card-details-container {
+        display: none;
+    }
+
+    .card-cover-info {
+        padding: 0.75rem;
+    }
+
+    .card-title {
+        font-size: 0.9rem;
+    }
+    .card-status-badge {
+        font-size: 0.65rem;
+        padding: 0.2rem 0.5rem;
+        gap: 0.25rem;
+    }
+    .card-status-badge i {
+        width: 0.75rem;
+        height: 0.75rem;
+    }
+
+    /* Posiciona o botão de adicionar ao lado do de menu */
+    #add-content-btn {
+        width: 64px;
+        height: 64px;
+        bottom: 2rem; /* Alinha com o botão de menu (bottom-8) */
+        right: calc(2rem + 64px + 0.75rem); /* right-padding + menu-btn-width + gap */
+    }
+    
+    .mobile-menu-button {
+        width: 64px;
+        height: 64px;
+        background-color: #4f46e5 !important; /* Cor azul indigo, !important para sobrepor Tailwind */
+    }
+
+    /* === ATUALIZAÇÃO: DESIGN SUPERIOR PARA A SIDEBAR DE PLAYLISTS === */
+    .playlists-sidebar {
+        background-color: #111827; /* Um tom mais escuro para profundidade */
+        border: 1px solid #374151;
+        box-shadow: 0 8px 25px rgba(0,0,0,0.3);
+        padding: 1.25rem; /* Aumenta o padding */
+        border-radius: 1.25rem; /* Cantos mais arredondados */
+    }
+
+    .playlist-header-actions .playlist-action-button,
+    .playlist-header-actions .add-playlist-button {
+        width: 44px; /* Aumenta o tamanho para melhor toque */
+        height: 44px;
+    }
+
+    .playlist-header-actions .playlist-action-button i,
+    .playlist-header-actions .add-playlist-button i {
+        width: 24px; /* Aumenta o ícone */
+        height: 24px;
+    }
+    
+    .playlists-list {
+        gap: 1rem; /* Aumenta o espaçamento entre os cards */
+    }
+
+    .playlist-item {
+        width: 160px; /* Aumenta a largura dos cards */
+        background-color: #1f2937; /* Cor de fundo do card */
+        border: 1px solid #374151; /* Borda subtil */
+        border-radius: 0.75rem; /* Cantos arredondados para o card */
+        box-shadow: 0 4px 10px rgba(0,0,0,0.2); /* Sombra para dar profundidade */
+        padding: 1rem; /* Padding interno */
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+        position: relative; /* Necessário para o posicionamento do contador */
+    }
+    
+    .playlist-item:active { /* Efeito de toque */
+        transform: scale(0.97);
+        box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+    }
+    
+    .playlist-item.active {
+        background: linear-gradient(to right, #4f46e5, #6366f1);
+        border-color: #818cf8;
+        color: white;
+        box-shadow: 0 0 20px rgba(79, 70, 229, 0.5);
+    }
+    .playlist-item.active .item-count {
+        background-color: rgba(255,255,255,0.2);
+        color: white;
+    }
+    .playlist-item.active .item-info i {
+        color: white;
+    }
+    
+    .playlist-item .item-info i {
+        width: 28px;
+        height: 28px;
+        color: #a5b4fc; /* Cor do ícone */
+        margin-bottom: 0.5rem;
+    }
+    
+    .playlist-item .item-count {
+        position: absolute;
+        top: 0.5rem;
+        right: 0.5rem;
+        background-color: #374151;
+        font-weight: 600;
+    }
+
+    /* === ATUALIZAÇÃO: MODAIS RESPONSIVOS === */
+    
+    /* Base para modais em ecrãs pequenos */
+    #item-modal .bg-gray-800,
+    .episodes-viewer-content,
+    .attachments-viewer-content {
+        width: 100vw;
+        height: 100vh;
+        max-height: 100vh;
+        border-radius: 0;
+        padding: 1.5rem;
+        display: flex;
+        flex-direction: column;
+    }
+    
+    #item-modal .bg-gray-800 {
+        padding-top: 4rem; /* Espaço para o botão de fechar */
+    }
+
+    /* Botão de fechar fixo e maior */
+    #close-item-modal-btn,
+    #close-episodes-viewer-btn,
+    #close-attachments-viewer-btn {
+        position: fixed;
+        top: 1rem;
+        right: 1rem;
+        z-index: 100;
+        background-color: rgba(0,0,0,0.5);
+        border-radius: 50%;
+        padding: 0.5rem;
+    }
+
+    #item-modal form {
+        display: flex;
+        flex-direction: column;
+        flex-grow: 1;
+        overflow-y: auto;
+    }
+    
+    #item-modal .grid {
+        grid-template-columns: 1fr;
+    }
+    
+    #item-modal .space-y-6,
+    #item-modal .space-y-3 {
+        display: flex;
+        flex-direction: column;
+        gap: 1.5rem;
+    }
+
+    #item-modal .mt-8.flex {
+        margin-top: auto; /* Empurra os botões para o fundo */
+        padding-top: 1.5rem;
+    }
+
+    /* Visualizador de episódios */
+    .episodes-viewer-body {
+        grid-template-columns: 1fr !important; /* Força uma coluna */
+    }
+    .episode-editor-panel {
+        display: none; /* Escondido por defeito, JS pode ter de o mostrar noutro formato */
+    }
+    .episode-card-content {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.75rem;
+        padding: 1rem;
+    }
+    .episode-card-meta {
+        gap: 1rem;
+    }
+    .ep-title {
+        font-size: 1.1rem;
+    }
+    .episode-card-actions {
+        position: absolute;
+        top: 0.5rem;
+        right: 0.5rem;
+        border: none;
+        padding: 0;
+        margin: 0;
+    }
+
+    /* === MELHORIAS NO MODO DE EDIÇÃO (MOBILE) === */
+    .playlist-header {
+        margin-bottom: 1rem; /* Adiciona espaço entre o título e a lista de playlists */
+    }
+
+    .playlists-sidebar.edit-mode .playlist-item {
+        border-style: solid; /* Muda a borda de tracejada para sólida */
+        padding-bottom: 3.5rem; /* Cria espaço em baixo para os botões */
+    }
+
+    .playlists-sidebar.edit-mode .drag-handle {
+        display: flex; /* Garante que o ícone de mover aparece */
+        align-items: center;
+        justify-content: center;
+        position: absolute;
+        bottom: 0.75rem;
+        left: 0.75rem;
+        width: 40px;
+        height: 40px;
+        background-color: #374151;
+        border-radius: 0.5rem;
+        cursor: grab;
+        margin: 0; /* Reseta margens */
+    }
+    .playlists-sidebar.edit-mode .drag-handle:active {
+        cursor: grabbing;
+        background-color: #4f46e5;
+    }
+
+    .playlists-sidebar.edit-mode .playlist-item-actions {
+        position: absolute;
+        bottom: 0.75rem;
+        right: 0.75rem;
+        margin: 0; /* Reseta margens */
+    }
+
+    .playlists-sidebar.edit-mode .playlist-item-actions button {
+        width: 40px;
+        height: 40px;
+        background-color: #374151;
+        border-radius: 0.5rem;
+    }
+}
+
+/* =================================================================== */
+/* ============= ESTILOS PARA DRAG AND DROP POR TOQUE ================ */
+/* =================================================================== */
+
+/* Estilo para o elemento "fantasma" que segue o dedo */
+.playlist-ghost {
+    position: fixed; /* Usa fixed para se mover sobre toda a página */
+    top: 0;
+    left: 0;
+    pointer-events: none; /* Não interfere com a deteção de elementos por baixo */
+    z-index: 9999;
+    opacity: 0.8;
+    transform-origin: center center;
+    box-shadow: 0 15px 30px rgba(0,0,0,0.4);
+    transform: scale(1.05); /* Ligeiramente maior para feedback visual */
+}
+
+/* Classe adicionada ao <body> durante o arrasto por toque */
+body.is-dragging-touch {
+    /* Previne a seleção de texto e outros comportamentos nativos de toque */
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+    -webkit-touch-callout: none;
+    -khtml-user-select: none;
+}
+
