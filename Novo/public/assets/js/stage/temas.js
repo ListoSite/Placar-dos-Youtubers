@@ -7,6 +7,7 @@ export const TEMAS = [
   {
     id: "rubi",
     nome: "Clássico",
+    grupo: "ambientes",
     texto: "O vermelho do Placar",
     amostra: ["#6a1029", "#e0294f", "#f4b942"],
     particulas: "poeira",
@@ -17,6 +18,7 @@ export const TEMAS = [
   },
   {
     id: "verao",
+    grupo: "ambientes",
     nome: "Verão",
     texto: "Pôr do sol, mar e ritmo de praia",
     amostra: ["#ff7a59", "#ffc857", "#19b6c9"],
@@ -28,6 +30,7 @@ export const TEMAS = [
   },
   {
     id: "inferno",
+    grupo: "ambientes",
     nome: "Inferno",
     texto: "Chamas, brasas e peso",
     amostra: ["#1a0302", "#ff3d00", "#ffb300"],
@@ -39,6 +42,7 @@ export const TEMAS = [
   },
   {
     id: "gelo",
+    grupo: "ambientes",
     nome: "Gelo",
     texto: "Neve, aurora e cristais",
     amostra: ["#06182e", "#5ad1ff", "#e6f7ff"],
@@ -50,6 +54,7 @@ export const TEMAS = [
   },
   {
     id: "neon",
+    grupo: "ambientes",
     nome: "Neon",
     texto: "Anos 80, grelha e luzes",
     amostra: ["#14002b", "#ff2bd6", "#00e5ff"],
@@ -61,6 +66,7 @@ export const TEMAS = [
   },
   {
     id: "espaco",
+    grupo: "ambientes",
     nome: "Galáxia",
     texto: "Estrelas, nebulosas e planetas",
     amostra: ["#05031a", "#7c5cff", "#38d9ff"],
@@ -72,6 +78,7 @@ export const TEMAS = [
   },
   {
     id: "gala",
+    grupo: "ambientes",
     nome: "Gala",
     texto: "Cortinas, holofotes e ouro",
     amostra: ["#0d0806", "#c9a227", "#7a0f1f"],
@@ -83,7 +90,8 @@ export const TEMAS = [
   },
   {
     id: "estadio",
-    nome: "Estádio",
+    nome: "Futebol",
+    grupo: "categorias",
     texto: "Relvado, holofotes e bancada",
     amostra: ["#062312", "#2ee66b", "#ffffff"],
     particulas: "flashes",
@@ -92,11 +100,149 @@ export const TEMAS = [
     musica: { tensao: "estadio_calmo", epico: "estadio_epico", leve: "estadio_calmo" },
     sons: { abertura: "buzina", destaque: "multidao", festa: "multidao" },
   },
+  {
+    id: "cozinha",
+    nome: "Cozinha",
+    grupo: "categorias",
+    texto: "Azulejos, toalha aos quadrados e vapor",
+    amostra: ["#fff1e0", "#e8452c", "#3a9d5d"],
+    particulas: "vapor",
+    festa: "confetes",
+    cores: ["#e8452c", "#f6c445", "#3a9d5d", "#ffffff", "#ff8a5c"],
+    musica: { tensao: "cozinha_calmo", epico: "cozinha_festa", leve: "cozinha_calmo" },
+    sons: { abertura: "ding", destaque: "ding", festa: "vitoria" },
+  },
+  {
+    id: "carros",
+    nome: "Carros",
+    grupo: "categorias",
+    texto: "Pista, velocidade e motores",
+    amostra: ["#141619", "#ff2a2a", "#f2f2f2"],
+    particulas: "velocidade",
+    festa: "faiscas",
+    cores: ["#ff2a2a", "#ffffff", "#ffcc00", "#9aa3ad", "#ff6b00"],
+    musica: { tensao: "carros_tensao", epico: "carros_corrida", leve: "carros_tensao" },
+    sons: { abertura: "motor", destaque: "motor", festa: "vitoria" },
+  },
+  {
+    id: "gaming",
+    nome: "Gaming",
+    grupo: "categorias",
+    texto: "Píxeis, arcada e chiptune",
+    amostra: ["#0c0820", "#7cff4f", "#b44bff"],
+    particulas: "pixels",
+    festa: "pixels",
+    cores: ["#7cff4f", "#b44bff", "#ffe14d", "#33d1ff", "#ff4f8b"],
+    musica: { tensao: "gaming_calmo", epico: "gaming_epico", leve: "gaming_calmo" },
+    sons: { abertura: "powerup", destaque: "moeda", festa: "powerup" },
+  },
+  {
+    id: "tech",
+    nome: "Tech",
+    grupo: "categorias",
+    texto: "Circuitos, código e luz",
+    amostra: ["#04121a", "#00e0b0", "#3d8bff"],
+    particulas: "codigo",
+    festa: "neon",
+    cores: ["#00e0b0", "#3d8bff", "#9bffea", "#ffffff", "#7a5cff"],
+    musica: { tensao: "tech_calmo", epico: "tech_epico", leve: "tech_calmo" },
+    sons: { abertura: "bip", destaque: "laser", festa: "vitoria" },
+  },
+  {
+    id: "comedia",
+    nome: "Comédia",
+    grupo: "categorias",
+    texto: "Banda desenhada, cores e risos",
+    amostra: ["#ffd400", "#ff2e63", "#1a1a1a"],
+    particulas: "pop",
+    festa: "confetes",
+    cores: ["#ffd400", "#ff2e63", "#2ec4ff", "#ffffff", "#1a1a1a"],
+    musica: { tensao: "comedia_leve", epico: "comedia_festa", leve: "comedia_leve" },
+    sons: { abertura: "boing", destaque: "boing", festa: "vitoria" },
+  },
+  {
+    id: "musica",
+    nome: "Música",
+    grupo: "categorias",
+    texto: "Concerto, luzes e equalizador",
+    amostra: ["#12001c", "#ff3df2", "#ffb800"],
+    particulas: "notas",
+    festa: "confetes",
+    cores: ["#ff3df2", "#ffb800", "#00e1ff", "#ffffff", "#9b5cff"],
+    musica: { tensao: "musica_calmo", epico: "musica_festa", leve: "musica_calmo" },
+    sons: { abertura: "revelar", destaque: "brilho", festa: "vitoria" },
+  },
+  {
+    id: "chroma",
+    nome: "Chroma (OBS)",
+    grupo: "direto",
+    texto: "Fundo verde para recortar no OBS",
+    amostra: ["#00ff00", "#00ff00", "#ffffff"],
+    particulas: "nenhuma",
+    festa: "confetes",
+    cores: ["#f4b942", "#ffd77a", "#e0294f", "#ffffff", "#ff8199"],
+    musica: { tensao: "tensao", epico: "epico", leve: "leve" },
+    sons: { abertura: "revelar", destaque: "brilho", festa: "vitoria" },
+  },
 ];
+
+export const GRUPOS_TEMAS = [
+  { id: "ambientes", nome: "Ambientes" },
+  { id: "categorias", nome: "Por categoria" },
+  { id: "direto", nome: "Para direto" },
+];
+
+/** Tema sugerido para cada categoria do site. */
+export const TEMA_DA_CATEGORIA = {
+  Football: "estadio",
+  Fitness: "estadio",
+  Comida: "cozinha",
+  Doméstico: "cozinha",
+  Carros: "carros",
+  Mota: "carros",
+  Corrida: "carros",
+  Gamer: "gaming",
+  Reacts: "gaming",
+  Tech: "tech",
+  Programação: "tech",
+  Educação: "tech",
+  Business: "tech",
+  Física: "tech",
+  Comédia: "comedia",
+  Pranks: "comedia",
+  Shorts: "comedia",
+  Música: "musica",
+  Dança: "musica",
+  Radio: "musica",
+  Vlog: "verao",
+  Pesca: "verao",
+  Animais: "verao",
+  Girly: "verao",
+  Política: "gala",
+  Notícias: "gala",
+  História: "gala",
+  Podcast: "gala",
+  Cinema: "gala",
+  Livros: "gala",
+  Reportagem: "gala",
+};
 
 export function tema(id) {
   return TEMAS.find((t) => t.id === id) || TEMAS[0];
 }
+
+const CIRCUITO = [
+  "M0 120 H260 L320 180 H620 L680 120 H900",
+  "M1600 220 H1300 L1240 280 H980 L920 220 H760",
+  "M0 640 H180 L240 580 H520 L580 640 H820",
+  "M1600 720 H1380 L1320 660 H1080 L1020 720 H860",
+  "M300 900 V760 L360 700 V520",
+  "M1300 0 V140 L1240 200 V360",
+  "M760 0 V90 L820 150 H1000",
+  "M600 900 V820 L660 760 H900 L960 820 V900",
+]
+  .map((d, i) => `<path class="trilho" d="${d}"/><path class="pulso" style="--i:${i}" d="${d}"/>`)
+  .join("");
 
 /** Cenário de cada tema (desenhado em CSS no palco.css). */
 export function cenario(id) {
@@ -111,6 +257,13 @@ export function cenario(id) {
     espaco: `<div class="dc-nebulosa"><i></i><i></i></div><div class="dc-planeta"><i></i></div>`,
     gala: `<div class="dc-holofotes"><i></i><i></i><i></i></div><div class="dc-cortina esq"></div><div class="dc-cortina dir"></div><div class="dc-chao"></div>`,
     estadio: `<div class="dc-relvado"><i></i></div><div class="dc-torres"><i></i><i></i></div><div class="dc-bancada"></div>`,
+    cozinha: `<div class="dc-azulejos"></div><div class="dc-prateleira"><i></i><i></i><i></i></div><div class="dc-toalha"></div>`,
+    carros: `<div class="dc-asfalto"></div><div class="dc-estrada"><i></i></div><div class="dc-zebra cima"></div><div class="dc-zebra baixo"></div><div class="dc-xadrez esq"></div><div class="dc-xadrez dir"></div>`,
+    gaming: `<div class="dc-pixeis-chao"></div><div class="dc-blocos">${Array.from({ length: 9 }, (_, i) => `<i style="--i:${i}"></i>`).join("")}</div><div class="dc-linhas"></div>`,
+    tech: `<svg class="dc-circuito" viewBox="0 0 1600 900" preserveAspectRatio="xMidYMid slice" aria-hidden="true">${CIRCUITO}</svg><div class="dc-hex"></div>`,
+    comedia: `<div class="dc-raios"></div><div class="dc-pontinhos"></div><svg class="dc-pow esq" viewBox="0 0 200 160" aria-hidden="true"><path d="M100 4 120 46 166 22 150 66 196 74 154 96 180 140 130 120 112 156 94 118 48 146 62 100 6 92 54 70 26 24 78 44z"/><text x="100" y="94" text-anchor="middle">POW!</text></svg><svg class="dc-pow dir" viewBox="0 0 200 160" aria-hidden="true"><path d="M100 4 120 46 166 22 150 66 196 74 154 96 180 140 130 120 112 156 94 118 48 146 62 100 6 92 54 70 26 24 78 44z"/><text x="100" y="94" text-anchor="middle">UAU!</text></svg>`,
+    musica: `<div class="dc-luzes"><i></i><i></i><i></i><i></i></div><div class="dc-equalizador">${Array.from({ length: 40 }, (_, i) => `<i style="--i:${i};--d:${(0.35 + ((i * 37) % 23) / 40).toFixed(2)}s"></i>`).join("")}</div>`,
+    chroma: ``,
   }[id];
   return html || "";
 }

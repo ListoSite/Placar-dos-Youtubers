@@ -3,12 +3,13 @@
 import { estado, indice, views, recordes } from "../data.js";
 import { esc, curto, inteiro, mesNome } from "../format.js";
 import { contar } from "../ui.js";
-import { avatarPalco, baralhar } from "./stage.js";
+import { avatarPalco, baralhar, comFoco } from "./stage.js";
 import { melhores } from "./metricas.js";
 
 export async function correr(palco, opts) {
   const n = Math.min(12, Math.max(6, Number(opts.n) || 10));
-  const pessoas = baralhar(melhores(Number(opts.top) || 60, { cat: opts.cat })).slice(0, n);
+  const pessoas = baralhar(comFoco(baralhar(melhores(Number(opts.top) || 60, { cat: opts.cat })).slice(0, n), palco));
+  palco.contexto = { metrica: "indice", cat: opts.cat };
   if (pessoas.length < 4) throw new Error("Há poucos Youtubers para a roda.");
   const voltas = Math.min(Number(opts.voltas) || 3, pessoas.length - 1);
   const vertical = palco.vertical;
@@ -117,6 +118,7 @@ export async function correr(palco, opts) {
     await palco.passo(5600);
     cena.querySelectorAll(".rd-fatia").forEach((f) => f.classList.remove("escolhida"));
     cena.querySelector(`.rd-pessoa[data-i="${alvo}"]`)?.classList.add("usado");
+    if (v === 0) await palco.meio();
   }
   palco.festa({ forca: 0.6 });
   await palco.esperar(1500);

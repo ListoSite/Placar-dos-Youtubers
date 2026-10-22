@@ -61,7 +61,9 @@ export async function correr(palco, opts) {
     return maior;
   };
 
+  palco.contexto = { metrica: "views", m };
   const rei = await secao(subidas, true);
+  await palco.meio();
   await secao(quedas, false);
 
   if (rei) {

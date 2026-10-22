@@ -2,7 +2,7 @@
 
 import { esc } from "../format.js";
 import { contar } from "../ui.js";
-import { avatarPalco, baralhar, letras } from "./stage.js";
+import { avatarPalco, baralhar, letras, comFoco } from "./stage.js";
 import { METRICAS, melhores } from "./metricas.js";
 import { animate, stagger, spring } from "../../vendor/anime.esm.min.js";
 
@@ -24,7 +24,9 @@ export async function correr(palco, opts) {
   const m = opts.m;
   let lista = opts.quem === "acaso" ? baralhar(melhores(60, { cat: opts.cat })).slice(0, n) : melhores(n, { cat: opts.cat });
   if (lista.length < n) throw new Error(`São precisos ${n} Youtubers com Índice${opts.cat ? " nesta categoria" : ""}.`);
+  lista = comFoco(lista, palco);
   if (opts.quem !== "acaso") lista = semear(n).map((i) => lista[i]);
+  palco.contexto = { metrica: opts.criterio && opts.criterio !== "misto" ? opts.criterio : "indice", m, cat: opts.cat };
   const vertical = palco.vertical;
   const cena = palco.cena;
   const R = Math.log2(n);
@@ -301,6 +303,7 @@ export async function correr(palco, opts) {
     critEl.textContent = "";
     if (nJogos > 2) await palco.passo(1400);
     vivos = seguintes;
+    if (r === 0) await palco.meio();
   }
 
   // ---------- Campeão ----------

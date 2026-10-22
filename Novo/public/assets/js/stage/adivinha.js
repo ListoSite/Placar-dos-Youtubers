@@ -2,7 +2,7 @@
 
 import { estado, indice, views, recordes } from "../data.js";
 import { esc, curto, mesNome } from "../format.js";
-import { avatarPalco, baralhar } from "./stage.js";
+import { avatarPalco, baralhar, comFoco } from "./stage.js";
 import { melhores } from "./metricas.js";
 
 function pistas(p) {
@@ -28,7 +28,8 @@ export async function correr(palco, opts) {
   const n = Number(opts.n) || 6;
   const pool = baralhar(melhores(Number(opts.dif) || 60));
   const comFoto = pool.filter((p) => p.photo);
-  const escolhidos = (comFoto.length >= n ? comFoto : pool).slice(0, n);
+  const escolhidos = comFoco((comFoto.length >= n ? comFoto : pool).slice(0, n), palco);
+  palco.contexto = { metrica: "indice" };
   if (escolhidos.length < 2) throw new Error("Há poucos Youtubers para este jogo.");
   const vertical = palco.vertical;
   const cena = palco.cena;
@@ -38,6 +39,7 @@ export async function correr(palco, opts) {
 
   const desfoque = [46, 32, 22, 14, 8, 0];
   for (const [i, p] of escolhidos.entries()) {
+    if (i === Math.floor(escolhidos.length / 2)) await palco.meio();
     const ps = pistas(p);
     const temFoto = Boolean(p.photo);
     cena.innerHTML = `<div class="av-topo">Ronda ${i + 1} de ${escolhidos.length}</div>

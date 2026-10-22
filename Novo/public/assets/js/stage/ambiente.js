@@ -75,7 +75,7 @@ export class Ambiente {
   criarFundo() {
     const { W, H } = this;
     const tipo = this.tema.particulas;
-    const n = Math.round(({ poeira: 55, bolhas: 42, brasas: 130, neve: 170, neon: 46, estrelas: 260, brilhos: 90, flashes: 0 }[tipo] || 0) * this.fator);
+    const n = Math.round(({ poeira: 55, bolhas: 42, brasas: 130, neve: 170, neon: 46, estrelas: 260, brilhos: 90, flashes: 0, vapor: 26, velocidade: 40, pixels: 60, codigo: 90, notas: 34, pop: 40 }[tipo] || 0) * this.fator);
     for (let i = 0; i < n; i++) this.fundo.push(this.novaFundo(tipo, true));
     this.proximoRaio = 2.5;
   }
@@ -93,6 +93,12 @@ export class Ambiente {
     if (tipo === "neon") Object.assign(p, { y: inicio ? p.y : H + 20, r: aleat(3, 8), vy: -aleat(14, 40), vx: 0, a: aleat(0.3, 0.8), cor: escolher(["#ff2bd6", "#00e5ff", "#b26bff"]), forma: Math.random() < 0.5 ? "mais" : "quadrado" });
     if (tipo === "estrelas") Object.assign(p, { r: Math.random() < 0.08 ? aleat(2.5, 4) : aleat(0.6, 2), a: aleat(0.3, 1), cor: escolher(["#ffffff", "#ffffff", "#b9a8ff", "#9be7ff"]), vx: -aleat(2, 10), vy: 0 });
     if (tipo === "brilhos") Object.assign(p, { y: inicio ? p.y : -20, r: aleat(6, 16), vy: aleat(12, 40), vx: aleat(-8, 8), a: 0, cor: escolher(["#f7d774", "#fff3c4", "#e8b84a"]) });
+    if (tipo === "vapor") Object.assign(p, { y: inicio ? aleat(H * 0.4, H) : H + 60, r: aleat(50, 120), vy: -aleat(30, 70), vx: aleat(-12, 12), a: aleat(0.05, 0.12), cor: "#ffffff", cresce: aleat(8, 20) });
+    if (tipo === "velocidade") Object.assign(p, { x: inicio ? p.x : W + aleat(0, 400), y: aleat(0, H), comp: aleat(80, 360), vy: 0, vx: -aleat(1400, 3200), a: aleat(0.12, 0.35), cor: Math.random() < 0.2 ? "#ff2a2a" : "#ffffff", r: aleat(1.5, 3.5) });
+    if (tipo === "pixels") Object.assign(p, { y: inicio ? p.y : H + 20, r: escolher([6, 8, 10, 14]), vy: -aleat(20, 60), vx: 0, a: aleat(0.35, 0.8), cor: escolher(cores) });
+    if (tipo === "codigo") Object.assign(p, { y: inicio ? p.y : -30, r: aleat(16, 30), vy: aleat(70, 200), vx: 0, a: aleat(0.12, 0.45), cor: escolher(["#00e0b0", "#3d8bff", "#9bffea"]), ch: escolher(["0", "1", "0", "1", "<", ">", "/", "{", "}", ";"]) });
+    if (tipo === "notas") Object.assign(p, { y: inicio ? p.y : H + 40, r: aleat(28, 64), vy: -aleat(30, 80), vx: aleat(-10, 10), a: aleat(0.25, 0.6), cor: escolher(cores), ch: escolher(["♪", "♫", "♩", "♬"]), rot: aleat(-0.4, 0.4) });
+    if (tipo === "pop") Object.assign(p, { y: inicio ? p.y : H + 60, r: aleat(10, 40), vy: -aleat(20, 50), vx: aleat(-10, 10), a: aleat(0.12, 0.3), cor: escolher(["#ff2e63", "#2ec4ff", "#ffffff", "#ff9f1c"]) });
     return p;
   }
   atualizarFundo(dt) {
@@ -100,13 +106,14 @@ export class Ambiente {
     for (let i = 0; i < this.fundo.length; i++) {
       const p = this.fundo[i];
       p.vida += dt;
-      p.x += p.vx * dt + (p.tipo === "neve" || p.tipo === "brasas" ? Math.sin(p.vida * 1.6 + p.fase) * (p.tipo === "brasas" ? 40 : 18) * dt : 0);
+      p.x += p.vx * dt + (p.tipo === "neve" || p.tipo === "brasas" || p.tipo === "notas" ? Math.sin(p.vida * 1.6 + p.fase) * (p.tipo === "brasas" ? 40 : 18) * dt : 0);
+      if (p.cresce) p.r += p.cresce * dt;
       p.y += p.vy * dt;
       if (p.tipo === "estrelas") {
         if (p.x < -10) p.x = W + 10;
         continue;
       }
-      const fora = p.y < -80 || p.y > H + 80 || p.x < -80 || p.x > W + 80;
+      const fora = p.y < -160 || p.y > H + 160 || p.x < -420 || p.x > W + 420 || (p.tipo === "vapor" && p.vida > 9);
       if (fora) this.fundo[i] = this.novaFundo(p.tipo);
     }
     // Estrelas cadentes e flashes da bancada
@@ -144,6 +151,7 @@ export class Ambiente {
       if (estilo === "neve") Object.assign(p, { r: aleat(3, 8), g: 120, ar: 2.4, cor: escolher(["#ffffff", "#e6f7ff", "#9be7ff"]) });
       if (estilo === "neon") Object.assign(p, { r: aleat(3, 7), g: 300, ar: 1.8 });
       if (estilo === "estrelas") Object.assign(p, { r: aleat(14, 34), g: 150, ar: 2 });
+      if (estilo === "pixels") Object.assign(p, { r: escolher([8, 12, 16]), g: 900, ar: 1.4, vr: 0 });
       this.festa.push(p);
     }
   }
@@ -189,7 +197,40 @@ export class Ambiente {
         g.fill();
         continue;
       }
-      if (p.tipo === "neve" || p.tipo === "bolhas" || p.tipo === "poeira") {
+      if (p.tipo === "vapor") {
+        g.globalAlpha = p.a * Math.min(1, p.vida / 1.5) * Math.max(0, 1 - p.vida / 9);
+        g.drawImage(brilho("#ffffff", 64), p.x - p.r, p.y - p.r, p.r * 2, p.r * 2);
+        continue;
+      }
+      if (p.tipo === "velocidade") {
+        g.globalAlpha = p.a;
+        g.strokeStyle = p.cor;
+        g.lineWidth = p.r;
+        g.lineCap = "round";
+        g.beginPath();
+        g.moveTo(p.x, p.y);
+        g.lineTo(p.x + p.comp, p.y);
+        g.stroke();
+        continue;
+      }
+      if (p.tipo === "pixels") {
+        g.globalAlpha = p.a * (Math.sin(t * 4 + p.fase) > -0.6 ? 1 : 0.3);
+        g.fillStyle = p.cor;
+        g.fillRect(Math.round(p.x / 4) * 4, Math.round(p.y / 4) * 4, p.r, p.r);
+        continue;
+      }
+      if (p.tipo === "codigo" || p.tipo === "notas") {
+        g.globalAlpha = p.a;
+        g.fillStyle = p.cor;
+        g.font = `${p.tipo === "codigo" ? "700" : "400"} ${Math.round(p.r)}px ${p.tipo === "codigo" ? "ui-monospace, monospace" : "system-ui, sans-serif"}`;
+        g.save();
+        g.translate(p.x, p.y);
+        if (p.rot) g.rotate(p.rot + Math.sin(t + p.fase) * 0.2);
+        g.fillText(p.ch, 0, 0);
+        g.restore();
+        continue;
+      }
+      if (p.tipo === "neve" || p.tipo === "bolhas" || p.tipo === "poeira" || p.tipo === "pop") {
         g.globalAlpha = p.a;
         g.fillStyle = p.cor;
         g.beginPath();
@@ -262,6 +303,9 @@ export class Ambiente {
           g.drawImage(estrelaSprite("#fff3c4"), p.x - 14, p.y - 14, 28, 28);
           g.globalCompositeOperation = "source-over";
         }
+      } else if (p.estilo === "pixels") {
+        g.fillStyle = p.cor;
+        g.fillRect(Math.round(p.x / 4) * 4, Math.round(p.y / 4) * 4, p.r, p.r);
       } else if (p.estilo === "estrelas") {
         g.globalCompositeOperation = "lighter";
         g.drawImage(estrelaSprite(p.cor), p.x - p.r, p.y - p.r, p.r * 2, p.r * 2);

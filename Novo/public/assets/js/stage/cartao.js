@@ -6,7 +6,7 @@ import { contar } from "../ui.js";
 import { avatarPalco } from "./stage.js";
 
 export async function correr(palco, opts) {
-  const p = pessoa(opts.id) || pessoa([...estado.posIndice.entries()].find(([, pos]) => pos === 1)?.[0]);
+  const p = pessoa(opts.id) || pessoa(palco.foco) || pessoa([...estado.posIndice.entries()].find(([, pos]) => pos === 1)?.[0]);
   if (!p) throw new Error("Escolhe um Youtuber.");
   const ref = estado.ref;
   const vertical = palco.formato === "9x16";

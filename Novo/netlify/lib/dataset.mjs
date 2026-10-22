@@ -4,6 +4,9 @@ import { getJSON, setJSON } from "./storage.mjs";
 import { todayLisbon, nextMonth, daysInMonth, monthRange, median } from "./util.mjs";
 import { hasApiKey } from "./youtube.mjs";
 import { adminEnabled } from "./auth.mjs";
+import { DEFAULT_SETTINGS } from "./db.mjs";
+
+const DEFAULT_CANAL = DEFAULT_SETTINGS.canal;
 
 /** Views ganhas por mês a partir dos registos diários do YouTube. */
 export function ytMonthly(starts = {}, today = todayLisbon()) {
@@ -306,7 +309,7 @@ export async function buildDataset(db) {
     today,
     currentMonth: curM,
     months: monthRange(firstMonth, curM),
-    settings: { weights: db.settings.weights, alcanceTopo: db.settings.alcanceTopo, siteTitle: db.settings.siteTitle },
+    settings: { weights: db.settings.weights, alcanceTopo: db.settings.alcanceTopo, siteTitle: db.settings.siteTitle, canal: { ...DEFAULT_CANAL, ...(db.settings.canal || {}) } },
     categories,
     people,
     channels,

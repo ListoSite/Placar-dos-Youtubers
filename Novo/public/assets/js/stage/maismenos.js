@@ -3,7 +3,7 @@
 
 import { esc } from "../format.js";
 import { contar } from "../ui.js";
-import { avatarPalco, baralhar, contagem } from "./stage.js";
+import { avatarPalco, baralhar, contagem, comFoco } from "./stage.js";
 import { METRICAS, melhores } from "./metricas.js";
 
 function corrente(pool, n, valor) {
@@ -26,7 +26,8 @@ function corrente(pool, n, valor) {
 export async function correr(palco, opts) {
   const chave = METRICAS[opts.metric] ? opts.metric : "views";
   const met = METRICAS[chave];
-  const lista = corrente(melhores(Number(opts.top) || 100), Number(opts.n) || 10, (p) => met.valor(p, opts.m));
+  const lista = corrente(comFoco(melhores(Number(opts.top) || 100), palco), Number(opts.n) || 10, (p) => met.valor(p, opts.m));
+  palco.contexto = { metrica: chave, m: opts.m };
   if (lista.length < 3) throw new Error("Há poucos Youtubers com dados para este jogo.");
   const vertical = palco.vertical;
   const cena = palco.cena;
@@ -47,6 +48,7 @@ export async function correr(palco, opts) {
       <div class="mm-unid">${esc(met.unidade)}</div></div>`;
 
   for (let i = 1; i < lista.length; i++) {
+    if (i === Math.floor(lista.length / 2)) await palco.meio();
     const a = lista[i - 1];
     const b = lista[i];
     cena.innerHTML = `<div class="mm-topo"><span>Ronda ${i} de ${lista.length - 1}</span><span class="mm-serie">Sequência <b>${serie}</b></span></div>

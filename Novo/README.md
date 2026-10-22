@@ -103,14 +103,27 @@ Novo/
 
 ## Palco
 
-12 espetáculos em ecrã inteiro, em 16:9 ou 9:16, com 8 temas (Clássico, Verão, Inferno, Gelo, Neon, Galáxia, Gala e Estádio). Cada tema muda as cores, o cenário, as partículas, a música e os sons.
+13 espetáculos em ecrã inteiro, em 16:9 ou 9:16, com 15 temas.
 
-- Rankings: Revelação do top (views, Índice, subscritores ganhos, crescimento, subscritores, views totais), Corrida das views, Tier list, Altos e baixos.
-- Jogos: Quem fez mais? (perguntas variadas), Mais ou menos, Adivinha quem é, Roda da sorte. Quem apresenta pode responder com as setas, as teclas ou tocando no ecrã.
-- Duelos: Batalha (barras de vida até ao K.O.) e Torneio (8 ou 16 Youtubers, até à final).
-- Histórias: Cartão de Youtuber e A história de… (o percurso mês a mês).
+- Temas de ambiente: Clássico, Verão, Inferno, Gelo, Neon, Galáxia, Gala.
+- Temas por categoria: Futebol, Cozinha, Carros, Gaming, Tech, Comédia, Música. Ao escolher uma categoria (ou um Youtuber), o tema certo é sugerido.
+- Para direto: Chroma (OBS), com fundo verde para recortar.
 
-Teclas: espaço avança, P pausa, M som, F ecrã inteiro, H esconde os controlos. A velocidade (rápida, normal, lenta) ajusta a duração para TikTok, Reels ou vídeos longos.
+Espetáculos:
+- Rankings: Revelação do top, Corrida das views, Tier list, Altos e baixos.
+- Jogos: Desafio do Placar (para quem vê o vídeo: escolha múltipla, o intruso, ordenar, verdadeiro ou falso, com pontos), Quem fez mais?, Mais ou menos, Adivinha quem é, Roda da sorte.
+- Duelos: Batalha (barras de vida até ao K.O.) e Torneio (8 ou 16 Youtubers).
+- Histórias: Cartão de Youtuber e A história de….
+
+Na página do Palco há um filtro **Para vídeos / Para direto (Twitch)**. Em cada espetáculo:
+- **Para**: Vídeo (ritmo automático, lembrete a meio para subscrever) ou Direto (ritmo "Eu avanço", opção Repetir no fim).
+- **Youtuber em foco**: o espetáculo corre normalmente e, no início, a meio ou no fim, mostra onde ficou esse Youtuber e os números dele. Sempre que aparece, tem um brilho especial; nos jogos e duelos entra de certeza.
+- **Gravar vídeo**: grava o espetáculo em Full HD com som, no próprio browser (Chrome no computador), e no fim mostra o vídeo para descarregar (MP4, ou WebM em browsers mais antigos).
+- **Legenda para publicar**: título, legenda e hashtags prontos a copiar.
+
+Todos os espetáculos acabam com a divulgação do canal (nome, @ do YouTube, TikTok e Instagram), que se edita em Editar, Definições, Canal nas redes.
+
+Teclas: espaço avança, P pausa, M som, F ecrã inteiro, H esconde os controlos, Esc sai (e termina a gravação). A velocidade (rápida, normal, lenta) ajusta a duração para Shorts ou vídeos longos.
 
 ## Sons e música
 

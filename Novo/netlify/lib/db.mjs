@@ -18,6 +18,8 @@ export const DEFAULT_SETTINGS = {
   // Escala do alcance: views por mês que valem a nota máxima
   alcanceTopo: 10000000,
   roles: ["principal", "secundário", "clips", "gaming", "podcast", "shorts", "música", "outro"],
+  // Divulgação do canal no fim dos espetáculos do Palco
+  canal: { nome: "Placar dos Youtubers", youtube: "@placardosyoutubers", tiktok: "", instagram: "", hashtags: "#placardosyoutubers #youtubersportugueses #youtubeportugal" },
 };
 
 function emptyDB() {

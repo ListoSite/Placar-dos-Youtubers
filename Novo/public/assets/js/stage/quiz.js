@@ -3,7 +3,7 @@
 
 import { esc, mesNome as nomeMes } from "../format.js";
 import { contar } from "../ui.js";
-import { avatarPalco, baralhar, contagem } from "./stage.js";
+import { avatarPalco, baralhar, contagem, comFoco } from "./stage.js";
 import { METRICAS, melhores } from "./metricas.js";
 
 const TIPOS = [
@@ -53,7 +53,8 @@ function criarRondas(pool, n, m, misto) {
 
 export async function correr(palco, opts) {
   const m = opts.m;
-  const pool = melhores(Number(opts.top) || 80);
+  const pool = comFoco(melhores(Number(opts.top) || 80), palco);
+  palco.contexto = { metrica: "views", m };
   const rondas = criarRondas(pool, Number(opts.n) || 8, m, opts.tipo !== "views");
   if (rondas.length < 2) throw new Error("Há poucos Youtubers com dados para este jogo.");
   const vertical = palco.vertical;
@@ -65,6 +66,7 @@ export async function correr(palco, opts) {
   await palco.abertura({ etiqueta: "Quiz", titulo: "Quem fez\nmais?", sub: `${rondas.length} perguntas, 5 segundos cada. Responde com ← →, 1 e 2, ou toca num lado.` });
 
   for (const [i, r] of rondas.entries()) {
+    if (i === Math.floor(rondas.length / 2)) await palco.meio();
     const lado = (z, k) => `<div class="qz-lado" data-escolha="${k}">${avatarPalco(z, vertical ? 220 : 280)}<div><b>${esc(z.name)}</b><small>${esc(z.category || "")}</small><div class="qz-valor">?</div></div></div>`;
     cena.innerHTML = `<div class="qz-pergunta p-entra">${esc(r.t.pergunta(m))}</div>
       <div class="qz-ronda">Pergunta ${i + 1} de ${rondas.length}</div>

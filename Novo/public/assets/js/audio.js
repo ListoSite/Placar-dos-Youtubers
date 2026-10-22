@@ -308,7 +308,7 @@ function marimba(t, n, { vol = 0.14, bus = busMusica, dur = 0.45 } = {}) {
 }
 
 let curvaDist = null;
-function baixoDist(t, n, dur, { vol = 0.22, bus = busMusica } = {}) {
+function curva() {
   if (!curvaDist) {
     curvaDist = new Float32Array(1024);
     for (let i = 0; i < 1024; i++) {
@@ -316,6 +316,10 @@ function baixoDist(t, n, dur, { vol = 0.22, bus = busMusica } = {}) {
       curvaDist[i] = Math.tanh(x * 7);
     }
   }
+  return curvaDist;
+}
+function baixoDist(t, n, dur, { vol = 0.22, bus = busMusica } = {}) {
+  curva();
   const o = ctx.createOscillator();
   o.type = "sawtooth";
   o.frequency.value = nota(n);
@@ -638,6 +642,88 @@ const EFEITOS = {
   tambor(t) {
     tom(t, 38, { vol: 0.9, bus: busEfeitos, dur: 0.8 });
   },
+  ding(t) {
+    sino(t, 88, { vol: 0.2 });
+    sino(t + 0.02, 100, { vol: 0.08 });
+  },
+  motor(t) {
+    // Motor a acelerar: serra e quadrada distorcidas com o tom a subir
+    const ws = ctx.createWaveShaper();
+    ws.curve = curva();
+    const f = ctx.createBiquadFilter();
+    f.type = "lowpass";
+    f.frequency.setValueAtTime(600, t);
+    f.frequency.linearRampToValueAtTime(2600, t + 0.9);
+    f.frequency.exponentialRampToValueAtTime(500, t + 1.6);
+    const g = ctx.createGain();
+    g.gain.setValueAtTime(0.0001, t);
+    g.gain.linearRampToValueAtTime(0.16, t + 0.1);
+    g.gain.setTargetAtTime(0.13, t + 0.9, 0.2);
+    g.gain.setTargetAtTime(0.0001, t + 1.4, 0.15);
+    ws.connect(f).connect(g);
+    saida(g, { rev: 0.2 });
+    const trem = ctx.createOscillator();
+    trem.frequency.setValueAtTime(18, t);
+    trem.frequency.linearRampToValueAtTime(46, t + 0.9);
+    const tg = ctx.createGain();
+    tg.gain.value = 0.06;
+    trem.connect(tg).connect(g.gain);
+    for (const [tipo, mult] of [["sawtooth", 1], ["square", 0.5]]) {
+      const o = ctx.createOscillator();
+      o.type = tipo;
+      o.frequency.setValueAtTime(55 * mult, t);
+      o.frequency.exponentialRampToValueAtTime(190 * mult, t + 0.9);
+      o.frequency.exponentialRampToValueAtTime(120 * mult, t + 1.5);
+      o.connect(ws);
+      o.start(t);
+      o.stop(t + 1.8);
+    }
+    trem.start(t);
+    trem.stop(t + 1.8);
+  },
+  boing(t) {
+    const o = ctx.createOscillator();
+    o.type = "sine";
+    o.frequency.setValueAtTime(180, t);
+    o.frequency.exponentialRampToValueAtTime(620, t + 0.12);
+    o.frequency.exponentialRampToValueAtTime(140, t + 0.6);
+    const vib = ctx.createOscillator();
+    vib.frequency.value = 22;
+    const vg = ctx.createGain();
+    vg.gain.value = 30;
+    vib.connect(vg).connect(o.frequency);
+    const g = ctx.createGain();
+    env(g, t, { a: 0.005, pico: 0.3, d: 0.65 });
+    o.connect(g);
+    saida(g, { rev: 0.2 });
+    o.start(t);
+    vib.start(t);
+    o.stop(t + 0.7);
+    vib.stop(t + 0.7);
+  },
+  powerup(t) {
+    [60, 64, 67, 72, 76, 79, 84, 88].forEach((n, i) => pluck(t + i * 0.045, n, { vol: 0.09, bus: busEfeitos, tipo: "square", dur: 0.08, eco: 0.1 }));
+  },
+  bip(t) {
+    pluck(t, 91, { vol: 0.1, bus: busEfeitos, tipo: "sine", dur: 0.09, eco: 0.2 });
+    pluck(t + 0.11, 96, { vol: 0.1, bus: busEfeitos, tipo: "sine", dur: 0.12, eco: 0.3 });
+  },
+  fritar(t) {
+    const r = ruido(t, 1.3);
+    const f = ctx.createBiquadFilter();
+    f.type = "highpass";
+    f.frequency.value = 3500;
+    const g = ctx.createGain();
+    g.gain.setValueAtTime(0.0001, t);
+    g.gain.linearRampToValueAtTime(0.18, t + 0.08);
+    g.gain.setTargetAtTime(0.0001, t + 1, 0.15);
+    r.connect(f).connect(g);
+    saida(g);
+  },
+  sino(t) {
+    sino(t, 84, { vol: 0.16 });
+    sino(t + 0.25, 84, { vol: 0.12 });
+  },
 };
 
 function abaixarMusica(t, dur) {
@@ -881,6 +967,167 @@ const ESTILOS = {
     baixoDur: 4,
     padVol: 0.04,
   },
+  cozinha_calmo: {
+    bpm: 96,
+    swing: 0.18,
+    acordes: [[53, 57, 60, 64], [52, 55, 59, 62], [50, 53, 57, 60], [55, 59, 62, 65]],
+    baixo: "x..x....x..x....",
+    bombo: "x.......x.......",
+    bomboVol: 0.5,
+    prato: "x.x.x.x.x.x.x.x.",
+    arp: "x..x.x..x..x.x..",
+    arpTipo: "marimba",
+    padVol: 0.03,
+    padBrilho: 2000,
+  },
+  cozinha_festa: {
+    bpm: 116,
+    swing: 0.12,
+    acordes: [[53, 57, 60, 64], [52, 55, 59, 62], [50, 53, 57, 60], [55, 59, 62, 65]],
+    baixo: "x..x..x.x..x..x.",
+    bombo: "x...x...x...x...",
+    palmas: "....x.......x...",
+    prato: "..x...x...x...x.",
+    arp: "x.xx.xx.x.xx.xx.",
+    arpTipo: "marimba",
+    padVol: 0.035,
+  },
+  carros_tensao: {
+    bpm: 100,
+    acordes: [[40, 47, 52], [43, 50, 55], [45, 52, 57], [38, 45, 50]],
+    baixo: "x...x...x...x...",
+    baixoTipo: "dist",
+    baixoDur: 2,
+    bombo: "x.......x.......",
+    tom: "......x.......x.",
+    tomNota: 33,
+    arp: "x.......x.......",
+    arpTipo: "sawtooth",
+    arpOitava: 12,
+    padVol: 0.05,
+    padBrilho: 900,
+  },
+  carros_corrida: {
+    bpm: 140,
+    acordes: [[40, 47, 52], [43, 50, 55], [45, 52, 57], [38, 45, 50]],
+    baixo: "x.x.x.x.x.x.x.x.",
+    baixoTipo: "dist",
+    baixoDur: 1,
+    bombo: "x...x.x.x...x.x.",
+    tarola: "....x.......x...",
+    tarolaVol: 0.3,
+    prato: "x.x.x.x.x.x.x.x.",
+    arp: "x...x...x...x...",
+    arpTipo: "sawtooth",
+    arpOitava: 12,
+    padVol: 0.04,
+    padBrilho: 1200,
+  },
+  gaming_calmo: {
+    bpm: 112,
+    acordes: [[57, 60, 64], [53, 57, 60], [55, 59, 62], [52, 55, 59]],
+    baixo: "x.x.x.x.x.x.x.x.",
+    baixoOitava: true,
+    baixoDur: 0.8,
+    bombo: "x.......x.......",
+    tarola: "....x.......x...",
+    arp: "xxxxxxxxxxxxxxxx",
+    arpTipo: "square",
+    arpVol: 0.03,
+    arpOitava: 24,
+  },
+  gaming_epico: {
+    bpm: 150,
+    acordes: [[57, 60, 64], [53, 57, 60], [55, 59, 62], [52, 55, 59]],
+    baixo: "x.x.x.x.x.x.x.x.",
+    baixoOitava: true,
+    baixoDur: 0.7,
+    bombo: "x...x...x...x...",
+    tarola: "....x.......x...",
+    prato: "..x...x...x...x.",
+    arp: "xxxxxxxxxxxxxxxx",
+    arpTipo: "square",
+    arpVol: 0.04,
+    arpOitava: 24,
+  },
+  tech_calmo: {
+    bpm: 100,
+    acordes: [[50, 57, 62, 65], [46, 53, 58, 62], [48, 55, 60, 64], [45, 52, 57, 60]],
+    baixo: "x.......x.......",
+    baixoTipo: "sub",
+    baixoDur: 6,
+    bombo: "x.......x.......",
+    prato: "..x...x...x...x.",
+    arp: "x..x....x..x....",
+    arpTipo: "sino",
+    padVol: 0.05,
+    padBrilho: 2400,
+  },
+  tech_epico: {
+    bpm: 126,
+    acordes: [[50, 57, 62, 65], [46, 53, 58, 62], [48, 55, 60, 64], [45, 52, 57, 60]],
+    baixo: "x.xxx.xxx.xxx.xx",
+    bombo: "x...x...x...x...",
+    tarola: "....x.......x...",
+    prato: "..x...x...x...x.",
+    pratoAberto: true,
+    arp: "x.x.x.x.x.x.x.x.",
+    arpTipo: "sawtooth",
+    arpVol: 0.035,
+    padVol: 0.05,
+    padBrilho: 2200,
+  },
+  comedia_leve: {
+    bpm: 122,
+    acordes: [[60, 64, 67], [53, 57, 60], [55, 59, 62], [60, 64, 67]],
+    baixo: "x...x...x...x...",
+    baixoOitava: true,
+    baixoDur: 1.2,
+    bombo: "x.......x.......",
+    tarola: "....x.......x...",
+    arp: "..x...x...x...x.",
+    arpTipo: "marimba",
+    arpOitava: 12,
+  },
+  comedia_festa: {
+    bpm: 140,
+    acordes: [[60, 64, 67], [53, 57, 60], [55, 59, 62], [60, 64, 67]],
+    baixo: "x...x...x...x...",
+    baixoOitava: true,
+    baixoDur: 1,
+    bombo: "x...x...x...x...",
+    palmas: "....x.......x...",
+    prato: "..x...x...x...x.",
+    arp: "x.x.x.x.x.x.x.x.",
+    arpTipo: "marimba",
+    arpOitava: 12,
+  },
+  musica_calmo: {
+    bpm: 100,
+    acordes: [[57, 60, 64], [53, 57, 60], [48, 52, 55], [55, 59, 62]],
+    baixo: "x..x..x...x.....",
+    bombo: "x.......x.......",
+    palmas: "....x.......x...",
+    prato: "x.x.x.x.x.x.x.x.",
+    arp: "x..x..x.x..x..x.",
+    arpTipo: "triangle",
+    padVol: 0.07,
+  },
+  musica_festa: {
+    bpm: 124,
+    acordes: [[57, 60, 64], [53, 57, 60], [48, 52, 55], [55, 59, 62]],
+    baixo: "..x...x...x...x.",
+    bombo: "x...x...x...x...",
+    bomboVol: 0.85,
+    palmas: "....x.......x...",
+    prato: "..x...x...x...x.",
+    pratoAberto: true,
+    arp: "xxxxxxxxxxxxxxxx",
+    arpTipo: "sawtooth",
+    arpVol: 0.03,
+    padVol: 0.07,
+    padBrilho: 2200,
+  },
   estadio_epico: {
     bpm: 128,
     acordes: [[52, 55, 59], [48, 52, 55], [50, 53, 57], [55, 59, 62]],
@@ -969,9 +1216,21 @@ const musica = {
   },
 };
 
+let destinoGravacao = null;
+
 export const som = {
   ligado: ler(),
   musica,
+  /** Fluxo de áudio do site, para juntar a uma gravação de vídeo. */
+  fluxoGravacao() {
+    if (!iniciarCtx()) return null;
+    if (!destinoGravacao) {
+      destinoGravacao = ctx.createMediaStreamDestination();
+      mestre.connect(destinoGravacao);
+    }
+    if (ctx.state === "suspended") ctx.resume();
+    return destinoGravacao.stream;
+  },
   alternar() {
     this.definir(!this.ligado);
   },

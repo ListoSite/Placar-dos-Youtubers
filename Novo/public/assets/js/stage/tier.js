@@ -2,7 +2,7 @@
 
 import { esc, mesNome } from "../format.js";
 import { contar } from "../ui.js";
-import { avatarPalco, baralhar } from "./stage.js";
+import { avatarPalco, baralhar, comFoco } from "./stage.js";
 import { METRICAS, rankingPor } from "./metricas.js";
 
 const FILAS = [
@@ -23,7 +23,9 @@ function classificar(lista) {
 export async function correr(palco, opts) {
   const chave = opts.metric === "views" ? "views" : "indice";
   const met = METRICAS[chave];
-  const top = rankingPor(chave, opts.m, { cat: opts.cat, n: Number(opts.n) || 16 });
+  palco.contexto = { metrica: chave, m: opts.m, cat: opts.cat };
+  let top = rankingPor(chave, opts.m, { cat: opts.cat, n: Number(opts.n) || 16 });
+  top = comFoco(top, palco, { chave: (x) => x.p, criar: (p) => ({ p, v: met.valor(p, opts.m) }) }).filter((x) => x.v !== null && x.v !== undefined).sort((a, b) => b.v - a.v);
   if (top.length < 5) throw new Error("Há poucos Youtubers com dados para a tier list.");
   const lista = classificar(top);
   const ordem = baralhar(lista);
@@ -44,6 +46,7 @@ export async function correr(palco, opts) {
   await palco.esperar(900);
 
   for (const [i, x] of ordem.entries()) {
+    if (i === Math.floor(ordem.length / 2)) await palco.meio();
     destaque.innerHTML = `<div class="tl-grande">${avatarPalco(x.p, vertical ? 300 : 320)}<div class="tl-nome">${esc(x.p.name)}</div><div class="tl-v" data-v="${x.v}">0</div></div>`;
     const grande = destaque.firstElementChild;
     grande.animate([{ transform: "scale(.3)", opacity: 0 }, { transform: "scale(1)", opacity: 1 }], { duration: 450, easing: "cubic-bezier(.2,1.4,.4,1)" });

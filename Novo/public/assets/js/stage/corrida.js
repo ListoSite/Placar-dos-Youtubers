@@ -12,6 +12,7 @@ export async function correr(palco, opts) {
   if (meses.length < 2) throw new Error("Escolhe pelo menos dois meses.");
   const acumulado = opts.modo === "acumulado";
   const pessoas = ds.people.filter((p) => !opts.cat || p.category === opts.cat);
+  palco.contexto = { metrica: "views", m: opts.ate, cat: opts.cat };
 
   // Valores de cada pessoa em cada mês
   const valores = new Map();
@@ -123,6 +124,7 @@ export async function correr(palco, opts) {
       desenhar(i, 0);
       break;
     }
+    if (i === Math.floor(meses.length / 2)) await palco.meio();
     await new Promise((resolve, reject) => {
       let feito = 0;
       let antes = performance.now();

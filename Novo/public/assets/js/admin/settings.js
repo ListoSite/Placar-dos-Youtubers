@@ -12,6 +12,7 @@ export async function render(alvo) {
   const pesos = { ...s.weights };
   let topo = s.alcanceTopo || 1e7;
   const meta = estado.ds.meta;
+  const canal = { nome: "Placar dos Youtubers", youtube: "@placardosyoutubers", tiktok: "", instagram: "", hashtags: "", ...(s.canal || {}) };
 
   alvo.innerHTML = `
     <div class="painel ed-bloco">
@@ -40,6 +41,19 @@ export async function render(alvo) {
         <div><h4 class="soft" style="font-size:var(--t-sm);margin-bottom:8px">Top 10 com estes pesos</h4><ol class="ed-top" id="st-top"></ol></div>
       </div>
       <div class="ed-acoes"><button class="btn" id="st-repor">Repor pesos iniciais</button><button class="btn btn-primario" id="st-guardar" data-a-esperar="A guardar">Guardar pesos</button></div>
+    </div>
+
+    <div class="painel ed-bloco">
+      <h3>Canal nas redes</h3>
+      <p class="muted">Aparece no fim de cada espetáculo do Palco (e a meio, nos vídeos), para quem vê seguir o canal. Também entra nas legendas sugeridas para publicar.</p>
+      <div class="ed-grelha" id="st-canal">
+        <label class="campo"><span>Nome do canal</span><input class="input" name="nome" value="${esc(canal.nome || "")}"></label>
+        <label class="campo"><span>YouTube</span><input class="input" name="youtube" placeholder="@placardosyoutubers" value="${esc(canal.youtube || "")}"></label>
+        <label class="campo"><span>TikTok</span><input class="input" name="tiktok" placeholder="@placardosyoutubers" value="${esc(canal.tiktok || "")}"></label>
+        <label class="campo"><span>Instagram</span><input class="input" name="instagram" placeholder="@placardosyoutubers" value="${esc(canal.instagram || "")}"></label>
+      </div>
+      <label class="campo" style="margin-top:12px"><span>Hashtags para as legendas</span><input class="input" id="st-hashtags" value="${esc(canal.hashtags || "")}"></label>
+      <div class="ed-acoes"><button class="btn btn-primario" id="st-guardar-canal" data-a-esperar="A guardar">Guardar canal</button></div>
     </div>
 
     <div class="painel ed-bloco">
@@ -89,6 +103,12 @@ export async function render(alvo) {
       r.nextElementSibling.textContent = r.value;
     });
     desenharTop();
+  });
+  $("#st-guardar-canal", alvo).addEventListener("click", (e) => {
+    const c = {};
+    $$("#st-canal input", alvo).forEach((i) => (c[i.name] = i.value));
+    c.hashtags = $("#st-hashtags", alvo).value;
+    chamar("settings", { settings: { canal: c } }, { botao: e.currentTarget, sucesso: "Canal guardado." }).catch(() => {});
   });
   $("#st-guardar", alvo).addEventListener("click", (e) => chamar("settings", { settings: { weights: pesos, alcanceTopo: topo } }, { botao: e.currentTarget, sucesso: "Pesos guardados. O Índice foi recalculado." }).catch(() => {}));
   desenharTop();

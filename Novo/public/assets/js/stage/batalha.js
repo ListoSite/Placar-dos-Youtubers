@@ -12,7 +12,8 @@ function escolherAoAcaso(excluir) {
 }
 
 export async function correr(palco, opts) {
-  const a = pessoa(opts.a) || escolherAoAcaso();
+  const a = pessoa(opts.a) || pessoa(palco.foco) || escolherAoAcaso();
+  palco.contexto = { metrica: "indice" };
   const b = pessoa(opts.b) || escolherAoAcaso(a?.id);
   if (!a || !b || a.id === b.id) throw new Error("Escolhe dois Youtubers diferentes.");
   const ref = estado.ref;
@@ -125,6 +126,7 @@ export async function correr(palco, opts) {
 
   let ko = null;
   for (const [i, r] of rondas.entries()) {
+    if (i === Math.floor(rondas.length / 2)) await palco.meio();
     cena.querySelector("#bt-num").textContent = i + 1;
     if (r.final) {
       await anunciar("Golpe final", "grande");

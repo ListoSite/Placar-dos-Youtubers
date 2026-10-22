@@ -7,7 +7,7 @@ import { avatarPalco, letras } from "./stage.js";
 import { animate, stagger, spring } from "../../vendor/anime.esm.min.js";
 
 export async function correr(palco, opts) {
-  const p = pessoa(opts.id) || pessoa([...estado.posIndice.entries()].find(([, pos]) => pos === 1)?.[0]);
+  const p = pessoa(opts.id) || pessoa(palco.foco) || pessoa([...estado.posIndice.entries()].find(([, pos]) => pos === 1)?.[0]);
   if (!p) throw new Error("Escolhe um Youtuber.");
   const meses = estado.ds.months.filter((m) => m < estado.ds.currentMonth);
   const pontos = meses.map((m, i) => ({ m, i, v: views(p, m) })).filter((x) => x.v !== null);

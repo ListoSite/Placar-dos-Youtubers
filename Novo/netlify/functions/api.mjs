@@ -433,6 +433,12 @@ const adminRoutes = {
     }
     if (s.alcanceTopo) db.settings.alcanceTopo = Math.max(10000, Number(s.alcanceTopo) || DEFAULT_SETTINGS.alcanceTopo);
     if (typeof s.siteTitle === "string" && s.siteTitle.trim()) db.settings.siteTitle = s.siteTitle.trim().slice(0, 80);
+    if (s.canal && typeof s.canal === "object") {
+      const c = {};
+      for (const k of ["nome", "youtube", "tiktok", "instagram", "hashtags"]) c[k] = String(s.canal[k] ?? "").trim().slice(0, k === "hashtags" ? 300 : 80);
+      if (!c.nome) c.nome = DEFAULT_SETTINGS.canal.nome;
+      db.settings.canal = c;
+    }
     return { settings: db.settings, save: true };
   },
   "GET export": async () => {

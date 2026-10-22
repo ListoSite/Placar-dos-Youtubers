@@ -19,6 +19,7 @@ export async function correr(palco, opts) {
   const chave = METRICAS[opts.metric] ? opts.metric : "views";
   const met = METRICAS[chave];
   const top = rankingPor(chave, opts.m, { cat: opts.cat, n: Number(opts.n) || 10 });
+  palco.contexto = { metrica: chave, m: opts.m, cat: opts.cat };
   if (top.length < 3) throw new Error("Há poucos Youtubers com dados para este ranking.");
   const vertical = palco.vertical;
   const porMes = ["views", "subsMes", "crescimento"].includes(chave);
@@ -66,7 +67,8 @@ export async function correr(palco, opts) {
     await palco.esperar(350);
   }
 
-  // Pódio
+  // Pódio (antes, o momento do meio: lembrete e Youtuber em foco)
+  await palco.meio();
   cartao.innerHTML = `<div class="p-titulo p-slam" style="font-size:${vertical ? 86 : 112}px">E agora,<br>o pódio</div>`;
   palco.musica("epico", 1);
   palco.tocar("subida", { dur: 2.6 });
