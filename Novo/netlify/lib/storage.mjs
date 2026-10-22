@@ -96,7 +96,8 @@ async function sb(caminho, { metodo = "GET", corpo, prefer, intervalo } = {}) {
     method: metodo,
     headers: {
       apikey: SB_KEY,
-      authorization: `Bearer ${SB_KEY}`,
+      // As chaves antigas (service_role, um JWT) também vão no Authorization; as novas (sb_secret_…) só no apikey
+      ...(SB_KEY.startsWith("eyJ") ? { authorization: `Bearer ${SB_KEY}` } : {}),
       "content-type": "application/json",
       ...(prefer ? { prefer } : {}),
       ...(intervalo ? { range: intervalo, "range-unit": "items" } : {}),

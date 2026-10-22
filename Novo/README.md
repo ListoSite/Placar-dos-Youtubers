@@ -155,7 +155,7 @@ Os dados podem viver no Netlify Blobs (como no início) ou no Supabase, uma base
 
 1. Em supabase.com cria um projeto (região West EU ou Frankfurt).
 2. No Supabase, **SQL Editor → New query**: cola o ficheiro `supabase/schema.sql` e carrega em **Run**. Cria as tabelas `pessoas`, `canais`, `projetos`, `documentos`, `palco_resultados`, `votacoes` e `votos`, com as regras de segurança (ninguém de fora lê os dados diretamente; cada conta vota uma vez por votação).
-3. No Netlify, **Site configuration → Environment variables**: `SUPABASE_URL` (Project URL), `SUPABASE_SERVICE_ROLE_KEY` (secreta, nunca no código nem no chat) e `SUPABASE_ANON_KEY` (pública). Faz um novo deploy.
+3. No Netlify, **Site configuration → Environment variables**: `SUPABASE_URL` (o Project URL, `https://xxxx.supabase.co`), `SUPABASE_ANON_KEY` (a chave pública: **Publishable key** `sb_publishable_…`, ou a antiga `anon`) e `SUPABASE_SERVICE_ROLE_KEY` (a chave secreta: **Secret key** `sb_secret_…`, ou a antiga `service_role`; nunca no código nem no chat). Estão no Supabase em **Project Settings → API Keys** (o URL em **Data API**). Em cada variável, escolhe **Same value for all deploy contexts**. Faz um novo deploy.
 4. No site, **Editar → Definições → Base de dados → Copiar dados para o Supabase**. A cópia vai por partes e não apaga nada do Netlify. Só depois da cópia é que o site passa a usar o Supabase (até lá continua no Netlify, por isso nunca abre vazio).
 
 **Login com Google para votar** (no Supabase, Authentication):
