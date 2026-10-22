@@ -475,3 +475,53 @@ details > summary {
 .ed-canal-info small {
   display: block;
 }
+
+/* Votações */
+.vt-admin-opcoes {
+  display: grid;
+  gap: 6px;
+  margin-top: 12px;
+}
+.vt-admin-opcoes div {
+  position: relative;
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 8px 12px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.03);
+  overflow: hidden;
+}
+.vt-admin-opcoes i {
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  background: color-mix(in srgb, var(--rubi) 25%, transparent);
+}
+.vt-admin-opcoes span,
+.vt-admin-opcoes b {
+  position: relative;
+}
+.vt-form-opcoes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.vt-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 6px 4px 6px;
+  border-radius: 999px;
+  border: 1px solid var(--linha);
+  font-size: var(--t-sm);
+}
+.vt-chip button {
+  border: 0;
+  background: none;
+  color: var(--texto-3);
+  font-size: 18px;
+  cursor: pointer;
+  padding: 0 4px;
+}

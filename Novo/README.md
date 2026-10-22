@@ -96,6 +96,8 @@ Novo/
   public/assets/js/pages/      páginas públicas
   public/assets/js/admin/      área de edição
   public/assets/js/stage/      Palco (espetáculos para vídeo)
+  public/assets/js/stage/kits.js  efeitos do "Tema completo" de cada tema
+  supabase/schema.sql          tabelas e regras da base de dados no Supabase
   public/assets/js/audio.js    sons e músicas gerados no browser
   public/data/seed.json        dados iniciais da folha de cálculo
   scripts/                     servidor local, testes, conversão da folha
@@ -103,7 +105,7 @@ Novo/
 
 ## Palco
 
-18 espetáculos em ecrã inteiro, em 16:9 ou 9:16, com 40 temas.
+19 espetáculos em ecrã inteiro, em 16:9 ou 9:16, com 40 temas.
 
 - Temas de ambiente: Clássico, Verão, Inferno, Gelo, Neon, Galáxia, Gala.
 - Temas por categoria: todas as 36 categorias do site têm tema. Os feitos à mão (Futebol, Cozinha, Carros, Gaming, Tech, Comédia, Música) e 25 gerados a partir de cores, um padrão de fundo, ícones e música próprios (YouTube, Clips, Shorts, Vlog, Podcast e Rádio, Negócios, Girly, Escola, Tutorial, Política, Notícias, História, Livros, Cinema, Fitness, Reacts, Casa, Pesca, Animais, Kids, Ciência, Dança, Religião, Motas, Programação). Ao escolher uma categoria (ou um Youtuber), o tema certo é sugerido. Os temas gerados estão em `stage/temas-gerados.js`: para criar outro basta uma linha com cores, padrão e ícones.
@@ -111,9 +113,9 @@ Novo/
 
 Espetáculos:
 - Rankings: Revelação do top, Corrida das views, Tier list, Altos e baixos.
-- Gráficos: Gráfico de barras (as colunas crescem fora de ordem e ordenam-se sozinhas, com a linha da média), O bolo das categorias (donut fatia a fatia), Bolhas (bolhas com física que mudam de tamanho entre views, subscritores e Índice), Linha a linha (até 7 Youtubers mês a mês, com quem vai na frente) e O mês em números (números gigantes, um de cada vez).
+- Gráficos: Gráfico de barras (as colunas crescem fora de ordem e ordenam-se sozinhas, com a linha da média), O bolo das categorias (donut fatia a fatia), Bolhas (bolhas com física que mudam de tamanho entre views, subscritores e Índice), Linha a linha (até 7 Youtubers mês a mês, com quem vai na frente) O mês em números (números gigantes, um de cada vez) e O público escolheu (resultados de uma votação do site).
 - Jogos: Desafio do Placar (para quem vê o vídeo: escolha múltipla, o intruso, ordenar, verdadeiro ou falso, com pontos), Quem fez mais?, Mais ou menos, Adivinha quem é, Roda da sorte.
-- Duelos: Batalha (barras de vida até ao K.O.) e Torneio (8 ou 16 Youtubers).
+- Duelos: Batalha (barras de vida até ao K.O.; no tema Futebol completo é um jogo com marcador, minutos, golos e penáltis) e Torneio (8 ou 16 Youtubers).
 - Histórias: Cartão de Youtuber e A história de….
 
 Na página do Palco há um filtro **Para vídeos / Para direto (Twitch)**. Em cada espetáculo:
@@ -122,9 +124,29 @@ Na página do Palco há um filtro **Para vídeos / Para direto (Twitch)**. Em ca
 - **Gravar vídeo**: grava o espetáculo em Full HD com som, no próprio browser (Chrome no computador), e no fim mostra o vídeo para descarregar (MP4, ou WebM em browsers mais antigos).
 - **Legenda para publicar**: título, legenda e hashtags prontos a copiar.
 
+**Efeitos do tema: Tema completo ou Só cores.** Em "Tema completo", cada tema tem um kit que desenha os momentos dos espetáculos à sua maneira: Futebol (golos com a bola a voar, cartões amarelo e vermelho, apito, bancada a cantar, taça), Coliseu nos temas Inferno e Fitness (espadas, rugido do público, louros, o polegar do imperador), Arcada em Gaming e Neon (HIT, combos, K.O., GAME OVER, recordes), Reações em Reacts, Comédia, Shorts e Clips (emojis e comentários de direto), Fofo em Girly e Kids (corações, laços, tiara), Viagem em Vlog e Verão (polaroids, pins, carimbos de passaporte, aviões), Natureza em Pesca e Animais, Notícias em Notícias, Política e Negócios (rótulos de televisão, última hora, verificação Verdadeiro/Falso, primeira página do jornal), Pista em Carros e Motas (semáforos, ultrapassagens, nitro, bandeira de xadrez), Espetáculo em Música, Dança, Gala e Cinema (holofotes, aplausos, rosas, estatueta), Laboratório em Tech, Programação, Ciência, Galáxia e Gelo (scanner, lasers, hologramas), Livro em Livros, História, Escola, Tutorial e Religião (caneta vermelha, selos, diploma), Cozinha em Cozinha e Casa (estrelas de chef, picante, chapéu) e Estúdio nos outros (gostos, sininho, placa de ouro). Os espetáculos só dizem o que aconteceu (`palco.evento("golpe", …)`) e o kit decide como aparece e soa: está tudo em `stage/kits.js`.
+
+**Histórico: clássicos, rivais, estrelas e coroas.** Quando um espetáculo é gravado em vídeo (com sessão iniciada), os resultados ficam guardados para sempre: cada duelo (Batalha e Torneio), cada torneio ganho (uma estrela ★) e cada 1.º lugar de um ranking ou votação (uma coroa 👑). Antes de cada duelo aparece o confronto direto ("5.º confronto · 3–1"), com o selo ⚡ Clássico a partir do 3.º; no fim aparecem as vinganças e as sequências de vitórias. As estrelas aparecem ao lado do nome nos torneios e batalhas, o perfil de cada Youtuber tem a secção "No Palco" (estrelas, coroas, vitórias e maiores rivais) e a página do Palco tem o Hall da fama.
+
 Todos os espetáculos acabam com a divulgação do canal (nome, @ do YouTube, TikTok e Instagram), que se edita em Editar, Definições, Canal nas redes.
 
 Teclas: espaço avança, P pausa, M som, F ecrã inteiro, H esconde os controlos, Esc sai (e termina a gravação). A velocidade (rápida, normal, lenta) ajusta a duração para Shorts ou vídeos longos.
+
+## Supabase (base de dados) e votações
+
+Os dados podem viver no Netlify Blobs (como no início) ou no Supabase, uma base de dados Postgres grátis onde se vê e mexe em tudo por tabelas. Passo a passo:
+
+1. Em supabase.com cria um projeto (região West EU ou Frankfurt).
+2. No Supabase, **SQL Editor → New query**: cola o ficheiro `supabase/schema.sql` e carrega em **Run**. Cria as tabelas `pessoas`, `canais`, `projetos`, `documentos`, `palco_resultados`, `votacoes` e `votos`, com as regras de segurança (ninguém de fora lê os dados diretamente; cada conta vota uma vez por votação).
+3. No Netlify, **Site configuration → Environment variables**: `SUPABASE_URL` (Project URL), `SUPABASE_SERVICE_ROLE_KEY` (secreta, nunca no código nem no chat) e `SUPABASE_ANON_KEY` (pública). Faz um novo deploy.
+4. No site, **Editar → Definições → Base de dados → Copiar dados para o Supabase**. A cópia vai por partes e não apaga nada do Netlify. Só depois da cópia é que o site passa a usar o Supabase (até lá continua no Netlify, por isso nunca abre vazio).
+
+**Login com Google para votar** (no Supabase, Authentication):
+1. Na Google Cloud Console, **APIs & Services → Credentials → Create credentials → OAuth client ID**, tipo **Web application**. Em *Authorized redirect URIs* põe `https://<o-teu-projeto>.supabase.co/auth/v1/callback`.
+2. No Supabase, **Authentication → Sign In / Providers → Google**: liga, cola o Client ID e o Client Secret.
+3. No Supabase, **Authentication → URL Configuration**: *Site URL* = o endereço do site no Netlify; em *Redirect URLs* junta o mesmo endereço.
+
+As votações criam-se em **Editar → Votações** (pergunta, opções com Youtubers ou texto, data de fecho, mostrar ou esconder resultados). Os visitantes votam em **Votar** com a conta Google, uma vez por votação. Os resultados podem ir para um vídeo com o espetáculo **O público escolheu**.
 
 ## Sons e música
 

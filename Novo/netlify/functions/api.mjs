@@ -3,7 +3,9 @@
 // Edição:   /api/admin/... (precisa do token obtido no login)
 
 import { json, todayLisbon, pool } from "../lib/util.mjs";
-import { getJSON, setJSON, listKeys } from "../lib/storage.mjs";
+import { getJSON, setJSON, listKeys, lerLinhas, adicionarLinhas, armazenamentoAtual, estadoSupabase, migrarParaSupabase } from "../lib/storage.mjs";
+import { listarVotacoes, guardarVotacao, apagarVotacao, configPublica } from "../lib/votacoes.mjs";
+import { guardarResultados, resumoHistorico, COLECAO as COLECAO_PALCO } from "../lib/historico.mjs";
 import { adminEnabled, checkPassword, createToken, verifyToken, tokenFromRequest } from "../lib/auth.mjs";
 import { loadDB, saveDB, newPerson, attachChannel, detachChannel, mergePeople, deletePerson, PERSON_FIELDS, DEFAULT_SETTINGS } from "../lib/db.mjs";
 import { rebuild, publicDataset } from "../lib/dataset.mjs";
@@ -99,8 +101,10 @@ const publicRoutes = {
   },
   "GET status": async () => {
     const meta = await getJSON("meta", {});
-    return json({ ok: true, hasApiKey: hasApiKey(), adminEnabled: adminEnabled(), ...meta });
+    return json({ ok: true, hasApiKey: hasApiKey(), adminEnabled: adminEnabled(), armazenamento: await armazenamentoAtual(), supabase: configPublica(), ...meta });
   },
+  "GET votacoes": async () => json({ ...(await listarVotacoes()), supabase: configPublica() }, 200, { "cache-control": "public, max-age=15" }),
+  "GET palco/historico": async () => json(await resumoHistorico(), 200, { "cache-control": "public, max-age=60" }),
   "POST login": async (req) => {
     if (!adminEnabled()) throw new HttpError(503, "A edição está desligada: define ADMIN_PASSWORD nas variáveis do Netlify.");
     const { password } = await body(req);
@@ -474,6 +478,7 @@ const adminRoutes = {
     const out = { kind: "placar-backup", version: 2, at: new Date().toISOString(), data: {} };
     for (const k of keys) out.data[k] = await getJSON(k, null);
     for (const k of await listKeys("snap/")) out.data[k] = await getJSON(k, null);
+    out.colecoes = { [COLECAO_PALCO]: await lerLinhas(COLECAO_PALCO) };
     return out;
   },
   "POST import/backup": async ({ b }) => {
@@ -484,10 +489,36 @@ const adminRoutes = {
       if (!/^(db|stats|ytstart|videosummary|projvids|meta|vstate|sbextra|ttextra|snap\/\d{4}-\d{2})$/.test(k)) continue;
       await setJSON(k, v);
     }
+    // Histórico do Palco: só entra se ainda estiver vazio (não duplica resultados)
+    const hist = bk.colecoes?.[COLECAO_PALCO];
+    if (Array.isArray(hist) && hist.length && !(await lerLinhas(COLECAO_PALCO)).length) {
+      await adicionarLinhas(COLECAO_PALCO, hist.map(({ id, ...resto }) => resto));
+    }
     const db = await loadDB();
     return { ok: true, people: Object.keys(db.people).length, rebuildWith: db };
   },
   "POST rebuild": async () => ({ ok: true, rebuild: true }),
+
+  // ---------- Histórico do Palco (resultados dos vídeos gravados) ----------
+  "POST palco/resultados": async ({ b }) => {
+    const n = await guardarResultados(b.resultados, { espetaculo: b.espetaculo, tema: b.tema, formato: b.formato });
+    return { ok: true, guardados: n };
+  },
+
+  // ---------- Votações ----------
+  "GET votacoes": async () => listarVotacoes({ todas: true }),
+  "POST votacao": async ({ db, b }) => ({ ok: true, id: await guardarVotacao(b.votacao || {}, db) }),
+  "POST votacao/apagar": async ({ b }) => {
+    await apagarVotacao(b.id);
+    return { ok: true };
+  },
+
+  // ---------- Supabase ----------
+  "GET supabase": async () => ({ ...(await estadoSupabase()), armazenamento: await armazenamentoAtual() }),
+  "POST supabase/migrar": async ({ b }) => {
+    const r = await migrarParaSupabase({ colecoes: [COLECAO_PALCO], inicio: Number(b.inicio) || 0 });
+    return { ok: true, ...r };
+  },
 };
 
 export default async (req) => {

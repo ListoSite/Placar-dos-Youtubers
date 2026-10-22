@@ -479,6 +479,26 @@ p {
 .menu-movel {
   display: none;
 }
+/* Entre o computador e o telemóvel: menu mais compacto para caber tudo */
+@media (max-width: 1320px) and (min-width: 1061px) {
+  .nav a {
+    padding: 9px 10px;
+  }
+  .pesquisa input {
+    width: 160px;
+  }
+  .pesquisa input:focus {
+    width: 200px;
+  }
+}
+@media (max-width: 1180px) and (min-width: 1061px) {
+  .marca b span {
+    display: none;
+  }
+  .pesquisa input {
+    width: 130px;
+  }
+}
 @media (max-width: 1060px) {
   .nav {
     display: none;
@@ -1933,7 +1953,7 @@ table.tabela {
     bottom: calc(10px + env(safe-area-inset-bottom));
     z-index: 70;
     display: grid;
-    grid-template-columns: repeat(6, minmax(0, 1fr));
+    grid-template-columns: repeat(7, minmax(0, 1fr));
     gap: 2px;
     padding: 6px;
     border-radius: 26px;
@@ -2121,4 +2141,292 @@ table.tabela {
 .link-sb {
   white-space: nowrap;
   font-size: var(--t-xs);
+}
+
+/* ---------- Perfil: No Palco ---------- */
+.palco-feitos {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+  gap: 12px;
+}
+.pf {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  grid-template-rows: auto auto;
+  column-gap: 14px;
+  align-items: center;
+  padding: 16px 18px;
+  border-radius: 20px;
+}
+.pf-icone {
+  grid-row: span 2;
+  font-size: 34px;
+  line-height: 1;
+}
+.pf-icone.estrela {
+  color: #ffd54a;
+  text-shadow: 0 0 14px rgba(255, 213, 74, 0.6);
+}
+.pf b {
+  font-family: var(--f-display);
+  font-size: var(--t-xl, 28px);
+}
+.pf small {
+  color: var(--texto-3);
+  font-size: var(--t-xs);
+}
+.palco-rivais {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 10px;
+}
+.rival {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  border-radius: 18px;
+  color: var(--texto);
+  text-decoration: none;
+}
+.rival > span:not(.avatar) {
+  flex: 1;
+  min-width: 0;
+}
+.rival b {
+  display: block;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.rival small {
+  color: var(--texto-3);
+  font-size: var(--t-xs);
+}
+.rival strong {
+  font-family: var(--f-display);
+  font-size: var(--t-lg, 22px);
+}
+.rival strong.ganha {
+  color: #4fe3a0;
+}
+.rival strong.perde {
+  color: #ff8a6b;
+}
+
+/* ---------- Palco: hall da fama ---------- */
+.hall {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 14px;
+  margin-top: 24px;
+}
+.hall-caixa {
+  padding: 18px 20px;
+  border-radius: 22px;
+}
+.hall-caixa h3 {
+  font-size: var(--t-base);
+  margin-bottom: 10px;
+}
+.hall-linha {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 7px 0;
+  color: var(--texto);
+  text-decoration: none;
+  border-top: 1px solid var(--linha);
+}
+.hall-linha:first-of-type {
+  border-top: 0;
+}
+.hall-linha > span:not(.avatar) {
+  flex: 1;
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.hall-linha b {
+  font-family: var(--f-display);
+  white-space: nowrap;
+}
+.hall-linha .estrelas {
+  color: #ffd54a;
+}
+
+/* ---------- Votar ---------- */
+.vt-conta {
+  margin-bottom: 20px;
+}
+.vt-eu {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 18px;
+  border-radius: 22px;
+  flex-wrap: wrap;
+}
+.vt-eu img {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+}
+.vt-eu span {
+  flex: 1;
+  min-width: 200px;
+}
+.vt-eu b {
+  display: block;
+}
+.vt-eu small {
+  color: var(--texto-3);
+  font-size: var(--t-xs);
+}
+.vt-google {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  background: #fff;
+  color: #1f1f1f;
+  border-color: #fff;
+  font-weight: 700;
+}
+.vt-google svg {
+  width: 20px;
+  height: 20px;
+}
+.vt-votacao {
+  padding: 22px;
+  border-radius: 26px;
+  margin-bottom: 18px;
+}
+.vt-votacao h2 {
+  font-size: var(--t-xl, 28px);
+  margin: 8px 0 4px;
+}
+.vt-topo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--texto-3);
+  font-size: var(--t-xs);
+}
+.vt-selo {
+  padding: 4px 12px;
+  border-radius: 999px;
+  border: 1px solid var(--linha);
+  font-weight: 700;
+  color: var(--texto-2);
+}
+.vt-selo.aberta {
+  border-color: rgba(79, 227, 160, 0.6);
+  color: #4fe3a0;
+}
+.vt-opcoes {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 10px;
+  margin-top: 16px;
+}
+.vt-opcao {
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 14px;
+  border-radius: 18px;
+  border: 1px solid var(--linha);
+  background: rgba(255, 255, 255, 0.03);
+  color: var(--texto);
+  text-align: left;
+  cursor: pointer;
+  font: inherit;
+  transition: transform 0.35s var(--mola), border-color 0.2s;
+}
+.vt-opcao:not([disabled]):hover {
+  transform: translateY(-2px);
+  border-color: var(--rubi);
+}
+.vt-opcao[disabled] {
+  cursor: default;
+}
+.vt-opcao > * {
+  position: relative;
+  z-index: 1;
+}
+.vt-nome {
+  flex: 1;
+  min-width: 0;
+}
+.vt-nome b {
+  display: block;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.vt-nome small {
+  color: var(--ouro);
+  font-weight: 700;
+  font-size: var(--t-xs);
+}
+.vt-pct {
+  text-align: right;
+}
+.vt-pct b {
+  display: block;
+  font-family: var(--f-display);
+}
+.vt-pct small {
+  color: var(--texto-3);
+  font-size: var(--t-xs);
+}
+.vt-barra {
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  z-index: 0 !important;
+  background: color-mix(in srgb, var(--rubi) 22%, transparent);
+  transition: width 0.8s var(--mola);
+}
+.vt-opcao.minha {
+  border-color: var(--ouro);
+  box-shadow: 0 0 0 1px var(--ouro);
+}
+.vt-opcao.vencedora .vt-barra {
+  background: color-mix(in srgb, var(--ouro) 30%, transparent);
+}
+.vt-letra {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: var(--rubi);
+  font-family: var(--f-display);
+  font-weight: 800;
+}
+.vt-nota {
+  margin-top: 12px;
+  font-size: var(--t-sm);
+}
+.vt-vazio {
+  padding: 30px;
+  border-radius: 26px;
+  text-align: center;
+}
+@media (max-width: 440px) {
+  .abas a {
+    font-size: 9.5px;
+    letter-spacing: -0.03em;
+  }
+  .abas a span {
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
 }

@@ -82,7 +82,7 @@ export async function correr(palco, opts) {
     clearTimeout(alertaTimer);
     alertaTimer = setTimeout(() => (alerta.hidden = true), 1800);
     palco.flash(0.35);
-    palco.tocar("_destaque");
+    if (!palco.evento("lider", { alvo: alerta, p })) palco.tocar("_destaque");
     palco.explodir(vertical ? palco.L * 0.8 : palco.L * 0.75, vertical ? 520 : 300, { n: 40, forca: 0.5 });
   };
 
@@ -152,11 +152,12 @@ export async function correr(palco, opts) {
   // Resumo: quem esteve mais vezes em primeiro
   const [rei, vezes] = [...lideres.entries()].sort((a, b) => b[1] - a[1])[0];
   const p = ds.people.find((x) => x.id === rei);
+  palco.registar({ tipo: "coroa", espetaculo: "corrida", vence: rei, metrica: acumulado ? "views-acumuladas" : "views" });
   cena.innerHTML = `<div class="p-centro">
     ${avatarPalco(p, vertical ? 320 : 260)}
     <h1 class="p-titulo p-entra" style="font-size:${vertical ? 72 : 90}px;margin-top:50px">${esc(p.name)}</h1>
     <p class="p-sub p-entra" style="animation-delay:.3s">Em primeiro lugar em ${vezes} de ${meses.length} ${meses.length === 1 ? "mês" : "meses"}</p></div>`;
-  palco.tocar("_destaque");
+  if (!palco.evento("vencedor", { alvo: cena.querySelector(".palco-avatar"), p })) palco.tocar("_destaque");
   palco.explodir(palco.L / 2, palco.A * 0.35, { n: 70 });
   await palco.passo(5000);
   await palco.fecho();

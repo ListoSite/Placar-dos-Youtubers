@@ -134,7 +134,8 @@ export async function correr(palco, opts) {
       els.forEach((el) => el.classList.remove("destaque"));
       els[maior.i].classList.add("destaque");
       faixa.innerHTML = `<span class="p-entra"><b>${esc(base[maior.i].name)}</b> é a maior bolha: ${esc(f.met.fmt(f.vals[maior.i]))}</span>`;
-      palco.tocar(fi === fases.length - 1 ? "_destaque" : "revelar");
+      const ultimaFase = fi === fases.length - 1;
+      if (!palco.evento(ultimaFase ? "vencedor" : "revelar", { alvo: { x: maior.x, y: maior.y, w: maior.r * 2, h: maior.r * 2 }, p: base[maior.i], pos: 1 })) palco.tocar(ultimaFase ? "_destaque" : "revelar");
       palco.explodir(maior.x, maior.y - maior.r * 0.6, { n: 60, forca: 0.6 });
       await palco.passo(3000);
       els[maior.i].classList.remove("destaque");

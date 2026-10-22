@@ -141,14 +141,17 @@ export async function correr(palco, opts) {
       cena.querySelector(".df-pergunta").innerHTML = `Resposta: <b class="df-resposta">${esc(q.resposta)}</b>`;
     } else {
       opEls.forEach((el, k) => el.classList.add(q.opcoes[k].certa ? "certa" : "errada"));
+      const errada = opEls.find((el) => el.classList.contains("errada"));
+      if (errada && q.tipo !== "vf") palco.evento("erro", { alvo: errada });
       if (q.explica) {
         const ex = document.createElement("div");
         ex.className = "df-explica p-entra";
         ex.textContent = q.explica;
         cena.appendChild(ex);
       }
-      palco.tocar("acerto");
     }
+    const certaEl = opEls.find((el) => el.classList.contains("certa")) || opEls[0];
+    if (!palco.evento("acerto", { alvo: certaEl })) palco.tocar("acerto");
     const ponto = document.createElement("div");
     ponto.className = "df-ponto";
     ponto.textContent = "+1 ponto se acertaste!";

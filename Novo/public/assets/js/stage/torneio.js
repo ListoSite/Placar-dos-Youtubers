@@ -4,6 +4,7 @@ import { esc } from "../format.js";
 import { contar } from "../ui.js";
 import { avatarPalco, baralhar, letras, comFoco } from "./stage.js";
 import { METRICAS, melhores } from "./metricas.js";
+import { linhaConfronto, estrelasHtml, dadosPessoa } from "./historico.js";
 import { animate, stagger, spring } from "../../vendor/anime.esm.min.js";
 
 const CRITERIOS = ["views", "indice", "subs", "total", "media3", "subsMes", "videos30", "crescimento"];
@@ -141,7 +142,7 @@ export async function correr(palco, opts) {
     slotEl.set(chave(r, j), el);
     return el;
   };
-  const conteudoSlot = (p) => `${avatarPalco(p, vertical ? (n === 16 ? 74 : 80) : n === 16 ? 54 : 70).replace("palco-avatar", "")}<span class="tn-info"><span class="tn-nome">${esc(p.name)}</span><b class="tn-v"></b></span>`;
+  const conteudoSlot = (p) => `${avatarPalco(p, vertical ? (n === 16 ? 74 : 80) : n === 16 ? 54 : 70).replace("palco-avatar", "")}<span class="tn-info"><span class="tn-nome">${esc(p.name)}${estrelasHtml(palco.historico, p.id, 3)}</span><b class="tn-v"></b></span>`;
   for (let r = 0; r < R; r++) for (let j = 0; j < n / 2 ** r; j++) criarSlot(r, j, r === 0 ? lista[j] : null);
   rondaEl.textContent = NOMES_RONDA[n];
   palco.tocar("whoosh");
@@ -215,8 +216,10 @@ export async function correr(palco, opts) {
     const [ganha, perde] = res.vence === 0 ? [ea, eb] : [eb, ea];
     ganha.classList.add("ganha");
     perde.classList.add("fora");
+    palco.evento("ponto", { alvo: ganha });
     ea.classList.remove("joga");
     eb.classList.remove("joga");
+    palco.registar({ tipo: "duelo", espetaculo: "torneio", a: a.id, b: b.id, vence: (res.vence === 0 ? a : b).id, criterio: crit, ronda: NOMES_RONDA[n / 2 ** r] });
     await avancar(r, res.vence === 0 ? ja : jb, res.vence === 0 ? a : b);
     return res.vence === 0 ? a : b;
   };
@@ -230,7 +233,8 @@ export async function correr(palco, opts) {
     const lado = (p, i) => `<div class="tn-lado l${i}">${avatarPalco(p, vertical ? 300 : 340)}<div class="p-titulo">${esc(p.name)}</div><div class="tn-grande-v"></div></div>`;
     duelo.innerHTML = `<div class="tn-titulo-duelo">${final ? "A grande final" : `${NOMES_RONDA[4]}, jogo ${k + 1}`}</div>
       <div class="tn-frente">${lado(a, 0)}<div class="tn-vs">VS</div>${lado(b, 1)}</div>
-      <div class="tn-roleta"><span></span></div>`;
+      <div class="tn-roleta"><span></span></div>
+      <div class="hi-linha tn-historial">${linhaConfronto(palco.historico, a, b)}</div>`;
     palco.tocar("whoosh");
     if (final) {
       palco.musica("epico", 2);
@@ -239,7 +243,9 @@ export async function correr(palco, opts) {
     }
     animate(duelo.querySelectorAll(".tn-lado"), { translateX: (el, i) => [i ? 600 : -600, 0], opacity: [0, 1], duration: 900, ease: spring({ stiffness: 120, damping: 14 }) });
     animate(duelo.querySelector(".tn-vs"), { scale: [3, 1], opacity: [0, 1], delay: 400, duration: 700, ease: "outBack" });
-    await palco.esperar(1400);
+    await palco.esperar(1000);
+    palco.evento("duelo", { a: duelo.querySelector(".tn-lado.l0 .palco-avatar"), b: duelo.querySelector(".tn-lado.l1 .palco-avatar"), final });
+    await palco.esperar(400);
     // Roleta do critério
     const rol = duelo.querySelector(".tn-roleta span");
     const giro = opts.criterio === "misto" || !opts.criterio ? baralhar(CRITERIOS).slice(0, 7) : [];
@@ -264,7 +270,7 @@ export async function correr(palco, opts) {
     lados[res.vence].classList.add("ganha");
     lados[1 - res.vence].classList.add("fora");
     palco.tremer(final ? 1 : 0.6);
-    palco.tocar(final ? "_destaque" : "acerto");
+    if (!palco.evento("golpe", { de: lados[res.vence].querySelector(".palco-avatar"), alvo: lados[1 - res.vence].querySelector(".palco-avatar"), critico: final })) palco.tocar(final ? "_destaque" : "acerto");
     palco.explodir(res.vence === 0 ? (vertical ? palco.L / 2 : palco.L * 0.25) : vertical ? palco.L / 2 : palco.L * 0.75, vertical ? (res.vence === 0 ? palco.A * 0.3 : palco.A * 0.7) : palco.A * 0.45, { n: final ? 120 : 60, forca: 0.8 });
     await palco.passo(final ? 2600 : 2400);
     duelo.hidden = true;
@@ -277,6 +283,7 @@ export async function correr(palco, opts) {
     (res.vence === 0 ? ea : eb).classList.add("ganha");
     (res.vence === 0 ? eb : ea).classList.add("fora");
     const vencedor = res.vence === 0 ? a : b;
+    palco.registar({ tipo: "duelo", espetaculo: "torneio", a: a.id, b: b.id, vence: vencedor.id, criterio: crit, ronda: final ? "Final" : NOMES_RONDA[4] });
     if (!final) await avancar(r, k * 2 + res.vence, vencedor);
     return vencedor;
   };
@@ -308,16 +315,20 @@ export async function correr(palco, opts) {
 
   // ---------- Campeão ----------
   const campeao = vivos[0];
+  const estrelas = dadosPessoa(palco.historico, campeao.id).estrelas + 1;
+  palco.registar({ tipo: "titulo", espetaculo: "torneio", vence: campeao.id, participantes: lista.map((p) => p.id) });
   palco.musica("epico", 1);
   cena.innerHTML = `<div class="p-centro tn-campeao">
     <div class="tn-taca-grande">${taca()}</div>
     ${avatarPalco(campeao, vertical ? 300 : 260)}
     <div class="ab-etiqueta" style="margin:40px 0 0">Campeão do torneio</div>
-    <h1 class="p-titulo" style="font-size:${vertical ? 100 : 120}px;margin-top:20px">${letras(campeao.name)}</h1></div>`;
+    <h1 class="p-titulo" style="font-size:${vertical ? 100 : 120}px;margin-top:20px">${letras(campeao.name)}</h1>
+    <div class="hi-estrela-nova"><span>${"★".repeat(Math.min(estrelas, 10))}</span><small>${estrelas === 1 ? "A primeira estrela, para sempre" : `${estrelas}.ª estrela no Palco`}</small></div></div>`;
   animate(cena.querySelectorAll(".ab-letra"), { translateY: [120, 0], opacity: [0, 1], delay: stagger(40, { start: 500 }), duration: 900, ease: spring({ stiffness: 130, damping: 12 }) });
   animate(cena.querySelector(".tn-taca-grande"), { translateY: [-400, 0], rotate: [-20, 0], duration: 1200, ease: spring({ stiffness: 90, damping: 10 }) });
   palco.tremer(1.3);
-  palco.festa({ forca: 1.2 });
+  await palco.esperar(300, { exato: true });
+  palco.festa({ forca: 1.2, som: !palco.evento("vencedor", { alvo: cena.querySelector(".palco-avatar"), p: campeao }) });
   await palco.passo(6500);
   await palco.fecho();
 }

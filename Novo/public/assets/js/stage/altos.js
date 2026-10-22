@@ -50,7 +50,10 @@ export async function correr(palco, opts) {
         if (k < 1 && !palco.terminado) requestAnimationFrame(passo);
       };
       requestAnimationFrame(passo);
-      palco.tocar(sobe ? "ponto" : "falha", {}, 1.5);
+      const avLinha = linha.querySelector(".palco-avatar");
+      setTimeout(() => {
+        if (!palco.terminado && !palco.evento(sobe ? "subida" : "queda", { alvo: avLinha, p: x.p })) palco.tocar(sobe ? "ponto" : "falha");
+      }, 1500);
       await palco.passo(2300);
     }
     const maior = lista[0];
@@ -73,7 +76,7 @@ export async function correr(palco, opts) {
       <h1 class="p-titulo p-slam" style="font-size:${vertical ? 96 : 112}px;margin-top:40px">${esc(rei.p.name)}</h1>
       <p class="p-sub p-entra" style="animation-delay:.4s">Do ${rei.ant}.º para o ${rei.pos}.º lugar, ${rei.ant - rei.pos} posições acima</p></div>`;
     palco.musica("epico", 2);
-    palco.festa();
+    palco.festa({ som: !palco.evento("vencedor", { alvo: cena.querySelector(".palco-avatar"), p: rei.p }) });
     await palco.passo(6000);
   }
   await palco.fecho();

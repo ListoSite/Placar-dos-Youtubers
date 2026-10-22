@@ -11,6 +11,7 @@ const SEPARADORES = [
   { id: "descobrir", nome: "Descobrir canais", mod: "./discover.js" },
   { id: "importar", nome: "Importar dados", mod: "./import.js" },
   { id: "projetos", nome: "Projetos", mod: "./projects.js" },
+  { id: "votacoes", nome: "Votações", mod: "./votes.js" },
   { id: "definicoes", nome: "Definições", mod: "./settings.js" },
 ];
 

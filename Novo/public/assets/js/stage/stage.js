@@ -8,6 +8,8 @@ import { som } from "../audio.js";
 import { animate, stagger, spring, engine } from "../../vendor/anime.esm.min.js";
 import { TEMAS, tema as temaPorId, cenario, estiloTema } from "./temas.js";
 import { Ambiente } from "./ambiente.js";
+import { criarKit } from "./kits.js";
+import { historicoEmCache } from "./historico.js";
 
 const I = (d) => `<svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">${d}</svg>`;
 
@@ -29,6 +31,7 @@ export const ESPETACULOS = [
   { id: "bolhas", usos: ["video","direto"], dur: "50 s", grupo: "graficos", nome: "Bolhas", texto: "Cada Youtuber é uma bolha do tamanho dos seus números. Muda a medida e as bolhas crescem e encolhem.", mod: "./bolhas.js", icone: I(`<circle cx="18" cy="20" r="12"/><circle cx="35" cy="31" r="8"/><circle cx="33" cy="12" r="5"/><circle cx="14" cy="39" r="4"/>`) },
   { id: "linhas", usos: ["video"], dur: "40 s", grupo: "graficos", nome: "Linha a linha", texto: "Até 7 Youtubers num gráfico de linhas que se desenha mês a mês, com quem vai na frente.", mod: "./linhas.js", icone: I(`<path d="M6 6v36h36"/><path d="M10 34l9-10 7 5 14-16"/><path d="M10 38l10-6 8 2 12-9" opacity=".55"/>`) },
   { id: "numeros", usos: ["video"], dur: "35 s", grupo: "graficos", nome: "O mês em números", texto: "Números gigantes, um de cada vez: total de views, subidas, milionários e o n.º 1.", mod: "./numeros.js", icone: I(`<rect x="6" y="8" width="36" height="32" rx="5"/><path d="M14 30V18l-3 3M22 18h6l-6 12M32 18h5v12"/>`) },
+  { id: "votacao", usos: ["video", "direto"], dur: "40 s", grupo: "graficos", nome: "O público escolheu", texto: "Os resultados de uma votação do site, do último ao primeiro, com o vencedor no fim.", mod: "./votacao.js", icone: I(`<path d="M8 22h32v18H8z"/><path d="M16 22V10l8-5 8 5v12"/><path d="m19 16 4 4 7-7"/>`) },
   { id: "desafio", usos: ["video"], dur: "1,5–2 min", grupo: "jogos", nome: "Desafio do Placar", texto: "Para jogar com o vídeo: escolha múltipla, o intruso, ordenar e verdadeiro ou falso. Quem vê pausa, responde e conta os pontos.", mod: "./desafio.js", icone: I(`<path d="M8 6h32v26H22l-9 9v-9H8z"/><path d="M19 15a5 5 0 1 1 7 4.6c-1.4.7-2 1.6-2 3.4"/><circle cx="24" cy="27.5" r="1.6" fill="currentColor"/>`) },
   { id: "quiz", usos: ["video","direto"], dur: "1–2 min", grupo: "jogos", nome: "Quem fez mais?", texto: "Perguntas variadas, 5 segundos para pensar e a resposta revelada.", mod: "./quiz.js", icone: I(`<circle cx="24" cy="24" r="19"/><path d="M18 18a6 6 0 1 1 9 5.2c-2 1.2-3 2.3-3 4.8"/><circle cx="24" cy="35" r="1.8" fill="currentColor"/>`) },
   { id: "maismenos", usos: ["video","direto"], dur: "1–2 min", grupo: "jogos", nome: "Mais ou menos", texto: "Mais ou menos views do que o anterior? Uma corrente sem fim.", mod: "./maismenos.js", icone: I(`<path d="M24 6 12 20h24zM24 42 12 28h24z"/>`) },
@@ -48,7 +51,7 @@ const VELOCIDADE = { rapido: 0.72, normal: 1, lento: 1.35 };
 export class Palco {
   static atual = null;
 
-  constructor({ formato = "16x9", manual = false, tema = "rubi", velocidade = "normal", foco = "", focoQuando = "fim", modo = "video" }) {
+  constructor({ formato = "16x9", manual = false, tema = "rubi", velocidade = "normal", foco = "", focoQuando = "fim", modo = "video", completo = true }) {
     Palco.atual = this;
     this.foco = foco || "";
     this.focoQuando = focoQuando;
@@ -56,6 +59,9 @@ export class Palco {
     this.modo = modo;
     this.canal = { nome: "Placar dos Youtubers", youtube: "@placardosyoutubers", tiktok: "", instagram: "", ...(estado.ds?.settings?.canal || {}) };
     this.contexto = { metrica: "indice", m: estado.ref };
+    // Histórico (confrontos, estrelas) e os resultados deste espetáculo, guardados se for gravado
+    this.historico = historicoEmCache();
+    this.resultados = [];
     this.formato = formato;
     this.vertical = formato === "9x16";
     this.manual = manual;
@@ -93,6 +99,10 @@ export class Palco {
     document.body.appendChild(this.raiz);
     document.body.classList.add("modo-palco");
     this.ambiente = new Ambiente($(".palco-particulas", this.raiz), this, this.tema);
+    // Tema completo: o kit do tema desenha os momentos (golos, espadas, emojis…) por cima da cena
+    this.kit = criarKit(this, completo);
+    if (this.kit) this.raiz.querySelector(".palco-tela").classList.add(`kit-${this.kit.id}`);
+    setTimeout(() => this.evento("inicio"), 400);
 
     this._escala = () => {
       const k = Math.min(innerWidth / this.L, innerHeight / this.A);
@@ -222,6 +232,16 @@ export class Palco {
     if (this.terminado) return;
     const n = { _abertura: this.tema.sons.abertura, _destaque: this.tema.sons.destaque, _festa: this.tema.sons.festa }[nome] || nome;
     som.tocar(n, opcoes, atraso);
+  }
+
+  /** Guarda um resultado (duelo, título ou coroa) para o histórico. */
+  registar(r) {
+    this.resultados.push(r);
+  }
+
+  /** Um momento do espetáculo (golpe, acerto, vencedor…). Devolve true se o tema tratou o som. */
+  evento(nome, dados) {
+    return this.kit ? this.kit.evento(nome, dados) : false;
   }
 
   // ---------- Efeitos ----------
@@ -412,6 +432,7 @@ export class Palco {
       /* nada */
     }
     som.musica.parar(0.5);
+    this.kit?.limpar();
     removeEventListener("resize", this._escala);
     document.removeEventListener("keydown", this._tecla);
     if (document.fullscreenElement) document.exitFullscreen?.().catch(() => {});

@@ -122,7 +122,7 @@ export async function correr(palco, opts) {
     popup.style.top = Math.max(vertical ? 380 : 170, py - (vertical ? 260 : 220)) + "px";
     popup.innerHTML = itens.map((y) => `<div><small>${esc(y.titulo)}</small><b>${esc(y.texto)}</b></div>`).join("");
     popup.animate([{ transform: `${px > palco.L * 0.6 ? "translateX(-100%) " : ""}scale(.5)`, opacity: 0 }, { transform: `${px > palco.L * 0.6 ? "translateX(-100%) " : ""}scale(1)`, opacity: 1 }], { duration: 450, easing: "cubic-bezier(.2,1.4,.4,1)" });
-    palco.tocar(ouro ? "_destaque" : "revelar");
+    if (!(ouro && palco.evento("subida", { alvo: { x: px, y: py }, p }))) palco.tocar(ouro ? "_destaque" : "revelar");
     if (ouro) {
       palco.flash(0.4);
       palco.explodir(px, py, { n: 80, forca: 0.7 });
@@ -148,7 +148,7 @@ export async function correr(palco, opts) {
     <div class="hs-numeros">${numeros.map((x) => `<div class="hs-num"><span>${esc(x.nome)}</span><b data-v="${x.v}">0</b>${x.extra ? `<small>${esc(x.extra)}</small>` : ""}</div>`).join("")}</div></div>`;
   animate(cena.querySelectorAll(".hs-num"), { translateY: [80, 0], opacity: [0, 1], delay: stagger(140, { start: 300 }), duration: 900, ease: spring({ stiffness: 140, damping: 13 }) });
   cena.querySelectorAll(".hs-num b").forEach((b, k) => contar(b, Number(b.dataset.v), { formato: numeros[k].fmt, duracao: 1200, atraso: 400 + k * 140 }));
-  palco.festa({ forca: 0.8 });
+  palco.festa({ forca: 0.8, som: !palco.evento("vencedor", { alvo: cena.querySelector(".palco-avatar"), p }) });
   await palco.passo(6500);
   await palco.fecho();
 }

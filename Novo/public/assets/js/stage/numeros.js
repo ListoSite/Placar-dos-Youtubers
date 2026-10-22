@@ -81,8 +81,13 @@ export async function correr(palco, opts) {
     await animarVisual(palco, cartao, c.visual);
     if (c.final) {
       await palco.esperar(900, { exato: true });
-      palco.tocar("_destaque");
-      palco.festa({ forca: 0.8 });
+      const tratou = palco.evento("vencedor", { alvo: cartao.querySelector(".nm-pessoa .palco-avatar"), p: c.visual.p });
+      if (!tratou) palco.tocar("_destaque");
+      palco.festa({ forca: 0.8, som: !tratou });
+    } else if (c.visual?.tipo === "pessoa" && palco.evento("subida", { alvo: cartao.querySelector(".nm-pessoa .palco-avatar"), p: c.visual.p })) {
+      palco.explodir(palco.L / 2, vertical ? 760 : 380, { n: 40, forca: 0.5 });
+    } else if (c.visual?.tipo === "seta" && palco.evento(c.visual.sobe ? "subida" : "queda", { alvo: cartao.querySelector(".nm-seta") })) {
+      palco.explodir(palco.L / 2, vertical ? 760 : 380, { n: 40, forca: 0.5 });
     } else {
       palco.tocar(i % 2 ? "ponto" : "revelar");
       palco.explodir(palco.L / 2, vertical ? 760 : 380, { n: 40, forca: 0.5 });

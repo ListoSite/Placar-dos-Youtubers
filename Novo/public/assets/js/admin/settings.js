@@ -56,6 +56,11 @@ export async function render(alvo) {
       <div class="ed-acoes"><button class="btn btn-primario" id="st-guardar-canal" data-a-esperar="A guardar">Guardar canal</button></div>
     </div>
 
+    <div class="painel ed-bloco" id="st-supabase">
+      <h3>Base de dados (Supabase)</h3>
+      <div id="st-sb-estado"><p class="muted">A verificar…</p></div>
+    </div>
+
     <div class="painel ed-bloco">
       <h3>Cópias de segurança</h3>
       <p class="muted">A cópia guarda tudo: Youtubers, canais, meses, projetos e os registos diários. Faz uma de vez em quando.</p>
@@ -110,6 +115,7 @@ export async function render(alvo) {
     c.hashtags = $("#st-hashtags", alvo).value;
     chamar("settings", { settings: { canal: c } }, { botao: e.currentTarget, sucesso: "Canal guardado." }).catch(() => {});
   });
+  estadoSupabase($("#st-sb-estado", alvo));
   $("#st-guardar", alvo).addEventListener("click", (e) => chamar("settings", { settings: { weights: pesos, alcanceTopo: topo } }, { botao: e.currentTarget, sucesso: "Pesos guardados. O Índice foi recalculado." }).catch(() => {}));
   desenharTop();
 
@@ -153,4 +159,57 @@ export async function render(alvo) {
     await chamar("import/backup", { backup }, { sucesso: "Cópia reposta." }).catch(() => {});
   });
   $("#st-sair", alvo).addEventListener("click", sair);
+}
+
+/** Estado do Supabase e o botão para copiar os dados do Netlify para lá. */
+async function estadoSupabase(alvo) {
+  let r;
+  try {
+    r = await api("admin/supabase");
+  } catch (e) {
+    alvo.innerHTML = `<p class="muted">${esc(e.message)}</p>`;
+    return;
+  }
+  const passos = `<ol class="ed-passos">
+      <li>Em supabase.com, no teu projeto: <b>SQL Editor</b> → <b>New query</b>, cola o ficheiro <b>Novo/supabase/schema.sql</b> do GitHub e carrega em <b>Run</b>. Cria as tabelas e as regras dos votos.</li>
+      <li>No Netlify, em <b>Site configuration → Environment variables</b>, junta <b>SUPABASE_URL</b>, <b>SUPABASE_SERVICE_ROLE_KEY</b> (secreta) e <b>SUPABASE_ANON_KEY</b> (pública), e faz um novo deploy.</li>
+      <li>Volta aqui e carrega em <b>Copiar dados para o Supabase</b>.</li></ol>`;
+  if (!r.configurado) {
+    alvo.innerHTML = `<p class="muted">Os dados estão no armazenamento do Netlify. Para passar tudo para o Supabase (e ter votações com login Google):</p>${passos}`;
+    return;
+  }
+  if (!r.ligado) {
+    alvo.innerHTML = `<div class="aviso"><p>O Supabase está configurado mas não respondeu: ${esc(r.erro || "")}. Confirma o URL, a chave e se correste o <b>schema.sql</b>.</p></div>${passos}`;
+    return;
+  }
+  if (r.usado && r.migrado) {
+    const m = r.migrado;
+    alvo.innerHTML = `<div class="ed-estado">
+        <div><span>Os dados estão em</span><b>Supabase</b></div>
+        <div><span>Copiados em</span><b>${esc(ha(m.at))}</b></div>
+        <div><span>Pessoas, canais e projetos</span><b>${inteiro(m.pessoas)} · ${inteiro(m.canais)} · ${inteiro(m.projetos)}</b></div>
+      </div>
+      <p class="muted" style="margin-top:12px">No Supabase, em <b>Table Editor</b>, vês as tabelas <b>pessoas</b>, <b>canais</b>, <b>projetos</b>, <b>palco_resultados</b>, <b>votacoes</b> e <b>votos</b>. Mudanças feitas no site aparecem lá; para editar, usa de preferência o site (as alterações no Supabase só aparecem no site depois de "Recalcular").</p>`;
+    return;
+  }
+  alvo.innerHTML = `<p>O Supabase está ligado e pronto. Os dados ainda estão no Netlify: copia-os para o Supabase. A cópia não apaga nada do Netlify (fica como reserva) e, a partir daí, o site passa a ler e a gravar no Supabase.</p>
+    <div class="ed-acoes" style="justify-content:flex-start"><button class="btn btn-primario" id="st-sb-migrar" data-a-esperar="A copiar">Copiar dados para o Supabase</button></div>`;
+  $("#st-sb-migrar", alvo).addEventListener("click", async (e) => {
+    if (!(await confirmar("Copiar todos os dados para o Supabase? A partir daí o site passa a usar o Supabase.", { sim: "Copiar" }))) return;
+    // A cópia vai por partes (cada pedido ao servidor tem pouco tempo)
+    const botao = e.currentTarget;
+    let res = null;
+    let inicio = 0;
+    try {
+      do {
+        botao.dataset.aEsperar = inicio ? `A copiar (${inicio} de ${res?.total || "?"})` : "A copiar";
+        res = await chamar("supabase/migrar", { inicio }, { botao, recarregar: false });
+        inicio = res.seguinte || 0;
+      } while (res.continuar);
+    } catch {
+      return;
+    }
+    toast(`Copiados ${res.documentos} documentos, ${res.pessoas} pessoas e ${res.canais} canais. O site já usa o Supabase.`);
+    estadoSupabase(alvo);
+  });
 }

@@ -44,6 +44,7 @@ export async function correr(palco, opts) {
   palco.tocar("_abertura", {}, 0.3);
   palco.flash(0.5);
   palco.explodir(vertical ? palco.L / 2 : palco.L * 0.27, vertical ? palco.A * 0.22 : palco.A * 0.45, { n: 70, forca: 0.7 });
+  setTimeout(() => !palco.terminado && palco.evento("revelar", { alvo: cena.querySelector(".palco-avatar"), p, pos: pos || 99 }), 700);
   const indEl = cena.querySelector("#ct-ind");
   if (indEl) {
     contar(indEl, ind.total, { formato: inteiro, duracao: 1600, atraso: 600 });
@@ -66,7 +67,7 @@ export async function correr(palco, opts) {
   palco.tocar("subida", { dur: 0.9 });
   await palco.passo(4500);
   if (pos && pos <= 10) {
-    palco.festa({ forca: 0.7 });
+    palco.festa({ forca: 0.7, som: !palco.evento("vencedor", { alvo: cena.querySelector(".palco-avatar"), p }) });
     await palco.passo(3500);
   }
   await palco.fecho();

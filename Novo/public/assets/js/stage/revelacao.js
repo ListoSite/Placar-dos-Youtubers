@@ -5,6 +5,7 @@ import { esc, mesNome } from "../format.js";
 import { contar } from "../ui.js";
 import { avatarPalco } from "./stage.js";
 import { METRICAS, rankingPor } from "./metricas.js";
+import { dadosPessoa } from "./historico.js";
 
 function movimento(x) {
   if (x.ant === undefined) return "";
@@ -45,6 +46,14 @@ export async function correr(palco, opts) {
       ${misterio ? "" : `<div class="rv-valor p-entra" style="animation-delay:.45s"><b data-v="${x.v}">0</b><span>${esc(met.unidade)}</span></div>${movimento(x)}`}`;
     palco.tocar("whoosh");
     palco.tocar("virar", {}, 0.05);
+    if (!misterio && x.pos > 1)
+      setTimeout(() => {
+        const alvo = cartao.querySelector(".palco-avatar");
+        if (!alvo || palco.terminado) return;
+        palco.evento("revelar", { alvo, p: x.p, pos: x.pos });
+        if (x.ant && x.ant - x.pos >= 3) setTimeout(() => palco.evento("subida", { alvo: cartao.querySelector(".rv-mov") || alvo, p: x.p }), 1200);
+        else if (x.ant && x.pos - x.ant >= 3) setTimeout(() => palco.evento("queda", { alvo: cartao.querySelector(".rv-mov") || alvo, p: x.p }), 1200);
+      }, 500);
     const b = cartao.querySelector("[data-v]");
     if (b) {
       contar(b, x.v, { formato: met.fmt, duracao: 1400, atraso: 450 });
@@ -92,8 +101,12 @@ export async function correr(palco, opts) {
   palco.tocar("rufo", { dur: 3.2 });
   await palco.esperar(3400, { exato: true });
   await mostrar(top[0], { cor: "ouro" });
+  palco.registar({ tipo: "coroa", espetaculo: "revelacao", vence: top[0].p.id, metrica: chave });
+  const coroas = dadosPessoa(palco.historico, top[0].p.id).coroas + 1;
+  if (coroas > 1) cartao.insertAdjacentHTML("beforeend", `<div class="hi-coroa p-entra" style="animation-delay:1s">👑 ${coroas}.ª coroa no Palco</div>`);
   palco.tremer(1.2);
-  palco.festa();
+  await palco.esperar(450, { exato: true });
+  palco.festa({ som: !palco.evento("vencedor", { alvo: cartao.querySelector(".palco-avatar"), p: top[0].p }) });
   await palco.passo(6500);
 
   // Pódio final

@@ -69,7 +69,7 @@ export async function correr(palco, opts) {
     cena.querySelector(".av-nome").innerHTML = `<div class="p-titulo p-slam">${esc(p.name)}</div>`;
     palco.flash(0.7);
     palco.tocar("impacto");
-    palco.tocar("_destaque", {}, 0.2);
+    if (!palco.evento("revelar", { alvo: foto, p, pos: 1 })) palco.tocar("_destaque", {}, 0.2);
     palco.explodir(vertical ? palco.L / 2 : palco.L * 0.3, vertical ? palco.A * 0.33 : palco.A * 0.5, { n: 90 });
     await palco.passo(3200);
   }

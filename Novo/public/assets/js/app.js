@@ -5,6 +5,7 @@ import { esc, ha } from "./format.js";
 import { avatar, linkPessoa, $, esconderDica } from "./ui.js";
 import { som } from "./audio.js";
 import { revelarAoScroll, pilulaNav, logoEntra } from "./motion.js";
+import { lerRegressoDoLogin } from "./conta.js";
 
 const ROTAS = [
   { re: /^$/, mod: "./pages/home.js", nav: "#/" },
@@ -15,6 +16,7 @@ const ROTAS = [
   { re: /^projetos$/, mod: "./pages/projects.js", nav: "#/projetos" },
   { re: /^projeto\/(.+)$/, mod: "./pages/project.js", nav: "#/projetos" },
   { re: /^palco(?:\/([a-z-]+))?$/, mod: "./stage/stage.js", nav: "#/palco" },
+  { re: /^votar$/, mod: "./pages/votar.js", nav: "#/votar" },
   { re: /^editar(?:\/([a-z-]+))?$/, mod: "./admin/admin.js", nav: "" },
 ];
 
@@ -170,4 +172,7 @@ logoEntra(document.querySelector(".marca svg"));
 iniciarPesquisa();
 iniciarSom();
 $("#link-editar").classList.toggle("ativo", temSessao());
+// Regresso do login com Google (o Supabase volta com os tokens no endereço)
+const regresso = lerRegressoDoLogin();
+if (regresso?.erro) setTimeout(() => import("./ui.js").then(({ toast }) => toast(`Não foi possível entrar: ${regresso.erro}`, { erro: true, tempo: 6000 })), 800);
 navegar();

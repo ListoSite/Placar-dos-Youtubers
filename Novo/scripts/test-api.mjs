@@ -98,8 +98,20 @@ check("TikTok no dataset", w.tt?.user === "wuant_tt" && w.tt.f["2026-10"] === 41
 const ttEnt = w.socials?.tiktok?.entries || [];
 check("TikTok: total de hoje e do fim de setembro", ttEnt.some((e) => e.date === "2026-10-22" && e.followers === 125400) && ttEnt.some((e) => e.date === "2026-09-30" && e.followers === 121300), JSON.stringify(ttEnt.slice(-2)));
 
+// Histórico do Palco
+const hist = await call("POST", "admin/palco/resultados", { espetaculo: "batalha", resultados: [{ tipo: "duelo", a: wuant.id, b: created.data.person.id, vence: wuant.id, placar: "3-1" }, { tipo: "titulo", vence: wuant.id }, { tipo: "duelo", a: "x", b: "x", vence: "x" }] });
+check("guardar resultados do Palco (ignora os inválidos)", hist.status === 200 && hist.data.guardados === 2, JSON.stringify(hist.data));
+const resumo = await call("GET", "palco/historico");
+check("histórico: confronto e estrela", resumo.data.pessoas?.[wuant.id]?.estrelas === 1 && resumo.data.pessoas?.[wuant.id]?.v === 1, JSON.stringify(resumo.data.pessoas?.[wuant.id]));
+const semSessao = await fetch(BASE + "/api/admin/palco/resultados", { method: "POST", body: "{}" });
+check("histórico só com sessão", semSessao.status === 401);
+
+// Votações (só com Supabase)
+const vt = await call("GET", "votacoes");
+check("votações respondem", vt.status === 200 && Array.isArray(vt.data.votacoes), `ligado=${vt.data.ligado}`);
+
 const exp = await call("GET", "admin/export");
-check("exportar cópia", exp.status === 200 && exp.data.kind === "placar-backup");
+check("exportar cópia (com o histórico do Palco)", exp.status === 200 && exp.data.kind === "placar-backup" && exp.data.colecoes?.palco_resultados?.length === 2);
 
 console.log(failures ? `\n${failures} falha(s)` : "\nTudo certo.");
 process.exit(failures ? 1 : 0);

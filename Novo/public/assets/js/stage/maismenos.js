@@ -84,14 +84,17 @@ export async function correr(palco, opts) {
     cena.querySelector(`.mm-btn.${certa === "mais" ? "menos" : "mais"}`).classList.add("errada");
     const novo = cena.querySelector(".mm-cartao.novo");
     novo.classList.add(certa);
+    const alvoNovo = novo.querySelector(".palco-avatar") || novo;
     if (escolha) {
       respondidas++;
       if (escolha === certa) {
         certas++;
         serie++;
         melhorSerie = Math.max(melhorSerie, serie);
-        palco.tocar("acerto");
-        palco.tocar("moeda", {}, 0.2);
+        if (!palco.evento("acerto", { alvo: alvoNovo })) {
+          palco.tocar("acerto");
+          palco.tocar("moeda", {}, 0.2);
+        }
         palco.explodir(vertical ? palco.L / 2 : palco.L * 0.78, vertical ? palco.A * 0.72 : palco.A * 0.5, { n: 50, forca: 0.6 });
         if (serie > 0 && serie % 5 === 0) {
           palco.flash(0.5);
@@ -99,11 +102,11 @@ export async function correr(palco, opts) {
         }
       } else {
         serie = 0;
-        palco.tocar("falha");
+        if (!palco.evento("erro", { alvo: alvoNovo })) palco.tocar("falha");
         palco.tremer(0.6);
       }
       cena.querySelector(".mm-serie b").textContent = serie;
-    } else {
+    } else if (!palco.evento(certa === "mais" ? "subida" : "queda", { alvo: alvoNovo, p: b.p })) {
       palco.tocar("ponto");
     }
     await palco.passo(2200);

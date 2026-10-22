@@ -90,7 +90,7 @@ export async function correr(palco, opts) {
     const melhor = atuais.reduce((a, v, k) => (v !== null && (a === -1 || v > atuais[a]) ? k : a), -1);
     if (melhor !== -1 && melhor !== lider) {
       if (lider !== null) {
-        palco.tocar("virar");
+        if (!palco.evento("lider", { alvo: pontas[melhor], p: series[melhor].p })) palco.tocar("virar");
         liderEl.classList.remove("muda");
         void liderEl.offsetWidth;
         liderEl.classList.add("muda");
@@ -125,9 +125,9 @@ export async function correr(palco, opts) {
     desenhar(pos);
   }, { easing: (t) => t });
   desenhar(meses.length - 1);
-  palco.tocar("_destaque");
   palco.flash(0.35);
   const pl = pontas[lider];
+  if (!palco.evento("vencedor", { alvo: pl.querySelector(".palco-avatar"), p: series[lider].p })) palco.tocar("_destaque");
   const tr = pl.style.transform.match(/translate\(([\d.]+)px, ([\d.]+)px\)/);
   if (tr) palco.explodir(Number(tr[1]), Number(tr[2]), { n: 80, forca: 0.6 });
   await palco.passo(2600);

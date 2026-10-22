@@ -86,7 +86,7 @@ export async function correr(palco, opts) {
   lider.classList.add("lider");
   const p0 = pontoDe(palco, lider.querySelector(".bb-val"));
   palco.flash(0.4);
-  palco.tocar("_destaque");
+  if (!palco.evento("vencedor", { alvo: lider.querySelector(".palco-avatar"), p: lista[0].p })) palco.tocar("_destaque");
   palco.explodir(p0.x, p0.y, { n: 90, forca: 0.7 });
   faixa.innerHTML = `<span class="p-entra">${avatarPalco(lista[0].p, vertical ? 84 : 72)}<b>${esc(lista[0].p.name)}</b> em 1.º com ${esc(met.fmt(lista[0].v))}</span>`;
   await palco.passo(3000);

@@ -91,10 +91,13 @@ export async function correr(palco, opts) {
     });
     itens.forEach((it, j) => it.classList.toggle("ativo", j === i));
     centroEl.innerHTML = `<small>${k === 0 ? "A maior" : `${k + 1}.ª maior`}</small><b class="p-slam">${esc(f.cat)}</b><span>${esc(fmt(f.valor))} ${esc(unidade)}</span>`;
-    palco.tocar(k === 0 ? "_destaque" : "revelar");
     palco.flash(0.25);
     const quem = cena.querySelector(".ct-quem") || cena.appendChild(Object.assign(document.createElement("div"), { className: "ct-quem" }));
     quem.innerHTML = `<div class="p-entra">${avatarPalco(f.top.p, vertical ? 150 : 130)}<div><small>N.º 1 em ${esc(f.cat)}</small><b>${esc(f.top.p.name)}</b><span>${esc(curto(f.top.v))} views${porCanais ? "" : `, ${Math.round((f.top.v / f.v) * 100)}% da categoria`}</span></div></div>`;
+    const avQuem = quem.querySelector(".palco-avatar");
+    setTimeout(() => {
+      if (!palco.terminado && !palco.evento("revelar", { alvo: avQuem, p: f.top.p, pos: k + 1 })) palco.tocar(k === 0 ? "_destaque" : "revelar");
+    }, 350);
     if (k === 0) palco.explodir(centro.x + Math.cos(meio) * R, centro.y + Math.sin(meio) * R, { n: 90, forca: 0.7 });
     await palco.passo(3600);
   }

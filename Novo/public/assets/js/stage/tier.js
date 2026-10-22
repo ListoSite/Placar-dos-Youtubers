@@ -80,14 +80,17 @@ export async function correr(palco, opts) {
     item.animate([{ transform: "scale(1.3)" }, { transform: "scale(1)" }], { duration: 350, easing: "cubic-bezier(.2,1.4,.4,1)" });
     filaEl.parentElement.animate([{ filter: "brightness(1.6)" }, { filter: "brightness(1)" }], { duration: 500 });
     if (x.fila === "S") {
-      palco.tocar("_destaque");
+      if (!palco.evento("revelar", { alvo: item, p: x.p, pos: 1 })) palco.tocar("_destaque");
       palco.flash(0.4);
       palco.explodir(para.left * k - t.left * k + 40, (para.top - t.top) * k + 40, { n: 60, forca: 0.6 });
-    } else palco.tocar(x.fila === "D" ? "falha" : "ponto");
+    } else if (x.fila === "D") {
+      if (!palco.evento("queda", { alvo: item, p: x.p })) palco.tocar("falha");
+    } else palco.tocar("ponto");
     await palco.esperar(350);
   }
   destaque.innerHTML = "";
-  palco.tocar("vitoria");
+  const primeiro = cena.querySelector('.tl-itens[data-fila="S"] .tl-item .avatar');
+  if (!(primeiro && palco.evento("vencedor", { alvo: primeiro, p: ordem.find((x) => x.fila === "S")?.p }))) palco.tocar("vitoria");
   palco.ambiente.chuva({ n: 120 });
   await palco.passo(6500);
   palco.tela.classList.remove("denso");

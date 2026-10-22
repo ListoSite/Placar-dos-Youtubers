@@ -103,14 +103,15 @@ export async function correr(palco, opts) {
     const ganha = r.vx > r.vy ? 0 : 1;
     lados[ganha].classList.add("ganha");
     lados[1 - ganha].classList.add("perde");
+    const avGanha = lados[ganha].querySelector(".palco-avatar");
     if (escolha !== null) {
       respondidas++;
       if (escolha === ganha) {
         certas++;
-        palco.tocar("acerto");
+        if (!palco.evento("acerto", { alvo: avGanha })) palco.tocar("acerto");
         palco.explodir(ganha === 0 ? palco.L * 0.25 : palco.L * 0.75, palco.A * 0.5, { n: 50, forca: 0.6 });
-      } else palco.tocar("falha");
-    } else palco.tocar("acerto");
+      } else if (!palco.evento("erro", { alvo: lados[escolha].querySelector(".palco-avatar") })) palco.tocar("falha");
+    } else if (!palco.evento("acerto", { alvo: avGanha })) palco.tocar("acerto");
     await palco.passo(2600);
   }
 

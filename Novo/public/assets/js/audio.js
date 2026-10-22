@@ -565,9 +565,11 @@ const EFEITOS = {
       o.stop(t + 1.3);
     }
   },
-  multidao(t, { dur = 3 } = {}) {
+  multidao(t, { dur = 3, vol = 1, grave = false } = {}) {
     // Público a festejar: ruído filtrado com ondulação
-    for (const [fr, q, v] of [[700, 0.7, 0.32], [1800, 0.9, 0.2], [3200, 1.2, 0.08]]) {
+    for (const [fr0, q, v0] of [[700, 0.7, 0.32], [1800, 0.9, 0.2], [3200, 1.2, 0.08]]) {
+      const fr = grave ? fr0 * 0.55 : fr0;
+      const v = v0 * vol;
       const r = ruido(t, dur);
       const f = ctx.createBiquadFilter();
       f.type = "bandpass";
@@ -723,6 +725,211 @@ const EFEITOS = {
   sino(t) {
     sino(t, 84, { vol: 0.16 });
     sino(t + 0.25, 84, { vol: 0.12 });
+  },
+
+  // ---------- Sons dos temas completos ----------
+  apito(t, { longo = false } = {}) {
+    // Apito de árbitro: tom agudo com trilo (a bolinha a vibrar) e sopro
+    const toques = longo ? [[0, 0.18], [0.26, 0.18], [0.52, 0.9]] : [[0, 0.32]];
+    for (const [d, dur] of toques) {
+      const o = ctx.createOscillator();
+      o.type = "sine";
+      o.frequency.value = 2650;
+      const trilo = ctx.createOscillator();
+      trilo.type = "square";
+      trilo.frequency.value = 34;
+      const tg = ctx.createGain();
+      tg.gain.value = 140;
+      trilo.connect(tg).connect(o.frequency);
+      const g = ctx.createGain();
+      env(g, t + d, { a: 0.01, pico: 0.16, d: 0.05, sus: 0.85, r: 0.06, dur });
+      o.connect(g);
+      const r = ruido(t + d, dur);
+      const f = ctx.createBiquadFilter();
+      f.type = "bandpass";
+      f.frequency.value = 2600;
+      f.Q.value = 3;
+      const gr = ctx.createGain();
+      env(gr, t + d, { a: 0.01, pico: 0.05, d: 0.05, sus: 0.8, r: 0.05, dur });
+      r.connect(f).connect(gr);
+      saida(g, { rev: 0.25 });
+      saida(gr, { rev: 0.2 });
+      o.start(t + d);
+      trilo.start(t + d);
+      o.stop(t + d + dur + 0.15);
+      trilo.stop(t + d + dur + 0.15);
+    }
+  },
+  golo(t) {
+    // A bola bate na rede e o estádio explode
+    const r = ruido(t, 0.5);
+    const f = ctx.createBiquadFilter();
+    f.type = "highpass";
+    f.frequency.value = 1800;
+    const g = ctx.createGain();
+    env(g, t, { a: 0.005, pico: 0.25, d: 0.45 });
+    r.connect(f).connect(g);
+    saida(g);
+    bombo(t, { vol: 0.8, bus: busEfeitos });
+    EFEITOS.multidao(t + 0.08, { dur: 4.2, vol: 1.5 });
+    EFEITOS.buzina(t + 0.5);
+    abaixarMusica(t, 3);
+  },
+  vaia(t) {
+    // "Uuuuh" do público: ruído grave com formante a descer
+    const r = ruido(t, 2.2);
+    const f = ctx.createBiquadFilter();
+    f.type = "bandpass";
+    f.frequency.setValueAtTime(520, t);
+    f.frequency.exponentialRampToValueAtTime(260, t + 2);
+    f.Q.value = 2.2;
+    const g = ctx.createGain();
+    g.gain.setValueAtTime(0.0001, t);
+    g.gain.linearRampToValueAtTime(0.5, t + 0.35);
+    g.gain.setTargetAtTime(0.0001, t + 1.6, 0.2);
+    r.connect(f).connect(g);
+    saida(g, { rev: 0.5 });
+  },
+  ooh(t) {
+    // "Ooooh!" de espanto do público: formante a subir
+    const r = ruido(t, 1.6);
+    const f = ctx.createBiquadFilter();
+    f.type = "bandpass";
+    f.frequency.setValueAtTime(380, t);
+    f.frequency.exponentialRampToValueAtTime(820, t + 0.9);
+    f.Q.value = 2.6;
+    const g = ctx.createGain();
+    g.gain.setValueAtTime(0.0001, t);
+    g.gain.linearRampToValueAtTime(0.42, t + 0.3);
+    g.gain.setTargetAtTime(0.0001, t + 1.1, 0.18);
+    r.connect(f).connect(g);
+    saida(g, { rev: 0.55 });
+  },
+  espada(t) {
+    // Lâmina a cortar o ar e a bater no metal
+    const r = ruido(t, 0.3);
+    const f = ctx.createBiquadFilter();
+    f.type = "bandpass";
+    f.frequency.setValueAtTime(7000, t);
+    f.frequency.exponentialRampToValueAtTime(1800, t + 0.22);
+    f.Q.value = 1.4;
+    const g = ctx.createGain();
+    env(g, t, { a: 0.01, pico: 0.35, d: 0.25 });
+    r.connect(f).connect(g);
+    saida(g, { rev: 0.2 });
+    metal(t + 0.16, [79, 86, 91], 0.9, { vol: 0.12 });
+    bombo(t + 0.16, { vol: 0.5, bus: busEfeitos });
+  },
+  rugido(t) {
+    // Rugido do coliseu: multidão grave e um tambor
+    EFEITOS.multidao(t, { dur: 3.6, vol: 1.6, grave: true });
+    tom(t, 31, { vol: 1, bus: busEfeitos, dur: 1.4 });
+    tom(t + 0.3, 31, { vol: 0.8, bus: busEfeitos, dur: 1.2 });
+  },
+  camara(t) {
+    // Obturador: dois cliques e o motor do flash
+    for (const d of [0, 0.07]) {
+      const r = ruido(t + d, 0.03);
+      const f = ctx.createBiquadFilter();
+      f.type = "highpass";
+      f.frequency.value = 2500;
+      const g = ctx.createGain();
+      env(g, t + d, { a: 0.001, pico: 0.5, d: 0.03 });
+      r.connect(f).connect(g);
+      saida(g, { rev: 0.1 });
+    }
+    const o = ctx.createOscillator();
+    o.frequency.setValueAtTime(3000, t + 0.1);
+    o.frequency.exponentialRampToValueAtTime(7000, t + 0.6);
+    const g = ctx.createGain();
+    env(g, t + 0.1, { a: 0.01, pico: 0.02, d: 0.5 });
+    o.connect(g);
+    saida(g);
+    o.start(t + 0.1);
+    o.stop(t + 0.7);
+  },
+  fofo(t) {
+    // Brilhinho fofo: arpejo agudo de marimba e um sininho
+    [84, 88, 91, 96].forEach((n, i) => marimba(t + i * 0.06, n, { vol: 0.11, bus: busEfeitos, dur: 0.3 }));
+    sino(t + 0.26, 103, { vol: 0.07 });
+  },
+  bolha(t) {
+    // "Pop" de notificação
+    const o = ctx.createOscillator();
+    o.type = "sine";
+    o.frequency.setValueAtTime(400, t);
+    o.frequency.exponentialRampToValueAtTime(1300, t + 0.08);
+    const g = ctx.createGain();
+    env(g, t, { a: 0.002, pico: 0.25, d: 0.12 });
+    o.connect(g);
+    saida(g, { rev: 0.15 });
+    o.start(t);
+    o.stop(t + 0.2);
+  },
+  pneu(t) {
+    // Pneus a chiar na curva
+    const r = ruido(t, 1.1);
+    const f = ctx.createBiquadFilter();
+    f.type = "bandpass";
+    f.frequency.setValueAtTime(2400, t);
+    f.frequency.linearRampToValueAtTime(1900, t + 1);
+    f.Q.value = 8;
+    const g = ctx.createGain();
+    g.gain.setValueAtTime(0.0001, t);
+    g.gain.linearRampToValueAtTime(0.6, t + 0.08);
+    g.gain.setTargetAtTime(0.0001, t + 0.8, 0.12);
+    const lfo = ctx.createOscillator();
+    lfo.frequency.value = 13;
+    const lg = ctx.createGain();
+    lg.gain.value = 140;
+    lfo.connect(lg).connect(f.frequency);
+    r.connect(f).connect(g);
+    saida(g, { rev: 0.2 });
+    lfo.start(t);
+    lfo.stop(t + 1.2);
+  },
+  urgente(t) {
+    // Genérico de última hora: três golpes de metais e um tímpano
+    [0, 0.16, 0.42].forEach((d, i) => {
+      const f = ctx.createBiquadFilter();
+      f.type = "lowpass";
+      f.frequency.value = 2200;
+      const g = ctx.createGain();
+      env(g, t + d, { a: 0.01, pico: 0.12, d: i === 2 ? 0.9 : 0.14 });
+      f.connect(g);
+      saida(g, { rev: 0.4 });
+      for (const n of i === 2 ? [57, 61, 64, 69] : [57, 60, 64]) {
+        const o = ctx.createOscillator();
+        o.type = "sawtooth";
+        o.frequency.value = nota(n);
+        o.connect(f);
+        o.start(t + d);
+        o.stop(t + d + (i === 2 ? 1.1 : 0.2));
+      }
+    });
+    tom(t + 0.42, 33, { vol: 0.9, bus: busEfeitos, dur: 1.1 });
+  },
+  gameover(t) {
+    [72, 67, 64, 60, 55, 48].forEach((n, i) => pluck(t + i * 0.13, n, { vol: 0.1, bus: busEfeitos, tipo: "square", dur: 0.14, eco: 0.1 }));
+  },
+  combo(t) {
+    [76, 83, 88].forEach((n, i) => pluck(t + i * 0.05, n, { vol: 0.09, bus: busEfeitos, tipo: "square", dur: 0.06, eco: 0.15 }));
+  },
+  aplauso(t, { dur = 2.5 } = {}) {
+    // Palmas do público: muitos estalidos curtos ao acaso
+    const n = Math.round(dur * 70);
+    for (let i = 0; i < n; i++) {
+      const d = Math.random() * dur * (0.6 + 0.4 * Math.random());
+      const r = ruido(t + d, 0.02);
+      const f = ctx.createBiquadFilter();
+      f.type = "bandpass";
+      f.frequency.value = 1200 + Math.random() * 1600;
+      f.Q.value = 1.2;
+      const g = ctx.createGain();
+      env(g, t + d, { a: 0.001, pico: 0.05 + Math.random() * 0.05, d: 0.03 });
+      r.connect(f).connect(g);
+      saida(g, { rev: 0.3 });
+    }
   },
 };
 

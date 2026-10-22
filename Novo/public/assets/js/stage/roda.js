@@ -114,7 +114,7 @@ export async function correr(palco, opts) {
       </div>
       <div class="rd-numeros">${numeros.map((x) => `<div class="rd-num p-entra"><span>${esc(x.nome)}</span><b data-v="${x.v}">0</b>${x.extra ? `<small>${esc(x.extra)}</small>` : ""}</div>`).join("")}</div>`;
     cartao.querySelectorAll(".rd-num b").forEach((b, k) => contar(b, Number(b.dataset.v), { formato: numeros[k].fmt, duracao: 1200, atraso: 300 + k * 200 }));
-    palco.tocar("_destaque", {}, 0.3);
+    if (!palco.evento("revelar", { alvo: cartao.querySelector(".palco-avatar"), p, pos: v + 1 })) palco.tocar("_destaque", {}, 0.3);
     await palco.passo(5600);
     cena.querySelectorAll(".rd-fatia").forEach((f) => f.classList.remove("escolhida"));
     cena.querySelector(`.rd-pessoa[data-i="${alvo}"]`)?.classList.add("usado");

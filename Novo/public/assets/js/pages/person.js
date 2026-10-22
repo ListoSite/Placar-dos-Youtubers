@@ -7,6 +7,7 @@ import { barrasMensais, barrasDiarias, barrasSimples } from "../charts.js";
 import { PARTES } from "../score.js";
 import { cartaoProjeto } from "./projects.js";
 import { encher } from "../motion.js";
+import { carregarHistorico, dadosPessoa, rivaisDe } from "../stage/historico.js";
 
 export async function render(main, { params }) {
   const p = pessoa(params[0]);
@@ -137,6 +138,8 @@ export async function render(main, { params }) {
           .join("")}</div></section>`
         : ""}
 
+      <section class="secao" id="sec-palco" hidden></section>
+
       ${redesHtml(p)}
 
       ${projetos.length ? `<section class="secao"><div class="secao-cabeca"><div><h2>Projetos</h2><p>Séries e conteúdos grandes em que participou.</p></div></div><div class="projetos-grelha">${projetos.map(cartaoProjeto).join("")}</div></section>` : ""}
@@ -160,6 +163,7 @@ export async function render(main, { params }) {
     if (Object.keys(p.tt.l || {}).length) limpeza.push(barrasSimples($("#g-tt-gostos", main), pontos(p.tt.l, "gostos ganhos"), { rotulo: rot, cor: "#fe2c55", nome: "Gostos ganhos por mês no TikTok" }));
     else $("#g-tt-gostos", main).innerHTML = `<p class="muted">Sem dados.</p>`;
   }
+  carregarPalco(main, p);
   const contados = canais.filter((c) => c.count);
   if (contados.length) carregarSocialBlade(main, contados, limpeza);
   if (main1) {
@@ -326,4 +330,28 @@ async function carregarVideos(main, canal) {
   } catch {
     /* sem vídeos */
   }
+}
+
+/** Estrelas, coroas e rivais no Palco (vídeos gravados). */
+async function carregarPalco(main, p) {
+  const h = await carregarHistorico();
+  const d = dadosPessoa(h, p.id);
+  const alvo = $("#sec-palco", main);
+  if (!alvo || !(d.v || d.d || d.estrelas || d.coroas)) return;
+  const rivais = rivaisDe(h, p.id, 4);
+  alvo.hidden = false;
+  alvo.innerHTML = `<div class="secao-cabeca"><div><h2>No Palco</h2><p>Os resultados dos vídeos do Placar: torneios, batalhas e rankings.</p></div><a class="btn btn-pequeno" href="#/palco">Ir ao Palco</a></div>
+    <div class="palco-feitos">
+      <div class="vidro pf"><span class="pf-icone estrela">★</span><b>${inteiro(d.estrelas)}</b><small>${d.estrelas === 1 ? "torneio ganho" : "torneios ganhos"}</small></div>
+      <div class="vidro pf"><span class="pf-icone">👑</span><b>${inteiro(d.coroas)}</b><small>${d.coroas === 1 ? "vez em 1.º lugar" : "vezes em 1.º lugar"}</small></div>
+      <div class="vidro pf"><span class="pf-icone">⚔️</span><b>${inteiro(d.v)}–${inteiro(d.d)}</b><small>vitórias e derrotas em duelos${d.ko ? `, ${d.ko} por K.O.` : ""}</small></div>
+      <div class="vidro pf"><span class="pf-icone">🔥</span><b>${inteiro(d.melhorSeq)}</b><small>melhor sequência de vitórias${d.seq >= 2 ? ` (agora: ${d.seq})` : ""}</small></div>
+    </div>
+    ${
+      rivais.length
+        ? `<h3 class="soft" style="margin:22px 0 10px;font-size:var(--t-base)">Maiores rivais</h3><div class="palco-rivais">${rivais
+            .map((r) => `<a class="vidro rival" href="#/youtuber/${encodeURIComponent(r.p.id)}">${avatar(r.p, 44)}<span><b>${esc(r.p.name)}</b><small>${r.n} ${r.n === 1 ? "confronto" : "confrontos"}${r.n >= 3 ? " · clássico" : ""}</small></span><strong class="${r.eu > r.ele ? "ganha" : r.eu < r.ele ? "perde" : ""}">${r.eu}–${r.ele}</strong></a>`)
+            .join("")}</div>`
+        : ""
+    }`;
 }

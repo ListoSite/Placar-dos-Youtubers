@@ -1,13 +1,15 @@
 // Página do Palco: lista de espetáculos (para vídeos e para direto) e opções de cada um.
 
-import { estado, pessoa, mesesComDados, procurar } from "../data.js";
+import { estado, pessoa, mesesComDados, procurar, api, temSessao } from "../data.js";
 import { esc, mesNome } from "../format.js";
 import { $, $$, avatar, toast } from "../ui.js";
 import { som } from "../audio.js";
 import { Palco, ESPETACULOS, GRUPOS, eAbortado } from "./stage.js";
 import { TEMAS, GRUPOS_TEMAS, TEMA_DA_CATEGORIA } from "./temas.js";
+import { NOME_DO_KIT, kitDoTema } from "./kits.js";
 import { podeGravar, prepararGravacao } from "./gravar.js";
 import { textoPublicar } from "./legenda.js";
+import { carregarHistorico } from "./historico.js";
 
 const USOS = { video: "Vídeo", direto: "Direto" };
 
@@ -30,6 +32,7 @@ function escolha(main, query) {
       <button type="button" data-para="direto">Para direto (Twitch)</button>
     </div>
     <div class="pl-dica" id="pl-dica"></div>
+    <div id="pl-hall"></div>
     <div id="pl-grupos"></div>
   </div>`;
   const dicas = {
@@ -63,6 +66,32 @@ function escolha(main, query) {
     }),
   );
   desenhar();
+  hallDaFama($("#pl-hall", main));
+}
+
+/** Estrelas, coroas e clássicos dos vídeos gravados. */
+async function hallDaFama(alvo) {
+  const h = await carregarHistorico();
+  const lista = Object.entries(h.pessoas || {}).map(([id, d]) => ({ p: pessoa(id), ...d })).filter((x) => x.p);
+  if (!lista.length || !document.body.contains(alvo)) return;
+  const topo = (campo, n = 5) => lista.filter((x) => x[campo] > 0).sort((a, b) => b[campo] - a[campo]).slice(0, n);
+  const linhaP = (x, valor) => `<a class="hall-linha" href="#/youtuber/${encodeURIComponent(x.p.id)}">${avatar(x.p, 32)}<span>${esc(x.p.name)}</span><b>${valor}</b></a>`;
+  const caixas = [
+    topo("estrelas").length ? `<div class="vidro hall-caixa"><h3>★ Estrelas (torneios ganhos)</h3>${topo("estrelas").map((x) => linhaP(x, `<span class="estrelas">${x.estrelas > 5 ? `★×${x.estrelas}` : "★".repeat(x.estrelas)}</span>`)).join("")}</div>` : "",
+    topo("coroas").length ? `<div class="vidro hall-caixa"><h3>👑 Coroas (1.º nos rankings)</h3>${topo("coroas").map((x) => linhaP(x, x.coroas)).join("")}</div>` : "",
+    topo("v").length ? `<div class="vidro hall-caixa"><h3>⚔️ Mais vitórias em duelos</h3>${topo("v").map((x) => linhaP(x, `${x.v}–${x.d}`)).join("")}</div>` : "",
+    (h.classicos || []).length
+      ? `<div class="vidro hall-caixa"><h3>⚡ Clássicos</h3>${h.classicos
+          .slice(0, 5)
+          .map((c) => {
+            const [a, b] = c.par.map(pessoa);
+            if (!a || !b) return "";
+            return `<div class="hall-linha">${avatar(a, 28)}${avatar(b, 28)}<span>${esc(a.name)} vs ${esc(b.name)}</span><b>${c.v[a.id] || 0}–${c.v[b.id] || 0}</b></div>`;
+          })
+          .join("")}</div>`
+      : "",
+  ].filter(Boolean);
+  alvo.innerHTML = `<section class="secao palco-grupo"><div class="secao-cabeca"><div><h2>Hall da fama</h2><p>Os resultados dos vídeos gravados ficam para sempre: estrelas dos torneios, coroas dos rankings e os clássicos.</p></div></div><div class="hall" style="margin-top:0">${caixas.join("")}</div></section>`;
 }
 
 // ---------- Opções ----------
@@ -102,6 +131,7 @@ function opcoes(main, esp, query) {
       <label class="campo"><span>Período</span><select class="input" name="meses"><option value="6">6 meses</option><option value="12" selected>12 meses</option><option value="24">24 meses</option><option value="999">Tudo</option></select></label>
       <label class="campo"><span>Até</span><select class="input" name="m">${opcaoMes(meses, estado.ref)}</select></label>${cat}`,
     numeros: `${mes}${cat}`,
+    votacao: `<label class="campo cresce"><span>Votação</span><select class="input" name="votacao" id="pl-votacao"><option value="">A mais recente com votos</option></select></label>`,
     desafio: `<label class="campo"><span>Perguntas</span><select class="input" name="n"><option>6</option><option selected>8</option><option>12</option></select></label>${mes}
       <label class="campo"><span>Entre os</span><select class="input" name="top"><option value="30">Top 30</option><option value="60" selected>Top 60</option><option value="150">Top 150</option></select></label>${cat}`,
     quiz: `<label class="campo"><span>Rondas</span><select class="input" name="n"><option>5</option><option selected>8</option><option>12</option></select></label>${mes}
@@ -122,7 +152,7 @@ function opcoes(main, esp, query) {
     cartao: campoPessoa("id", "Youtuber", query, "Procurar"),
     historia: campoPessoa("id", "Youtuber", query, "Procurar"),
   }[esp.id];
-  const temFoco = !["cartao", "historia"].includes(esp.id);
+  const temFoco = !["cartao", "historia", "votacao"].includes(esp.id);
 
   main.innerHTML = `<div class="wrap">
     <div class="pagina-topo"><p><a href="#/palco${query.get("para") ? `?para=${esc(query.get("para"))}` : ""}">Palco</a></p><h1>${esc(esp.nome)}</h1><p>${esc(esp.texto)}</p></div>
@@ -139,6 +169,8 @@ function opcoes(main, esp, query) {
             .join("")}</div></div>`,
         ).join("")}
         <small class="muted" id="pl-tema-nota"></small>
+        <div class="campo" style="margin-top:14px"><span>Efeitos do tema</span><div class="segmentos" role="group"><button type="button" data-efeitos="completo" aria-pressed="${lerModoTema() === "completo"}">Tema completo</button><button type="button" data-efeitos="cores" aria-pressed="${lerModoTema() === "cores"}">Só cores</button></div>
+          <small class="muted" id="pl-kit-nota"></small></div>
       </div>
       <div class="filtros" style="margin:18px 0 0">
         <div class="campo"><span>Formato</span><div class="segmentos" role="group"><button type="button" data-fmt="16x9" aria-pressed="${fmt === "16x9"}">16:9 horizontal</button><button type="button" data-fmt="9x16" aria-pressed="${fmt === "9x16"}">9:16 vertical</button></div></div>
@@ -178,6 +210,10 @@ function opcoes(main, esp, query) {
   let ritmo = modo === "direto" ? "manual" : "auto";
   let velocidade = "normal";
   let temaId = temaInicial;
+  let efeitos = lerModoTema();
+  const notaKit = () => {
+    $("#pl-kit-nota", main).textContent = efeitos === "completo" ? `${NOME_DO_KIT[kitDoTema(temaId)]}. Os golpes, acertos, revelações e o vencedor ganham animações e sons próprios do tema.` : "Só as cores, o cenário e a música do tema. As animações são as de sempre.";
+  };
   let temaEscolhidoAMao = TEMAS.some((t) => t.id === query.get("tema"));
   const form = $("#pl-form", main);
   const marcar = (attr, v) => $$(`[data-${attr}]`, main).forEach((x) => x.setAttribute(x.getAttribute("role") === "radio" ? "aria-checked" : "aria-pressed", String(x.dataset[attr] === v)));
@@ -196,7 +232,13 @@ function opcoes(main, esp, query) {
     temaId = id;
     marcar("tema", id);
     $("#pl-tema-nota", main).textContent = nota;
+    notaKit();
   };
+  grupo("efeitos", (v) => {
+    efeitos = v;
+    guardarModoTema(v);
+    notaKit();
+  });
   grupo("modo", (v) => {
     modo = v;
     ritmo = v === "direto" ? "manual" : "auto";
@@ -211,9 +253,20 @@ function opcoes(main, esp, query) {
     temaEscolhidoAMao = true;
     guardarTema(v);
     $("#pl-tema-nota", main).textContent = "";
+    notaKit();
     som.tocar("clique");
   });
   atualizarModo();
+  notaKit();
+  // Lista das votações (para o espetáculo "O público escolheu")
+  if (esp.id === "votacao")
+    api("votacoes")
+      .then((r) => {
+        const sel = $("#pl-votacao", main);
+        if (!sel) return;
+        for (const v of r.votacoes || []) if (v.votos) sel.insertAdjacentHTML("beforeend", `<option value="${esc(v.id)}" ${query.get("votacao") === v.id ? "selected" : ""}>${esc(v.titulo)} (${v.total || 0} votos)</option>`);
+      })
+      .catch(() => {});
   // Tema da categoria: ao escolher uma categoria ou um Youtuber, o tema acompanha (se não foi escolhido à mão)
   const sugerirTema = (categoria) => {
     const t = TEMA_DA_CATEGORIA[categoria];
@@ -243,8 +296,8 @@ function opcoes(main, esp, query) {
       gravacao = await prepararGravacao(formato);
       if (!gravacao) return;
     }
-    const mod = await import(esp.mod);
-    const palco = new Palco({ formato, manual: ritmo === "manual", tema: temaId, velocidade, foco: opts.foco, focoQuando: opts.focoQuando || "fim", modo });
+    const [mod] = await Promise.all([import(esp.mod), carregarHistorico()]);
+    const palco = new Palco({ formato, manual: ritmo === "manual", tema: temaId, velocidade, foco: opts.foco, focoQuando: opts.focoQuando || "fim", modo, completo: efeitos === "completo" });
     if (gravacao) gravacao.comecar(palco);
     let erro = false;
     try {
@@ -264,7 +317,21 @@ function opcoes(main, esp, query) {
     }
     const video = gravacao ? await gravacao.parar() : null;
     palco.sair();
-    if (!erro) mostrarPublicar($("#pl-publicar", main), esp, opts, { formato, temaId, video });
+    // O histórico (rivais, clássicos, estrelas) só conta os espetáculos gravados em vídeo
+    let historico = null;
+    if (!erro && video && palco.resultados.length) {
+      if (!temSessao()) historico = { erro: "Inicia sessão em Editar para os resultados deste vídeo contarem para o histórico (clássicos, rivais e estrelas)." };
+      else {
+        try {
+          const r = await api("admin/palco/resultados", { corpo: { espetaculo: esp.id, tema: temaId, formato, resultados: palco.resultados } });
+          historico = { n: r.guardados };
+          carregarHistorico({ forcar: true });
+        } catch (e) {
+          historico = { erro: `Não foi possível guardar no histórico: ${e.message}` };
+        }
+      }
+    }
+    if (!erro) mostrarPublicar($("#pl-publicar", main), esp, opts, { formato, temaId, video, historico });
   };
   form.addEventListener("submit", (e) => {
     e.preventDefault();
@@ -278,10 +345,11 @@ function opcoes(main, esp, query) {
 }
 
 /** Painel com o vídeo gravado (se houver) e a legenda pronta a copiar. */
-function mostrarPublicar(alvo, esp, opts, { formato, temaId, video }) {
+function mostrarPublicar(alvo, esp, opts, { formato, temaId, video, historico }) {
   const t = textoPublicar(esp, opts, { formato, temaId });
   const nomeFicheiro = `placar-${esp.id}-${temaId}-${formato}-${new Date().toISOString().slice(0, 10)}.${video?.ext || "mp4"}`;
   alvo.innerHTML = `<section class="secao"><div class="secao-cabeca"><div><h2>Pronto para publicar</h2><p>${esc(t.dica)}</p></div></div>
+    ${historico ? `<div class="aviso ${historico.erro ? "" : "info"}" style="margin-bottom:14px"><p>${historico.erro ? esc(historico.erro) : `Guardado no histórico do Palco: ${historico.n} ${historico.n === 1 ? "resultado" : "resultados"} (confrontos, estrelas e coroas).`}</p></div>` : ""}
     <div class="pl-publicar ${video ? "com-video" : ""}">
       ${
         video
@@ -319,6 +387,20 @@ function lerTema() {
     return TEMAS.some((x) => x.id === t) ? t : "rubi";
   } catch {
     return "rubi";
+  }
+}
+function lerModoTema() {
+  try {
+    return localStorage.getItem("placar-tema-modo") === "cores" ? "cores" : "completo";
+  } catch {
+    return "completo";
+  }
+}
+function guardarModoTema(v) {
+  try {
+    localStorage.setItem("placar-tema-modo", v);
+  } catch {
+    /* sem armazenamento */
   }
 }
 function guardarTema(t) {
