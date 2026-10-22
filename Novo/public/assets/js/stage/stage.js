@@ -11,6 +11,7 @@ import { Ambiente } from "./ambiente.js";
 import { criarKit } from "./kits.js";
 import { historicoEmCache } from "./historico.js";
 import { cenaDoTema } from "./cenas.js";
+import qrcode from "../../vendor/qrcode.esm.js";
 
 const I = (d) => `<svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">${d}</svg>`;
 
@@ -52,8 +53,11 @@ const VELOCIDADE = { rapido: 0.72, normal: 1, lento: 1.35 };
 export class Palco {
   static atual = null;
 
-  constructor({ formato = "16x9", manual = false, tema = "rubi", velocidade = "normal", foco = "", focoQuando = "fim", modo = "video", completo = true }) {
+  constructor({ formato = "16x9", manual = false, tema = "rubi", velocidade = "normal", foco = "", focoQuando = "fim", modo = "video", completo = true, votacao = null }) {
     Palco.atual = this;
+    // Votação a decorrer no site: nos vídeos, aparece um aviso antes do fim
+    this.votacaoAviso = votacao;
+    this.votacaoMostrada = false;
     this.foco = foco || "";
     this.focoQuando = focoQuando;
     this.focoMostrado = false;
@@ -375,6 +379,42 @@ export class Palco {
     camada.remove();
     if (musicaAntes && this.musicaAtual !== musicaAntes) som.musica.iniciar(musicaAntes);
   }
+  /** Antes do fim dos vídeos: há uma votação a decorrer no site, e onde se vota (link na bio, endereço e QR). */
+  async segmentoVotacao() {
+    const v = this.votacaoAviso;
+    this.votacaoMostrada = true;
+    let qr = "";
+    try {
+      const c = qrcode(0, "M");
+      c.addData(v.link);
+      c.make();
+      qr = c.createSvgTag({ cellSize: 1, margin: 2, scalable: true });
+    } catch {
+      /* sem QR */
+    }
+    const dois = v.opcoes.length === 2 && ["confronto", "torneio"].includes(v.tipo);
+    const caras = v.opcoes.slice(0, 4);
+    const nCaras = caras.length + (v.mais ? 1 : 0);
+    const tam = this.vertical ? (dois ? 230 : nCaras > 4 ? 140 : 170) : dois ? 190 : 140;
+    this.cena.innerHTML = `<div class="p-centro vv-aviso ${dois ? "dois" : ""}">
+      <div class="vv-etiqueta"><i></i>${esc(v.etiqueta)}</div>
+      <h2 class="p-titulo vv-pergunta">${esc(v.titulo)}</h2>
+      ${caras.length ? `<div class="vv-caras">${caras.map((o, i) => `${dois && i === 1 ? `<b class="vv-vs">VS</b>` : ""}<div class="vv-cara">${o.p ? avatarPalco(o.p, tam) : `<span class="vo-letra" style="width:${tam}px;height:${tam}px">${esc(o.nome.slice(0, 1))}</span>`}<span>${esc(o.nome)}</span></div>`).join("")}${v.mais ? `<div class="vv-cara vv-mais"><span class="vo-letra" style="width:${tam}px;height:${tam}px">+${v.mais}</span><span>e mais</span></div>` : ""}</div>` : ""}
+      <div class="vv-onde">
+        <div class="vv-texto"><b>Vai votar!</b><span class="vv-bio">👉 ${esc(v.textoBio)}</span><small>ou em <b>${esc(v.linkCurto)}</b></small></div>
+        ${qr ? `<div class="vv-qr">${qr}</div>` : ""}
+      </div></div>`;
+    const raiz = this.cena.firstElementChild;
+    animate(raiz.querySelectorAll(".vv-etiqueta, .vv-pergunta"), { translateY: [70, 0], opacity: [0, 1], delay: stagger(160), duration: 900, ease: spring({ stiffness: 140, damping: 14 }) });
+    animate(raiz.querySelectorAll(".vv-cara, .vv-vs"), { scale: [0.3, 1], opacity: [0, 1], delay: stagger(130, { start: 450 }), duration: 900, ease: spring({ stiffness: 160, damping: 12 }) });
+    animate(raiz.querySelectorAll(".vv-onde"), { translateY: [90, 0], opacity: [0, 1], delay: 1000, duration: 900, ease: "outExpo" });
+    this.tocar("whoosh");
+    this.tocar("_destaque", {}, 0.5);
+    setTimeout(() => !this.terminado && this.explodir(this.L / 2, this.A * 0.3, { n: 60, forca: 0.6 }), 900);
+    setTimeout(() => !this.terminado && raiz.querySelector(".vv-bio")?.classList.add("pulsa"), 1700);
+    await this.passo(6500);
+    await this.sair_(raiz);
+  }
   /** Faz um elemento sair (com a animação p-sai) e espera. */
   async sair_(el) {
     el?.classList.add("p-sai");
@@ -384,6 +424,7 @@ export class Palco {
   async fecho() {
     this.tela.classList.remove("denso");
     if (this.foco && !this.focoMostrado) await this.segmentoFoco();
+    if (this.modo === "video" && this.votacaoAviso && !this.votacaoMostrada) await this.segmentoVotacao();
     const c = this.canal;
     const redes = [
       c.youtube ? { i: ICONE_YT, t: c.youtube } : null,
@@ -399,7 +440,7 @@ export class Palco {
       <div class="fc-acoes"><span class="fc-botao">Subscrever</span><span class="fc-sino">${SINO}</span><span class="fc-gosto">${GOSTO}</span></div>
       <div class="fc-cursor">${CURSOR}</div>
       ${redes.length ? `<div class="fc-redes">${redes.map((r) => `<span>${r.i}${esc(r.t)}</span>`).join("")}</div>` : ""}
-      <p class="fc-site-linha">Vota e vê os resultados em <b class="fc-site">${esc(location.host)}</b></p></div>`;
+      <p class="fc-site-linha">Vota e vê os resultados em <b class="fc-site">${esc(this.votacaoAviso ? this.votacaoAviso.linkCurto : location.host)}</b></p></div>`;
     const raiz = this.cena.firstElementChild;
     animate(raiz.querySelectorAll(".fc-pergunta, .fc-canal, .fc-acoes, .fc-redes, .fc-site-linha"), { translateY: [60, 0], opacity: [0, 1], delay: stagger(140), duration: 900, ease: spring({ stiffness: 140, damping: 14 }) });
     this.tocar("_abertura", {}, 0.1);

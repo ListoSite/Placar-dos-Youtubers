@@ -1,6 +1,7 @@
 // Página de um projeto: episódios, impacto face ao canal, quem participou.
 
 import { estado, pessoa, temSessao } from "../data.js";
+import { modo } from "../modo.js";
 import { esc, curto, inteiro, data, ha, duracao, decimal, plural, pct } from "../format.js";
 import { avatar, linkPessoa, $ } from "../ui.js";
 import { barrasEpisodios } from "../charts.js";
@@ -32,7 +33,7 @@ export async function render(main, { params }) {
           ${criador ? `<a class="etiqueta" href="${linkPessoa(criador)}">${avatar(criador, 18)} Criado por ${esc(criador.name)}</a>` : ""}
           ${pr.impact ? `<span class="etiqueta ${pr.impact >= 1 ? "ouro" : ""}">${esc(impactoTexto(pr.impact))}</span>` : ""}
           ${pr.ratings?.main ? `<span class="estrelas" title="Avaliação ${pr.ratings.main}/10">${estrelas(pr.ratings.main)}</span>` : ""}
-          ${temSessao() ? `<a class="btn btn-pequeno" href="#/editar/projetos?id=${encodeURIComponent(pr.id)}">Editar</a>` : ""}
+          ${!modo.publico && temSessao() ? `<a class="btn btn-pequeno" href="#/editar/projetos?id=${encodeURIComponent(pr.id)}">Editar</a>` : ""}
         </div>
       </div>
     </section>

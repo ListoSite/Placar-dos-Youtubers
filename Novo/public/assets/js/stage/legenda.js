@@ -33,7 +33,7 @@ const HASH_CATEGORIA = {
   Tutorial: "#tutorial",
 };
 
-export function textoPublicar(esp, opts, { formato }) {
+export function textoPublicar(esp, opts, { formato, aviso }) {
   const canal = { nome: "Placar dos Youtubers", youtube: "", ...(estado.ds?.settings?.canal || {}) };
   const site = location.host;
   const mes = opts.m ? mesNome(opts.m) : mesNome(estado.ref);
@@ -61,7 +61,13 @@ export function textoPublicar(esp, opts, { formato }) {
     cartao: [`${nome(opts.id) || "Youtuber"} em números 📊`, `O Índice de Influência e os números mais importantes.`],
     historia: [`A história de ${nome(opts.id) || "um Youtuber"} no YouTube 📈`, `Do início até hoje, mês a mês, com os momentos marcantes.`],
   }[esp.id] || [esp.nome, ""];
-  const extra = [canal.youtube ? `Subscreve ${canal.youtube} para mais.` : `Segue o ${canal.nome} para mais.`, `Vota e vê os resultados em ${site}`].join(" ");
+  const extra = [
+    aviso ? `🗳️ ${aviso.titulo} Vota já: ${aviso.link}` : "",
+    canal.youtube ? `Subscreve ${canal.youtube} para mais.` : `Segue o ${canal.nome} para mais.`,
+    aviso ? "" : `Vota e vê os resultados em ${site}`,
+  ]
+    .filter(Boolean)
+    .join(" ");
   const tags = new Set(String(canal.hashtags || "#placardosyoutubers #youtubersportugueses").split(/\s+/).filter(Boolean));
   if (HASH_CATEGORIA[opts.cat]) tags.add(HASH_CATEGORIA[opts.cat]);
   if (formato === "9x16") tags.add("#shorts");

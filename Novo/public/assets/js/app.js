@@ -1,5 +1,5 @@
 // Arranque do painel (só para o dono do site): pede a palavra-passe, carrega os dados,
-// trata da navegação, da pesquisa e do som. A página pública é outra (publico/publico.js).
+// trata da navegação, da pesquisa e do som. O painel controla a página pública (publico/app.js).
 
 import { carregar, estado, procurar, temSessao } from "./data.js";
 import { esc, ha } from "./format.js";
@@ -8,15 +8,18 @@ import { som } from "./audio.js";
 import { revelarAoScroll, pilulaNav, logoEntra } from "./motion.js";
 
 const ROTAS = [
-  { re: /^$/, mod: "./pages/home.js", nav: "#/" },
-  { re: /^ranking$/, mod: "./pages/ranking.js", nav: "#/ranking" },
-  { re: /^youtuber\/(.+)$/, mod: "./pages/person.js", nav: "" },
-  { re: /^comparar$/, mod: "./pages/compare.js", nav: "#/comparar" },
-  { re: /^categorias$/, mod: "./pages/categories.js", nav: "#/categorias" },
-  { re: /^projetos$/, mod: "./pages/projects.js", nav: "#/projetos" },
-  { re: /^projeto\/(.+)$/, mod: "./pages/project.js", nav: "#/projetos" },
+  { re: /^$/, mod: "./admin/vitrine.js", nav: "#/" },
+  { re: /^publica(?:\/([a-z]+))?$/, mod: "./admin/vitrine.js", nav: "#/" },
+  { re: /^votacoes$/, mod: "./admin/votacoes.js", nav: "#/votacoes" },
   { re: /^palco(?:\/([a-z-]+))?$/, mod: "./stage/stage.js", nav: "#/palco" },
-  { re: /^editar(?:\/([a-z-]+))?$/, mod: "./admin/admin.js", nav: "" },
+  { re: /^editar(?:\/([a-z-]+))?$/, mod: "./admin/admin.js", nav: "#/editar" },
+];
+// O painel só controla: ver os números é na página pública. Endereços antigos levam ao sítio certo.
+const REDIRECIONAR = [
+  [/^youtuber\/(.+)$/, (id) => `#/editar/youtubers?id=${encodeURIComponent(id)}`],
+  [/^projeto\/(.+)$/, (id) => `#/editar/projetos?id=${encodeURIComponent(id)}`],
+  [/^projetos$/, () => "#/editar/projetos"],
+  [/^(ranking|comparar|categorias)$/, () => "#/"],
 ];
 
 let limpar = null;
@@ -31,6 +34,10 @@ function lerHash() {
 
 async function navegar() {
   const { caminho, query } = lerHash();
+  for (const [re, para] of REDIRECIONAR) {
+    const m = re.exec(caminho);
+    if (m) return location.replace(para(decodeURIComponent(m[1] || "")));
+  }
   const main = $("#conteudo");
   esconderDica();
   const rota = ROTAS.find((r) => r.re.test(caminho));
@@ -182,5 +189,5 @@ if ("serviceWorker" in navigator && location.protocol === "https:") {
 logoEntra(document.querySelector(".marca svg"));
 iniciarPesquisa();
 iniciarSom();
-$("#link-editar").classList.toggle("ativo", temSessao());
+$("#link-editar")?.classList.toggle("ativo", temSessao());
 navegar();

@@ -187,6 +187,10 @@ function opcoes(main, esp, query) {
       </div>`
           : ""
       }
+      <div class="pl-aviso pl-so-video" id="pl-aviso" hidden>
+        <label class="campo cresce"><span>Votação a decorrer: aviso antes do fim do vídeo</span><select class="input" id="pl-aviso-v"><option value="">Sem aviso</option></select></label>
+        <small class="muted" id="pl-aviso-nota"></small>
+      </div>
       <div class="filtros" style="margin:18px 0 0">
         <div class="campo"><span>Ritmo</span><div class="segmentos" role="group"><button type="button" data-ritmo="auto" aria-pressed="${modo === "video"}">Automático</button><button type="button" data-ritmo="manual" aria-pressed="${modo === "direto"}">Eu avanço</button></div></div>
         <div class="campo"><span>Velocidade</span><div class="segmentos" role="group"><button type="button" data-vel="rapido" aria-pressed="false">Rápida</button><button type="button" data-vel="normal" aria-pressed="true">Normal</button><button type="button" data-vel="lento" aria-pressed="false">Lenta</button></div></div>
@@ -264,9 +268,34 @@ function opcoes(main, esp, query) {
       .then((r) => {
         const sel = $("#pl-votacao", main);
         if (!sel) return;
-        for (const v of r.votacoes || []) if (v.votos) sel.insertAdjacentHTML("beforeend", `<option value="${esc(v.id)}" ${query.get("votacao") === v.id ? "selected" : ""}>${esc(v.titulo)} (${v.total || 0} votos)</option>`);
+        const grupos = new Map();
+        for (const v of r.votacoes || []) if (v.grupo && v.estado !== "rascunho" && !grupos.has(v.grupo)) grupos.set(v.grupo, v.extra?.nomeGrupo || "Torneio");
+        for (const [g, nome] of grupos) sel.insertAdjacentHTML("beforeend", `<option value="g:${esc(g)}" ${query.get("votacao") === "g:" + g ? "selected" : ""}>🏟️ ${esc(nome)} (a chave do torneio)</option>`);
+        for (const v of r.votacoes || []) if (v.votos && !v.grupo) sel.insertAdjacentHTML("beforeend", `<option value="${esc(v.id)}" ${query.get("votacao") === v.id ? "selected" : ""}>${esc(v.titulo)} (${v.total || 0} votos)</option>`);
       })
       .catch(() => {});
+  // Votações abertas no site: o vídeo avisa antes do fim que se pode votar (e onde)
+  let avisos = [];
+  let ligacoes = { linkVotar: "", textoBio: "Link na bio", avisoVideos: true };
+  Promise.all([api("votacoes"), api("admin/vitrine").catch(() => null)])
+    .then(([r, vit]) => {
+      if (vit?.config?.ligacoes) ligacoes = vit.config.ligacoes;
+      avisos = avisosDeVotacao(r.votacoes || []);
+      const caixa = $("#pl-aviso", main);
+      if (!caixa || !avisos.length) return;
+      const sel = $("#pl-aviso-v", main);
+      for (const a of avisos) sel.insertAdjacentHTML("beforeend", `<option value="${esc(a.id)}">${esc(a.etiqueta)}: ${esc(a.titulo)}</option>`);
+      if (ligacoes.avisoVideos) sel.value = avisos[0].id;
+      $("#pl-aviso-nota", main).textContent = `Aparece antes do "Subscreve": "${ligacoes.textoBio}", o endereço e um código QR. Liga ou desliga por defeito em Página pública, Dados e ligações.`;
+      caixa.hidden = false;
+    })
+    .catch(() => {});
+  const avisoEscolhido = () => {
+    const a = avisos.find((x) => x.id === $("#pl-aviso-v", main)?.value);
+    if (!a || modo !== "video") return null;
+    const link = ligacoes.linkVotar || `${location.origin}/#/votar`;
+    return { ...a, link, linkCurto: link.replace(/^https?:\/\//, "").replace(/\/$/, ""), textoBio: ligacoes.textoBio || "Link na bio" };
+  };
   // Tema da categoria: ao escolher uma categoria ou um Youtuber, o tema acompanha (se não foi escolhido à mão)
   const sugerirTema = (categoria) => {
     const t = TEMA_DA_CATEGORIA[categoria];
@@ -297,7 +326,7 @@ function opcoes(main, esp, query) {
       if (!gravacao) return;
     }
     const [mod] = await Promise.all([import(esp.mod), carregarHistorico()]);
-    const palco = new Palco({ formato, manual: ritmo === "manual", tema: temaId, velocidade, foco: opts.foco, focoQuando: opts.focoQuando || "fim", modo, completo: efeitos === "completo" });
+    const palco = new Palco({ formato, manual: ritmo === "manual", tema: temaId, velocidade, foco: opts.foco, focoQuando: opts.focoQuando || "fim", modo, completo: efeitos === "completo", votacao: avisoEscolhido() });
     if (gravacao) gravacao.comecar(palco);
     let erro = false;
     try {
@@ -324,7 +353,7 @@ function opcoes(main, esp, query) {
       if (!temSessao()) historico = { erro: "A sessão expirou: este vídeo não foi guardado no histórico nem na página pública." };
       else {
         try {
-          const t = textoPublicar(esp, opts, { formato, temaId });
+          const t = textoPublicar(esp, opts, { formato, temaId, aviso: palco.votacaoAviso });
           const publicacao = { titulo: t.titulo, legenda: t.legenda, resumo: palco.resumo || { tipo: "jogo" } };
           const r = await api("admin/palco/resultados", { corpo: { espetaculo: esp.id, tema: temaId, formato, resultados: palco.resultados, publicacao } });
           historico = { n: r.guardados, publicacao: r.publicacao };
@@ -334,7 +363,7 @@ function opcoes(main, esp, query) {
         }
       }
     }
-    if (!erro) mostrarPublicar($("#pl-publicar", main), esp, opts, { formato, temaId, video, historico });
+    if (!erro) mostrarPublicar($("#pl-publicar", main), esp, opts, { formato, temaId, video, historico, aviso: palco.votacaoAviso });
   };
   form.addEventListener("submit", (e) => {
     e.preventDefault();
@@ -342,17 +371,54 @@ function opcoes(main, esp, query) {
   });
   $("#pl-gravar", main)?.addEventListener("click", () => iniciar(true));
   $("#pl-legenda", main).addEventListener("click", () => {
-    mostrarPublicar($("#pl-publicar", main), esp, lerOpcoes(), { formato, temaId });
+    mostrarPublicar($("#pl-publicar", main), esp, lerOpcoes(), { formato, temaId, aviso: avisoEscolhido() });
     $("#pl-publicar", main).scrollIntoView({ behavior: "smooth", block: "start" });
   });
 }
 
+/** As votações abertas (e cada torneio a decorrer) que um vídeo pode anunciar, da mais recente para a mais antiga. */
+function avisosDeVotacao(lista) {
+  const abertas = lista.filter((v) => v.aberta);
+  const out = [];
+  const vistos = new Set();
+  for (const v of abertas) {
+    if (v.grupo) {
+      if (vistos.has(v.grupo)) continue;
+      vistos.add(v.grupo);
+      const jogos = abertas.filter((x) => x.grupo === v.grupo);
+      const opcoes = jogos.flatMap((x) => x.opcoes);
+      out.push({
+        id: "g:" + v.grupo,
+        tipo: "torneio",
+        etiqueta: jogos.length === 1 && (v.extra?.rondas || 0) === (v.ronda || 1) ? "A final está a decorrer" : "Torneio a decorrer",
+        titulo: jogos.length === 1 ? `${v.extra?.nomeGrupo || "Torneio"}: ${v.titulo}` : v.extra?.nomeGrupo || "Torneio do Placar",
+        opcoes: opcoes.slice(0, 4).map((o) => ({ nome: o.nome, p: o.pessoa ? pessoa(o.pessoa) : null })),
+        mais: Math.max(0, opcoes.length - 4),
+        criado: v.criado,
+      });
+      continue;
+    }
+    const etiqueta = v.tipo === "previsao" || v.modo === "previsao" ? "Previsão a decorrer" : v.tipo === "desafiante" ? "Escolhe o próximo desafiante" : "Votação a decorrer";
+    const comPessoa = v.opcoes.filter((o) => o.pessoa);
+    out.push({
+      id: v.id,
+      tipo: v.tipo,
+      etiqueta,
+      titulo: v.titulo,
+      opcoes: (v.tipo === "favorito" ? [] : comPessoa.slice(0, 4)).map((o) => ({ nome: o.nome, p: pessoa(o.pessoa) })),
+      mais: v.tipo === "favorito" ? 0 : Math.max(0, comPessoa.length - 4),
+      criado: v.criado,
+    });
+  }
+  return out.sort((a, b) => (Date.parse(b.criado) || 0) - (Date.parse(a.criado) || 0));
+}
+
 /** Painel com o vídeo gravado (se houver) e a legenda pronta a copiar. */
-function mostrarPublicar(alvo, esp, opts, { formato, temaId, video, historico }) {
-  const t = textoPublicar(esp, opts, { formato, temaId });
+function mostrarPublicar(alvo, esp, opts, { formato, temaId, video, historico, aviso }) {
+  const t = textoPublicar(esp, opts, { formato, temaId, aviso });
   const nomeFicheiro = `placar-${esp.id}-${temaId}-${formato}-${new Date().toISOString().slice(0, 10)}.${video?.ext || "mp4"}`;
   alvo.innerHTML = `<section class="secao"><div class="secao-cabeca"><div><h2>Pronto para publicar</h2><p>${esc(t.dica)}</p></div></div>
-    ${historico ? `<div class="aviso ${historico.erro ? "" : "info"}" style="margin-bottom:14px"><p>${historico.erro ? esc(historico.erro) : `${historico.n ? `Guardado no histórico do Palco: ${historico.n} ${historico.n === 1 ? "resultado" : "resultados"} (confrontos, estrelas e coroas). ` : ""}${historico.publicacao ? "O vídeo já aparece na página pública; depois de o publicares, junta o link em Editar, Página pública." : ""}`}</p></div>` : ""}
+    ${historico ? `<div class="aviso ${historico.erro ? "" : "info"}" style="margin-bottom:14px"><p>${historico.erro ? esc(historico.erro) : `${historico.n ? `Guardado no histórico do Palco: ${historico.n} ${historico.n === 1 ? "resultado" : "resultados"} (confrontos, estrelas e coroas). ` : ""}${historico.publicacao ? "O vídeo já aparece na página pública; depois de o publicares, junta o link em Página pública, Vídeos e hall." : ""}`}</p></div>` : ""}
     <div class="pl-publicar ${video ? "com-video" : ""}">
       ${
         video

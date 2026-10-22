@@ -2,12 +2,14 @@
 // Os resultados só contam quando o espetáculo é gravado em vídeo (e com sessão iniciada).
 
 import { api, pessoa } from "../data.js";
+import { modo } from "../modo.js";
 import { esc } from "../format.js";
 
 let cache = null;
 let quando = 0;
 
 export async function carregarHistorico({ forcar = false } = {}) {
+  if (modo.publico) return (cache = modo.extra?.historico || { pares: {}, pessoas: {}, classicos: [] });
   if (cache && !forcar && Date.now() - quando < 60000) return cache;
   try {
     cache = await api("palco/historico");

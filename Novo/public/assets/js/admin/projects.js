@@ -55,7 +55,7 @@ function formulario(alvo, p, abrir) {
 
   alvo.innerHTML = `<form class="painel ed-bloco" id="pj-form">
     <h3>${novo ? "Novo projeto" : esc(p.name)}</h3>
-    ${resumo?.at ? `<p class="muted">${resumo.episodes} episódios, ${curto(resumo.totalViews)} views. Números atualizados ${esc(ha(resumo.at))}. <a href="#/projeto/${encodeURIComponent(p.id)}">Ver página pública</a></p>` : ""}
+    ${resumo?.at ? `<p class="muted">${resumo.episodes} episódios, ${curto(resumo.totalViews)} views. Números atualizados ${esc(ha(resumo.at))}. <a href="/#/projeto/${encodeURIComponent(p.id)}" target="_blank" rel="noopener">Ver no site público</a></p>` : ""}
     <div class="ed-grelha">
       <label class="campo"><span>Nome</span><input class="input" name="nome" value="${esc(p.name)}" required></label>
       <label class="campo"><span>Tipo</span><select class="input" name="tipo">${TIPOS.map((t) => `<option ${p.type === t ? "selected" : ""}>${t}</option>`).join("")}</select></label>

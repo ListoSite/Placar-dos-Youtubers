@@ -6,7 +6,8 @@
 import { json, todayLisbon, pool } from "../lib/util.mjs";
 import { getJSON, setJSON, listKeys, lerLinhas, adicionarLinhas, armazenamentoAtual, estadoSupabase, migrarParaSupabase } from "../lib/storage.mjs";
 import { dadosPublicos, guardarPublicacao, listarPublicacoes, mudarPublicacao, apagarPublicacao, COLECAO_PUB } from "../lib/publico.mjs";
-import { listarVotacoes, guardarVotacao, apagarVotacao, configPublica } from "../lib/votacoes.mjs";
+import { listarVotacoes, guardarVotacao, apagarVotacao, configPublica, mudarEstado, resolverVotacao, criarTorneio, avancarTorneio, apagarTorneio } from "../lib/votacoes.mjs";
+import { lerConfig, guardarConfig, datasetPublico, configPublicaVitrine, canalPublico, BLOCOS, ABAS } from "../lib/vitrine.mjs";
 import { guardarResultados, resumoHistorico, COLECAO as COLECAO_PALCO } from "../lib/historico.mjs";
 import { adminEnabled, checkPassword, createToken, verifyToken, tokenFromRequest, googleLigado, googleClientId, verificarGoogle } from "../lib/auth.mjs";
 import { loadDB, saveDB, newPerson, attachChannel, detachChannel, mergePeople, deletePerson, PERSON_FIELDS, DEFAULT_SETTINGS } from "../lib/db.mjs";
@@ -106,7 +107,26 @@ const publicRoutes = {
     return json({ ok: true, hasApiKey: hasApiKey(), adminEnabled: adminEnabled(), loginGoogle: googleLigado() ? googleClientId() : "", armazenamento: await armazenamentoAtual(), supabase: configPublica(), ...meta });
   },
   "GET votacoes": async () => json({ ...(await listarVotacoes()), supabase: configPublica() }, 200, { "cache-control": "public, max-age=15" }),
-  "GET publico": async () => json(await dadosPublicos(), 200, { "cache-control": "public, max-age=60" }),
+  // A página pública: a configuração (o que aparece) e só os dados que podem aparecer
+  "GET publico": async (req) => {
+    const [ds, cfg, extra] = await Promise.all([getDataset(req), lerConfig(), dadosPublicos()]);
+    const pub = datasetPublico(ds, cfg);
+    const vivos = new Set(pub.people.map((p) => p.id));
+    const pessoas = Object.fromEntries(Object.entries(extra.pessoas || {}).filter(([id]) => vivos.has(id)));
+    return json(
+      {
+        cfg: configPublicaVitrine(cfg),
+        ds: pub,
+        canal: extra.canal,
+        publicacoes: cfg.videos.publicacoes ? extra.publicacoes.slice(0, cfg.videos.n) : [],
+        hall: cfg.videos.hall ? extra.hall : {},
+        pessoas,
+        historico: cfg.perfis.ligado && cfg.perfis.secoes.palco ? historicoPublico(await resumoHistorico(), vivos) : null,
+      },
+      200,
+      { "cache-control": "public, max-age=60" },
+    );
+  },
   "GET palco/historico": async () => json(await resumoHistorico(), 200, { "cache-control": "public, max-age=60" }),
   "POST login": async (req) => {
     if (!adminEnabled()) throw new HttpError(503, "A edição está desligada: define ADMIN_PASSWORD nas variáveis do Netlify.");
@@ -543,11 +563,29 @@ const adminRoutes = {
     return { ok: true };
   },
 
+  // ---------- Página pública (o que aparece) ----------
+  "GET vitrine": async () => ({ config: await lerConfig(), blocos: BLOCOS, abas: ABAS }),
+  "POST vitrine": async ({ b }) => ({ ok: true, config: await guardarConfig(b.config) }),
+
   // ---------- Votações ----------
   "GET votacoes": async () => listarVotacoes({ todas: true }),
   "POST votacao": async ({ db, b }) => ({ ok: true, id: await guardarVotacao(b.votacao || {}, db) }),
   "POST votacao/apagar": async ({ b }) => {
     await apagarVotacao(b.id);
+    return { ok: true };
+  },
+  "POST votacao/estado": async ({ b }) => {
+    await mudarEstado(b.id, b.estado);
+    return { ok: true };
+  },
+  "POST votacao/resolver": async ({ b }) => {
+    await resolverVotacao(b.id, b.resultado || null, { fechar: b.fechar !== false });
+    return { ok: true };
+  },
+  "POST torneio": async ({ db, b }) => ({ ok: true, grupo: await criarTorneio(b.torneio || {}, db) }),
+  "POST torneio/avancar": async ({ db, b }) => ({ ok: true, ...(await avancarTorneio(b.grupo, b.vencedores || {}, db, { fecha: b.fecha })) }),
+  "POST torneio/apagar": async ({ b }) => {
+    await apagarTorneio(b.grupo);
     return { ok: true };
   },
 
@@ -559,6 +597,14 @@ const adminRoutes = {
   },
 };
 
+/** O histórico do Palco só com os Youtubers que aparecem na página pública. */
+function historicoPublico(h, vivos) {
+  const pares = {};
+  for (const [k, v] of Object.entries(h.pares || {})) if (k.split("|").every((id) => vivos.has(id))) pares[k] = v;
+  const pessoas = Object.fromEntries(Object.entries(h.pessoas || {}).filter(([id]) => vivos.has(id)));
+  return { pares, pessoas, classicos: (h.classicos || []).filter((c) => c.par.every((id) => vivos.has(id))) };
+}
+
 // Dados do painel: só com sessão iniciada (o painel é só para o dono do site)
 const PRIVADAS = new Set(["GET dataset", "GET videos", "GET daily", "GET sb", "GET palco/historico"]);
 
@@ -566,6 +612,14 @@ export default async (req) => {
   const url = new URL(req.url);
   const route = url.pathname.replace(/^\/api\/?/, "").replace(/\/+$/, "");
   try {
+    // Perfil público: vídeos, últimos dias e crescimento de um canal (só o que estiver ligado no painel)
+    const mCanal = req.method === "GET" && /^publico\/canal\/(UC[\w-]{22})$/.exec(route);
+    if (mCanal) {
+      const [ds, cfg] = await Promise.all([getDataset(req), lerConfig()]);
+      const r = await canalPublico(ds, cfg, mCanal[1]);
+      if (!r) throw new HttpError(404, "Este canal não está disponível.");
+      return json(r, 200, { "cache-control": "public, max-age=300" });
+    }
     const pub = publicRoutes[`${req.method} ${route}`];
     if (pub && PRIVADAS.has(`${req.method} ${route}`) && !verifyToken(tokenFromRequest(req))) throw new HttpError(401, "Entra no painel para ver estes dados.");
     if (pub) {

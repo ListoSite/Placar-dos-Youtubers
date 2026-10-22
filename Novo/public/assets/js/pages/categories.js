@@ -3,14 +3,16 @@
 import { estado, rankingMes, mesesComDados, mesAnterior } from "../data.js";
 import { esc, curto, mesNome, pct, plural } from "../format.js";
 import { avatar, $, variacao, mostrarDica, esconderDica, saiDica } from "../ui.js";
+import { modo } from "../modo.js";
 
 export async function render(main) {
   main.dataset.titulo = "Categorias";
   const meses = mesesComDados(5).filter((m) => m < estado.ds.currentMonth);
-  let mes = estado.ref;
+  const cfg = modo.publico ? modo.cfg.categorias : { escolherPeriodo: true, periodo: { tipo: "ultimo" } };
+  let mes = cfg.periodo?.tipo === "mes" && meses.includes(cfg.periodo.mes) ? cfg.periodo.mes : estado.ref;
   main.innerHTML = `<div class="wrap">
     <div class="pagina-topo"><h1>Categorias</h1><p>Views do mês somadas por tipo de conteúdo. O tamanho de cada bloco é a parte das views de Portugal nesse mês.</p></div>
-    <div class="filtros"><label class="campo"><span>Mês</span><select class="input" id="cat-mes">${[...meses].reverse().map((m) => `<option value="${m}">${mesNome(m)}</option>`).join("")}</select></label></div>
+    <div class="filtros" ${cfg.escolherPeriodo ? "" : "hidden"}><label class="campo"><span>Mês</span><select class="input" id="cat-mes">${[...meses].reverse().map((m) => `<option value="${m}">${mesNome(m)}</option>`).join("")}</select></label></div>
     <div id="cat-mapa" class="grafico" style="height:420px"></div>
     <section class="secao"><div id="cat-tabela"></div></section></div>`;
   $("#cat-mes", main).value = mes;

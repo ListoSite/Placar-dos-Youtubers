@@ -29,7 +29,7 @@ export function lerRegressoDoLogin() {
   const h = location.hash.replace(/^#/, "");
   if (!/(^|&)(access_token|error)=/.test(h)) return null;
   const p = new URLSearchParams(h);
-  let destino = "#votacoes";
+  let destino = "#/votar";
   // Só se aceita a sessão se o login começou neste browser (evita que um link com a sessão de outra pessoa
   // a troque pela tua sem dares por isso)
   let comecouAqui = false;
@@ -53,7 +53,7 @@ export function temConta() {
 
 export function entrarComGoogle(cfg) {
   try {
-    sessionStorage.setItem(VOLTAR, "#votacoes");
+    sessionStorage.setItem(VOLTAR, "#/votar");
   } catch {
     /* nada */
   }

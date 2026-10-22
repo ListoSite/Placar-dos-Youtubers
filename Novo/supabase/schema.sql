@@ -81,6 +81,16 @@ create table if not exists public.votacoes (
   criado timestamptz not null default now()
 );
 
+-- Tipos de votação (pergunta livre, Youtuber do mês, favorito, confronto, desafiante, torneio, previsão)
+-- e, nos torneios, o grupo e a ronda. "modo": o público decide ou só faz previsões. "resultado": a opção vencedora/certa.
+alter table public.votacoes add column if not exists tipo text not null default 'escolha';
+alter table public.votacoes add column if not exists modo text;
+alter table public.votacoes add column if not exists grupo text;
+alter table public.votacoes add column if not exists ronda int;
+alter table public.votacoes add column if not exists resultado text;
+alter table public.votacoes add column if not exists extra jsonb not null default '{}'::jsonb;
+create index if not exists votacoes_grupo on public.votacoes (grupo, ronda);
+
 create table if not exists public.votos (
   votacao_id uuid not null references public.votacoes (id) on delete cascade,
   user_id uuid not null default auth.uid() references auth.users (id) on delete cascade,

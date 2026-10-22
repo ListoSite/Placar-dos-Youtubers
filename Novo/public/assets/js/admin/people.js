@@ -126,7 +126,7 @@ function editor(alvo, id, aoMudar, abrir) {
   const pub = estado.pessoas.get(id);
   const canais = p.channels.map((c) => ({ link: adm.db.channels[c], pub: estado.canais.get(c) })).filter((x) => x.link);
   alvo.innerHTML = `
-    <div class="ed-cabeca">${avatar(pub || { name: p.name }, 64)}<div><h2>${esc(p.name)}</h2><a href="#/youtuber/${encodeURIComponent(p.id)}">Ver perfil público</a></div></div>
+    <div class="ed-cabeca">${avatar(pub || { name: p.name }, 64)}<div><h2>${esc(p.name)}</h2><a href="/#/youtuber/${encodeURIComponent(p.id)}" target="_blank" rel="noopener">Ver no site público</a></div></div>
 
     <form class="painel ed-bloco" id="ed-dados">
       <h3>Dados</h3>

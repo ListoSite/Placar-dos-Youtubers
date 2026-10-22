@@ -69,6 +69,12 @@ export async function carregar({ forcar = false } = {}) {
   return estado;
 }
 
+/** Usa um dataset já carregado (a página pública recebe-o junto com a configuração). */
+export function usarDataset(ds) {
+  preparar(ds);
+  return estado;
+}
+
 function preparar(ds) {
   estado.ds = ds;
   estado.pessoas = new Map(ds.people.map((p) => [p.id, p]));

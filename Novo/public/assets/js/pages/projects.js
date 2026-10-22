@@ -1,6 +1,7 @@
 // Projetos (séries e conteúdos grandes) e o placar de quem anda a trabalhar.
 
 import { estado, pessoa, temSessao } from "../data.js";
+import { modo } from "../modo.js";
 import { esc, curto, inteiro, decimal, norm, plural } from "../format.js";
 import { avatar, linkPessoa, $, $$ } from "../ui.js";
 
@@ -31,23 +32,24 @@ const ORDENS = [
 export async function render(main, { query }) {
   main.dataset.titulo = "Projetos";
   const ds = estado.ds;
-  const vista = query.get("ver") === "trabalho" ? "trabalho" : "projetos";
+  const comTrabalho = !modo.publico || modo.cfg.projetos.trabalho;
+  const vista = comTrabalho && query.get("ver") === "trabalho" ? "trabalho" : "projetos";
   const tipos = [...new Set(ds.projects.map((p) => p.type).filter(Boolean))].sort();
   main.innerHTML = `<div class="wrap">
     <div class="pagina-topo"><h1>Projetos</h1><p>Séries, formatos e conteúdos grandes. As views de cada episódio vêm do YouTube e o impacto compara a média por episódio com o normal do canal.</p></div>
     <div class="filtros" style="justify-content:space-between">
-      <div class="segmentos" role="group" aria-label="Vista">
+      ${comTrabalho ? `<div class="segmentos" role="group" aria-label="Vista">
         <button data-ver="projetos" aria-pressed="${vista === "projetos"}">Projetos</button>
         <button data-ver="trabalho" aria-pressed="${vista === "trabalho"}">Quem anda a trabalhar</button>
-      </div>
-      ${temSessao() ? `<a class="btn btn-primario" href="#/editar/projetos">Adicionar projeto</a>` : ""}
+      </div>` : "<span></span>"}
+      ${!modo.publico && temSessao() ? `<a class="btn btn-primario" href="#/editar/projetos">Adicionar projeto</a>` : ""}
     </div>
     <div id="pj-conteudo"></div></div>`;
   $$("[data-ver]", main).forEach((b) => b.addEventListener("click", () => (location.hash = b.dataset.ver === "trabalho" ? "#/projetos?ver=trabalho" : "#/projetos")));
 
   const alvo = $("#pj-conteudo", main);
   if (!ds.projects.length) {
-    alvo.innerHTML = `<div class="vazio"><h3>Ainda não há projetos</h3><p>Um projeto é uma série ou um formato grande. Cola o link de uma playlist do YouTube e o site vai buscar as views de cada episódio.</p><a class="btn btn-primario" href="#/editar/projetos">Adicionar o primeiro projeto</a></div>`;
+    alvo.innerHTML = `<div class="vazio"><h3>Ainda não há projetos</h3><p>Um projeto é uma série ou um formato grande. Cola o link de uma playlist do YouTube e o site vai buscar as views de cada episódio.</p>${modo.publico ? "" : `<a class="btn btn-primario" href="#/editar/projetos">Adicionar o primeiro projeto</a>`}</div>`;
     return;
   }
   if (vista === "trabalho") return trabalho(alvo);

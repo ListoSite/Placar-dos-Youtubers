@@ -47,9 +47,18 @@ O servidor confirma a assinatura do Google, o ID do cliente e o email antes de a
 
 **Segurança do painel.** Usa uma `ADMIN_PASSWORD` comprida (16 letras ou mais, ao acaso). Depois de 8 tentativas erradas, o mesmo endereço fica 15 minutos sem poder tentar. Recomendado: cria também `ADMIN_SECRET` com um texto comprido ao acaso (por exemplo, gerado num gestor de palavras-passe); passa a ser a chave das sessões e, se um dia a mudares, todas as sessões abertas fecham.
 
+## Duas partes: o site público e o painel
+
+- **Site público** (`/`): é o que os visitantes veem, feito primeiro para o telemóvel, com abas em baixo. Mostra **só** o que o painel deixa: as abas, os blocos do Início, os gráficos, os períodos (último mês, um mês, um ano, os últimos meses), as animações, os perfis e cada secção dos perfis, os Youtubers escondidos e os meses que podem aparecer. Não tem nenhuma ligação para o painel.
+- **Painel** (`/painel/`): serve só para controlar. Tem quatro partes:
+  - **Página pública**: liga e desliga tudo o que o site mostra, com uma pré-visualização em formato de telemóvel. As mudanças só chegam aos visitantes depois de carregares em **Publicar** (o site pode demorar até um minuto a mostrar a versão nova).
+  - **Votações**: votação livre, Youtuber do mês, Youtuber favorito, confronto, próximo desafiante, previsão e torneios (4, 8 ou 16, ronda a ronda). Em cada uma escolhes se **o público decide** ou se é uma **previsão** (depois marcas a resposta certa e o site mostra quem acertou).
+  - **Palco**: grava os vídeos. Enquanto houver uma votação aberta, o vídeo mostra antes do fim que se pode votar ("Link na bio", o endereço e um código QR). O texto e o endereço mudam-se em Página pública, Dados e ligações.
+  - **Youtubers e dados**: Youtubers, canais, importações, projetos e definições.
+
 ## Primeiros passos depois de publicar
 
-1. Abre o site, carrega no lápis (canto superior direito) e entra com a palavra-passe.
+1. Abre o painel (`/painel/`) e entra com a conta Google ou a palavra-passe.
 2. **Ligar canais**: carrega em *Procurar automaticamente*. O site experimenta o nome de cada Youtuber da folha como @handle e mostra o canal encontrado para confirmares. Para os que falharem, cola o link do canal ou usa *Procurar pelo nome*.
 3. **Youtubers**: junta pessoas com dois canais (por exemplo "Arganaça" e "Arganaça 2"), define o canal principal e marca os canais de clips como "não conta".
 4. **Importar dados**: usa o marcador do Social Blade para preencher os meses de agosto 2025 até agora, canal a canal. Também podes colar uma tabela do Excel ou Google Sheets.
@@ -106,8 +115,13 @@ Novo/
   netlify/functions/api.mjs    API (dados públicos e edição)
   netlify/functions/collect-*.mjs  recolhas agendadas
   netlify/lib/                 base de dados, YouTube, recolha, dataset, Social Blade
-  public/index.html            página única do site
-  public/assets/js/pages/      páginas públicas
+  public/index.html            o site público (abas em baixo, feito para o telemóvel)
+  public/painel/index.html     o painel
+  public/assets/js/publico/    o site público: abas, blocos do Início, ranking, votações
+  public/assets/js/pages/      perfis, comparar, categorias e projetos (usadas no site público)
+  public/assets/js/admin/vitrine.js   o controlo da página pública
+  public/assets/js/admin/votacoes.js  votações e torneios
+  netlify/lib/vitrine.mjs      o que a página pública pode mostrar (e a limpeza dos dados)
   public/assets/js/admin/      área de edição
   public/assets/js/stage/      Palco (espetáculos para vídeo)
   public/assets/js/stage/kits.js  efeitos do "Tema completo" de cada tema
@@ -167,7 +181,9 @@ Os dados podem viver no Netlify Blobs (como no início) ou no Supabase, uma base
 
 Se já tinhas corrido o `schema.sql` antes, corre-o outra vez: pode correr várias vezes sem apagar dados e traz as regras novas.
 
-As votações criam-se em **Editar → Página pública** (pergunta, opções com Youtubers ou texto, data de fecho, mostrar ou esconder resultados). Os visitantes votam na página pública (secção **Votar**) com a conta Google, uma vez por votação. Os resultados podem ir para um vídeo com o espetáculo **O público escolheu**.
+**Importante (votações novas):** os tipos novos de votação e os torneios precisam de colunas novas na tabela `votacoes`. No Supabase, **SQL Editor**, corre outra vez o ficheiro `supabase/schema.sql` (não apaga nada). Sem isso, o painel avisa ao criar uma votação.
+
+As votações criam-se no painel, em **Votações**. Os visitantes votam na aba **Votar** do site com a conta Google, uma vez por votação. Os resultados vão para um vídeo com o espetáculo **O público escolheu**: lista do último ao primeiro, confronto frente a frente, a resposta certa de uma previsão (com a percentagem de quem acertou) ou a chave de um torneio ronda a ronda até ao campeão.
 
 ## Sons e música
 

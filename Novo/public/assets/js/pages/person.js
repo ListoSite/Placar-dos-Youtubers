@@ -8,6 +8,7 @@ import { PARTES } from "../score.js";
 import { cartaoProjeto } from "./projects.js";
 import { encher } from "../motion.js";
 import { carregarHistorico, dadosPessoa, rivaisDe } from "../stage/historico.js";
+import { modo, ligado } from "../modo.js";
 
 export async function render(main, { params }) {
   const p = pessoa(params[0]);
@@ -32,6 +33,8 @@ export async function render(main, { params }) {
   const parcial = p.monthly[ds.currentMonth];
 
   const limpeza = [];
+  const ve = (s) => ligado("perfis.secoes." + s);
+  const comparar = !modo.publico || modo.cfg.abas.some((a) => a.id === "comparar");
   main.innerHTML = `
     <section class="perfil-capa">
       ${p.banner ? `<div class="fundo" style="background-image:url('${esc(p.banner)}')"></div>` : `<div class="fundo calcada" style="opacity:1"></div>`}
@@ -49,12 +52,12 @@ export async function render(main, { params }) {
             </div>
             <div class="perfil-linha">
               ${main1 ? `<a class="btn btn-pequeno" href="https://www.youtube.com/channel/${esc(main1.id)}" target="_blank" rel="noopener">${ICONES.youtube} ${esc(main1.handle || "Canal")}</a>` : ""}
-              <a class="btn btn-pequeno" href="#/comparar?ids=${encodeURIComponent(p.id)}">Comparar</a>
-              <a class="btn btn-pequeno" href="#/palco/cartao?id=${encodeURIComponent(p.id)}">Mostrar no Palco</a>
-              ${temSessao() ? `<a class="btn btn-pequeno" href="#/editar/youtubers?id=${encodeURIComponent(p.id)}">Editar</a>` : ""}
+              ${comparar && ve("comparar") ? `<a class="btn btn-pequeno" href="#/comparar?ids=${encodeURIComponent(p.id)}">Comparar</a>` : ""}
+              ${modo.publico ? "" : `<a class="btn btn-pequeno" href="#/palco/cartao?id=${encodeURIComponent(p.id)}">Mostrar no Palco</a>`}
+              ${!modo.publico && temSessao() ? `<a class="btn btn-pequeno" href="#/editar/youtubers?id=${encodeURIComponent(p.id)}">Editar</a>` : ""}
             </div>
           </div>
-          <div class="perfil-indice">
+          <div class="perfil-indice" ${ve("indice") ? "" : "hidden"}>
             ${ind.total !== null ? `<span class="placar" id="ind-num">${inteiro(ind.total)}</span><span>Índice de Influência${pos ? `, ${pos}.º em Portugal` : ""}</span>` : `<span class="muted">Ainda sem dados para o Índice</span>`}
           </div>
         </div>
@@ -62,7 +65,7 @@ export async function render(main, { params }) {
     </section>
     <div class="wrap">
       ${p.bio ? `<p class="soft" style="margin-top:24px;font-size:var(--t-md)">${esc(p.bio)}</p>` : ""}
-      <div class="numeros" style="margin-top:28px">
+      <div class="numeros" style="margin-top:28px" ${ve("numeros") ? "" : "hidden"}>
         <div class="numero"><span>Views em ${esc(mesNome(ref))}</span><strong>${curto(vRef)}</strong><small>${posRef ? `${posRef.pos}.º lugar ` : ""}${variacao(vRef, views(p, estado.ds.months[estado.ds.months.indexOf(ref) - 1] || ""))}</small></div>
         ${parcial ? `<div class="numero"><span>Este mês (até agora)</span><strong>${curto(parcial.v)}</strong><small>projeção ${curto(parcial.est)}</small></div>` : ""}
         <div class="numero"><span>Média de 3 meses</span><strong>${curto(media3)}</strong><small>views por mês</small></div>
@@ -71,7 +74,7 @@ export async function render(main, { params }) {
         <div class="numero"><span>No YouTube desde</span><strong>${p.since ? new Date(p.since).getFullYear() : "–"}</strong><small>${p.since ? data(p.since) : ""}</small></div>
       </div>
 
-      <section class="secao">
+      <section class="secao" ${ve("mensal") ? "" : "hidden"}>
         <div class="secao-cabeca"><div><h2>Views por mês</h2><p>Views ganhas em cada mês, somando os canais principais${canais.some((c) => !c.count) ? " (canais de clips não contam)" : ""}.${notaEstimativa(p)}</p></div></div>
         <div id="g-mensal" class="vidro caixa-grafico"></div>
       </section>
@@ -90,7 +93,7 @@ export async function render(main, { params }) {
         <div class="vidro caixa-grafico" style="margin-top:18px" id="sb-semanas"><h3 class="grafico-titulo">Views por semana, no último ano</h3><div id="g-sb-sem"></div></div>
       </section>
 
-      ${p.tt && Object.keys(p.tt.f || {}).length ? `<section class="secao" id="sec-tt">
+      ${ve("tiktok") && p.tt && Object.keys(p.tt.f || {}).length ? `<section class="secao" id="sec-tt">
         <div class="secao-cabeca"><div><h2>TikTok</h2><p>${p.tt.user ? `<a href="https://www.tiktok.com/@${esc(p.tt.user)}" target="_blank" rel="noopener">@${esc(p.tt.user)}</a>. ` : ""}Ganhos de cada mês, segundo o Social Blade${p.tt.at ? `, atualizados em ${esc(data(p.tt.at))}` : ""}.</p></div></div>
         <div class="grelha-2">
           <div class="vidro caixa-grafico"><h3 class="grafico-titulo">Seguidores ganhos por mês</h3><div id="g-tt-seg"></div></div>
@@ -98,8 +101,8 @@ export async function render(main, { params }) {
         </div>
       </section>` : ""}
 
-      <section class="secao grelha-2">
-        <div class="painel">
+      <section class="secao grelha-2" ${ve("indice") || ve("recordes") ? "" : "hidden"}>
+        <div class="painel" ${ve("indice") ? "" : "hidden"}>
           <h3>Como se calcula o Índice</h3>
           <p class="muted">Cada parte vale de 0 a 100. O Índice é a média com pesos, de 0 a 1000.${ind.cobertura && ind.cobertura < 0.99 ? " Partes sem dados não entram nas contas." : ""}</p>
           <div class="partes">${PARTES.map((pt) => {
@@ -108,7 +111,7 @@ export async function render(main, { params }) {
           }).join("")}</div>
           ${classica ? `<p class="muted" style="margin:18px 0 0;font-size:var(--t-sm)">Pontuação clássica (fórmula da folha antiga): <b class="soft">${inteiro(classica)}</b>${p.legacy?.pontuacao ? `, na folha estava ${inteiro(p.legacy.pontuacao)}` : ""}.</p>` : ""}
         </div>
-        <div class="painel">
+        <div class="painel" ${ve("recordes") ? "" : "hidden"}>
           <h3>Recordes</h3>
           <p class="muted">Desde que há dados${ds.months[0] ? `, a partir de ${esc(mesNome(ds.months[0]))}` : ""}.</p>
           <div class="recordes">
@@ -126,7 +129,7 @@ export async function render(main, { params }) {
         <div class="videos-grelha" id="videos"></div>
       </section>
 
-      ${canais.length ? `<section class="secao"><div class="secao-cabeca"><div><h2>Canais</h2><p>Todos os canais desta pessoa. Os canais de clips não somam nas views.</p></div></div>
+      ${ve("canais") && canais.length ? `<section class="secao"><div class="secao-cabeca"><div><h2>Canais</h2><p>Todos os canais desta pessoa. Os canais de clips não somam nas views.</p></div></div>
         <div class="painel canal-lista">${canais
           .map(
             (c) => `<div class="canal">${avatar({ name: c.title, photo: c.thumb }, 44)}
@@ -140,9 +143,9 @@ export async function render(main, { params }) {
 
       <section class="secao" id="sec-palco" hidden></section>
 
-      ${redesHtml(p)}
+      ${ve("redes") ? redesHtml(p) : ""}
 
-      ${projetos.length ? `<section class="secao"><div class="secao-cabeca"><div><h2>Projetos</h2><p>Séries e conteúdos grandes em que participou.</p></div></div><div class="projetos-grelha">${projetos.map(cartaoProjeto).join("")}</div></section>` : ""}
+      ${ve("projetos") && projetos.length ? `<section class="secao"><div class="secao-cabeca"><div><h2>Projetos</h2><p>Séries e conteúdos grandes em que participou.</p></div></div><div class="projetos-grelha">${projetos.map(cartaoProjeto).join("")}</div></section>` : ""}
     </div>`;
 
   encher(main.querySelectorAll(".parte .trilho i"));
@@ -163,12 +166,12 @@ export async function render(main, { params }) {
     if (Object.keys(p.tt.l || {}).length) limpeza.push(barrasSimples($("#g-tt-gostos", main), pontos(p.tt.l, "gostos ganhos"), { rotulo: rot, cor: "#fe2c55", nome: "Gostos ganhos por mês no TikTok" }));
     else $("#g-tt-gostos", main).innerHTML = `<p class="muted">Sem dados.</p>`;
   }
-  carregarPalco(main, p);
+  if (ve("palco")) carregarPalco(main, p);
   const contados = canais.filter((c) => c.count);
-  if (contados.length) carregarSocialBlade(main, contados, limpeza);
+  if (contados.length && ve("crescimento")) carregarSocialBlade(main, contados, limpeza);
   if (main1) {
-    carregarDiario(main, main1, limpeza);
-    carregarVideos(main, main1);
+    if (ve("diario")) carregarDiario(main, main1, limpeza);
+    if (ve("videos")) carregarVideos(main, main1);
   }
   return () => limpeza.forEach((f) => f && f());
 }
@@ -220,7 +223,9 @@ function redesHtml(p) {
 async function carregarSocialBlade(main, canais, limpeza) {
   let dados;
   try {
-    dados = await api(`sb?channels=${canais.map((c) => c.id).join(",")}`);
+    dados = modo.publico
+      ? Object.fromEntries(await Promise.all(canais.map(async (c) => [c.id, (await canalPublico(c.id))?.sb || null])))
+      : await api(`sb?channels=${canais.map((c) => c.id).join(",")}`);
   } catch {
     return;
   }
@@ -286,7 +291,7 @@ function limparVideos(arr) {
 
 async function carregarDiario(main, canal, limpeza) {
   try {
-    const d = await api(`daily?channels=${canal.id}&months=3`);
+    const d = modo.publico ? { [canal.id]: (await canalPublico(canal.id))?.diario || {} } : await api(`daily?channels=${canal.id}&months=3`);
     const meses = d[canal.id] || {};
     const pontos = [];
     for (const m of Object.keys(meses).sort()) {
@@ -311,7 +316,7 @@ async function carregarDiario(main, canal, limpeza) {
 
 async function carregarVideos(main, canal) {
   try {
-    const r = await api(`videos?channel=${canal.id}`);
+    const r = modo.publico ? (await canalPublico(canal.id))?.videos || { items: [] } : await api(`videos?channel=${canal.id}`);
     const items = r.items || [];
     if (!items.length || !document.body.contains(main)) return;
     $("#sec-videos", main).hidden = false;
@@ -340,7 +345,7 @@ async function carregarPalco(main, p) {
   if (!alvo || !(d.v || d.d || d.estrelas || d.coroas)) return;
   const rivais = rivaisDe(h, p.id, 4);
   alvo.hidden = false;
-  alvo.innerHTML = `<div class="secao-cabeca"><div><h2>No Palco</h2><p>Os resultados dos vídeos do Placar: torneios, batalhas e rankings.</p></div><a class="btn btn-pequeno" href="#/palco">Ir ao Palco</a></div>
+  alvo.innerHTML = `<div class="secao-cabeca"><div><h2>No Palco</h2><p>Os resultados dos vídeos do Placar: torneios, batalhas e rankings.</p></div>${modo.publico ? "" : `<a class="btn btn-pequeno" href="#/palco">Ir ao Palco</a>`}</div>
     <div class="palco-feitos">
       <div class="vidro pf"><span class="pf-icone estrela">★</span><b>${inteiro(d.estrelas)}</b><small>${d.estrelas === 1 ? "torneio ganho" : "torneios ganhos"}</small></div>
       <div class="vidro pf"><span class="pf-icone">👑</span><b>${inteiro(d.coroas)}</b><small>${d.coroas === 1 ? "vez em 1.º lugar" : "vezes em 1.º lugar"}</small></div>
@@ -354,4 +359,11 @@ async function carregarPalco(main, p) {
             .join("")}</div>`
         : ""
     }`;
+}
+
+// Na página pública, os dados extra de um canal vêm de um só pedido (guardado para as três secções)
+const pedidosCanal = new Map();
+function canalPublico(id) {
+  if (!pedidosCanal.has(id)) pedidosCanal.set(id, api(`publico/canal/${id}`).catch(() => null));
+  return pedidosCanal.get(id);
 }

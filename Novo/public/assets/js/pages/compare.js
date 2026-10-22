@@ -5,14 +5,16 @@ import { esc, curto, inteiro, mesNome, decimal } from "../format.js";
 import { avatar, linkPessoa, $, $$ } from "../ui.js";
 import { linhasMensais, SERIES } from "../charts.js";
 import { PARTES } from "../score.js";
+import { modo } from "../modo.js";
 
 export async function render(main, { query }) {
   main.dataset.titulo = "Comparar";
-  let ids = (query.get("ids") || "").split(",").filter((id) => pessoa(id)).slice(0, 4);
+  const MAX = modo.publico ? modo.cfg.comparar.max : 4;
+  let ids = (query.get("ids") || "").split(",").filter((id) => pessoa(id)).slice(0, MAX);
   let pararGrafico = null;
 
   main.innerHTML = `<div class="wrap">
-    <div class="pagina-topo"><h1>Comparar</h1><p>Escolhe até 4 Youtubers. Cada um fica com a sua cor em todos os gráficos.</p></div>
+    <div class="pagina-topo"><h1>Comparar</h1><p>Escolhe até ${MAX} Youtubers. Cada um fica com a sua cor em todos os gráficos.</p></div>
     <div class="filtros">
       <div id="cmp-escolhidos" style="display:flex;gap:8px;flex-wrap:wrap;align-items:center"></div>
       <div class="pesquisa" style="flex:1;min-width:220px">
@@ -21,7 +23,7 @@ export async function render(main, { query }) {
         <div class="pesquisa-lista" id="cmp-lista" style="left:0;right:auto"></div>
       </div>
       <button class="btn" id="cmp-aleatorio">Escolher ao acaso</button>
-      <a class="btn btn-ouro" id="cmp-batalha" href="#/palco">Batalha no Palco</a>
+      ${modo.publico ? "" : `<a class="btn btn-ouro" id="cmp-batalha" href="#/palco">Batalha no Palco</a>`}
     </div>
     <div id="cmp-conteudo"></div></div>`;
 
@@ -40,10 +42,12 @@ export async function render(main, { query }) {
       }),
     );
     const bat = $("#cmp-batalha", main);
-    bat.style.display = ids.length === 2 ? "" : "none";
-    bat.href = `#/palco/batalha?a=${encodeURIComponent(ids[0] || "")}&b=${encodeURIComponent(ids[1] || "")}`;
-    $("#cmp-q", main).disabled = ids.length >= 4;
-    $("#cmp-q", main).placeholder = ids.length >= 4 ? "Máximo de 4" : "Adicionar Youtuber";
+    if (bat) {
+      bat.style.display = ids.length === 2 ? "" : "none";
+      bat.href = `#/palco/batalha?a=${encodeURIComponent(ids[0] || "")}&b=${encodeURIComponent(ids[1] || "")}`;
+    }
+    $("#cmp-q", main).disabled = ids.length >= MAX;
+    $("#cmp-q", main).placeholder = ids.length >= MAX ? `Máximo de ${MAX}` : "Adicionar Youtuber";
     if (pararGrafico) pararGrafico();
     pararGrafico = desenhar($("#cmp-conteudo", main), ids.map(pessoa));
   };
@@ -57,7 +61,7 @@ export async function render(main, { query }) {
   });
   lista.addEventListener("click", (e) => {
     const b = e.target.closest("[data-id]");
-    if (!b || ids.length >= 4) return;
+    if (!b || ids.length >= MAX) return;
     ids.push(b.dataset.id);
     input.value = "";
     lista.classList.remove("aberta");
