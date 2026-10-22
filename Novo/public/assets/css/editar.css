@@ -466,3 +466,4 @@ details > summary {
     grid-template-columns: minmax(0, 1fr) 110px 30px;
   }
 }
+#sb-resultado { scroll-margin-top: 100px; }

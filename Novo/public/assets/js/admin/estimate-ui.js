@@ -5,10 +5,11 @@ import { $, toast, confirmar } from "../ui.js";
 import { adm, chamar, lerDb } from "./common.js";
 import { carregar } from "../data.js";
 
-export function blocoEstimativa(alvo) {
+export function blocoEstimativa(alvo, antesDe = null) {
   const caixa = document.createElement("div");
   caixa.className = "painel ed-bloco";
-  alvo.prepend(caixa);
+  if (antesDe) alvo.insertBefore(caixa, antesDe);
+  else alvo.prepend(caixa);
   let aParar = false;
   const resultados = [];
 

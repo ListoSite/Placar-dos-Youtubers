@@ -355,6 +355,26 @@ const adminRoutes = {
     return { ...result, channelId, personId: channelId ? db.channels[channelId].personId : personId, save: true };
   },
 
+  "POST import/socialblade-lote": async ({ db, b }) => {
+    const itens = Array.isArray(b.itens) ? b.itens.slice(0, 80) : [];
+    let canais = 0;
+    let meses = 0;
+    const ignorados = [];
+    for (const it of itens) {
+      if (!it || !db.channels[it.channelId]) {
+        ignorados.push(it?.channelId || "");
+        continue;
+      }
+      const data = cleanPayload({ channelId: it.channelId, monthly: it.monthly });
+      const r = await applyImport(db, data, { channelId: it.channelId });
+      if (r.months) {
+        canais++;
+        meses += r.months;
+      }
+    }
+    return { canais, meses, ignorados, save: canais > 0 };
+  },
+
   // ---------- Estimativa dos meses em falta ----------
   "POST estimate": async ({ db, b }) => {
     try {

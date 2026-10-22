@@ -6,9 +6,13 @@
   "description": "Placar dos Youtubers — ranking, perfis e estatísticas de Youtubers portugueses",
   "scripts": {
     "dev": "node scripts/dev-server.mjs",
-    "test": "node scripts/test-api.mjs"
+    "test": "node scripts/test-api.mjs",
+    "build:marcador": "node scripts/build-marcador.mjs"
   },
   "dependencies": {
     "@netlify/blobs": "^8.1.0"
+  },
+  "devDependencies": {
+    "terser": "^5.31.6"
   }
 }

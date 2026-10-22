@@ -1,9 +1,9 @@
 // Importar dados: marcador do Social Blade e colar tabelas da folha de cálculo.
 
-import { estado } from "../data.js";
+import { estado, carregar } from "../data.js";
 import { esc, curto, inteiro, mesNome, norm, plural } from "../format.js";
 import { $, $$, toast } from "../ui.js";
-import { adm, chamar, escolherPessoa, pessoasOrdenadas } from "./common.js";
+import { adm, chamar, escolherPessoa, pessoasOrdenadas, lerDb } from "./common.js";
 import { blocoEstimativa } from "./estimate-ui.js";
 
 const MESES_PT = { jan: 1, janeiro: 1, fev: 2, fevereiro: 2, favereiro: 2, mar: 3, marco: 3, março: 3, abr: 4, abril: 4, mai: 5, maio: 5, may: 5, jun: 6, junho: 6, juno: 6, jul: 7, julho: 7, ago: 8, agosto: 8, set: 9, setembro: 9, out: 10, outubro: 10, octobro: 10, nov: 11, novembro: 11, dez: 12, dezembro: 12 };
@@ -12,20 +12,23 @@ export async function render(alvo, query) {
   const marcador = await codigoMarcador();
   alvo.innerHTML = `
     <div class="painel ed-bloco" id="sb">
-      <h3>Social Blade: marcador</h3>
-      <p class="soft">Serve para preencher os meses que faltam (por exemplo de agosto 2025 até agora). Funciona assim:</p>
+      <h3>Social Blade: todos os canais de uma vez</h3>
+      <p class="soft">Um marcador do browser percorre o Social Blade canal a canal e traz os meses que lá aparecem (views ganhas em cada mês). Corre no teu computador, com pausas entre canais, e vai guardando o que já fez.</p>
       <ol class="ed-passos">
-        <li>Arrasta este botão para a barra de marcadores do teu browser: <a class="btn btn-ouro btn-pequeno" id="sb-link" href="${esc(marcador)}" onclick="event.preventDefault();alert('Arrasta este botão para a barra de marcadores. Depois usa-o numa página de canal do Social Blade.')">Placar: ler Social Blade</a></li>
-        <li>Abre a página do canal no Social Blade (por exemplo socialblade.com/youtube/handle/wuant). Se houver gráficos detalhados, abre-os e espera que carreguem.</li>
-        <li>Carrega no marcador. Abre-se este site com os dados lidos para confirmares.</li>
+        <li>Arrasta este botão para a barra de marcadores do browser: <a class="btn btn-ouro btn-pequeno" id="sb-link" href="${esc(marcador)}" onclick="event.preventDefault();alert('Arrasta este botão para a barra de marcadores. Depois usa-o numa página de canal do Social Blade.')">Placar ⇄ Social Blade</a><br><small class="muted">Se já tinhas o marcador antigo, apaga-o e usa este.</small></li>
+        <li>Copia a lista de canais: <button class="btn btn-pequeno" id="sbl-copiar">Copiar lista de canais</button>
+          <label class="ed-check" style="margin-top:8px"><input type="checkbox" id="sbl-faltam" checked> Só canais que ainda não têm meses do Social Blade</label>
+          <small class="muted" id="sbl-n"></small></li>
+        <li>Abre a página de um canal qualquer no Social Blade (por exemplo <b>socialblade.com/youtube/handle/wuant</b>) e espera que os gráficos apareçam. Carrega no marcador, cola a lista na caixa "Todos os canais da lista" e carrega em <b>Começar</b>.</li>
+        <li>No fim, carrega em <b>Enviar resultados para o Placar</b>. Abre-se esta página com tudo pronto para confirmares antes de gravar.</li>
       </ol>
-      <p class="muted" style="font-size:var(--t-sm)">O marcador só lê o que está na página que tens aberta. Se uma nova janela for bloqueada, os dados ficam copiados: cola-os na caixa em baixo.</p>
-      <label class="campo" style="margin-top:10px"><span>Ou cola aqui os dados copiados pelo marcador</span><textarea class="input" id="sb-colar" rows="3" placeholder='{"kind":"placar-sb-raw",...}'></textarea></label>
+      <p class="muted" style="font-size:var(--t-sm)">Conta com 3 a 8 segundos por canal. Podes pausar e continuar mais tarde, mesmo depois de fechar o browser. Se o Social Blade pedir uma verificação, o marcador para: recarrega a página do Social Blade, espera um pouco e carrega outra vez no marcador para continuar de onde ficou. O mesmo marcador também lê só o canal que tens aberto.</p>
+      <label class="campo" style="margin-top:10px"><span>Ou cola aqui o que o marcador copiou</span><textarea class="input" id="sb-colar" rows="3" placeholder='{"kind":"placar-sb-lote",...}'></textarea></label>
       <div class="ed-acoes" style="justify-content:flex-start"><button class="btn" id="sb-ler">Ler dados colados</button></div>
       <div id="sb-resultado"></div>
     </div>
 
-    <div class="painel ed-bloco">
+    <div class="painel ed-bloco" id="fl">
       <h3>Colar da folha de cálculo</h3>
       <p class="soft">Copia uma tabela do Excel ou do Google Sheets e cola aqui. A primeira coluna é o nome do Youtuber e as outras são meses. A primeira linha tem os meses, por exemplo <b>Agosto 2025</b>, <b>08/25</b> ou <b>2025-08</b>.</p>
       <textarea class="input" id="fl-texto" rows="7" placeholder="Nome&#9;Agosto 2025&#9;Setembro 2025&#10;Wuant&#9;1 200 000&#9;1 350 000"></textarea>
@@ -33,27 +36,73 @@ export async function render(alvo, query) {
       <div id="fl-resultado"></div>
     </div>`;
 
-  blocoEstimativa(alvo);
+  blocoEstimativa(alvo, $("#fl", alvo));
+
+  const contarLista = () => {
+    const n = listaCanais($("#sbl-faltam", alvo).checked).length;
+    $("#sbl-n", alvo).textContent = `${plural(n, "canal", "canais")} na lista.`;
+  };
+  contarLista();
+  $("#sbl-faltam", alvo).addEventListener("change", contarLista);
+  $("#sbl-copiar", alvo).addEventListener("click", async (e) => {
+    const botao = e.currentTarget;
+    const canais = listaCanais($("#sbl-faltam", alvo).checked);
+    if (!canais.length) return toast("Não há canais para pôr na lista. Liga primeiro os canais em Ligar canais.", { erro: true });
+    await copiarTexto(JSON.stringify({ kind: "placar-sb-lista", v: 1, canais }));
+    botao.textContent = "Lista copiada ✓";
+    toast(`${plural(canais.length, "canal copiado", "canais copiados")}. Agora cola no marcador, no Social Blade.`);
+  });
+
   $("#sb-ler", alvo).addEventListener("click", () => {
+    let raw;
     try {
-      mostrarSocialBlade($("#sb-resultado", alvo), JSON.parse($("#sb-colar", alvo).value));
+      raw = JSON.parse($("#sb-colar", alvo).value);
     } catch {
-      toast("Isso não parece vir do marcador.", { erro: true });
+      return toast("Isso não parece vir do marcador.", { erro: true });
     }
+    if (raw?.kind === "placar-sb-lote") mostrarLote($("#sb-resultado", alvo), raw);
+    else mostrarSocialBlade($("#sb-resultado", alvo), raw);
   });
   $("#fl-ler", alvo).addEventListener("click", () => mostrarFolha($("#fl-resultado", alvo), $("#fl-texto", alvo).value));
 
-  const sb = query.get("sb");
-  if (sb) {
+  for (const [param, mostrar] of [
+    ["sb", mostrarSocialBlade],
+    ["sbl", mostrarLote],
+  ]) {
+    const v = query.get(param);
+    if (!v) continue;
     try {
-      const raw = JSON.parse(decodeURIComponent(escape(atob(sb))));
+      const raw = JSON.parse(decodeURIComponent(escape(atob(v))));
       history.replaceState(null, "", "#/editar/importar");
-      mostrarSocialBlade($("#sb-resultado", alvo), raw);
-      $("#sb", alvo).scrollIntoView();
+      mostrar($("#sb-resultado", alvo), raw);
+      $("#sb-resultado", alvo).scrollIntoView({ block: "start" });
     } catch {
       toast("Não consegui ler os dados do marcador.", { erro: true });
     }
   }
+}
+
+async function copiarTexto(t) {
+  try {
+    await navigator.clipboard.writeText(t);
+  } catch {
+    const ta = document.createElement("textarea");
+    ta.value = t;
+    document.body.appendChild(ta);
+    ta.select();
+    document.execCommand("copy");
+    ta.remove();
+  }
+}
+
+/** Canais ligados, para o marcador percorrer no Social Blade. */
+function listaCanais(soFaltam) {
+  const stats = estado.canais || new Map();
+  return Object.values(adm.db.channels)
+    .filter((c) => c.personId && adm.db.people[c.personId])
+    .filter((c) => !soFaltam || !Object.values(c.monthly || {}).some((m) => m.src === "socialblade"))
+    .sort((a, b) => (a.role === "principal" ? 0 : 1) - (b.role === "principal" ? 0 : 1) || adm.db.people[a.personId].name.localeCompare(adm.db.people[b.personId].name, "pt"))
+    .map((c) => ({ id: c.id, h: String(c.handle || stats.get(c.id)?.handle || "").replace(/^@/, ""), n: adm.db.people[c.personId].name + (c.role === "principal" ? "" : ` (${c.title || c.role})`), p: c.personId }));
 }
 
 async function codigoMarcador() {
@@ -133,7 +182,11 @@ export function interpretarSocialBlade(raw) {
   // 1) Séries mensais
   for (const s of series.filter((x) => x.passo >= 25 && x.passo <= 35)) {
     if (s.monotona) {
-      for (let i = 1; i < s.pts.length; i++) porMes.set(mesDe(s.pts[i - 1][0]), s.pts[i][1] - s.pts[i - 1][1]);
+      for (let i = 1; i < s.pts.length; i++) {
+        const [a, b] = [s.pts[i - 1][0], s.pts[i][0]];
+        const seguidos = (b.getUTCFullYear() - a.getUTCFullYear()) * 12 + b.getUTCMonth() - a.getUTCMonth() === 1;
+        if (seguidos) porMes.set(mesDe(a), s.pts[i][1] - s.pts[i - 1][1]);
+      }
       res.notas.push("Meses calculados a partir do total mensal.");
     } else {
       for (const [d, y] of s.pts) if (!porMes.has(mesDe(d))) porMes.set(mesDe(d), y);
@@ -217,6 +270,78 @@ function mostrarSocialBlade(alvo, raw) {
     toast(`Importados ${res.months} meses e ${res.days} dias.`);
     alvo.innerHTML = `<div class="aviso info" style="margin-top:14px"><p>Feito: ${res.months} meses e ${res.days} dias guardados${res.personId ? ` em <a href="#/youtuber/${encodeURIComponent(res.personId)}">${esc(adm.db.people[res.personId]?.name || "")}</a>` : ""}. Podes passar ao canal seguinte.</p></div>`;
   });
+}
+
+// ---------- Social Blade em lote ----------
+
+function mostrarLote(alvo, lote) {
+  const curMes = estado.ds.currentMonth;
+  const linhas = (lote.itens || []).map((it) => {
+    const r = interpretarSocialBlade(it);
+    const link = adm.db.channels[it.channelId];
+    const pessoa = link ? adm.db.people[link.personId] : null;
+    return { it, link, pessoa, meses: r.monthly.filter((m) => m.month < curMes), notas: r.notas };
+  });
+  let substituirFolha = false;
+
+  const aImportar = (l) =>
+    l.meses.filter((m) => {
+      if (!l.link || l.link.monthly?.[m.month]?.lock) return false;
+      const daPessoa = l.pessoa?.monthly?.[m.month];
+      if (!substituirFolha && daPessoa && daPessoa.src !== "estimativa") return false;
+      return true;
+    });
+
+  const desenhar = () => {
+    const comDados = linhas.filter((l) => l.meses.length);
+    const prontos = linhas.filter((l) => aImportar(l).length);
+    const total = prontos.reduce((a, l) => a + aImportar(l).length, 0);
+    const semCanal = linhas.filter((l) => !l.link).length;
+    alvo.innerHTML = `<hr class="ed-linha">
+      <h3>Resultados do Social Blade</h3>
+      <p class="soft">${plural(linhas.length, "canal lido", "canais lidos")}, ${comDados.length} com meses. ${prontos.length ? `Vou gravar <b>${plural(total, "mês", "meses")}</b> em ${plural(prontos.length, "canal", "canais")}.` : "Nada de novo para gravar."}${semCanal ? ` ${plural(semCanal, "canal já não está", "canais já não estão")} no placar e fica${semCanal > 1 ? "m" : ""} de fora.` : ""}</p>
+      <label class="ed-check"><input type="checkbox" id="lt-folha" ${substituirFolha ? "checked" : ""}> Substituir também os meses que já vêm da folha ou foram escritos à mão</label>
+      <p class="muted" style="font-size:var(--t-sm);margin-top:6px">Sem esta opção, só entram os meses que ainda não têm dados reais (o buraco). Meses fixados (com cadeado) nunca são alterados. As estimativas (≈) são sempre substituídas.</p>
+      <div class="ed-acoes" style="justify-content:flex-start"><button class="btn btn-primario" id="lt-importar" data-a-esperar="A gravar" ${prontos.length ? "" : "disabled"}>Gravar ${plural(total, "mês", "meses")}</button><span class="muted" id="lt-estado"></span></div>
+      <div class="tabela-caixa" style="margin-top:12px;max-height:420px;overflow:auto"><table class="tabela"><thead><tr><th>Youtuber</th><th class="dir">Meses lidos</th><th class="dir">A gravar</th><th>Período</th></tr></thead><tbody>
+      ${linhas
+        .sort((a, b) => aImportar(b).length - aImportar(a).length || b.meses.length - a.meses.length)
+        .map((l) => {
+          const n = aImportar(l).length;
+          const nome = l.pessoa ? esc(l.pessoa.name) + (l.link.role === "principal" ? "" : ` <small class="muted">${esc(l.link.title || l.link.role)}</small>`) : `<span class="muted">${esc(l.it.title || l.it.channelId)}</span>`;
+          const periodo = l.meses.length ? `${mesNome(l.meses[0].month, { curto: true })} a ${mesNome(l.meses[l.meses.length - 1].month, { curto: true })}` : `<span class="muted">${esc(l.it.erro || "sem dados")}</span>`;
+          return `<tr style="cursor:default;${n ? "" : "opacity:.6"}"><td>${nome}</td><td class="dir">${l.meses.length}</td><td class="dir"><b>${n}</b></td><td>${periodo}</td></tr>`;
+        })
+        .join("")}</tbody></table></div>`;
+
+    $("#lt-folha", alvo).addEventListener("change", (e) => {
+      substituirFolha = e.target.checked;
+      desenhar();
+    });
+    $("#lt-importar", alvo).addEventListener("click", async (e) => {
+      const botao = e.currentTarget;
+      const itens = prontos.map((l) => ({ channelId: l.it.channelId, monthly: aImportar(l) }));
+      let canais = 0;
+      let meses = 0;
+      botao.disabled = true;
+      try {
+        for (let i = 0; i < itens.length; i += 25) {
+          $("#lt-estado", alvo).textContent = `A gravar ${Math.min(i + 25, itens.length)} de ${itens.length} canais…`;
+          const r = await chamar("import/socialblade-lote", { itens: itens.slice(i, i + 25) }, { recarregar: false });
+          canais += r.canais;
+          meses += r.meses;
+        }
+      } catch {
+        botao.disabled = false;
+        return;
+      }
+      await lerDb();
+      await carregar({ forcar: true });
+      toast(`Gravados ${plural(meses, "mês", "meses")} em ${plural(canais, "canal", "canais")}.`);
+      alvo.innerHTML = `<div class="aviso info" style="margin-top:14px"><p>Feito: ${plural(meses, "mês", "meses")} do Social Blade gravados em ${plural(canais, "canal", "canais")}. Os gráficos e o ranking já usam estes números.</p></div>`;
+    });
+  };
+  desenhar();
 }
 
 // ---------- Colar da folha ----------

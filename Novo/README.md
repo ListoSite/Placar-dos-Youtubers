@@ -47,7 +47,7 @@ A quota grátis é de 10 000 unidades por dia. A recolha automática gasta cerca
 Há três formas de os preencher, por esta ordem de facilidade:
 
 1. **Estimativa automática.** Para cada Youtuber com canal ligado, o site lê os vídeos do canal (data e views de hoje) e reparte essas views pelos meses, com uma curva afinada pelos meses que já conhecemos. Corre sozinha (4 Youtubers por hora) ou mais depressa em Editar, Importar dados. Os valores aparecem com ≈ e o erro típico de cada pessoa.
-2. **Marcador do Social Blade.** Valores reais por canal, um a um.
+2. **Marcador do Social Blade (todos de uma vez).** Em Editar, Importar dados: arrastas o botão "Placar ⇄ Social Blade" para a barra de marcadores, copias a lista de canais, abres um canal qualquer no socialblade.com e carregas no marcador. Ele percorre todos os canais da lista (com pausas, e pode ser pausado e continuado) e no fim envia os meses para o Placar, onde confirmas antes de gravar. O código do marcador está em `scripts/marcador/sb.src.js`; depois de o alterar, corre `npm run build:marcador`.
 3. **Colar da folha de cálculo.** Para muitos meses de uma vez.
 
 Dados reais (YouTube, Social Blade, folha, manual) passam sempre à frente de uma estimativa.
