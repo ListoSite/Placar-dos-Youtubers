@@ -1005,3 +1005,24 @@ body.modo-palco {
 .palco-form .filtros {
   align-items: flex-end;
 }
+
+/* Telemóvel: controlos maiores e por cima da barra do sistema */
+@media (max-width: 700px), (pointer: coarse) {
+  .palco-controlos {
+    bottom: calc(14px + env(safe-area-inset-bottom));
+    left: 10px;
+    right: 10px;
+    transform: none;
+    width: fit-content;
+    margin: 0 auto;
+    flex-wrap: wrap;
+    justify-content: center;
+    max-width: calc(100vw - 20px);
+    border-radius: 24px;
+  }
+  .palco-controlos button {
+    height: 42px;
+    padding: 0 16px;
+    font-size: 14px;
+  }
+}

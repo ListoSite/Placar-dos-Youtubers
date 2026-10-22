@@ -71,7 +71,7 @@ export async function render(main, { params }) {
       </div>
 
       <section class="secao">
-        <div class="secao-cabeca"><div><h2>Views por mês</h2><p>Views ganhas em cada mês, somando os canais principais${canais.some((c) => !c.count) ? " (canais de clips não contam)" : ""}.</p></div></div>
+        <div class="secao-cabeca"><div><h2>Views por mês</h2><p>Views ganhas em cada mês, somando os canais principais${canais.some((c) => !c.count) ? " (canais de clips não contam)" : ""}.${notaEstimativa(p)}</p></div></div>
         <div id="g-mensal" class="vidro caixa-grafico"></div>
       </section>
 
@@ -137,6 +137,13 @@ export async function render(main, { params }) {
     carregarVideos(main, main1);
   }
   return () => limpeza.forEach((f) => f && f());
+}
+
+function notaEstimativa(p) {
+  const est = Object.values(p.monthly).filter((v) => v.src === "estimativa");
+  if (!est.length) return "";
+  const erro = est.find((v) => v.erro !== undefined)?.erro;
+  return ` ${est.length} ${est.length === 1 ? "mês é uma estimativa" : "meses são estimativas"} feitas a partir dos vídeos do canal (barras a tracejado)${erro !== undefined ? `, com erro típico de ±${erro}%` : ""}.`;
 }
 
 function explicacao(id, v) {

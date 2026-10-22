@@ -65,7 +65,13 @@ export async function render(alvo, query) {
   );
   $("#pp-lista", alvo).addEventListener("click", (e) => {
     const b = e.target.closest("[data-id]");
-    if (b) abrir(b.dataset.id);
+    if (!b) return;
+    abrir(b.dataset.id);
+    // No telemóvel a ficha fica por baixo da lista: levar a pessoa até lá.
+    if (matchMedia("(max-width: 900px)").matches) {
+      const ed = $("#pp-editor", alvo);
+      scrollTo({ top: ed.getBoundingClientRect().top + scrollY - 90, behavior: "smooth" });
+    }
   });
   $("#pp-novo", alvo).addEventListener("click", () => novo(abrir));
   desenharLista();
@@ -183,7 +189,8 @@ function editor(alvo, id, aoMudar, abrir) {
       <h3>Views por mês</h3>
       <p class="muted">Os números a cinzento são os que o site usa agora (do YouTube, Social Blade ou folha). Se escreveres um valor, passa à frente de todos os outros. Apaga o número para voltar ao automático.</p>
       <div id="ed-meses"></div>
-      <div class="ed-acoes"><button class="btn btn-primario" id="ed-guardar-meses" data-a-esperar="A guardar">Guardar meses</button></div>
+      ${p.estimativa && !p.estimativa.falhou ? `<p class="muted" style="font-size:var(--t-sm);margin-top:12px">Estimativa feita com ${p.estimativa.videos} vídeos${p.estimativa.erro !== null && p.estimativa.erro !== undefined ? `, erro típico de ±${p.estimativa.erro}% nos ${p.estimativa.calibracao} meses conhecidos` : ", sem meses conhecidos para afinar"}.</p>` : ""}
+      <div class="ed-acoes">${p.channels.length ? `<button class="btn" id="ed-estimar" data-a-esperar="A estimar">${p.estimativa ? "Refazer estimativa" : "Estimar meses em falta"}</button>` : ""}<button class="btn btn-primario" id="ed-guardar-meses" data-a-esperar="A guardar">Guardar meses</button></div>
     </div>
 
     <div class="painel ed-bloco ed-perigo">
@@ -300,6 +307,11 @@ function editor(alvo, id, aoMudar, abrir) {
 
   // Meses
   grelhaMeses($("#ed-meses", alvo), p, pub);
+  $("#ed-estimar", alvo)?.addEventListener("click", async (e) => {
+    const r = await chamar("estimate", { personId: id, refresh: true }, { botao: e.currentTarget }).catch(() => null);
+    if (r) toast(`${r.result.meses} meses estimados${r.result.erro !== null ? `, erro típico ±${r.result.erro}%` : ""}.`);
+    editor(alvo, id, aoMudar, abrir);
+  });
   $("#ed-guardar-meses", alvo).addEventListener("click", async (e) => {
     const entries = [];
     $$("#ed-meses input[data-m]", alvo).forEach((inp) => {

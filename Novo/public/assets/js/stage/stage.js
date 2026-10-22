@@ -53,6 +53,11 @@ export class Palco {
     this._escala();
     addEventListener("resize", this._escala);
 
+    // No telemóvel, o botão "voltar" fecha o Palco em vez de sair da página.
+    history.pushState({ palco: true }, "");
+    this._voltar = () => this.sair(true);
+    addEventListener("popstate", this._voltar);
+
     this._tecla = (e) => {
       if (e.key === " " || e.key === "ArrowRight" || e.key === "Enter") {
         e.preventDefault();
@@ -79,6 +84,10 @@ export class Palco {
       t = setTimeout(() => this.raiz.classList.remove("rato"), 2200);
     };
     this.raiz.addEventListener("mousemove", this._rato);
+    // No telemóvel não há rato: um toque mostra os controlos durante uns segundos
+    this.raiz.addEventListener("pointerdown", (e) => {
+      if (e.pointerType !== "mouse") this._rato();
+    });
     this._atualizarSom();
   }
 
@@ -147,9 +156,11 @@ export class Palco {
   limpar() {
     this.cena.innerHTML = "";
   }
-  sair() {
+  sair(peloVoltar = false) {
     if (this.terminado) return;
     this.terminado = true;
+    removeEventListener("popstate", this._voltar);
+    if (!peloVoltar && history.state?.palco) history.back();
     for (const w of [...this.esperas]) w.abortar();
     som.musica.parar(0.5);
     removeEventListener("resize", this._escala);

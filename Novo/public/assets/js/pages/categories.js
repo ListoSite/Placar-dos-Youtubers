@@ -2,7 +2,7 @@
 
 import { estado, rankingMes, mesesComDados, mesAnterior } from "../data.js";
 import { esc, curto, mesNome, pct, plural } from "../format.js";
-import { avatar, $, variacao, mostrarDica, esconderDica } from "../ui.js";
+import { avatar, $, variacao, mostrarDica, esconderDica, saiDica } from "../ui.js";
 
 export async function render(main) {
   main.dataset.titulo = "Categorias";
@@ -73,8 +73,8 @@ function treemap(alvo, dados, total) {
     .attr("transform", (d) => `translate(${d.x0},${d.y0})`)
     .style("cursor", "pointer")
     .on("click", (_, d) => (location.hash = `#/ranking?cat=${encodeURIComponent(d.data.c)}`))
-    .on("mousemove", (ev, d) => mostrarDica(`<b>${esc(d.data.c)}</b><br>${curto(d.data.v)} views, ${pct(d.data.v / total, { casas: 1 })}<br>${plural(d.data.n, "Youtuber", "Youtubers")}`, ev))
-    .on("mouseleave", esconderDica);
+    .on("pointermove pointerdown", (ev, d) => mostrarDica(`<b>${esc(d.data.c)}</b><br>${curto(d.data.v)} views, ${pct(d.data.v / total, { casas: 1 })}<br>${plural(d.data.n, "Youtuber", "Youtubers")}`, ev))
+    .on("pointerleave", saiDica);
   nos
     .append("rect")
     .attr("width", (d) => Math.max(0, d.x1 - d.x0))

@@ -97,7 +97,7 @@ export function quotaTexto() {
 }
 
 export function fonteEtiqueta(src) {
-  const nomes = { youtube: "YouTube", socialblade: "Social Blade", folha: "Folha", manual: "Manual", misto: "Misto" };
+  const nomes = { youtube: "YouTube", socialblade: "Social Blade", folha: "Folha", manual: "Manual", misto: "Misto", estimativa: "≈ Estimativa" };
   return `<span class="fonte fonte-${esc(src)}">${esc(nomes[src] || src)}</span>`;
 }
 

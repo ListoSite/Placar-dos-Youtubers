@@ -80,6 +80,7 @@ function preparar(ds) {
   estado.cobertura = ds.months.map((m) => ({
     m,
     n: ds.people.filter((p) => p.monthly[m] && !p.monthly[m].cur).length,
+    est: ds.people.filter((p) => p.monthly[m]?.src === "estimativa").length,
     parcial: ds.people.some((p) => p.monthly[m]?.cur),
   }));
   // Mês de referência: o último mês completo em que pelo menos 30% das pessoas têm dados
@@ -204,6 +205,14 @@ export function recordes(p) {
     if (x.pos <= 50) top50++;
   }
   return { melhor, melhorPos, top10, top50 };
+}
+
+export function estimados(m) {
+  return estado.cobertura.find((c) => c.m === m)?.est || 0;
+}
+
+export function eEstimativa(p, m) {
+  return p.monthly?.[m]?.src === "estimativa";
 }
 
 export function cobertura(m) {

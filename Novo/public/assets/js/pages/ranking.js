@@ -1,6 +1,6 @@
 // Ranking completo com várias métricas, filtros por mês e por categoria.
 
-import { estado, rankingMes, indice, views, mediaMeses, mesAnterior, mesesComDados, cobertura } from "../data.js";
+import { estado, rankingMes, indice, views, mediaMeses, mesAnterior, mesesComDados, cobertura, estimados, eEstimativa } from "../data.js";
 import { esc, curto, inteiro, mesNome, pct, norm, plural } from "../format.js";
 import { avatar, linkPessoa, movimento, sparkline, $, variacao } from "../ui.js";
 import { entrar } from "../motion.js";
@@ -59,7 +59,7 @@ export async function render(main, { query }) {
     $("#campo-mes", main).style.display = met.mensal ? "" : "none";
     const linhas = calcular(f);
     const sub = met.mensal
-      ? `${met.nome} em ${mesNome(f.mes)}${f.mes === ds.currentMonth ? " (projeção para o mês inteiro)" : ""}. ${plural(cobertura(f.mes), "Youtuber tem", "Youtubers têm")} dados neste mês.`
+      ? `${met.nome} em ${mesNome(f.mes)}${f.mes === ds.currentMonth ? " (projeção para o mês inteiro)" : ""}. ${plural(cobertura(f.mes), "Youtuber tem", "Youtubers têm")} dados neste mês${estimados(f.mes) ? `, ${estimados(f.mes)} deles por estimativa (≈)` : ""}.`
       : f.metrica === "indice"
         ? `Índice de 0 a 1000 que junta alcance, constância, atividade, momento, peso histórico e envolvimento. Calculado com dados até ${mesNome(estado.ref)}.`
         : f.metrica === "classica"
@@ -89,7 +89,7 @@ export async function render(main, { query }) {
             <td class="pos">${x.pos}</td>
             ${met.mensal ? `<td class="esconde-movel">${f.metrica === "views" ? movimento(x.pos, x.ant) : ""}</td>` : ""}
             <td><a class="quem" href="${linkPessoa(x.p)}" style="color:inherit;text-decoration:none">${avatar(x.p, 36)}<span><b>${esc(x.p.name)}</b><small>${esc(x.p.category || "")}</small></span></a></td>
-            <td class="dir"><span class="valor-grande">${x.txt}</span>${x.extra ? `<br><small>${x.extra}</small>` : ""}</td>
+            <td class="dir"><span class="valor-grande">${met.mensal && eEstimativa(x.p, f.mes) ? '<span class="aprox" title="Estimativa">≈</span>' : ""}${x.txt}</span>${x.extra ? `<br><small>${x.extra}</small>` : ""}</td>
             ${f.metrica !== "indice" ? `<td class="esconde-movel">${ind === null ? '<span class="muted">–</span>' : `<div class="mini-barra"><div class="trilho"><i style="width:${ind / 10}%"></i></div><span>${ind}</span></div>`}</td>` : ""}
             <td class="esconde-movel">${spark}</td>
             ${f.metrica !== "subs" ? `<td class="dir esconde-movel">${x.p.totals?.subs ? curto(x.p.totals.subs) : '<span class="muted">–</span>'}</td>` : ""}

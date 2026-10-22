@@ -141,11 +141,12 @@ export function placarEntra(quadro) {
 }
 
 /** Pílula da navegação que desliza até ao separador ativo. */
-export function pilulaNav(nav) {
-  let pil = nav.querySelector(".nav-pilula");
+export function pilulaNav(nav, seletor = ".nav-pilula") {
+  if (!nav || !nav.offsetParent) return;
+  let pil = nav.querySelector(seletor);
   if (!pil) {
     pil = document.createElement("span");
-    pil.className = "nav-pilula";
+    pil.className = seletor.slice(1);
     nav.prepend(pil);
   }
   const ativo = nav.querySelector('a[aria-current="page"]');

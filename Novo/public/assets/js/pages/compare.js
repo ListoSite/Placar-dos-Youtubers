@@ -108,7 +108,7 @@ function desenhar(alvo, pessoas) {
   alvo.innerHTML = `
     <section class="secao" style="margin-top:12px"><div class="secao-cabeca"><div><h2>Views por mês</h2></div></div><div id="cmp-graf" class="vidro caixa-grafico"></div></section>
     <section class="secao"><div class="secao-cabeca"><div><h2>Frente a frente</h2><p>O melhor de cada linha fica a dourado.</p></div></div>
-      <div class="tabela-caixa"><table class="tabela"><thead><tr><th></th>${pessoas.map((p, i) => `<th class="dir"><a href="${linkPessoa(p)}" style="color:var(--texto);display:inline-flex;align-items:center;gap:8px"><i style="width:10px;height:10px;border-radius:3px;background:${SERIES[i]};display:inline-block"></i>${esc(p.name)}</a></th>`).join("")}</tr></thead>
+      <div class="tabela-caixa"><table class="tabela tabela-frente"><thead><tr><th></th>${pessoas.map((p, i) => `<th class="dir"><a href="${linkPessoa(p)}" style="color:var(--texto);display:inline-flex;align-items:center;gap:8px"><i style="width:10px;height:10px;border-radius:3px;background:${SERIES[i]};display:inline-block"></i>${esc(p.name)}</a></th>`).join("")}</tr></thead>
       <tbody>${linhas
         .map((l) => {
           const vals = pessoas.map((p, i) => l.v(p, i));

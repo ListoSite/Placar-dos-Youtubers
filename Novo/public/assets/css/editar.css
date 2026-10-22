@@ -54,7 +54,7 @@
 }
 @media (max-width: 900px) {
   .ed-duas {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
   }
 }
 .ed-lista {
@@ -218,6 +218,7 @@
   color: var(--texto-3);
 }
 .fonte {
+  white-space: nowrap;
   display: block;
   font-size: 10px;
   color: var(--texto-3);
@@ -373,7 +374,7 @@
 }
 @media (max-width: 900px) {
   .ed-pesos-grelha {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
   }
 }
 .ed-peso {
@@ -447,4 +448,21 @@ details > summary {
   flex: 1;
   padding: 0 8px;
   font-size: var(--t-xs);
+}
+.fonte-estimativa {
+  color: var(--texto-3);
+  font-style: italic;
+}
+
+@media (max-width: 640px) {
+  .ed-cabeca h2 {
+    font-size: var(--t-xl);
+    overflow-wrap: anywhere;
+  }
+  .ed-grelha {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .ed-peso {
+    grid-template-columns: minmax(0, 1fr) 110px 30px;
+  }
 }

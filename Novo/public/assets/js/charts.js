@@ -1,7 +1,7 @@
 // Gráficos (D3). Todos têm dica ao passar o rato e redesenham quando a largura muda.
 
 import { eixo, inteiro, curto, mesNome, data, esc } from "./format.js";
-import { mostrarDica, moverDica, esconderDica, fonteDados } from "./ui.js";
+import { mostrarDica, moverDica, esconderDica, saiDica, fonteDados } from "./ui.js";
 import { barrasCrescem } from "./motion.js";
 
 export const SERIES = ["#e0294f", "#c98500", "#199e70", "#9085e9"];
@@ -53,12 +53,14 @@ function barraPath(x, y, w, h, r = 7) {
 export function barrasMensais(el, serie, { altura = 280, destaque = null } = {}) {
   if (semD3(el)) return () => {};
   const d3 = window.d3;
-  const temOutras = serie.some((s) => s.tem && s.src !== "youtube");
+  const temOutras = serie.some((s) => s.tem && s.src !== "youtube" && s.src !== "estimativa");
+  const temEstimativa = serie.some((s) => s.tem && s.src === "estimativa");
   const temYT = serie.some((s) => s.tem && s.src === "youtube");
   const temProj = serie.some((s) => s.tem && s.p);
   el.innerHTML = `<div class="legenda">
       ${temYT ? `<span><i style="background:${COR_YT}"></i>Medido pelo YouTube</span>` : ""}
       ${temOutras ? `<span><i style="background:${COR_OUTRA}"></i>Social Blade, folha antiga ou manual</span>` : ""}
+      ${temEstimativa ? `<span><i style="background:transparent;border:1.5px dashed ${COR_YT}"></i>Estimativa (mês sem dados reais)</span>` : ""}
       ${temProj ? `<span><i class="tracejado"></i>Projeção de mês incompleto</span>` : ""}
     </div><div class="grafico"></div>`;
   const alvo = el.querySelector(".grafico");
@@ -94,6 +96,17 @@ export function barrasMensais(el, serie, { altura = 280, destaque = null } = {})
         continue;
       }
       const cor = s.src === "youtube" ? COR_YT : COR_OUTRA;
+      if (s.src === "estimativa") {
+        grupo
+          .append("path")
+          .attr("class", "barra")
+          .attr("d", barraPath(x0 + 1, y(Math.min(s.v, y.domain()[1])), bw - 2, h - y(Math.min(s.v, y.domain()[1]))))
+          .attr("fill", "rgba(224,41,79,.14)")
+          .attr("stroke", COR_YT)
+          .attr("stroke-width", 1.5)
+          .attr("stroke-dasharray", "4 3");
+        continue;
+      }
       if (s.p) {
         const vEst = Math.min(s.est ?? s.v, y.domain()[1]);
         grupo.append("path").attr("class", "barra").attr("d", barraPath(x0, y(vEst), bw, h - y(vEst))).attr("fill", "url(#trac-mes)");
@@ -116,13 +129,13 @@ export function barrasMensais(el, serie, { altura = 280, destaque = null } = {})
       .attr("width", x.step())
       .attr("height", h)
       .attr("fill", "transparent")
-      .on("mousemove", (ev, s) => {
+      .on("pointermove pointerdown", (ev, s) => {
         const html = !s.tem
           ? `<b>${mesNome(s.m)}</b><br>Sem dados`
-          : `<b>${mesNome(s.m)}</b><br>${inteiro(s.v)} views${s.p ? `<br>${s.cur ? "Mês a decorrer" : "Mês incompleto"}: projeção de ${inteiro(s.est)}` : ""}<br><span style="opacity:.7">Fonte: ${fonteDados(s.src)}</span>`;
+          : `<b>${mesNome(s.m)}</b><br>${inteiro(s.v)} views${s.p ? `<br>${s.cur ? "Mês a decorrer" : "Mês incompleto"}: projeção de ${inteiro(s.est)}` : ""}<br><span style="opacity:.7">Fonte: ${fonteDados(s.src)}${s.src === "estimativa" && s.erro !== undefined ? `, erro típico ±${s.erro}%` : ""}</span>`;
         mostrarDica(html, ev);
       })
-      .on("mouseleave", esconderDica);
+      .on("pointerleave", saiDica);
   });
 }
 
@@ -171,7 +184,7 @@ export function linhasMensais(el, series, meses, { altura = 320 } = {}) {
       .attr("width", w)
       .attr("height", h)
       .attr("fill", "transparent")
-      .on("mousemove", (ev) => {
+      .on("pointermove pointerdown", (ev) => {
         const [mx] = d3.pointer(ev);
         const i = Math.max(0, Math.min(meses.length - 1, Math.round((mx - x(meses[0])) / (x.step() || 1))));
         const m = meses[i];
@@ -183,7 +196,8 @@ export function linhasMensais(el, series, meses, { altura = 320 } = {}) {
         for (const { s, v } of linhas) if (v !== null) pontosHover.append("circle").attr("cx", x(m)).attr("cy", y(v)).attr("r", 4.5).attr("fill", s.cor).attr("stroke", SUPERFICIE).attr("stroke-width", 2);
         mostrarDica(`<b>${mesNome(m)}</b>` + linhas.map(({ s, v }) => `<div class="linha-dica"><span><i style="background:${s.cor}"></i>${esc(s.nome)}</span><b>${v === null ? "–" : curto(v)}</b></div>`).join(""), ev);
       })
-      .on("mouseleave", () => {
+      .on("pointerleave", (ev) => {
+        if (ev.pointerType !== "mouse") return;
         guia.style("opacity", 0);
         pontosHover.selectAll("*").remove();
         esconderDica();
@@ -230,8 +244,8 @@ export function barrasDiarias(el, pontos, { altura = 200 } = {}) {
       .attr("width", x.step())
       .attr("height", h)
       .attr("fill", "transparent")
-      .on("mousemove", (ev, p) => mostrarDica(`<b>${data(p.d)}</b><br>${inteiro(p.v)} views nesse dia`, ev))
-      .on("mouseleave", esconderDica);
+      .on("pointermove pointerdown", (ev, p) => mostrarDica(`<b>${data(p.d)}</b><br>${inteiro(p.v)} views nesse dia`, ev))
+      .on("pointerleave", saiDica);
   });
 }
 
@@ -278,10 +292,10 @@ export function barrasEpisodios(el, videos, { base = null, altura = 280 } = {}) 
       .attr("height", h)
       .attr("fill", "transparent")
       .style("cursor", "pointer")
-      .on("mousemove", (ev, v) =>
+      .on("pointermove pointerdown", (ev, v) =>
         mostrarDica(`<b>${esc(v.t)}</b><br>${inteiro(v.v)} views<br>${data(v.p)}${base ? `<br>${(v.v / base).toLocaleString("pt-PT", { maximumFractionDigits: 1 })}× a mediana do canal` : ""}`, ev),
       )
-      .on("mouseleave", esconderDica)
+      .on("pointerleave", saiDica)
       .on("click", (_, v) => window.open(`https://www.youtube.com/watch?v=${v.id}`, "_blank", "noopener"));
   });
 }

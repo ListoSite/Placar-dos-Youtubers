@@ -175,7 +175,7 @@ export function vazio(titulo, texto, acao = "") {
 }
 
 export function fonteDados(src) {
-  return { youtube: "YouTube", socialblade: "Social Blade", folha: "Folha antiga", manual: "Manual", misto: "Várias fontes" }[src] || src || "";
+  return { youtube: "YouTube", socialblade: "Social Blade", folha: "Folha antiga", manual: "Manual", misto: "Várias fontes", estimativa: "Estimativa a partir dos vídeos" }[src] || src || "";
 }
 
 export const ICONES = {
@@ -204,4 +204,15 @@ export function numeroOuTraco(n) {
 export function dataAtualizacao() {
   const m = estado.ds?.meta;
   return m?.lastDaily || estado.ds?.generatedAt;
+}
+
+// No telemóvel a dica fica aberta depois de tocar: fecha-se ao fazer scroll ou ao tocar noutro sítio.
+addEventListener("scroll", () => esconderDica(), { passive: true });
+addEventListener("pointerdown", (e) => {
+  if (e.pointerType !== "mouse" && !e.target.closest("svg")) esconderDica();
+});
+
+/** Para "pointerleave": no rato esconde a dica, no toque deixa-a ficar até ao próximo toque. */
+export function saiDica(ev) {
+  if (!ev || ev.pointerType === "mouse") esconderDica();
 }

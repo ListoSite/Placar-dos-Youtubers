@@ -1,6 +1,6 @@
 // Página inicial: o placar do mês, as grandes perguntas, subidas e descidas, categorias.
 
-import { estado, rankingMes, indice, mesesComDados, cobertura, views } from "../data.js";
+import { estado, rankingMes, indice, mesesComDados, cobertura, views, estimados, eEstimativa } from "../data.js";
 import { esc, curto, inteiro, mesNome, mesNomeMaiuscula, pct, anos, plural } from "../format.js";
 import { avatar, linkPessoa, movimento, contar, $, $$ } from "../ui.js";
 import { som } from "../audio.js";
@@ -49,7 +49,8 @@ export async function render(main) {
   const desenharQuadro = (animarSom) => {
     $("#mes-atual", main).textContent = mesNomeMaiuscula(mes);
     const n = cobertura(mes);
-    $("#mes-cobertura", main).textContent = `${plural(n, "Youtuber", "Youtubers")} com dados neste mês.`;
+    const ne = estimados(mes);
+    $("#mes-cobertura", main).textContent = ne ? `${plural(n - ne, "Youtuber", "Youtubers")} com dados reais e ${ne} com estimativa (marcados com ≈).` : `${plural(n, "Youtuber", "Youtubers")} com dados neste mês.`;
     $("#ver-ranking", main).href = `#/ranking?m=${mes}`;
     const lista = rankingMes(mes).slice(0, 10);
     const max = lista[0]?.v || 1;
@@ -61,7 +62,7 @@ export async function render(main) {
           <span class="quadro-pos">${x.pos}</span>
           ${avatar(x.p, 40)}
           <span class="quadro-nome"><b>${esc(x.p.name)}</b><small>${esc(x.p.category || "")}</small></span>
-          <span class="quadro-valor"><span data-v="${x.v}">${curto(x.v)}</span><small>views</small></span>
+          <span class="quadro-valor"><span data-v="${x.v}">${curto(x.v)}</span><small>${eEstimativa(x.p, mes) ? "≈ estimativa" : "views"}</small></span>
           ${movimento(x.pos, x.ant)}
         </a>`,
       )
@@ -101,6 +102,10 @@ export async function render(main) {
 
 function avisoDados() {
   const ds = estado.ds;
+  const ne = estimados(estado.ref);
+  if (ne && ne / Math.max(1, cobertura(estado.ref)) > 0.3) {
+    return `<div class="aviso info" style="margin-top:28px"><p>Parte dos números de <b>${esc(mesNome(estado.ref))}</b> são estimativas, calculadas a partir das views de cada vídeo dos canais e afinadas com os meses que já conhecemos. Assim que houver dados reais (recolha diária ou Social Blade), substituem as estimativas.</p></div>`;
+  }
   const [ry, rm] = estado.ref.split("-").map(Number);
   const [cy, cm] = ds.currentMonth.split("-").map(Number);
   const atraso = (cy - ry) * 12 + (cm - rm);

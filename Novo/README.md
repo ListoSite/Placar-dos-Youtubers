@@ -42,6 +42,20 @@ A quota grátis é de 10 000 unidades por dia. A recolha automática gasta cerca
 5. **Descobrir canais**: procura canais novos e decide quem entra. Os que rejeitas não voltam a aparecer.
 6. **Projetos**: cola o link da playlist de uma série. O site vai buscar as views de cada episódio e calcula o impacto face ao normal do canal.
 
+## Meses sem dados (o buraco de agosto 2025 em diante)
+
+Há três formas de os preencher, por esta ordem de facilidade:
+
+1. **Estimativa automática.** Para cada Youtuber com canal ligado, o site lê os vídeos do canal (data e views de hoje) e reparte essas views pelos meses, com uma curva afinada pelos meses que já conhecemos. Corre sozinha (4 Youtubers por hora) ou mais depressa em Editar, Importar dados. Os valores aparecem com ≈ e o erro típico de cada pessoa.
+2. **Marcador do Social Blade.** Valores reais por canal, um a um.
+3. **Colar da folha de cálculo.** Para muitos meses de uma vez.
+
+Dados reais (YouTube, Social Blade, folha, manual) passam sempre à frente de uma estimativa.
+
+## No telemóvel
+
+O site foi feito para telemóvel: barra de navegação em baixo, gráficos com toque, Palco em 9:16 e área de edição completa. Pode ser instalado como app: no Android, menu do Chrome e "Adicionar ao ecrã principal"; no iPhone, Safari, Partilhar e "Adicionar ao ecrã principal".
+
 ## O Índice de Influência
 
 Número de 0 a 1000 que junta seis partes (pesos ajustáveis em *Editar > Definições*):

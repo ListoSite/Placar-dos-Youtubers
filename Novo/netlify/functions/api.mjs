@@ -13,6 +13,7 @@ import {
   handleGuesses, parseProjectSource, playlistInfo,
 } from "../lib/youtube.mjs";
 import { cleanPayload, findChannel, applyImport } from "../lib/socialblade.mjs";
+import { estimarPessoa, apagarEstimativas, unidadesUsadas } from "../lib/estimate.mjs";
 
 export const config = { path: "/api/*" };
 
@@ -352,6 +353,21 @@ const adminRoutes = {
     }
     const result = await applyImport(db, data, { channelId, personId });
     return { ...result, channelId, personId: channelId ? db.channels[channelId].personId : personId, save: true };
+  },
+
+  // ---------- Estimativa dos meses em falta ----------
+  "POST estimate": async ({ db, b }) => {
+    try {
+      const r = await estimarPessoa(db, b.personId, { forcar: Boolean(b.refresh) });
+      return { result: r, save: true };
+    } finally {
+      const u = unidadesUsadas();
+      if (u) await addQuota(u);
+    }
+  },
+  "POST estimate/clear": async ({ db, b }) => {
+    const n = apagarEstimativas(db, b.personId || null);
+    return { removed: n, save: true };
   },
 
   // ---------- Recolha manual, definições, cópias ----------

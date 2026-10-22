@@ -33,13 +33,14 @@ async function navegar() {
   const main = $("#conteudo");
   esconderDica();
   const rota = ROTAS.find((r) => r.re.test(caminho));
-  for (const a of document.querySelectorAll(".nav a")) a.toggleAttribute("aria-current", rota && a.getAttribute("href") === rota.nav);
-  for (const a of document.querySelectorAll(".nav a[aria-current]")) a.setAttribute("aria-current", "page");
-  $("#nav").classList.remove("aberta");
+  for (const a of document.querySelectorAll(".nav a, .abas a")) {
+    if (rota && a.getAttribute("href") === rota.nav) a.setAttribute("aria-current", "page");
+    else a.removeAttribute("aria-current");
+  }
   pilulaNav($("#nav"));
+  pilulaNav($("#abas"), ".abas-pilula");
   limparScroll?.();
   limparScroll = null;
-  $("#menu-movel").setAttribute("aria-expanded", "false");
   if (typeof limpar === "function") {
     try {
       limpar();
@@ -152,18 +153,19 @@ function iniciarSom() {
   atualizar();
 }
 
-$("#menu-movel").addEventListener("click", () => {
-  const nav = $("#nav");
-  const aberto = nav.classList.toggle("aberta");
-  $("#menu-movel").setAttribute("aria-expanded", String(aberto));
-});
 
 window.addEventListener("hashchange", navegar);
 window.addEventListener("placar:recarregar", async () => {
   await carregar({ forcar: true });
   atualizarRodape();
 });
-addEventListener("resize", () => pilulaNav($("#nav")));
+addEventListener("resize", () => {
+  pilulaNav($("#nav"));
+  pilulaNav($("#abas"), ".abas-pilula");
+});
+if ("serviceWorker" in navigator && location.protocol === "https:") {
+  addEventListener("load", () => navigator.serviceWorker.register("/sw.js").catch(() => {}));
+}
 logoEntra(document.querySelector(".marca svg"));
 iniciarPesquisa();
 iniciarSom();

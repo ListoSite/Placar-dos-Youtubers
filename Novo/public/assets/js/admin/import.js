@@ -4,6 +4,7 @@ import { estado } from "../data.js";
 import { esc, curto, inteiro, mesNome, norm, plural } from "../format.js";
 import { $, $$, toast } from "../ui.js";
 import { adm, chamar, escolherPessoa, pessoasOrdenadas } from "./common.js";
+import { blocoEstimativa } from "./estimate-ui.js";
 
 const MESES_PT = { jan: 1, janeiro: 1, fev: 2, fevereiro: 2, favereiro: 2, mar: 3, marco: 3, março: 3, abr: 4, abril: 4, mai: 5, maio: 5, may: 5, jun: 6, junho: 6, juno: 6, jul: 7, julho: 7, ago: 8, agosto: 8, set: 9, setembro: 9, out: 10, outubro: 10, octobro: 10, nov: 11, novembro: 11, dez: 12, dezembro: 12 };
 
@@ -32,6 +33,7 @@ export async function render(alvo, query) {
       <div id="fl-resultado"></div>
     </div>`;
 
+  blocoEstimativa(alvo);
   $("#sb-ler", alvo).addEventListener("click", () => {
     try {
       mostrarSocialBlade($("#sb-resultado", alvo), JSON.parse($("#sb-colar", alvo).value));
