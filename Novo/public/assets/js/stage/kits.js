@@ -90,8 +90,13 @@ function ferramentas(palco, kitId) {
   };
   // Mantém um elemento centrado em x dentro do ecrã (com margem)
   const dentro = (el, x) => {
+    // Um letreiro mais largo do que o ecrã (no vertical) encolhe e fica ao centro
+    if (el.offsetWidth + 60 > palco.L) {
+      const s = parseFloat(el.style.getPropertyValue("--s")) || 1;
+      el.style.setProperty("--s", String((s * (palco.L - 60)) / el.offsetWidth));
+    }
     const meia = el.offsetWidth / 2 + 30;
-    if (meia * 2 < palco.L) el.style.left = Math.min(palco.L - meia, Math.max(meia, x)) + "px";
+    el.style.left = Math.min(palco.L - meia, Math.max(meia, x)) + "px";
   };
   // A curva vai só no primeiro quadro (entrada): uma curva com ressalto no tempo todo
   // passaria pelos quadros de saída a meio da animação e o elemento piscava.
