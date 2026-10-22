@@ -3,7 +3,7 @@
 import { estado } from "../data.js";
 import { esc, curto, inteiro, norm, mesNome, data } from "../format.js";
 import { $, $$, avatar, janela, confirmar, toast, REDES, ICONES } from "../ui.js";
-import { adm, chamar, pessoasOrdenadas, categorias, cartaoCanal, escolherPessoa, fonteEtiqueta } from "./common.js";
+import { adm, chamar, pessoasOrdenadas, categorias, cartaoCanal, escolherPessoa, fonteEtiqueta, linkSocialBlade } from "./common.js";
 
 const PAPEIS = ["principal", "secundário", "clips", "gaming", "podcast", "shorts", "música", "outro"];
 const ESTADOS = [
@@ -156,7 +156,7 @@ function editor(alvo, id, aoMudar, abrir) {
               .map(
                 ({ link, pub: c }) => `<div class="ed-canal" data-ch="${esc(link.id)}">
             ${avatar({ name: c?.title || link.title, photo: c?.thumb || link.thumb }, 40)}
-            <div class="ed-canal-info"><b>${esc(c?.title || link.title)}</b><small class="muted">${esc(c?.handle || link.handle || link.id)}, ${curto(c?.subs)} subs, ${curto(c?.views)} views${c?.country ? ", " + esc(c.country) : ""}</small></div>
+            <div class="ed-canal-info"><b>${esc(c?.title || link.title)}</b><small class="muted">${esc(c?.handle || link.handle || link.id)}, ${curto(c?.subs)} subs, ${curto(c?.views)} views${c?.country ? ", " + esc(c.country) : ""}</small><small><a href="https://www.youtube.com/channel/${esc(link.id)}" target="_blank" rel="noopener">YouTube ↗</a> · ${linkSocialBlade(link.id)}</small></div>
             <select class="input" data-papel style="width:140px">${PAPEIS.map((r) => `<option ${link.role === r ? "selected" : ""}>${r}</option>`).join("")}</select>
             <label class="ed-check" style="margin:0"><input type="checkbox" data-conta ${link.count !== false ? "checked" : ""}> Conta</label>
             ${p.mainChannelId === link.id ? `<span class="etiqueta ouro">Principal</span>` : `<button class="btn btn-pequeno" data-principal>Tornar principal</button>`}

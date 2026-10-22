@@ -2110,3 +2110,15 @@ table.tabela {
     font-size: var(--t-xs);
   }
 }
+
+/* Gráficos pequenos com título (crescimento do Social Blade) */
+.grafico-titulo {
+  font-size: var(--t-sm);
+  font-weight: 700;
+  color: var(--texto-2);
+  margin: 0 0 10px;
+}
+.link-sb {
+  white-space: nowrap;
+  font-size: var(--t-xs);
+}

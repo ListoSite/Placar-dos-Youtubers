@@ -12,7 +12,7 @@ import {
   hasApiKey, takeUnits, resolveChannel, channelsByIds, searchChannels, featuredChannels,
   handleGuesses, parseProjectSource, playlistInfo,
 } from "../lib/youtube.mjs";
-import { cleanPayload, findChannel, applyImport } from "../lib/socialblade.mjs";
+import { cleanPayload, findChannel, applyImport, applyMonths, applyDaily, cleanExtra, dailyFromExtra, saveExtras, fillSocials } from "../lib/socialblade.mjs";
 import { estimarPessoa, apagarEstimativas, unidadesUsadas } from "../lib/estimate.mjs";
 
 export const config = { path: "/api/*" };
@@ -88,6 +88,13 @@ const publicRoutes = {
       const M = key.slice(5);
       for (const id of ids) if (snap[id]) (out[id] ||= {})[M] = snap[id];
     }
+    return json(out, 200, { "cache-control": "public, max-age=600" });
+  },
+  "GET sb": async (req, url) => {
+    const ids = (url.searchParams.get("channels") || "").split(",").filter((x) => /^UC[\w-]{22}$/.test(x)).slice(0, 12);
+    const todos = await getJSON("sbextra", {});
+    const out = {};
+    for (const id of ids) if (todos[id]) out[id] = todos[id];
     return json(out, 200, { "cache-control": "public, max-age=600" });
   },
   "GET status": async () => {
@@ -351,8 +358,16 @@ const adminRoutes = {
     if (!channelId && !personId) {
       return { needsTarget: true, data: { title: data.title, handle: data.handle, channelId: data.channelId, months: data.monthly.length, days: data.daily.length } };
     }
+    const extra = channelId ? cleanExtra(b.payload?.sb) : null;
+    if (extra && !data.daily.length) data.daily = dailyFromExtra(extra);
     const result = await applyImport(db, data, { channelId, personId });
-    return { ...result, channelId, personId: channelId ? db.channels[channelId].personId : personId, save: true };
+    const dono = channelId ? db.channels[channelId].personId : personId;
+    let redes = 0;
+    if (extra) {
+      await saveExtras({ [channelId]: extra });
+      redes = fillSocials(db, dono, extra.info?.redes);
+    }
+    return { ...result, redes, extra: Boolean(extra), channelId, personId: dono, save: true };
   },
 
   "POST import/socialblade-lote": async ({ db, b }) => {
@@ -360,19 +375,28 @@ const adminRoutes = {
     let canais = 0;
     let meses = 0;
     const ignorados = [];
+    const extras = {};
+    const diarios = [];
+    let redes = 0;
     for (const it of itens) {
       if (!it || !db.channels[it.channelId]) {
         ignorados.push(it?.channelId || "");
         continue;
       }
       const data = cleanPayload({ channelId: it.channelId, monthly: it.monthly });
-      const r = await applyImport(db, data, { channelId: it.channelId });
-      if (r.months) {
-        canais++;
-        meses += r.months;
+      const n = applyMonths(db, data.monthly, { channelId: it.channelId });
+      const extra = cleanExtra(it.sb);
+      if (extra) {
+        extras[it.channelId] = extra;
+        diarios.push({ channelId: it.channelId, daily: dailyFromExtra(extra) });
+        redes += fillSocials(db, db.channels[it.channelId].personId, extra.info?.redes);
       }
+      if (n || extra) canais++;
+      meses += n;
     }
-    return { canais, meses, ignorados, save: canais > 0 };
+    await saveExtras(extras);
+    const dias = await applyDaily(diarios);
+    return { canais, meses, dias, redes, extras: Object.keys(extras).length, ignorados, save: canais > 0 };
   },
 
   // ---------- Estimativa dos meses em falta ----------
@@ -412,7 +436,7 @@ const adminRoutes = {
     return { settings: db.settings, save: true };
   },
   "GET export": async () => {
-    const keys = ["db", "stats", "ytstart", "videosummary", "projvids", "meta", "vstate"];
+    const keys = ["db", "stats", "ytstart", "videosummary", "projvids", "meta", "vstate", "sbextra"];
     const out = { kind: "placar-backup", version: 2, at: new Date().toISOString(), data: {} };
     for (const k of keys) out.data[k] = await getJSON(k, null);
     for (const k of await listKeys("snap/")) out.data[k] = await getJSON(k, null);
@@ -423,7 +447,7 @@ const adminRoutes = {
     if (!bk || bk.kind !== "placar-backup" || !bk.data?.db?.people) throw new HttpError(400, "Ficheiro de cópia inválido.");
     for (const [k, v] of Object.entries(bk.data)) {
       if (v === null) continue;
-      if (!/^(db|stats|ytstart|videosummary|projvids|meta|vstate|snap\/\d{4}-\d{2})$/.test(k)) continue;
+      if (!/^(db|stats|ytstart|videosummary|projvids|meta|vstate|sbextra|snap\/\d{4}-\d{2})$/.test(k)) continue;
       await setJSON(k, v);
     }
     const db = await loadDB();

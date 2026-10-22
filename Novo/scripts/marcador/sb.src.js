@@ -231,7 +231,8 @@
     const r = await fetch(url, { credentials: "include", headers: { accept: "application/json, */*" } });
     const tipo = r.headers.get("content-type") || "";
     const texto = await r.text();
-    if (r.status === 403 || r.status === 429 || r.status === 503 || (/text\/html/.test(tipo) && /challenge|cf-chl|captcha|just a moment/i.test(texto))) {
+    const html = /text\/html/.test(tipo);
+    if (r.status === 429 || r.status === 503 || (r.status === 403 && html) || (html && /challenge|cf-chl|captcha|just a moment/i.test(texto))) {
       throw new Bloqueado(`O Social Blade respondeu ${r.status}.`);
     }
     if (!r.ok) return null;
@@ -395,6 +396,76 @@
     return idMaisVisto(rec.ids);
   }
 
+  // ---------- API do Social Blade (formato conhecido, um pedido por canal) ----------
+  // youtube.user: dados do canal e redes sociais; youtube.monthly: ganhos de cada mês;
+  // youtube.history: totais dos últimos 30 dias; youtube.summary: ganhos das últimas 52 semanas.
+  // Rankings, nota e ganhos estimados não são lidos.
+  function colunas(linhas, passo) {
+    // linhas: [[data, views, subs, videos]] ordenadas; devolve colunas a partir da primeira data
+    if (!linhas.length) return null;
+    const ini = linhas[0][0];
+    const pos = (d) => (passo === "mes" ? (Number(d.slice(0, 4)) - Number(ini.slice(0, 4))) * 12 + Number(d.slice(5, 7)) - Number(ini.slice(5, 7)) : Math.round((Date.parse(d) - Date.parse(ini)) / DIA / (passo === "semana" ? 7 : 1)));
+    const n = pos(linhas[linhas.length - 1][0]) + 1;
+    if (n > 400) return null;
+    const out = { ini, v: new Array(n).fill(null), s: new Array(n).fill(null), n: new Array(n).fill(null) };
+    for (const [d, v, sub, vid] of linhas) {
+      const i = pos(d);
+      if (i < 0 || i >= n) continue;
+      out.v[i] = v;
+      out.s[i] = sub;
+      out.n[i] = vid;
+    }
+    return out;
+  }
+  function linhasDe(arr, fmt) {
+    if (!Array.isArray(arr)) return [];
+    return arr
+      .map((x) => [dataISO(x && x.date), num(x && x.views), num(x && x.subscribers), num(x && x.videos)])
+      .filter((r) => r[0])
+      .map((r) => [fmt(r[0]), r[1], r[2], r[3]])
+      .sort((a, b) => a[0].localeCompare(b[0]));
+  }
+  async function porSB(id) {
+    const inp = { 0: { json: { id } }, 1: { json: { id, period: "monthly" } }, 2: { json: { id, limit: 31 } }, 3: { json: { id } } };
+    const url = `${location.origin}/api/trpc/youtube.user,youtube.monthly,youtube.history,youtube.summary?batch=1&input=${encodeURIComponent(JSON.stringify(inp))}`;
+    const t = await lerResposta(url);
+    if (!t) return null;
+    let j;
+    try {
+      j = JSON.parse(t);
+    } catch (e) {
+      return null;
+    }
+    if (!Array.isArray(j)) return null;
+    const d = (i) => j[i] && j[i].result && j[i].result.data && j[i].result.data.json;
+    const user = d(0);
+    if (user && user.id && user.id !== id) return { outro: true };
+    const sb = { at: new Date().toISOString() };
+    if (user && typeof user === "object") {
+      const ident = (user.identifier && user.identifier.type === "handle" && user.identifier.identifier) || ((user.identifiers || []).find((x) => x.type === "handle") || {}).identifier || "";
+      sb.info = {
+        nome: String(user.displayName || "").slice(0, 120),
+        handle: String(ident).slice(0, 60),
+        pais: String(user.country || "").slice(0, 4),
+        tipo: String(user.channelType || "").slice(0, 30),
+        criado: dataISO(user.createdAt),
+        kids: user.madeForKids === true,
+        redes: (Array.isArray(user.socials) ? user.socials : []).map((x) => x && x.url).filter((u) => typeof u === "string" && /^https?:\/\//.test(u)).slice(0, 12),
+        subs: num(user.subscribers),
+        views: num(user.views),
+        videos: num(user.videos),
+      };
+    }
+    const m = colunas(linhasDe(d(1), (x) => x.slice(0, 7)), "mes");
+    const dd = colunas(linhasDe(d(2), (x) => x), "dia");
+    const w = colunas(linhasDe(d(3), (x) => x), "semana");
+    if (m) sb.m = m;
+    if (dd) sb.d = dd;
+    if (w) sb.w = w;
+    return sb.m || sb.d || sb.info ? sb : null;
+  }
+  const contarMeses = (sb) => (sb && sb.m ? sb.m.v.filter((x) => x !== null).length : 0);
+
   // ---------- Página atual ----------
   function chaveDaPagina() {
     const m = location.pathname.match(/\/youtube\/(handle|c|user|channel)\/([^/?#]+)/);
@@ -406,15 +477,26 @@
     const chave = chaveDaPagina();
     const channelId = idDaPagina(rec);
     const h1 = document.querySelector("h1");
-    return {
-      rec,
-      raw: resultado(rec, {
-        url: location.href,
-        title: (h1 ? h1.textContent : document.title).trim().slice(0, 200),
-        handle: chave && chave.tipo !== "channel" ? chave.valor : "",
-        channelId,
-      }),
-    };
+    const raw = resultado(rec, {
+      url: location.href,
+      title: (h1 ? h1.textContent : document.title).trim().slice(0, 200),
+      handle: chave && chave.tipo !== "channel" ? chave.valor : "",
+      channelId,
+    });
+    if (channelId) {
+      try {
+        const sb = await porSB(channelId);
+        if (sb && !sb.outro) {
+          raw.sb = sb;
+          raw.series = [];
+          raw.meses = contarMeses(sb);
+          if (sb.info && sb.info.nome) raw.title = sb.info.nome;
+        }
+      } catch (e) {
+        if (e instanceof Bloqueado) throw e;
+      }
+    }
+    return { rec, raw };
   }
 
   // ---------- Vários canais ----------
@@ -624,11 +706,11 @@
     try {
       atual = await lerEstaPagina();
       const r = atual.raw;
-      if (!r.series.length) {
+      if (!r.series.length && !r.sb) {
         s1txt.textContent = chaveDaPagina() ? "Ainda não encontrei números nesta página. Espera que os gráficos carreguem e carrega outra vez no marcador." : "Abre a página de um canal do YouTube no Social Blade.";
         return;
       }
-      s1txt.textContent = `${r.title || r.handle}: encontrei dados de ${r.meses} meses.`;
+      s1txt.textContent = r.sb ? `${r.title || r.handle}: ${r.meses} meses, ${r.sb.d ? r.sb.d.v.length : 0} dias e ${r.sb.w ? r.sb.w.v.length : 0} semanas (views, subscritores e vídeos)${r.sb.info && r.sb.info.redes.length ? `, ${r.sb.info.redes.length} redes sociais` : ""}.` : `${r.title || r.handle}: encontrei dados de ${r.meses} meses.`;
       bEnviar1.style.display = bCopiar1.style.display = "";
     } catch (e) {
       s1txt.textContent = e instanceof Bloqueado ? "O Social Blade está a travar os pedidos. Espera um minuto, recarrega a página e carrega outra vez no marcador." : "Não consegui ler esta página: " + e.message;
@@ -652,7 +734,7 @@
     if (!estado) return;
     const n = estado.lista.length;
     const feitos = estado.i;
-    const ok = estado.itens.filter((x) => x.series && x.series.length).length;
+    const ok = estado.itens.filter(temDados).length;
     barra.style.display = "";
     barraI.style.width = `${Math.round((feitos / Math.max(1, n)) * 100)}%`;
     estadoTxt.replaceChildren();
@@ -671,8 +753,19 @@
   }
 
   let ordem = ["api", "html", "iframe"];
+  const temDados = (x) => Boolean((x.sb && (x.sb.m || x.sb.d || x.sb.info)) || (x.series && x.series.length));
+  let falhasSB = 0;
   async function umCanal(alvo, modelos) {
     let ultimo = null;
+    if (falhasSB < 3) {
+      const sb = await porSB(alvo.id);
+      if (sb && sb.outro) ultimo = { erro: "Os dados eram de outro canal." };
+      else if (sb) {
+        falhasSB = 0;
+        return { kind: "placar-sb-raw", v: 3, channelId: alvo.id, handle: alvo.h || "", title: alvo.n || "", series: [], sb, meses: contarMeses(sb), metodo: "sb" };
+      } else falhasSB++;
+      if (falhasSB < 3) return Object.assign({ channelId: alvo.id, title: alvo.n || "", series: [], meses: 0 }, ultimo || { erro: "O Social Blade não tem este canal." });
+    }
     for (const metodo of ordem) {
       let rec = null;
       if (metodo === "api") rec = await porApi(alvo, modelos);
@@ -717,7 +810,7 @@
       estado.itens.push(r);
       estado.i++;
       gravarEstado(estado);
-      log(`${r.series.length ? "✓" : "–"} ${alvo.n || alvo.id}: ${r.series.length ? `${r.meses} meses (${r.metodo})` : r.erro || "sem dados"}`);
+      log(`${temDados(r) ? "✓" : "–"} ${alvo.n || alvo.id}: ${temDados(r) ? `${r.meses} meses${r.sb && r.sb.info && r.sb.info.redes.length ? `, ${r.sb.info.redes.length} redes` : ""} (${r.metodo})` : r.erro || "sem dados"}`);
       mostrarEstado();
       if (estado.i < estado.lista.length) await esperar(1500 + Math.random() * 1500);
     }

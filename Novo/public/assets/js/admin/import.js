@@ -3,7 +3,7 @@
 import { estado, carregar } from "../data.js";
 import { esc, curto, inteiro, mesNome, norm, plural } from "../format.js";
 import { $, $$, toast } from "../ui.js";
-import { adm, chamar, escolherPessoa, pessoasOrdenadas, lerDb } from "./common.js";
+import { adm, chamar, escolherPessoa, pessoasOrdenadas, lerDb, linkSocialBlade } from "./common.js";
 import { blocoEstimativa } from "./estimate-ui.js";
 
 const MESES_PT = { jan: 1, janeiro: 1, fev: 2, fevereiro: 2, favereiro: 2, mar: 3, marco: 3, março: 3, abr: 4, abril: 4, mai: 5, maio: 5, may: 5, jun: 6, junho: 6, juno: 6, jul: 7, julho: 7, ago: 8, agosto: 8, set: 9, setembro: 9, out: 10, outubro: 10, octobro: 10, nov: 11, novembro: 11, dez: 12, dezembro: 12 };
@@ -133,7 +133,26 @@ function paraData(x) {
 
 /** Transforma os dados em bruto do marcador em meses e dias. */
 export function interpretarSocialBlade(raw) {
-  const res = { channelId: raw.channelId || "", handle: raw.handle || "", title: raw.title || "", daily: [], monthly: [], notas: [] };
+  const res = { channelId: raw.channelId || "", handle: raw.handle || "", title: raw.title || "", daily: [], monthly: [], notas: [], sb: raw.sb || null };
+
+  // Formato da API do Social Blade (marcador v3): colunas por mês e por dia
+  if (raw.sb && (raw.sb.m || raw.sb.d)) {
+    const { m, d } = raw.sb;
+    if (m) {
+      const [y0, m0] = m.ini.split("-").map(Number);
+      m.v.forEach((v, i) => {
+        if (v === null || v === undefined || v < 0) return;
+        const t = new Date(Date.UTC(y0, m0 - 1 + i, 1));
+        res.monthly.push({ month: t.toISOString().slice(0, 7), views: Math.round(v) });
+      });
+    }
+    if (d) {
+      const ini = Date.parse(d.ini + "T00:00:00Z");
+      d.v.forEach((v, i) => v && res.daily.push({ date: new Date(ini + i * 86400000).toISOString().slice(0, 10), views: v, subs: d.s?.[i] ?? null }));
+    }
+    res.notas.push("Lido da API do Social Blade: views, subscritores e vídeos de cada mês, totais dos últimos 30 dias e ganhos por semana.");
+    return res;
+  }
 
   // Tabela dos últimos dias (data, alterações e totais)
   for (const row of raw.rows || []) {
@@ -260,14 +279,14 @@ function mostrarSocialBlade(alvo, raw) {
       $("#sb-importar", alvo).disabled = false;
     });
   $("#sb-importar", alvo)?.addEventListener("click", async (e) => {
-    const payload = { channelId: r.channelId, handle: r.handle, title: r.title, monthly: r.monthly, daily: r.daily };
+    const payload = { channelId: r.channelId, handle: r.handle, title: r.title, monthly: r.monthly, daily: r.daily, sb: r.sb };
     const corpo = { payload };
     if (canal) corpo.channelId = r.channelId;
     else if (pessoaEscolhida) corpo.personId = pessoaEscolhida.id;
     const res = await chamar("import/socialblade", corpo, { botao: e.currentTarget }).catch(() => null);
     if (!res) return;
     if (res.needsTarget) return toast("Escolhe primeiro o Youtuber.", { erro: true });
-    toast(`Importados ${res.months} meses e ${res.days} dias.`);
+    toast(`Importados ${res.months} meses e ${res.days} dias${res.extra ? ", com subscritores e vídeos" : ""}${res.redes ? ` e ${plural(res.redes, "rede social", "redes sociais")}` : ""}.`);
     alvo.innerHTML = `<div class="aviso info" style="margin-top:14px"><p>Feito: ${res.months} meses e ${res.days} dias guardados${res.personId ? ` em <a href="#/youtuber/${encodeURIComponent(res.personId)}">${esc(adm.db.people[res.personId]?.name || "")}</a>` : ""}. Podes passar ao canal seguinte.</p></div>`;
   });
 }
@@ -280,7 +299,7 @@ function mostrarLote(alvo, lote) {
     const r = interpretarSocialBlade(it);
     const link = adm.db.channels[it.channelId];
     const pessoa = link ? adm.db.people[link.personId] : null;
-    return { it, link, pessoa, meses: r.monthly.filter((m) => m.month < curMes), notas: r.notas };
+    return { it, link, pessoa, meses: r.monthly.filter((m) => m.month < curMes), notas: r.notas, sb: r.sb };
   });
   let substituirFolha = false;
 
@@ -293,24 +312,27 @@ function mostrarLote(alvo, lote) {
     });
 
   const desenhar = () => {
-    const comDados = linhas.filter((l) => l.meses.length);
-    const prontos = linhas.filter((l) => aImportar(l).length);
+    const comDados = linhas.filter((l) => l.meses.length || l.sb);
+    const prontos = linhas.filter((l) => l.link && (aImportar(l).length || l.sb));
+    const comExtra = prontos.filter((l) => l.sb).length;
+    const redes = prontos.reduce((a, l) => a + (l.sb?.info?.redes?.length || 0), 0);
     const total = prontos.reduce((a, l) => a + aImportar(l).length, 0);
     const semCanal = linhas.filter((l) => !l.link).length;
     alvo.innerHTML = `<hr class="ed-linha">
       <h3>Resultados do Social Blade</h3>
-      <p class="soft">${plural(linhas.length, "canal lido", "canais lidos")}, ${comDados.length} com meses. ${prontos.length ? `Vou gravar <b>${plural(total, "mês", "meses")}</b> em ${plural(prontos.length, "canal", "canais")}.` : "Nada de novo para gravar."}${semCanal ? ` ${plural(semCanal, "canal já não está", "canais já não estão")} no placar e fica${semCanal > 1 ? "m" : ""} de fora.` : ""}</p>
+      <p class="soft">${plural(linhas.length, "canal lido", "canais lidos")}, ${comDados.length} com meses. ${prontos.length ? `Vou gravar <b>${plural(total, "mês", "meses")}</b> de views em ${plural(prontos.length, "canal", "canais")}${comExtra ? `, mais subscritores e vídeos por mês, os últimos 30 dias e as últimas 52 semanas de ${plural(comExtra, "canal", "canais")}${redes ? ` e ${plural(redes, "link", "links")} de redes sociais (só entram onde ainda não há link)` : ""}` : ""}.` : "Nada de novo para gravar."}${semCanal ? ` ${plural(semCanal, "canal já não está", "canais já não estão")} no placar e fica${semCanal > 1 ? "m" : ""} de fora.` : ""}</p>
       <label class="ed-check"><input type="checkbox" id="lt-folha" ${substituirFolha ? "checked" : ""}> Substituir também os meses que já vêm da folha ou foram escritos à mão</label>
       <p class="muted" style="font-size:var(--t-sm);margin-top:6px">Sem esta opção, só entram os meses que ainda não têm dados reais (o buraco). Meses fixados (com cadeado) nunca são alterados. As estimativas (≈) são sempre substituídas.</p>
-      <div class="ed-acoes" style="justify-content:flex-start"><button class="btn btn-primario" id="lt-importar" data-a-esperar="A gravar" ${prontos.length ? "" : "disabled"}>Gravar ${plural(total, "mês", "meses")}</button><span class="muted" id="lt-estado"></span></div>
-      <div class="tabela-caixa" style="margin-top:12px;max-height:420px;overflow:auto"><table class="tabela"><thead><tr><th>Youtuber</th><th class="dir">Meses lidos</th><th class="dir">A gravar</th><th>Período</th></tr></thead><tbody>
+      <div class="ed-acoes" style="justify-content:flex-start"><button class="btn btn-primario" id="lt-importar" data-a-esperar="A gravar" ${prontos.length ? "" : "disabled"}>Gravar ${plural(prontos.length, "canal", "canais")}</button><span class="muted" id="lt-estado"></span></div>
+      <div class="tabela-caixa" style="margin-top:12px;max-height:420px;overflow:auto"><table class="tabela"><thead><tr><th>Youtuber</th><th class="dir">Meses lidos</th><th class="dir">A gravar</th><th>Período</th><th>Mais</th><th></th></tr></thead><tbody>
       ${linhas
         .sort((a, b) => aImportar(b).length - aImportar(a).length || b.meses.length - a.meses.length)
         .map((l) => {
           const n = aImportar(l).length;
           const nome = l.pessoa ? esc(l.pessoa.name) + (l.link.role === "principal" ? "" : ` <small class="muted">${esc(l.link.title || l.link.role)}</small>`) : `<span class="muted">${esc(l.it.title || l.it.channelId)}</span>`;
           const periodo = l.meses.length ? `${mesNome(l.meses[0].month, { curto: true })} a ${mesNome(l.meses[l.meses.length - 1].month, { curto: true })}` : `<span class="muted">${esc(l.it.erro || "sem dados")}</span>`;
-          return `<tr style="cursor:default;${n ? "" : "opacity:.6"}"><td>${nome}</td><td class="dir">${l.meses.length}</td><td class="dir"><b>${n}</b></td><td>${periodo}</td></tr>`;
+          const mais = l.sb ? [l.sb.m ? "subs e vídeos" : "", l.sb.d ? "30 dias" : "", l.sb.w ? "52 semanas" : "", l.sb.info?.redes?.length ? plural(l.sb.info.redes.length, "rede", "redes") : ""].filter(Boolean).join(", ") : "";
+          return `<tr style="cursor:default;${n || l.sb ? "" : "opacity:.6"}"><td>${nome}</td><td class="dir">${l.meses.length}</td><td class="dir"><b>${n}</b></td><td>${periodo}</td><td class="muted" style="font-size:var(--t-xs)">${esc(mais)}</td><td>${linkSocialBlade(l.it.channelId)}</td></tr>`;
         })
         .join("")}</tbody></table></div>`;
 
@@ -320,9 +342,10 @@ function mostrarLote(alvo, lote) {
     });
     $("#lt-importar", alvo).addEventListener("click", async (e) => {
       const botao = e.currentTarget;
-      const itens = prontos.map((l) => ({ channelId: l.it.channelId, monthly: aImportar(l) }));
+      const itens = prontos.map((l) => ({ channelId: l.it.channelId, monthly: aImportar(l), sb: l.sb || undefined }));
       let canais = 0;
       let meses = 0;
+      let redesGravadas = 0;
       botao.disabled = true;
       try {
         for (let i = 0; i < itens.length; i += 25) {
@@ -330,6 +353,7 @@ function mostrarLote(alvo, lote) {
           const r = await chamar("import/socialblade-lote", { itens: itens.slice(i, i + 25) }, { recarregar: false });
           canais += r.canais;
           meses += r.meses;
+          redesGravadas += r.redes || 0;
         }
       } catch {
         botao.disabled = false;
@@ -337,8 +361,8 @@ function mostrarLote(alvo, lote) {
       }
       await lerDb();
       await carregar({ forcar: true });
-      toast(`Gravados ${plural(meses, "mês", "meses")} em ${plural(canais, "canal", "canais")}.`);
-      alvo.innerHTML = `<div class="aviso info" style="margin-top:14px"><p>Feito: ${plural(meses, "mês", "meses")} do Social Blade gravados em ${plural(canais, "canal", "canais")}. Os gráficos e o ranking já usam estes números.</p></div>`;
+      toast(`Gravados ${plural(canais, "canal", "canais")}.`);
+      alvo.innerHTML = `<div class="aviso info" style="margin-top:14px"><p>Feito: ${plural(canais, "canal atualizado", "canais atualizados")} com dados do Social Blade, ${plural(meses, "mês", "meses")} de views${redesGravadas ? ` e ${plural(redesGravadas, "link novo", "links novos")} de redes sociais` : ""}. Os gráficos e o ranking já usam estes números.</p></div>`;
     });
   };
   desenhar();

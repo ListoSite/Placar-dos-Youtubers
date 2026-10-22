@@ -49,24 +49,37 @@ export function findChannel(db, stats, data) {
  * e usa os totais diários como ponto de partida da recolha do mês atual.
  */
 export async function applyImport(db, data, { channelId, personId }) {
+  const months = applyMonths(db, data.monthly, { channelId, personId });
+  const days = channelId && data.daily.length ? await applyDaily([{ channelId, daily: data.daily }]) : 0;
+  return { months, days };
+}
+
+export function applyMonths(db, monthly, { channelId, personId }) {
   const curM = todayLisbon().slice(0, 7);
   const target = channelId ? db.channels[channelId] : db.people[personId];
   if (!target) throw new Error("Escolhe o canal ou a pessoa para estes dados.");
   target.monthly ||= {};
   let months = 0;
-  for (const { month, views } of data.monthly) {
+  for (const { month, views } of monthly) {
     if (month >= curM) continue; // o mês atual ainda não acabou
     if (target.monthly[month]?.lock) continue;
     target.monthly[month] = { v: views, src: "socialblade" };
     months++;
   }
+  return months;
+}
+
+/** Totais diários de vários canais, lendo e gravando cada mês uma só vez. */
+export async function applyDaily(lista) {
+  const porMes = {};
+  for (const { channelId, daily } of lista) for (const d of daily) ((porMes[d.date.slice(0, 7)] ||= {})[channelId] ||= []).push(d);
+  if (!Object.keys(porMes).length) return 0;
+  const ytstart = await getJSON("ytstart", {});
   let days = 0;
-  if (channelId && data.daily.length) {
-    const ytstart = await getJSON("ytstart", {});
-    const byMonth = {};
-    for (const d of data.daily) (byMonth[d.date.slice(0, 7)] ||= []).push(d);
-    for (const [M, list] of Object.entries(byMonth)) {
-      const snap = await getJSON("snap/" + M, {});
+  for (const [M, canais] of Object.entries(porMes)) {
+    const snap = await getJSON("snap/" + M, {});
+    for (const [channelId, list] of Object.entries(canais)) {
+      list.sort((a, b) => a.date.localeCompare(b.date));
       const ch = (snap[channelId] ||= {});
       const st = ((ytstart[channelId] ||= {})[M] ||= { v: list[0].views, d: Number(list[0].date.slice(8)) });
       for (const d of list) {
@@ -84,9 +97,94 @@ export async function applyImport(db, data, { channelId, personId }) {
           st.ed = day;
         }
       }
-      await setJSON("snap/" + M, snap);
     }
-    await setJSON("ytstart", ytstart);
+    await setJSON("snap/" + M, snap);
   }
-  return { months, days };
+  await setJSON("ytstart", ytstart);
+  return days;
+}
+
+// ---------- Dados extra do Social Blade (subscritores, vídeos, semanas, redes) ----------
+
+const numeros = (arr, max) => (Array.isArray(arr) ? arr.slice(0, max).map((x) => (x === null || x === undefined || !Number.isFinite(Number(x)) ? null : Math.round(Number(x)))) : []);
+function colunas(c, re, max) {
+  if (!c || typeof c.ini !== "string" || !re.test(c.ini) || !Array.isArray(c.v)) return null;
+  return { ini: c.ini, v: numeros(c.v, max), s: numeros(c.s, max), n: numeros(c.n, max) };
+}
+
+/** Valida os dados extra que vêm do marcador. */
+export function cleanExtra(sb) {
+  if (!sb || typeof sb !== "object") return null;
+  const i = sb.info && typeof sb.info === "object" ? sb.info : null;
+  const out = {
+    at: /^\d{4}-\d{2}-\d{2}T/.test(sb.at || "") ? sb.at : new Date().toISOString(),
+    info: i
+      ? {
+          nome: String(i.nome || "").slice(0, 120),
+          handle: String(i.handle || "").slice(0, 60),
+          pais: String(i.pais || "").slice(0, 4),
+          tipo: String(i.tipo || "").slice(0, 30),
+          criado: /^\d{4}-\d{2}-\d{2}$/.test(i.criado || "") ? i.criado : "",
+          kids: i.kids === true,
+          redes: (Array.isArray(i.redes) ? i.redes : []).filter((u) => typeof u === "string" && /^https?:\/\/[^\s"<>]+$/.test(u)).slice(0, 12),
+          subs: Number.isFinite(Number(i.subs)) ? Number(i.subs) : null,
+          views: Number.isFinite(Number(i.views)) ? Number(i.views) : null,
+          videos: Number.isFinite(Number(i.videos)) ? Number(i.videos) : null,
+        }
+      : null,
+    m: colunas(sb.m, /^\d{4}-\d{2}$/, 240),
+    d: colunas(sb.d, /^\d{4}-\d{2}-\d{2}$/, 120),
+    w: colunas(sb.w, /^\d{4}-\d{2}-\d{2}$/, 160),
+  };
+  return out.info || out.m || out.d || out.w ? out : null;
+}
+
+/** Totais diários (views, subs, vídeos) a partir das colunas diárias. */
+export function dailyFromExtra(x) {
+  if (!x?.d) return [];
+  const ini = Date.parse(x.d.ini + "T00:00:00Z");
+  const out = [];
+  x.d.v.forEach((v, i) => {
+    if (!v) return;
+    out.push({ date: new Date(ini + i * 86400000).toISOString().slice(0, 10), views: v, subs: x.d.s[i] ?? null, videos: x.d.n[i] ?? null });
+  });
+  return out;
+}
+
+export async function saveExtras(mapa) {
+  if (!Object.keys(mapa).length) return;
+  const todos = await getJSON("sbextra", {});
+  Object.assign(todos, mapa);
+  await setJSON("sbextra", todos);
+}
+
+const DOMINIOS = [
+  ["instagram", /(^|\.)instagram\.com$/],
+  ["tiktok", /(^|\.)tiktok\.com$/],
+  ["twitch", /(^|\.)twitch\.tv$/],
+  ["x", /(^|\.)(x|twitter)\.com$/],
+  ["kick", /(^|\.)kick\.com$/],
+];
+
+/** Preenche os links das redes sociais que ainda estão vazios. Nunca substitui um link escrito à mão. */
+export function fillSocials(db, personId, urls) {
+  const p = db.people[personId];
+  if (!p || !urls?.length) return 0;
+  p.socials ||= {};
+  let n = 0;
+  for (const u of urls) {
+    let host;
+    try {
+      host = new URL(u).hostname.toLowerCase();
+    } catch {
+      continue;
+    }
+    if (/(^|\.)(youtube\.com|youtu\.be)$/.test(host)) continue;
+    const rede = (DOMINIOS.find(([, re]) => re.test(host)) || ["site"])[0];
+    if (p.socials[rede]?.url) continue;
+    p.socials[rede] = { ...(p.socials[rede] || {}), url: u, entries: p.socials[rede]?.entries || [] };
+    n++;
+  }
+  if (n) p.updatedAt = new Date().toISOString();
+  return n;
 }

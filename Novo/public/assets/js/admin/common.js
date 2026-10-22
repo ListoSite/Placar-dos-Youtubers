@@ -101,4 +101,8 @@ export function fonteEtiqueta(src) {
   return `<span class="fonte fonte-${esc(src)}">${esc(nomes[src] || src)}</span>`;
 }
 
+export function linkSocialBlade(channelId, texto = "Social Blade") {
+  return `<a class="link-sb" href="https://socialblade.com/youtube/channel/${esc(channelId)}" target="_blank" rel="noopener">${esc(texto)} ↗</a>`;
+}
+
 export { data };

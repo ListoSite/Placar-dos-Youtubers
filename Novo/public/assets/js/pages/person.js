@@ -3,7 +3,7 @@
 import { estado, pessoa, indice, views, serieMensal, rankingMes, recordes, projetosDe, canaisDe, mediaMeses, api, temSessao } from "../data.js";
 import { esc, curto, inteiro, mesNome, pct, data, ha, decimal, duracao, plural } from "../format.js";
 import { avatar, linkPessoa, etiquetaCategoria, ICONES, REDES, $, vazio, variacao, contar } from "../ui.js";
-import { barrasMensais, barrasDiarias } from "../charts.js";
+import { barrasMensais, barrasDiarias, barrasSimples } from "../charts.js";
 import { PARTES } from "../score.js";
 import { cartaoProjeto } from "./projects.js";
 import { encher } from "../motion.js";
@@ -76,8 +76,17 @@ export async function render(main, { params }) {
       </section>
 
       <section class="secao" id="sec-diario" hidden>
-        <div class="secao-cabeca"><div><h2>Últimos dias</h2><p>Views ganhas por dia no canal principal, medidas pela recolha diária.</p></div></div>
+        <div class="secao-cabeca"><div><h2>Últimos dias</h2><p>Views ganhas por dia no canal principal, medidas pela recolha diária e pelo Social Blade.</p></div></div>
         <div id="g-diario" class="vidro caixa-grafico"></div>
+      </section>
+
+      <section class="secao" id="sec-sb" hidden>
+        <div class="secao-cabeca"><div><h2>Crescimento</h2><p id="sb-nota"></p></div></div>
+        <div class="grelha-2">
+          <div class="vidro caixa-grafico"><h3 class="grafico-titulo">Subscritores ganhos por mês</h3><div id="g-sb-subs"></div></div>
+          <div class="vidro caixa-grafico"><h3 class="grafico-titulo">Vídeos publicados por mês</h3><div id="g-sb-vids"></div></div>
+        </div>
+        <div class="vidro caixa-grafico" style="margin-top:18px" id="sb-semanas"><h3 class="grafico-titulo">Views por semana, no último ano</h3><div id="g-sb-sem"></div></div>
       </section>
 
       <section class="secao grelha-2">
@@ -114,7 +123,8 @@ export async function render(main, { params }) {
             (c) => `<div class="canal">${avatar({ name: c.title, photo: c.thumb }, 44)}
             <div><b>${esc(c.title)}</b><small class="muted">${esc([c.handle, "canal " + c.role, c.count ? "" : "não conta nas somas", c.country ? "país " + c.country : "", c.missing ? "canal indisponível" : ""].filter(Boolean).join(", "))}</small></div>
             <div class="canal-num"><b>${curto(c.subs)}</b> subs<br><span class="muted">${curto(c.views)} views</span></div>
-            <a class="botao-icone" href="https://www.youtube.com/channel/${esc(c.id)}" target="_blank" rel="noopener" aria-label="Abrir ${esc(c.title)} no YouTube">${ICONES.youtube}</a></div>`,
+            <a class="botao-icone" href="https://socialblade.com/youtube/channel/${esc(c.id)}" target="_blank" rel="noopener" aria-label="Ver ${esc(c.title)} no Social Blade" title="Social Blade"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M5 20v-7M11 20V5M17 20v-10M3 20h18"/></svg></a>
+            <a class="botao-icone" href="https://www.youtube.com/channel/${esc(c.id)}" target="_blank" rel="noopener" aria-label="Abrir ${esc(c.title)} no YouTube" title="YouTube">${ICONES.youtube}</a></div>`,
           )
           .join("")}</div></section>`
         : ""}
@@ -132,6 +142,8 @@ export async function render(main, { params }) {
   if (serie.some((s) => s.tem)) limpeza.push(barrasMensais($("#g-mensal", main), serie, { destaque: rec.melhor?.m }));
   else $("#g-mensal", main).innerHTML = vazio("Ainda sem views por mês", "Liga o canal do YouTube ou importa os dados do Social Blade na área de edição.");
 
+  const contados = canais.filter((c) => c.count);
+  if (contados.length) carregarSocialBlade(main, contados, limpeza);
   if (main1) {
     carregarDiario(main, main1, limpeza);
     carregarVideos(main, main1);
@@ -170,7 +182,7 @@ function explicacao(id, v) {
 function redesHtml(p) {
   const itens = REDES.filter((r) => p.socials?.[r.id]?.url || p.socials?.[r.id]?.last);
   if (!itens.length) return "";
-  return `<section class="secao"><div class="secao-cabeca"><div><h2>Outras redes</h2><p>Números atualizados à mão na área de edição.</p></div></div>
+  return `<section class="secao"><div class="secao-cabeca"><div><h2>Outras redes</h2><p>Links e números das redes sociais.</p></div></div>
     <div class="redes">${itens
       .map((r) => {
         const s = p.socials[r.id];
@@ -180,6 +192,74 @@ function redesHtml(p) {
           <span><strong>${last?.followers ? curto(last.followers) : r.nome}</strong><small>${last?.followers ? `${r.seguidores} no ${r.nome}` : "Ver perfil"}${prev?.followers && last?.followers ? ` ${variacao(last.followers, prev.followers)}` : ""}${last?.date ? `<br>${esc(data(last.date))}` : ""}</small></span></a>`;
       })
       .join("")}</div></section>`;
+}
+
+/** Subscritores e vídeos por mês e views por semana, recolhidos do Social Blade. */
+async function carregarSocialBlade(main, canais, limpeza) {
+  let dados;
+  try {
+    dados = await api(`sb?channels=${canais.map((c) => c.id).join(",")}`);
+  } catch {
+    return;
+  }
+  const lista = canais.map((c) => dados[c.id]).filter(Boolean);
+  if (!lista.length || !document.body.contains(main)) return;
+  const somaMes = { s: new Map(), n: new Map() };
+  const semanas = new Map();
+  const mesDe = (ini, i) => {
+    const [y, m] = ini.split("-").map(Number);
+    return new Date(Date.UTC(y, m - 1 + i, 1)).toISOString().slice(0, 7);
+  };
+  for (const x of lista) {
+    if (x.m) {
+      const vids = limparVideos(x.m.n);
+      x.m.s.forEach((v, i) => v !== null && somaMes.s.set(mesDe(x.m.ini, i), (somaMes.s.get(mesDe(x.m.ini, i)) || 0) + Math.max(0, v)));
+      vids.forEach((v, i) => v !== null && somaMes.n.set(mesDe(x.m.ini, i), (somaMes.n.get(mesDe(x.m.ini, i)) || 0) + v));
+    }
+    if (x.w) {
+      const ini = Date.parse(x.w.ini + "T00:00:00Z");
+      x.w.v.forEach((v, i) => {
+        if (v === null) return;
+        const k = new Date(ini + i * 7 * 86400000).toISOString().slice(0, 10);
+        semanas.set(k, (semanas.get(k) || 0) + v);
+      });
+    }
+  }
+  const pontosMes = (mapa, unidade) => {
+    const meses = [...mapa.keys()].sort();
+    if (!meses.length) return [];
+    const todos = [];
+    for (let m = meses[0]; m <= meses[meses.length - 1]; m = mesDe(m, 1)) todos.push(m);
+    return todos.map((m) => ({ k: m, v: mapa.has(m) ? mapa.get(m) : null, dica: `<b>${mesNome(m)}</b><br>${mapa.has(m) ? `${inteiro(mapa.get(m))} ${unidade}` : "Sem dados"}` }));
+  };
+  const subs = pontosMes(somaMes.s, "subscritores ganhos");
+  const vids = pontosMes(somaMes.n, "vídeos publicados");
+  const sem = [...semanas.entries()].sort((a, b) => a[0].localeCompare(b[0])).slice(-52).map(([k, v]) => ({ k, v, dica: `<b>Semana de ${data(k)}</b><br>${inteiro(v)} views` }));
+  if (!subs.length && !vids.length && !sem.length) return;
+  const at = lista.map((x) => x.at).sort().pop();
+  $("#sb-nota", main).textContent = `Dados do Social Blade${lista.length > 1 ? `, somando ${lista.length} canais` : ""}, atualizados em ${data(at)}. O YouTube arredonda os subscritores, por isso os ganhos aparecem em saltos.`;
+  $("#sec-sb", main).hidden = false;
+  const rotMes = (m) => mesNome(m, { curto: true });
+  if (subs.length) limpeza.push(barrasSimples($("#g-sb-subs", main), subs, { rotulo: rotMes, nome: "Subscritores ganhos por mês" }));
+  else $("#g-sb-subs", main).innerHTML = `<p class="muted">Sem dados.</p>`;
+  if (vids.some((p) => p.v !== null)) limpeza.push(barrasSimples($("#g-sb-vids", main), vids, { rotulo: rotMes, cor: "#c98500", nome: "Vídeos publicados por mês" }));
+  else $("#g-sb-vids", main).innerHTML = `<p class="muted">Sem dados.</p>`;
+  if (sem.length >= 4) limpeza.push(barrasSimples($("#g-sb-sem", main), sem, { rotulo: (k) => `${+k.slice(8)}/${+k.slice(5, 7)}`, nome: "Views por semana" }));
+  else $("#sb-semanas", main).hidden = true;
+}
+
+/**
+ * O Social Blade só começou a contar vídeos a certa altura: os meses antes disso vêm a 0
+ * e o primeiro mês contado traz o total do canal. Esses valores não são uploads reais.
+ */
+function limparVideos(arr) {
+  const n = [...(arr || [])];
+  const f = n.findIndex((v) => v > 0);
+  if (f < 0) return n.map(() => null);
+  const resto = n.slice(f + 1).filter((v) => v !== null).sort((a, b) => a - b);
+  const mediana = resto.length ? resto[Math.floor(resto.length / 2)] : 0;
+  if (n[f] > 50 && n[f] > 5 * Math.max(1, mediana)) for (let i = 0; i <= f; i++) n[i] = null;
+  return n;
 }
 
 async function carregarDiario(main, canal, limpeza) {
@@ -195,6 +275,10 @@ async function carregarDiario(main, canal, limpeza) {
       const dias = (Date.parse(pontos[i].d) - Date.parse(pontos[i - 1].d)) / 86400000;
       if (dias === 1) diarios.push({ d: pontos[i].d, v: Math.max(0, pontos[i].total - pontos[i - 1].total) });
     }
+    // Um salto absurdo num só dia vem de fontes diferentes a medir o total (não é um dia real)
+    const ordenados = diarios.map((x) => x.v).sort((a, b) => a - b);
+    const mediana = ordenados[Math.floor(ordenados.length / 2)] || 0;
+    if (mediana > 0) for (let i = diarios.length - 1; i >= 0; i--) if (diarios[i].v > mediana * 20) diarios.splice(i, 1);
     if (diarios.length < 5 || !document.body.contains(main)) return;
     $("#sec-diario", main).hidden = false;
     limpeza.push(barrasDiarias($("#g-diario", main), diarios.slice(-60)));

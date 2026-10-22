@@ -249,6 +249,54 @@ export function barrasDiarias(el, pontos, { altura = 200 } = {}) {
   });
 }
 
+/**
+ * Barras simples. pontos: [{ k, v, dica }] (v null = sem dados).
+ * rotulo(k) dá o texto do eixo X.
+ */
+export function barrasSimples(el, pontos, { altura = 200, cor = COR_YT, rotulo = (k) => k, nome = "Valores" } = {}) {
+  if (semD3(el)) return () => {};
+  const d3 = window.d3;
+  el.innerHTML = `<div class="grafico"></div>`;
+  const alvo = el.querySelector(".grafico");
+  return responsivo(alvo, (W) => {
+    const M = { t: 12, r: 8, b: 26, l: 44 };
+    const w = W - M.l - M.r;
+    const h = altura - M.t - M.b;
+    alvo.innerHTML = "";
+    const svg = d3.select(alvo).append("svg").attr("viewBox", `0 0 ${W} ${altura}`).attr("role", "img").attr("aria-label", nome);
+    const g = svg.append("g").attr("transform", `translate(${M.l},${M.t})`);
+    const x = d3.scaleBand().domain(pontos.map((p) => p.k)).range([0, w]).padding(0.24);
+    const y = d3.scaleLinear().domain([0, d3.max(pontos, (p) => p.v || 0) || 1]).nice(3).range([h, 0]);
+    g.append("g").attr("class", "grelha").selectAll("line").data(y.ticks(3)).join("line").attr("x1", 0).attr("x2", w).attr("y1", y).attr("y2", y);
+    g.append("g").attr("class", "eixo").call(d3.axisLeft(y).ticks(3).tickFormat(eixo).tickSize(0).tickPadding(8)).call((a) => a.select(".domain").remove());
+    const passo = Math.ceil(pontos.length / Math.max(1, Math.floor(w / 54)));
+    g.append("g")
+      .attr("class", "eixo")
+      .attr("transform", `translate(0,${h})`)
+      .call(d3.axisBottom(x).tickValues(pontos.map((p) => p.k).filter((_, i) => i % passo === 0)).tickFormat(rotulo).tickSize(0).tickPadding(8))
+      .call((a) => a.select(".domain").attr("stroke", "rgba(255,196,210,.25)"));
+    const bw = Math.min(18, x.bandwidth());
+    const off = (x.bandwidth() - bw) / 2;
+    g.append("g")
+      .selectAll("path")
+      .data(pontos)
+      .join("path")
+      .attr("class", "barra")
+      .attr("d", (p) => (p.v === null || p.v === undefined ? `M${x(p.k) + off},${h - 2}h${bw}v2h${-bw}Z` : barraPath(x(p.k) + off, y(p.v), bw, h - y(p.v), 4)))
+      .attr("fill", (p) => (p.v === null || p.v === undefined ? "rgba(255,196,210,.2)" : cor));
+    g.append("g")
+      .selectAll("rect")
+      .data(pontos)
+      .join("rect")
+      .attr("x", (p) => x(p.k))
+      .attr("width", x.step())
+      .attr("height", h)
+      .attr("fill", "transparent")
+      .on("pointermove pointerdown", (ev, p) => mostrarDica(p.dica, ev))
+      .on("pointerleave", saiDica);
+  });
+}
+
 /** Views de cada episódio de um projeto, com a linha da mediana normal do canal. */
 export function barrasEpisodios(el, videos, { base = null, altura = 280 } = {}) {
   if (semD3(el)) return () => {};

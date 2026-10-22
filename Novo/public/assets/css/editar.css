@@ -467,3 +467,6 @@ details > summary {
   }
 }
 #sb-resultado { scroll-margin-top: 100px; }
+.ed-canal-info small {
+  display: block;
+}
