@@ -191,6 +191,8 @@ function ferramentas(palco, kitId) {
       const w = Math.max(160, p.w + folga * 2);
       const h = Math.max(160, p.h + folga * 2);
       const el = novo(html, `kt-moldura ${cls}`, p, `width:${w}px;height:${h}px`);
+      // Perto do topo do ecrã, o enfeite de cima (laço, etiqueta) passa para baixo
+      if (p.y - h / 2 < 90) el.classList.add("kt-em-baixo");
       anim(el, [{ opacity: 0, transform: "scale(1.3)" }, { opacity: 1, transform: "scale(1)", offset: 0.12 }, { opacity: 1, transform: "scale(1)", offset: 0.85 }, { opacity: 0, transform: "scale(1)" }], { duration: dur, easing: "cubic-bezier(.2,1.2,.4,1)" });
       tirar(el, dur + 50);
       return el;

@@ -2874,6 +2874,11 @@ body.modo-palco {
 }
 .av-nome .p-titulo {
   font-size: 110px;
+  padding: 0 40px;
+  overflow-wrap: break-word;
+}
+.vertical .av-nome .p-titulo {
+  font-size: 92px;
 }
 
 /* =====================================================================
@@ -6203,6 +6208,10 @@ body.modo-palco {
   translate: -50% 0;
   font-size: 80px;
   font-style: normal;
+}
+.kt-em-baixo.kt-laco i {
+  top: auto;
+  bottom: -40px;
 }
 .kt-holofote {
   border-radius: 50%;

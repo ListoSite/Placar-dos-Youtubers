@@ -18,7 +18,10 @@ export async function correr(palco, opts) {
 
   // ---------- Momentos ----------
   const momentos = new Map();
-  const juntar = (m, t) => momentos.set(m, [...(momentos.get(m) || []), t]);
+  // (só meses que estão no gráfico: o recorde pode ser do mês atual, que ainda não entra)
+  const juntar = (m, t) => {
+    if (pontos.some((x) => x.m === m)) momentos.set(m, [...(momentos.get(m) || []), t]);
+  };
   juntar(pontos[0].m, { titulo: "O início", texto: `${curto(pontos[0].v)} views em ${mesNome(pontos[0].m)}` });
   const milhao = pontos.find((x) => x.v >= 1e6);
   if (milhao && milhao !== pontos[0]) juntar(milhao.m, { titulo: "Primeiro milhão", texto: `Mais de 1 milhão de views num mês, em ${mesNome(milhao.m)}` });
@@ -104,7 +107,7 @@ export async function correr(palco, opts) {
       requestAnimationFrame(frame);
     });
 
-  const paragens = [...momentos.keys()].map((m) => pontos.findIndex((x) => x.m === m)).sort((a, b) => a - b);
+  const paragens = [...momentos.keys()].map((m) => pontos.findIndex((x) => x.m === m)).filter((k) => k >= 0).sort((a, b) => a - b);
   const porPonto = Math.max(140, Math.min(600, 11000 / pontos.length)) * palco.fator;
   let atual = 0;
   for (const k of paragens) {
