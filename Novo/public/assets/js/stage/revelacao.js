@@ -5,7 +5,7 @@ import { esc, curto, inteiro, mesNome } from "../format.js";
 import { contar } from "../ui.js";
 import { avatarPalco, confetes } from "./stage.js";
 
-const LOGO = `<svg class="p-logo" viewBox="0 0 32 32" aria-hidden="true"><rect width="32" height="32" rx="7" fill="#4a86ff"/><path d="M0 9a9 9 0 0 0 9-9H0zM32 9a9 9 0 0 1-9-9h9zM0 23a9 9 0 0 1 9 9H0zM32 23a9 9 0 0 0-9 9h9z" fill="#f2b53a"/><path d="M12.5 10.5v11l9.5-5.5z" fill="#fff"/></svg>`;
+const LOGO = `<svg class="p-logo" viewBox="0 0 40 40" aria-hidden="true"><defs><linearGradient id="lg-revelacao" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ff4d70"/><stop offset=".55" stop-color="#c3123e"/><stop offset="1" stop-color="#6e0820"/></linearGradient></defs><rect width="40" height="40" rx="13" fill="url(#lg-revelacao)"/><path class="marca-play" d="M16 12.6c0-1.5 1.6-2.4 2.9-1.6l10.1 6.4c1.2.8 1.2 2.5 0 3.3l-10.1 6.4c-1.3.8-2.9-.1-2.9-1.6z" fill="#fff"/><circle class="marca-ponto" cx="32" cy="8" r="4.2" fill="#f4b942" stroke="#12060b" stroke-width="2"/></svg>`;
 
 function lista(opts) {
   const n = Number(opts.n) || 10;
@@ -43,7 +43,7 @@ export async function correr(palco, opts) {
   // Abertura
   palco.musica("tensao", 1);
   cena.innerHTML = `<div class="p-centro">${LOGO}
-    <h1 class="p-titulo p-entra" style="font-size:${vertical ? 150 : 190}px;margin-top:50px;animation-delay:.35s">${esc(titulo)}</h1>
+    <h1 class="p-titulo p-entra" style="font-size:${vertical ? 90 : 114}px;margin-top:50px;animation-delay:.35s">${esc(titulo)}</h1>
     <p class="p-sub p-entra" style="animation-delay:.6s">${esc(sub)}</p></div>`;
   palco.tocar("revelar", {}, 0.3);
   await palco.passo(3600);
@@ -88,7 +88,7 @@ export async function correr(palco, opts) {
   }
 
   // Pódio
-  cartao.innerHTML = `<div class="p-titulo p-entra" style="font-size:${vertical ? 130 : 170}px">E agora,<br>o pódio</div>`;
+  cartao.innerHTML = `<div class="p-titulo p-entra" style="font-size:${vertical ? 78 : 102}px">E agora,<br>o pódio</div>`;
   palco.musica("epico", 1);
   palco.tocar("subida", { dur: 2.6 });
   await palco.esperar(2900);

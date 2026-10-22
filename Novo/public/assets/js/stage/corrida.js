@@ -46,7 +46,7 @@ export async function correr(palco, opts) {
   const H = area.clientHeight || 700;
   const passoY = H / n;
   const alturaBarra = Math.min(72, passoY * 0.78);
-  const largMax = W - (vertical ? 270 : 330);
+  const largMax = W - (vertical ? 520 : 640);
 
   const els = new Map();
   for (const id of candidatos) {
@@ -55,7 +55,7 @@ export async function correr(palco, opts) {
     el.className = "cr-barra";
     el.style.height = alturaBarra + "px";
     el.style.opacity = "0";
-    el.innerHTML = `<span class="pos"></span><div class="fill" style="background:var(--azulejo)"><span class="rotulo">${esc(p.name)}</span></div><div class="fim">${avatar(p, Math.round(alturaBarra * 0.86))}<b></b></div>`;
+    el.innerHTML = `<span class="pos"></span><div class="fill" style="background:var(--rubi)"></div><div class="fim">${avatar(p, Math.round(alturaBarra * 0.86))}<span class="nome">${esc(p.name)}</span><b></b></div>`;
     area.appendChild(el);
     els.set(id, { el, fill: el.querySelector(".fill"), val: el.querySelector("b"), pos: el.querySelector(".pos"), rank: 999 });
   }
@@ -80,8 +80,7 @@ export async function correr(palco, opts) {
       e.el.style.transform = `translateY(${(visivel ? rank : n + 0.5) * passoY}px)`;
       e.el.style.opacity = visivel ? "1" : "0";
       e.fill.style.width = Math.max(6, (x.v / max) * largMax) + "px";
-      e.fill.style.background = rank === 0 ? "var(--ouro)" : "var(--azulejo)";
-      e.fill.querySelector(".rotulo").style.color = rank === 0 ? "#241903" : "#fff";
+      e.fill.style.background = rank === 0 ? "var(--ouro)" : "var(--rubi)";
       e.val.textContent = curto(x.v);
       e.pos.textContent = visivel ? rank + 1 : "";
       if (visivel && rank < e.rank && e.rank < 999 && performance.now() - ultimoSom > 160) {
@@ -131,7 +130,7 @@ export async function correr(palco, opts) {
   const p = ds.people.find((x) => x.id === rei);
   cena.innerHTML = `<div class="p-centro">
     ${avatarPalco(p, vertical ? 320 : 260)}
-    <h1 class="p-titulo p-entra" style="font-size:${vertical ? 120 : 150}px;margin-top:50px">${esc(p.name)}</h1>
+    <h1 class="p-titulo p-entra" style="font-size:${vertical ? 72 : 90}px;margin-top:50px">${esc(p.name)}</h1>
     <p class="p-sub p-entra" style="animation-delay:.3s">Em primeiro lugar em ${vezes} de ${meses.length} ${meses.length === 1 ? "mês" : "meses"}</p></div>`;
   palco.tocar("brilho");
   await palco.passo(5000);

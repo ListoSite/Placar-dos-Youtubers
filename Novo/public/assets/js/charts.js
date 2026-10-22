@@ -2,11 +2,12 @@
 
 import { eixo, inteiro, curto, mesNome, data, esc } from "./format.js";
 import { mostrarDica, moverDica, esconderDica, fonteDados } from "./ui.js";
+import { barrasCrescem } from "./motion.js";
 
-export const SERIES = ["#4a86ff", "#d95926", "#199e70", "#c98500"];
-const COR_YT = "#4a86ff";
-const COR_OUTRA = "#7a8fc9";
-const SUPERFICIE = "#0e1a3d";
+export const SERIES = ["#e0294f", "#c98500", "#199e70", "#9085e9"];
+const COR_YT = "#e0294f";
+const COR_OUTRA = "#b57a8a";
+const SUPERFICIE = "#12060b";
 
 function semD3(el) {
   if (window.d3) return false;
@@ -17,11 +18,14 @@ function semD3(el) {
 /** Redesenha quando o contentor muda de largura. Devolve função para parar. */
 function responsivo(el, desenhar) {
   let largura = 0;
+  let primeira = true;
   const ro = new ResizeObserver(() => {
     const w = Math.floor(el.clientWidth);
     if (w && w !== largura) {
       largura = w;
       desenhar(w);
+      if (primeira) barrasCrescem(el.querySelector("svg"));
+      primeira = false;
     }
   });
   ro.observe(el);
@@ -36,7 +40,7 @@ function padraoTracejado(svg, id, cor) {
 }
 
 /** Caminho de barra com topo arredondado (4px) e base reta. */
-function barraPath(x, y, w, h, r = 4) {
+function barraPath(x, y, w, h, r = 7) {
   if (h <= 0) return "";
   r = Math.min(r, w / 2, h);
   return `M${x},${y + h}V${y + r}Q${x},${y} ${x + r},${y}H${x + w - r}Q${x + w},${y} ${x + w},${y + r}V${y + h}Z`;
@@ -79,7 +83,7 @@ export function barrasMensais(el, serie, { altura = 280, destaque = null } = {})
       .attr("class", "eixo")
       .attr("transform", `translate(0,${h})`)
       .call(d3.axisBottom(x).tickValues(serie.map((s) => s.m).filter((_, i) => i % passo === 0)).tickFormat((m) => mesNome(m, { curto: true })).tickSize(0).tickPadding(10))
-      .call((a) => a.select(".domain").attr("stroke", "rgba(160,184,255,.28)"));
+      .call((a) => a.select(".domain").attr("stroke", "rgba(255,196,210,.25)"));
     const bw = Math.min(24, x.bandwidth());
     const off = (x.bandwidth() - bw) / 2;
     const grupo = g.append("g");
@@ -92,14 +96,14 @@ export function barrasMensais(el, serie, { altura = 280, destaque = null } = {})
       const cor = s.src === "youtube" ? COR_YT : COR_OUTRA;
       if (s.p) {
         const vEst = Math.min(s.est ?? s.v, y.domain()[1]);
-        grupo.append("path").attr("d", barraPath(x0, y(vEst), bw, h - y(vEst))).attr("fill", "url(#trac-mes)");
+        grupo.append("path").attr("class", "barra").attr("d", barraPath(x0, y(vEst), bw, h - y(vEst))).attr("fill", "url(#trac-mes)");
         const vReal = Math.min(s.v, y.domain()[1]);
-        grupo.append("path").attr("d", barraPath(x0, y(vReal), bw, h - y(vReal))).attr("fill", cor);
+        grupo.append("path").attr("class", "barra").attr("d", barraPath(x0, y(vReal), bw, h - y(vReal))).attr("fill", cor);
       } else {
-        grupo.append("path").attr("d", barraPath(x0, y(s.v), bw, h - y(s.v))).attr("fill", cor).attr("fill-opacity", destaque && destaque !== s.m ? 0.85 : 1);
+        grupo.append("path").attr("class", "barra").attr("d", barraPath(x0, y(s.v), bw, h - y(s.v))).attr("fill", cor).attr("fill-opacity", destaque && destaque !== s.m ? 0.85 : 1);
       }
       if (destaque === s.m) {
-        g.append("text").attr("x", x0 + bw / 2).attr("y", y(s.v) - 6).attr("text-anchor", "middle").attr("fill", "#eef2fb").attr("font-size", 11).attr("font-weight", 700).text(curto(s.v));
+        g.append("text").attr("x", x0 + bw / 2).attr("y", y(s.v) - 6).attr("text-anchor", "middle").attr("fill", "#fdf0f3").attr("font-size", 11).attr("font-weight", 700).text(curto(s.v));
       }
     }
     // Zonas de interação maiores do que as barras
@@ -148,7 +152,7 @@ export function linhasMensais(el, series, meses, { altura = 320 } = {}) {
       .attr("class", "eixo")
       .attr("transform", `translate(0,${h})`)
       .call(d3.axisBottom(x).tickValues(meses.filter((_, i) => i % passo === 0)).tickFormat((m) => mesNome(m, { curto: true })).tickSize(0).tickPadding(10))
-      .call((a) => a.select(".domain").attr("stroke", "rgba(160,184,255,.28)"));
+      .call((a) => a.select(".domain").attr("stroke", "rgba(255,196,210,.25)"));
     const linha = d3
       .line()
       .defined((p) => p.v !== null && p.v !== undefined)
@@ -161,7 +165,7 @@ export function linhasMensais(el, series, meses, { altura = 320 } = {}) {
       const ult = [...pts].reverse().find((p) => p.v !== null);
       if (ult) g.append("circle").attr("cx", x(ult.m)).attr("cy", y(ult.v)).attr("r", 4).attr("fill", s.cor).attr("stroke", SUPERFICIE).attr("stroke-width", 2);
     }
-    const guia = g.append("line").attr("y1", 0).attr("y2", h).attr("stroke", "rgba(238,242,251,.35)").attr("stroke-width", 1).style("opacity", 0);
+    const guia = g.append("line").attr("y1", 0).attr("y2", h).attr("stroke", "rgba(253,240,243,.4)").attr("stroke-width", 1).style("opacity", 0);
     const pontosHover = g.append("g");
     g.append("rect")
       .attr("width", w)
@@ -209,12 +213,13 @@ export function barrasDiarias(el, pontos, { altura = 200 } = {}) {
       .attr("class", "eixo")
       .attr("transform", `translate(0,${h})`)
       .call(d3.axisBottom(x).tickValues(pontos.map((p) => p.d).filter((_, i) => i % passo === 0)).tickFormat((d) => `${+d.slice(8)}/${+d.slice(5, 7)}`).tickSize(0).tickPadding(8))
-      .call((a) => a.select(".domain").attr("stroke", "rgba(160,184,255,.28)"));
+      .call((a) => a.select(".domain").attr("stroke", "rgba(255,196,210,.25)"));
     const bw = Math.min(14, x.bandwidth());
     g.append("g")
       .selectAll("path")
       .data(pontos)
       .join("path")
+      .attr("class", "barra")
       .attr("d", (p) => barraPath(x(p.d) + (x.bandwidth() - bw) / 2, y(p.v), bw, h - y(p.v), 3))
       .attr("fill", COR_YT);
     g.append("g")
@@ -234,7 +239,7 @@ export function barrasDiarias(el, pontos, { altura = 200 } = {}) {
 export function barrasEpisodios(el, videos, { base = null, altura = 280 } = {}) {
   if (semD3(el)) return () => {};
   const d3 = window.d3;
-  el.innerHTML = `<div class="legenda"><span><i style="background:${COR_YT}"></i>Views por episódio</span>${base ? `<span><i class="linha" style="background:#f2b53a"></i>Mediana normal do canal (${curto(base)})</span>` : ""}</div><div class="grafico"></div>`;
+  el.innerHTML = `<div class="legenda"><span><i style="background:${COR_YT}"></i>Views por episódio</span>${base ? `<span><i class="linha" style="background:#f4b942"></i>Mediana normal do canal (${curto(base)})</span>` : ""}</div><div class="grafico"></div>`;
   const alvo = el.querySelector(".grafico");
   return responsivo(alvo, (W) => {
     const M = { t: 16, r: 8, b: 28, l: 48 };
@@ -252,16 +257,17 @@ export function barrasEpisodios(el, videos, { base = null, altura = 280 } = {}) 
       .attr("class", "eixo")
       .attr("transform", `translate(0,${h})`)
       .call(d3.axisBottom(x).tickValues(videos.map((_, i) => i).filter((i) => i % passo === 0)).tickFormat((i) => "Ep. " + (i + 1)).tickSize(0).tickPadding(8))
-      .call((a) => a.select(".domain").attr("stroke", "rgba(160,184,255,.28)"));
+      .call((a) => a.select(".domain").attr("stroke", "rgba(255,196,210,.25)"));
     const bw = Math.min(24, x.bandwidth());
     g.append("g")
       .selectAll("path")
       .data(videos)
       .join("path")
+      .attr("class", "barra")
       .attr("d", (v, i) => barraPath(x(i) + (x.bandwidth() - bw) / 2, y(v.v), bw, h - y(v.v)))
       .attr("fill", COR_YT);
     if (base) {
-      g.append("line").attr("x1", 0).attr("x2", w).attr("y1", y(base)).attr("y2", y(base)).attr("stroke", "#f2b53a").attr("stroke-width", 2);
+      g.append("line").attr("x1", 0).attr("x2", w).attr("y1", y(base)).attr("y2", y(base)).attr("stroke", "#f4b942").attr("stroke-width", 2);
     }
     g.append("g")
       .selectAll("rect")
@@ -280,4 +286,3 @@ export function barrasEpisodios(el, videos, { base = null, altura = 280 } = {}) 
   });
 }
 
-export { moverDica };

@@ -4,6 +4,7 @@ import { carregar, estado, procurar, temSessao } from "./data.js";
 import { esc, ha } from "./format.js";
 import { avatar, linkPessoa, $, esconderDica } from "./ui.js";
 import { som } from "./audio.js";
+import { revelarAoScroll, pilulaNav, logoEntra } from "./motion.js";
 
 const ROTAS = [
   { re: /^$/, mod: "./pages/home.js", nav: "#/" },
@@ -18,6 +19,7 @@ const ROTAS = [
 ];
 
 let limpar = null;
+let limparScroll = null;
 let carregado = false;
 
 function lerHash() {
@@ -34,6 +36,9 @@ async function navegar() {
   for (const a of document.querySelectorAll(".nav a")) a.toggleAttribute("aria-current", rota && a.getAttribute("href") === rota.nav);
   for (const a of document.querySelectorAll(".nav a[aria-current]")) a.setAttribute("aria-current", "page");
   $("#nav").classList.remove("aberta");
+  pilulaNav($("#nav"));
+  limparScroll?.();
+  limparScroll = null;
   $("#menu-movel").setAttribute("aria-expanded", "false");
   if (typeof limpar === "function") {
     try {
@@ -61,6 +66,7 @@ async function navegar() {
     main.innerHTML = "";
     window.scrollTo({ top: 0, behavior: "instant" });
     limpar = await mod.render(main, { params, query });
+    limparScroll = revelarAoScroll(main);
     document.title = (main.dataset.titulo ? main.dataset.titulo + " · " : "") + "Placar dos Youtubers";
   } catch (e) {
     console.error(e);
@@ -157,6 +163,8 @@ window.addEventListener("placar:recarregar", async () => {
   await carregar({ forcar: true });
   atualizarRodape();
 });
+addEventListener("resize", () => pilulaNav($("#nav")));
+logoEntra(document.querySelector(".marca svg"));
 iniciarPesquisa();
 iniciarSom();
 $("#link-editar").classList.toggle("ativo", temSessao());

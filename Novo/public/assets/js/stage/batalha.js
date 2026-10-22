@@ -43,9 +43,9 @@ export async function correr(palco, opts) {
   // Apresentação
   palco.musica("tensao", 1);
   cena.innerHTML = `<div class="p-centro" style="flex-direction:${vertical ? "column" : "row"};gap:${vertical ? 40 : 90}px">
-    <div class="p-entra" style="display:flex;flex-direction:column;align-items:center;gap:30px">${avatarPalco(a, vertical ? 300 : 340)}<div class="p-titulo" style="font-size:${vertical ? 90 : 100}px">${esc(a.name)}</div></div>
-    <div class="qz-vs p-slam" style="animation-delay:.5s;font-size:${vertical ? 150 : 200}px">VS</div>
-    <div class="p-entra" style="display:flex;flex-direction:column;align-items:center;gap:30px;animation-delay:.25s">${avatarPalco(b, vertical ? 300 : 340)}<div class="p-titulo" style="font-size:${vertical ? 90 : 100}px">${esc(b.name)}</div></div></div>`;
+    <div class="p-entra" style="display:flex;flex-direction:column;align-items:center;gap:30px">${avatarPalco(a, vertical ? 300 : 340)}<div class="p-titulo" style="font-size:${vertical ? 54 : 60}px">${esc(a.name)}</div></div>
+    <div class="qz-vs p-slam" style="animation-delay:.5s;font-size:${vertical ? 90 : 120}px">VS</div>
+    <div class="p-entra" style="display:flex;flex-direction:column;align-items:center;gap:30px;animation-delay:.25s">${avatarPalco(b, vertical ? 300 : 340)}<div class="p-titulo" style="font-size:${vertical ? 54 : 60}px">${esc(b.name)}</div></div></div>`;
   palco.tocar("whoosh");
   palco.tocar("impacto", {}, 0.55);
   await palco.passo(3400);
@@ -96,8 +96,8 @@ export async function correr(palco, opts) {
   cena.innerHTML = vencedor
     ? `<div class="p-centro">${avatarPalco(vencedor, vertical ? 360 : 300)}
         <p class="p-sub p-entra" style="margin-top:44px">Vencedor da batalha</p>
-        <h1 class="p-titulo p-slam" style="font-size:${vertical ? 130 : 170}px;margin-top:10px">${esc(vencedor.name)}</h1>
-        <p class="p-sub p-entra" style="animation-delay:.4s;font-family:var(--f-placar);font-weight:800;font-size:90px;color:var(--porcelana)">${Math.max(pa, pb)} – ${Math.min(pa, pb)}</p></div>`
+        <h1 class="p-titulo p-slam" style="font-size:${vertical ? 78 : 102}px;margin-top:10px">${esc(vencedor.name)}</h1>
+        <p class="p-sub p-entra" style="animation-delay:.4s;font-family:var(--f-display);font-weight:700;font-size:60px;color:var(--texto)">${Math.max(pa, pb)} – ${Math.min(pa, pb)}</p></div>`
     : `<div class="p-centro"><h1 class="p-titulo p-slam" style="font-size:180px">Empate</h1><p class="p-sub">${pa} – ${pb}</p></div>`;
   palco.tocar("vitoria");
   if (vencedor) confetes(cena);

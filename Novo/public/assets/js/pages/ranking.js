@@ -3,6 +3,7 @@
 import { estado, rankingMes, indice, views, mediaMeses, mesAnterior, mesesComDados, cobertura } from "../data.js";
 import { esc, curto, inteiro, mesNome, pct, norm, plural } from "../format.js";
 import { avatar, linkPessoa, movimento, sparkline, $, variacao } from "../ui.js";
+import { entrar } from "../motion.js";
 
 const METRICAS = [
   { id: "views", nome: "Views do mês", mensal: true },
@@ -96,6 +97,7 @@ export async function render(main, { query }) {
         })
         .join("")}</tbody></table></div>
       ${linhas.length > f.limite ? `<p style="text-align:center;margin-top:18px"><button class="btn" id="mais">Mostrar mais (${linhas.length - f.limite})</button></p>` : `<p class="muted" style="text-align:center;margin-top:14px;font-size:var(--t-sm)">${plural(linhas.length, "Youtuber", "Youtubers")} neste ranking.</p>`}`;
+    entrar([...alvo.querySelectorAll("tbody tr")].slice(0, 18), { y: 16, passo: 30, x: -10 });
     $("#mais", alvo)?.addEventListener("click", () => {
       f.limite += 200;
       desenhar();

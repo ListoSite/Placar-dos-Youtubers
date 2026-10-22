@@ -7,7 +7,7 @@ export const $ = (sel, root = document) => root.querySelector(sel);
 export const $$ = (sel, root = document) => [...root.querySelectorAll(sel)];
 
 /** Cor estável a partir de um texto (para avatares sem foto). */
-const CORES = ["#4a86ff", "#d95926", "#199e70", "#c98500", "#9085e9", "#d55181", "#2a78d6", "#7a8fc9"];
+const CORES = ["#e0294f", "#b3123b", "#c98500", "#d9925a", "#9085e9", "#199e70", "#d55181", "#8f0d2c"];
 export function corDe(texto) {
   let h = 0;
   for (const c of String(texto)) h = (h * 31 + c.charCodeAt(0)) >>> 0;
@@ -73,8 +73,8 @@ export function sparkline(valores, { largura = 110, altura = 28, destaque = true
   }
   const [li, lv] = pts[pts.length - 1];
   return `<svg width="${largura}" height="${altura}" viewBox="0 0 ${largura} ${altura}" aria-hidden="true">
-    <path d="${d}" fill="none" stroke="#7a8fc9" stroke-width="1.6" stroke-linejoin="round" stroke-linecap="round"/>
-    ${destaque ? `<circle cx="${x(li)}" cy="${y(lv)}" r="3" fill="#4a86ff" stroke="#0e1a3d" stroke-width="1.5"/>` : ""}
+    <path d="${d}" fill="none" stroke="#c48a99" stroke-width="1.6" stroke-linejoin="round" stroke-linecap="round"/>
+    ${destaque ? `<circle cx="${x(li)}" cy="${y(lv)}" r="3" fill="#e0294f" stroke="#12060b" stroke-width="1.5"/>` : ""}
   </svg>`;
 }
 

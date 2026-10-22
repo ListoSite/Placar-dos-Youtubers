@@ -6,6 +6,7 @@ import { avatar, linkPessoa, etiquetaCategoria, ICONES, REDES, $, vazio, variaca
 import { barrasMensais, barrasDiarias } from "../charts.js";
 import { PARTES } from "../score.js";
 import { cartaoProjeto } from "./projects.js";
+import { encher } from "../motion.js";
 
 export async function render(main, { params }) {
   const p = pessoa(params[0]);
@@ -71,12 +72,12 @@ export async function render(main, { params }) {
 
       <section class="secao">
         <div class="secao-cabeca"><div><h2>Views por mês</h2><p>Views ganhas em cada mês, somando os canais principais${canais.some((c) => !c.count) ? " (canais de clips não contam)" : ""}.</p></div></div>
-        <div id="g-mensal"></div>
+        <div id="g-mensal" class="vidro caixa-grafico"></div>
       </section>
 
       <section class="secao" id="sec-diario" hidden>
         <div class="secao-cabeca"><div><h2>Últimos dias</h2><p>Views ganhas por dia no canal principal, medidas pela recolha diária.</p></div></div>
-        <div id="g-diario"></div>
+        <div id="g-diario" class="vidro caixa-grafico"></div>
       </section>
 
       <section class="secao grelha-2">
@@ -123,6 +124,7 @@ export async function render(main, { params }) {
       ${projetos.length ? `<section class="secao"><div class="secao-cabeca"><div><h2>Projetos</h2><p>Séries e conteúdos grandes em que participou.</p></div></div><div class="projetos-grelha">${projetos.map(cartaoProjeto).join("")}</div></section>` : ""}
     </div>`;
 
+  encher(main.querySelectorAll(".parte .trilho i"));
   const num = $("#ind-num", main);
   if (num) contar(num, ind.total, { formato: inteiro, duracao: 1300 });
 

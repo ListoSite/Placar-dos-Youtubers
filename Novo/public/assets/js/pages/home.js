@@ -4,6 +4,7 @@ import { estado, rankingMes, indice, mesesComDados, cobertura, views } from "../
 import { esc, curto, inteiro, mesNome, mesNomeMaiuscula, pct, anos, plural } from "../format.js";
 import { avatar, linkPessoa, movimento, contar, $, $$ } from "../ui.js";
 import { som } from "../audio.js";
+import { grelhaPontos, luzQueSegue, tituloEmLinhas, placarEntra, saltar } from "../motion.js";
 import { cartaoProjeto } from "./projects.js";
 
 export async function render(main) {
@@ -13,10 +14,12 @@ export async function render(main) {
   main.dataset.titulo = "";
 
   main.innerHTML = `
-    <section class="heroi calcada">
+    <section class="heroi">
+      <div class="pontos" aria-hidden="true"></div>
+      <div class="heroi-luz" aria-hidden="true"></div>
       <div class="wrap heroi-grelha">
         <div class="heroi-titulo">
-          <h1>Placar<br>do mês</h1>
+          <h1><span class="linha-titulo"><span>O placar</span></span><span class="linha-titulo"><span class="grad">do mês</span></span></h1>
           <p>Quantas views fez cada Youtuber português num mês. Dados do YouTube e do Social Blade, recolhidos todos os dias.</p>
           <div class="mes-escolha">
             <button class="botao-icone" data-mes="-1" aria-label="Mês anterior"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m15 6-6 6 6 6"/></svg></button>
@@ -53,7 +56,7 @@ export async function render(main) {
     const quadro = $("#quadro", main);
     quadro.innerHTML = lista
       .map(
-        (x, i) => `<a class="quadro-linha virar" style="animation-delay:${i * 60}ms" href="${linkPessoa(x.p)}">
+        (x) => `<a class="quadro-linha" href="${linkPessoa(x.p)}">
           <span class="barra-fundo" style="width:100%;transform:scaleX(0)" data-k="${x.v / max}"></span>
           <span class="quadro-pos">${x.pos}</span>
           ${avatar(x.p, 40)}
@@ -63,10 +66,8 @@ export async function render(main) {
         </a>`,
       )
       .join("");
-    requestAnimationFrame(() => {
-      $$(".barra-fundo", quadro).forEach((b) => (b.style.transform = `scaleX(${b.dataset.k})`));
-      $$("[data-v]", quadro).forEach((el, i) => contar(el, Number(el.dataset.v), { atraso: i * 60 }));
-    });
+    placarEntra(quadro);
+    $$("[data-v]", quadro).forEach((el, i) => contar(el, Number(el.dataset.v), { atraso: 150 + i * 55 }));
     if (animarSom) lista.forEach((_, i) => som.tocar("virar", {}, i * 0.06));
     const i = meses.indexOf(mes);
     $('[data-mes="-1"]', main).disabled = i <= 0;
@@ -78,15 +79,24 @@ export async function render(main) {
       const i = meses.indexOf(mes) + Number(b.dataset.mes);
       if (i < 0 || i >= meses.length) return;
       mes = meses[i];
+      pontos.onda(Number(b.dataset.mes) < 0 ? "first" : "last");
+      saltar($("#mes-atual", main));
       desenharQuadro(true);
     }),
   );
+  const pontos = grelhaPontos($(".pontos", main), { colunas: innerWidth < 700 ? 14 : 30, linhas: innerWidth < 700 ? 18 : 12 });
+  const pararLuz = luzQueSegue($(".heroi", main), $(".heroi-luz", main));
+  tituloEmLinhas($(".heroi-titulo h1", main));
   desenharQuadro(false);
 
   $("#perguntas", main).innerHTML = perguntas().join("");
   $("#movimentos", main).innerHTML = movimentos();
   $("#categorias", main).innerHTML = categorias();
   $("#projetos-destaque", main).innerHTML = projetosDestaque();
+  return () => {
+    pontos.parar();
+    pararLuz();
+  };
 }
 
 function avisoDados() {
@@ -170,8 +180,8 @@ function movimentos() {
   if (r.length < 6) return "";
   const sobem = [...r].sort((a, b) => b.ant - b.pos - (a.ant - a.pos)).slice(0, 5);
   const descem = [...r].sort((a, b) => a.ant - a.pos - (b.ant - b.pos)).slice(0, 5);
-  const linha = (x) => `<a class="quadro-linha" href="${linkPessoa(x.p)}" style="grid-template-columns:44px 36px minmax(0,1fr) auto">
-      <span class="quadro-pos" style="font-size:1.4rem">${x.pos}</span>${avatar(x.p, 36)}
+  const linha = (x) => `<a class="quadro-linha" href="${linkPessoa(x.p)}" style="grid-template-columns:52px 36px minmax(0,1fr) auto">
+      <span class="quadro-pos">${x.pos}</span>${avatar(x.p, 36)}
       <span class="quadro-nome"><b style="font-size:var(--t-base)">${esc(x.p.name)}</b><small>era ${x.ant}.º, ${curto(x.v)} views</small></span>
       ${movimento(x.pos, x.ant)}</a>`;
   return `<div class="secao-cabeca"><div><h2>Subidas e descidas</h2><p>Lugares ganhos e perdidos em ${esc(mesNome(ref))} face ao mês anterior.</p></div></div>
@@ -201,7 +211,7 @@ function categorias() {
       .map(
         (e) => `<tr onclick="location.hash='#/ranking?cat=${encodeURIComponent(e.c)}&m=${ref}'">
         <td><b>${esc(e.c)}</b></td><td class="esconde-movel">${e.n}</td>
-        <td><div class="mini-barra"><span style="min-width:72px;text-align:left">${curto(e.v)}</span><div class="trilho"><i style="width:${((e.v / max) * 100).toFixed(1)}%;background:var(--azulejo)"></i></div></div></td>
+        <td><div class="mini-barra"><span style="min-width:72px;text-align:left">${curto(e.v)}</span><div class="trilho"><i style="width:${((e.v / max) * 100).toFixed(1)}%;background:var(--rubi)"></i></div></div></td>
         <td class="dir">${pct(e.v / total, { casas: 1 })}</td>
         <td class="esconde-movel"><span class="quem">${avatar(e.top, 28)}<span>${esc(e.top.name)}</span></span></td></tr>`,
       )

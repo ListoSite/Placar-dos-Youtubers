@@ -31,7 +31,7 @@ export class Palco {
       <div class="palco-tela ${formato === "9x16" ? "vertical" : "horizontal"}" style="width:${this.L}px;height:${this.A}px">
         <div class="palco-ondas"></div>
         <div class="palco-cena"></div>
-        <div class="palco-marca"><svg viewBox="0 0 32 32" aria-hidden="true"><rect width="32" height="32" rx="7" fill="#4a86ff"/><path d="M0 9a9 9 0 0 0 9-9H0zM32 9a9 9 0 0 1-9-9h9zM0 23a9 9 0 0 1 9 9H0zM32 23a9 9 0 0 0-9 9h9z" fill="#f2b53a"/><path d="M12.5 10.5v11l9.5-5.5z" fill="#fff"/></svg><span>Placar dos Youtubers</span></div>
+        <div class="palco-marca"><svg viewBox="0 0 40 40" aria-hidden="true"><defs><linearGradient id="lg-stage" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ff4d70"/><stop offset=".55" stop-color="#c3123e"/><stop offset="1" stop-color="#6e0820"/></linearGradient></defs><rect width="40" height="40" rx="13" fill="url(#lg-stage)"/><path class="marca-play" d="M16 12.6c0-1.5 1.6-2.4 2.9-1.6l10.1 6.4c1.2.8 1.2 2.5 0 3.3l-10.1 6.4c-1.3.8-2.9-.1-2.9-1.6z" fill="#fff"/><circle class="marca-ponto" cx="32" cy="8" r="4.2" fill="#f4b942" stroke="#12060b" stroke-width="2"/></svg><span>Placar dos Youtubers</span></div>
       </div>
       <div class="palco-controlos">
         <button data-acao="sair" title="Sair (Esc)">Sair</button>
@@ -167,7 +167,7 @@ export function eAbortado(e) {
 
 /** Confetes dourados e azuis. */
 export function confetes(cena, n = 140) {
-  const cores = ["#f2b53a", "#ffd77a", "#4a86ff", "#ffffff", "#86b0ff"];
+  const cores = ["#f4b942", "#ffd77a", "#e0294f", "#ffffff", "#ff8199"];
   const caixa = document.createElement("div");
   caixa.className = "confetes";
   for (let i = 0; i < n; i++) {

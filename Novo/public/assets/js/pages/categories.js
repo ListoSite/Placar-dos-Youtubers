@@ -79,8 +79,8 @@ function treemap(alvo, dados, total) {
     .append("rect")
     .attr("width", (d) => Math.max(0, d.x1 - d.x0))
     .attr("height", (d) => Math.max(0, d.y1 - d.y0))
-    .attr("rx", 6)
-    .attr("fill", "#4a86ff")
+    .attr("rx", 16)
+    .attr("fill", "#e0294f")
     .attr("fill-opacity", (d) => 0.25 + 0.75 * Math.sqrt(d.data.v / max));
   nos.each(function (d, i) {
     const w = d.x1 - d.x0;

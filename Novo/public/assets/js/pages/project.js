@@ -46,7 +46,7 @@ export async function render(main, { params }) {
         <div class="numero"><span>Lançado</span><strong>${pr.first ? new Date(pr.first).getFullYear() : pr.year || "–"}</strong><small>${pr.first ? `${data(pr.first)}${pr.last && pr.last !== pr.first ? ` a ${data(pr.last)}` : ""}` : ""}</small></div>
       </div>
 
-      ${vids.length ? `<section class="secao"><div class="secao-cabeca"><div><h2>Views de cada episódio</h2><p>${melhor ? `O episódio mais visto é “${esc(melhor.t)}” com ${curto(melhor.v)} views.` : ""}${queda !== null ? ` Do primeiro ao último episódio, as views ${queda >= 0 ? "subiram" : "desceram"} ${pct(Math.abs(queda))}.` : ""} Clica numa barra para abrir o vídeo.</p></div></div><div id="g-ep"></div></section>` : `<div class="aviso info" style="margin-top:28px"><p>Este projeto tem números escritos à mão. Para ter as views de cada episódio, liga-o a uma playlist do YouTube na área de edição.</p></div>`}
+      ${vids.length ? `<section class="secao"><div class="secao-cabeca"><div><h2>Views de cada episódio</h2><p>${melhor ? `O episódio mais visto é “${esc(melhor.t)}” com ${curto(melhor.v)} views.` : ""}${queda !== null ? ` Do primeiro ao último episódio, as views ${queda >= 0 ? "subiram" : "desceram"} ${pct(Math.abs(queda))}.` : ""} Clica numa barra para abrir o vídeo.</p></div></div><div id="g-ep" class="vidro caixa-grafico"></div></section>` : `<div class="aviso info" style="margin-top:28px"><p>Este projeto tem números escritos à mão. Para ter as views de cada episódio, liga-o a uma playlist do YouTube na área de edição.</p></div>`}
 
       <section class="secao grelha-2">
         <div class="painel">

@@ -32,7 +32,7 @@ export async function correr(palco, opts) {
 
   palco.musica("leve", 1);
   cena.innerHTML = `<div class="p-centro">
-    <h1 class="p-titulo p-slam" style="font-size:${vertical ? 170 : 200}px">Quem fez<br>mais views?</h1>
+    <h1 class="p-titulo p-slam" style="font-size:${vertical ? 102 : 120}px">Quem fez<br>mais views?</h1>
     <p class="p-sub p-entra" style="animation-delay:.4s">${esc(mes)}. Tens 5 segundos para adivinhar.</p></div>`;
   palco.tocar("revelar");
   await palco.passo(3400);
@@ -68,7 +68,7 @@ export async function correr(palco, opts) {
     await palco.passo(2800);
   }
 
-  cena.innerHTML = `<div class="p-centro"><h1 class="p-titulo p-slam" style="font-size:${vertical ? 150 : 180}px">Quantas<br>acertaste?</h1><p class="p-sub p-entra" style="animation-delay:.4s">Diz nos comentários.</p></div>`;
+  cena.innerHTML = `<div class="p-centro"><h1 class="p-titulo p-slam" style="font-size:${vertical ? 90 : 108}px">Quantas<br>acertaste?</h1><p class="p-sub p-entra" style="animation-delay:.4s">Diz nos comentários.</p></div>`;
   palco.tocar("vitoria");
   await palco.passo(5000);
 }
