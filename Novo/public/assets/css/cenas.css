@@ -2519,3 +2519,31 @@
   color: #3dffb0;
   font-family: ui-monospace, Menlo, Consolas, monospace;
 }
+
+/* Anúncios compridos dos temas ("Votem com o coração!", "Prato perfeito!"…) cabem sempre no ecrã */
+.bt-anuncio .p-titulo {
+  max-width: 92%;
+  text-align: center;
+}
+.bt-estilo .bt-anuncio.grande .p-titulo,
+.bt-estilo .bt-anuncio.ko .p-titulo {
+  font-size: 150px;
+}
+.vertical.bt-estilo .bt-anuncio .p-titulo,
+.vertical .bt-anuncio .p-titulo {
+  font-size: 110px;
+}
+.vertical .bt-anuncio.grande .p-titulo,
+.vertical.bt-estilo .bt-anuncio.ko .p-titulo {
+  font-size: 120px;
+}
+/* Nas lutas o K.O. continua enorme */
+.bt-luta .bt-anuncio.ko .p-titulo,
+.bt-pixel .bt-anuncio.ko .p-titulo {
+  font-size: 380px;
+}
+.vertical.bt-luta .bt-anuncio.ko .p-titulo,
+.vertical.bt-pixel .bt-anuncio.ko .p-titulo,
+.vertical .bt-anuncio.ko .p-titulo {
+  font-size: 300px;
+}
