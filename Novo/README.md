@@ -33,6 +33,18 @@ A versão antiga continua na pasta `Antigo/`. Esta pasta (`Novo/`) é independen
 
 A quota grátis é de 10 000 unidades por dia. A recolha automática gasta cerca de 2 000 por dia com 400 canais. Cada pesquisa de canais na área de edição gasta 100.
 
+### Entrar no painel com a conta Google
+
+O painel (`/painel/`) aceita o login com Google, só para os emails da lista. A palavra-passe continua a funcionar como alternativa.
+
+1. No mesmo projeto do Google Cloud, vai a **APIs e serviços > Ecrã de consentimento OAuth** (ou **Google Auth Platform**): tipo **Externo**, nome "Placar dos Youtubers", o teu email de apoio. Os âmbitos básicos (email, perfil) chegam.
+2. Em **Público-alvo** (Audience), adiciona o teu email aos **utilizadores de teste**, ou carrega em **Publicar aplicação**.
+3. Em **Credenciais > Criar credenciais > ID do cliente OAuth**: tipo **Aplicação Web**. Em **Origens JavaScript autorizadas** põe o endereço do site (por exemplo `https://o-teu-site.netlify.app`, e o domínio próprio se tiveres) e, para testar em casa, `http://localhost` e `http://localhost:8888`.
+4. Copia o **ID do cliente** (acaba em `.apps.googleusercontent.com`). O segredo do cliente não é preciso para o painel.
+5. No Netlify, cria as variáveis `GOOGLE_CLIENT_ID` (o ID do cliente) e `ADMIN_EMAILS` (o teu email; vários separados por vírgulas) e faz **Trigger deploy**.
+
+O servidor confirma a assinatura do Google, o ID do cliente e o email antes de abrir o painel. Mantém a `ADMIN_PASSWORD`: serve de alternativa e para assinar as sessões.
+
 ## Primeiros passos depois de publicar
 
 1. Abre o site, carrega no lápis (canto superior direito) e entra com a palavra-passe.

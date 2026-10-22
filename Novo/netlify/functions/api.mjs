@@ -8,7 +8,7 @@ import { getJSON, setJSON, listKeys, lerLinhas, adicionarLinhas, armazenamentoAt
 import { dadosPublicos, guardarPublicacao, listarPublicacoes, mudarPublicacao, apagarPublicacao, COLECAO_PUB } from "../lib/publico.mjs";
 import { listarVotacoes, guardarVotacao, apagarVotacao, configPublica } from "../lib/votacoes.mjs";
 import { guardarResultados, resumoHistorico, COLECAO as COLECAO_PALCO } from "../lib/historico.mjs";
-import { adminEnabled, checkPassword, createToken, verifyToken, tokenFromRequest } from "../lib/auth.mjs";
+import { adminEnabled, checkPassword, createToken, verifyToken, tokenFromRequest, googleLigado, googleClientId, verificarGoogle } from "../lib/auth.mjs";
 import { loadDB, saveDB, newPerson, attachChannel, detachChannel, mergePeople, deletePerson, PERSON_FIELDS, DEFAULT_SETTINGS } from "../lib/db.mjs";
 import { rebuild, publicDataset } from "../lib/dataset.mjs";
 import { runDaily, runVideos, refreshProjects, fetchProjectVideos, storeChannelNumbers, addQuota } from "../lib/collect.mjs";
@@ -103,14 +103,24 @@ const publicRoutes = {
   },
   "GET status": async () => {
     const meta = await getJSON("meta", {});
-    return json({ ok: true, hasApiKey: hasApiKey(), adminEnabled: adminEnabled(), armazenamento: await armazenamentoAtual(), supabase: configPublica(), ...meta });
+    return json({ ok: true, hasApiKey: hasApiKey(), adminEnabled: adminEnabled(), loginGoogle: googleLigado() ? googleClientId() : "", armazenamento: await armazenamentoAtual(), supabase: configPublica(), ...meta });
   },
   "GET votacoes": async () => json({ ...(await listarVotacoes()), supabase: configPublica() }, 200, { "cache-control": "public, max-age=15" }),
   "GET publico": async () => json(await dadosPublicos(), 200, { "cache-control": "public, max-age=60" }),
   "GET palco/historico": async () => json(await resumoHistorico(), 200, { "cache-control": "public, max-age=60" }),
   "POST login": async (req) => {
     if (!adminEnabled()) throw new HttpError(503, "A edição está desligada: define ADMIN_PASSWORD nas variáveis do Netlify.");
-    const { password } = await body(req);
+    const { password, google } = await body(req);
+    if (google) {
+      if (!googleLigado()) throw new HttpError(503, "O login com Google não está ligado: define GOOGLE_CLIENT_ID e ADMIN_EMAILS no Netlify.");
+      try {
+        await verificarGoogle(google);
+      } catch (e) {
+        await new Promise((r) => setTimeout(r, 400));
+        throw new HttpError(401, e.message);
+      }
+      return json({ token: createToken() });
+    }
     if (!checkPassword(password)) {
       await new Promise((r) => setTimeout(r, 600));
       throw new HttpError(401, "Palavra-passe errada.");
