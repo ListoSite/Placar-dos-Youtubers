@@ -99,6 +99,8 @@ export async function correr(palco, opts) {
       await palco.esperar(300, { exato: true });
     }
   }
+  const L = (p, valor = "", pos) => ({ id: p.id, nome: p.name, valor: String(valor), pos });
+  palco.resumir({ tipo: "grafico", medida: `${mesNome(m)} em números`, linhas: cartoes.map((c) => ({ nome: c.rotulo, valor: c.fmt(c.v) })), vencedor: L(top.p, curto(top.v), 1) });
   await palco.fecho();
 }
 

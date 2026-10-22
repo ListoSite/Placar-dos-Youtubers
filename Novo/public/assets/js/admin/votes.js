@@ -1,11 +1,62 @@
-// Votações: criar, abrir, fechar e apagar. Os votos são dos visitantes (conta Google).
+// Página pública: os vídeos gravados que lá aparecem (com o link para cada vídeo) e as votações
+// (criar, abrir, fechar e apagar; os votos são dos visitantes, com a conta Google).
 
 import { api, pessoa } from "../data.js";
 import { esc, inteiro } from "../format.js";
 import { $, $$, avatar, confirmar } from "../ui.js";
 import { chamar, escolherPessoa } from "./common.js";
 
-export async function render(alvo) {
+export async function render(raiz) {
+  raiz.innerHTML = `<div class="painel ed-bloco"><h3>A página pública</h3><p class="muted">É o que os visitantes veem no endereço principal do site: as votações, os vídeos que gravaste no Palco e o hall da fama. Não tem nenhuma ligação para este painel.</p>
+      <div class="ed-acoes" style="justify-content:flex-start"><a class="btn btn-pequeno" href="/" target="_blank" rel="noopener">Ver a página pública</a></div></div>
+    <div id="pb-videos"></div><div id="pb-votacoes"></div>`;
+  videos(raiz.querySelector("#pb-videos"));
+  return votacoes(raiz.querySelector("#pb-votacoes"));
+}
+
+/** Vídeos gravados no Palco: título, link do vídeo publicado, mostrar ou esconder. */
+async function videos(alvo) {
+  let r;
+  try {
+    r = await api("admin/publicacoes");
+  } catch (e) {
+    alvo.innerHTML = `<div class="aviso"><p>${esc(e.message)}</p></div>`;
+    return;
+  }
+  const lista = r.publicacoes || [];
+  alvo.innerHTML = `<div class="painel ed-bloco"><h3>Vídeos na página pública</h3>
+    <p class="muted">Cada vídeo que gravas no Palco aparece aqui e na página pública, com o resultado. Depois de o publicares, cola o link (YouTube, TikTok, Instagram) para os visitantes o verem.</p>
+    ${
+      lista.length
+        ? `<div class="pb-lista">${lista
+            .map(
+              (p) => `<div class="pb-item ${p.visivel === false ? "escondido" : ""}" data-id="${esc(p.id)}">
+            <div class="pb-topo"><b>${esc(p.titulo || p.espetaculo)}</b><small>${esc(new Date(p.criado).toLocaleString("pt-PT", { dateStyle: "short", timeStyle: "short" }))} · ${esc(p.espetaculo)} · ${esc(p.formato)}</small></div>
+            <div class="pb-acoes"><input class="input" placeholder="https://youtube.com/shorts/…" value="${esc(p.link || "")}" data-link>
+              <button class="btn btn-pequeno" data-guardar>Guardar link</button>
+              <button class="btn btn-pequeno" data-visivel>${p.visivel === false ? "Mostrar" : "Esconder"}</button>
+              <button class="btn btn-pequeno btn-texto" data-apagar>Apagar</button></div></div>`,
+            )
+            .join("")}</div>`
+        : `<p class="muted" style="margin-top:10px">Ainda não gravaste nenhum vídeo no Palco.</p>`
+    }</div>`;
+  $$("[data-id]", alvo).forEach((el) => {
+    const p = lista.find((x) => String(x.id) === el.dataset.id);
+    $("[data-guardar]", el).addEventListener("click", (e) => chamar("publicacao", { id: p.id, link: $("[data-link]", el).value }, { botao: e.currentTarget, recarregar: false, sucesso: "Link guardado." }).catch(() => {}));
+    $("[data-visivel]", el).addEventListener("click", async (e) => {
+      await chamar("publicacao", { id: p.id, visivel: p.visivel === false }, { botao: e.currentTarget, recarregar: false }).catch(() => {});
+      videos(alvo);
+    });
+    $("[data-apagar]", el).addEventListener("click", async (e) => {
+      if (!(await confirmar("Apagar este vídeo da página pública? Os resultados (rivais, estrelas) ficam.", { sim: "Apagar", perigo: true }))) return;
+      await chamar("publicacao/apagar", { id: p.id }, { botao: e.currentTarget, recarregar: false, sucesso: "Apagado." }).catch(() => {});
+      videos(alvo);
+    });
+  });
+}
+
+async function votacoes(alvo) {
+  const render = () => votacoes(alvo);
   alvo.innerHTML = `<div class="painel ed-bloco"><div class="a-carregar" style="min-height:20vh"><div class="roda"></div></div></div>`;
   let r;
   try {
@@ -38,7 +89,7 @@ export async function render(alvo) {
               ${v.estado !== "aberta" ? `<button class="btn btn-pequeno" data-estado="aberta">Abrir</button>` : ""}
               ${v.estado !== "fechada" ? `<button class="btn btn-pequeno" data-estado="fechada">Fechar</button>` : ""}
               <button class="btn btn-pequeno" data-editar>Editar</button>
-              <a class="btn btn-pequeno" href="#/palco/votacao?votacao=${encodeURIComponent(v.id)}">Mostrar no Palco</a>
+              <a class="btn btn-pequeno" href="#/palco/votacao?para=video&votacao=${encodeURIComponent(v.id)}">Mostrar no Palco</a>
               <button class="btn btn-pequeno btn-texto" data-apagar>Apagar</button>
             </div></div>`;
         })
@@ -120,7 +171,7 @@ function formulario(alvo, v, aoGuardar) {
       mostrar_resultados: $("#vf-mostrar", alvo).checked,
       opcoes,
     };
-    const r = await chamar("votacao", { votacao }, { botao: e.currentTarget, recarregar: false, sucesso: v ? "Votação guardada." : "Votação criada. Já aparece em Votar." }).catch(() => null);
+    const r = await chamar("votacao", { votacao }, { botao: e.currentTarget, recarregar: false, sucesso: v ? "Votação guardada." : "Votação criada. Já aparece na página pública." }).catch(() => null);
     if (r) aoGuardar();
   });
 }

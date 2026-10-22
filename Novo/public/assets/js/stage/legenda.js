@@ -50,7 +50,7 @@ export function textoPublicar(esp, opts, { formato }) {
     bolhas: [`As bolhas dos Youtubers portugueses${cat} 🫧`, `Views, subscritores e Índice: vê quem tem a maior bolha em cada um.`],
     linhas: [`${opts.n || 5} Youtubers, ${opts.meses && opts.meses < 999 ? `${opts.meses} meses` : "todos os meses"}: quem vai na frente? 📈`, `As views mês a mês, linha a linha. Houve ultrapassagens?`],
     numeros: [`${mes} em números${cat} 🔢`, `O total de views, as maiores subidas e o n.º 1 do mês dos Youtubers portugueses.`],
-    votacao: [`O público escolheu: quem ganhou a votação? 🗳️`, `Os vossos votos no site do Placar, do último ao primeiro. Vota na próxima em ${location.host}/#/votar`],
+    votacao: [`O público escolheu: quem ganhou a votação? 🗳️`, `Os vossos votos no site do Placar, do último ao primeiro. Vota na próxima em ${location.host}`],
     desafio: [`Desafio do Placar: quantos pontos fazes? 🧠`, `Pausa, responde e conta os teus pontos. Comenta a tua pontuação!`],
     quiz: [`Quem fez mais? Testa o que sabes sobre os Youtubers portugueses 🤔`, `5 segundos por pergunta. Quantas acertaste? Comenta!`],
     maismenos: [`Mais ou menos? O jogo dos Youtubers portugueses 🔥`, `Até onde consegues ir sem errar? Comenta a tua sequência!`],
@@ -61,7 +61,7 @@ export function textoPublicar(esp, opts, { formato }) {
     cartao: [`${nome(opts.id) || "Youtuber"} em números 📊`, `O Índice de Influência e os números mais importantes.`],
     historia: [`A história de ${nome(opts.id) || "um Youtuber"} no YouTube 📈`, `Do início até hoje, mês a mês, com os momentos marcantes.`],
   }[esp.id] || [esp.nome, ""];
-  const extra = [canal.youtube ? `Subscreve ${canal.youtube} para mais.` : `Segue o ${canal.nome} para mais.`, `Ranking completo em ${site}`].join(" ");
+  const extra = [canal.youtube ? `Subscreve ${canal.youtube} para mais.` : `Segue o ${canal.nome} para mais.`, `Vota e vê os resultados em ${site}`].join(" ");
   const tags = new Set(String(canal.hashtags || "#placardosyoutubers #youtubersportugueses").split(/\s+/).filter(Boolean));
   if (HASH_CATEGORIA[opts.cat]) tags.add(HASH_CATEGORIA[opts.cat]);
   if (formato === "9x16") tags.add("#shorts");

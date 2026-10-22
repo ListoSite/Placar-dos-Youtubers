@@ -59,5 +59,7 @@ export async function correr(palco, opts) {
     } else await palco.esperar(i > 3 ? 650 : 1100);
   }
   await palco.passo(5000);
+  const L = (p, valor = "", pos) => ({ id: p.id, nome: p.name, valor: String(valor), pos });
+  palco.resumir({ tipo: "votacao", titulo: v.titulo, linhas: mostrar.map((o, i) => ({ id: o.p?.id, nome: o.nome, valor: `${Math.round((o.n / total) * 100)}%`, pos: i + 1 })), vencedor: { id: mostrar[0].p?.id, nome: mostrar[0].nome, valor: `${Math.round((mostrar[0].n / total) * 100)}%` } });
   await palco.fecho();
 }

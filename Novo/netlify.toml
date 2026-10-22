@@ -20,6 +20,12 @@
   [headers.values]
     Cache-Control = "public, max-age=604800"
 
+# O painel é só para quem gere o site: fora dos motores de pesquisa
+[[headers]]
+  for = "/painel/*"
+  [headers.values]
+    X-Robots-Tag = "noindex, nofollow"
+
 [[headers]]
   for = "/sw.js"
   [headers.values]

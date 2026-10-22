@@ -2430,3 +2430,12 @@ table.tabela {
     white-space: nowrap;
   }
 }
+
+/* Painel sem sessão: só o ecrã de entrada */
+body.sem-sessao .nav,
+body.sem-sessao .topo-acoes,
+body.sem-sessao .abas,
+body.sem-sessao .menu-movel,
+body.sem-sessao .rodape {
+  display: none !important;
+}

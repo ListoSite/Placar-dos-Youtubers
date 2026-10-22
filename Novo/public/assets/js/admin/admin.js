@@ -11,7 +11,7 @@ const SEPARADORES = [
   { id: "descobrir", nome: "Descobrir canais", mod: "./discover.js" },
   { id: "importar", nome: "Importar dados", mod: "./import.js" },
   { id: "projetos", nome: "Projetos", mod: "./projects.js" },
-  { id: "votacoes", nome: "Votações", mod: "./votes.js" },
+  { id: "publico", nome: "Página pública", mod: "./votes.js" },
   { id: "definicoes", nome: "Definições", mod: "./settings.js" },
 ];
 
@@ -36,11 +36,11 @@ export async function render(main, { params, query }) {
   return mod.render($("#ed-conteudo", main), query);
 }
 
-function login(main, msg = "") {
+export function login(main, msg = "") {
   const ativo = estado.ds?.meta?.adminEnabled;
   main.innerHTML = `<div class="wrap" style="max-width:460px;padding-top:64px">
     <h1 class="placar" style="font-size:var(--t-3xl)">Entrar</h1>
-    <p class="soft" style="margin-top:8px">A área de edição serve para adicionar Youtubers, ligar canais, importar dados e criar projetos.</p>
+    <p class="soft" style="margin-top:8px">O painel do Placar é só para quem gere o site.</p>
     ${ativo === false ? `<div class="aviso" style="margin:16px 0"><p>A edição ainda não está ligada. No Netlify, cria a variável <b>ADMIN_PASSWORD</b> com a tua palavra-passe e volta a publicar o site.</p></div>` : ""}
     ${msg ? `<div class="aviso" style="margin:16px 0"><p>${esc(msg)}</p></div>` : ""}
     <form id="login" class="painel" style="margin-top:20px;display:flex;flex-direction:column;gap:14px">
@@ -68,4 +68,5 @@ export function sair() {
   guardarToken("");
   $("#link-editar")?.classList.remove("ativo");
   location.hash = "#/";
+  location.reload();
 }

@@ -160,5 +160,7 @@ export async function correr(palco, opts) {
   if (!palco.evento("vencedor", { alvo: cena.querySelector(".palco-avatar"), p })) palco.tocar("_destaque");
   palco.explodir(palco.L / 2, palco.A * 0.35, { n: 70 });
   await palco.passo(5000);
+  const L = (p, valor = "", pos) => ({ id: p.id, nome: p.name, valor: String(valor), pos });
+  palco.resumir({ tipo: "ranking", medida: acumulado ? "Views acumuladas" : "Views por mês", vencedor: L(p), nota: `1.º lugar em ${vezes} de ${meses.length} meses` });
   await palco.fecho();
 }

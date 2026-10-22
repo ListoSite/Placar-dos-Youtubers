@@ -52,7 +52,7 @@ export async function api(caminho, { metodo, corpo } = {}) {
   } catch {
     /* resposta vazia */
   }
-  if (res.status === 401 && caminho.startsWith("admin/")) guardarToken("");
+  if (res.status === 401 && caminho !== "login") guardarToken("");
   if (!res.ok) {
     const e = new Error(dados.error || `Erro ${res.status}`);
     e.status = res.status;

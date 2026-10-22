@@ -234,6 +234,11 @@ export class Palco {
     som.tocar(n, opcoes, atraso);
   }
 
+  /** O que o vídeo mostrou, em resumo (vai para a página pública quando o vídeo é gravado). */
+  resumir(r) {
+    this.resumo = r;
+  }
+
   /** Guarda um resultado (duelo, título ou coroa) para o histórico. */
   registar(r) {
     this.resultados.push(r);
@@ -386,7 +391,7 @@ export class Palco {
       <div class="fc-acoes"><span class="fc-botao">Subscrever</span><span class="fc-sino">${SINO}</span><span class="fc-gosto">${GOSTO}</span></div>
       <div class="fc-cursor">${CURSOR}</div>
       ${redes.length ? `<div class="fc-redes">${redes.map((r) => `<span>${r.i}${esc(r.t)}</span>`).join("")}</div>` : ""}
-      <p class="fc-site-linha">Ranking completo em <b class="fc-site">${esc(location.host)}</b></p></div>`;
+      <p class="fc-site-linha">Vota e vê os resultados em <b class="fc-site">${esc(location.host)}</b></p></div>`;
     const raiz = this.cena.firstElementChild;
     animate(raiz.querySelectorAll(".fc-pergunta, .fc-canal, .fc-acoes, .fc-redes, .fc-site-linha"), { translateY: [60, 0], opacity: [0, 1], delay: stagger(140), duration: 900, ease: spring({ stiffness: 140, damping: 14 }) });
     this.tocar("_abertura", {}, 0.1);

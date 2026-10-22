@@ -1,11 +1,11 @@
-// Arranque do site: carrega os dados, trata da navegação, da pesquisa e do som.
+// Arranque do painel (só para o dono do site): pede a palavra-passe, carrega os dados,
+// trata da navegação, da pesquisa e do som. A página pública é outra (publico/publico.js).
 
 import { carregar, estado, procurar, temSessao } from "./data.js";
 import { esc, ha } from "./format.js";
 import { avatar, linkPessoa, $, esconderDica } from "./ui.js";
 import { som } from "./audio.js";
 import { revelarAoScroll, pilulaNav, logoEntra } from "./motion.js";
-import { lerRegressoDoLogin } from "./conta.js";
 
 const ROTAS = [
   { re: /^$/, mod: "./pages/home.js", nav: "#/" },
@@ -16,7 +16,6 @@ const ROTAS = [
   { re: /^projetos$/, mod: "./pages/projects.js", nav: "#/projetos" },
   { re: /^projeto\/(.+)$/, mod: "./pages/project.js", nav: "#/projetos" },
   { re: /^palco(?:\/([a-z-]+))?$/, mod: "./stage/stage.js", nav: "#/palco" },
-  { re: /^votar$/, mod: "./pages/votar.js", nav: "#/votar" },
   { re: /^editar(?:\/([a-z-]+))?$/, mod: "./admin/admin.js", nav: "" },
 ];
 
@@ -53,6 +52,14 @@ async function navegar() {
   limpar = null;
   document.body.classList.remove("modo-palco");
 
+  // Sem sessão não se vê nada: só o ecrã de entrada
+  document.body.classList.toggle("sem-sessao", !temSessao());
+  if (!temSessao()) {
+    const { login } = await import("./admin/admin.js");
+    login(main);
+    document.title = "Entrar · Painel do Placar";
+    return;
+  }
   if (!rota) {
     main.innerHTML = `<div class="wrap pagina-topo"><h1>Página não encontrada</h1><p>Este endereço não existe. <a href="#/">Voltar ao início</a>.</p></div>`;
     return;
@@ -73,6 +80,10 @@ async function navegar() {
     document.title = (main.dataset.titulo ? main.dataset.titulo + " · " : "") + "Placar dos Youtubers";
   } catch (e) {
     console.error(e);
+    if (e.status === 401) {
+      const { login } = await import("./admin/admin.js");
+      return login(main, "A sessão expirou. Entra outra vez.");
+    }
     main.innerHTML = `<div class="wrap pagina-topo"><h1>Não foi possível abrir esta página</h1><p>${esc(e.message)}</p><p><button class="btn" onclick="location.reload()">Tentar de novo</button></p></div>`;
   }
 }
@@ -172,7 +183,4 @@ logoEntra(document.querySelector(".marca svg"));
 iniciarPesquisa();
 iniciarSom();
 $("#link-editar").classList.toggle("ativo", temSessao());
-// Regresso do login com Google (o Supabase volta com os tokens no endereço)
-const regresso = lerRegressoDoLogin();
-if (regresso?.erro) setTimeout(() => import("./ui.js").then(({ toast }) => toast(`Não foi possível entrar: ${regresso.erro}`, { erro: true, tempo: 6000 })), 800);
 navegar();

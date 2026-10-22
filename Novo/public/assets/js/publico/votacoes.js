@@ -1,7 +1,7 @@
-// Votar: as votações do Placar. Qualquer pessoa vê; para votar entra-se com a conta Google
+// Votações na página pública. Qualquer pessoa vê; para votar entra-se com a conta Google
 // (um voto por pessoa em cada votação).
 
-import { api, pessoa } from "../data.js";
+import { api } from "../data.js";
 import { esc, inteiro } from "../format.js";
 import { $, $$, avatar, toast, confirmar } from "../ui.js";
 import { temConta, entrarComGoogle, sairDaConta, quemSou, meusVotos, votar } from "../conta.js";
@@ -18,19 +18,21 @@ function quandoFecha(v) {
   return `Fecha em ${Math.round(h / 24)} dias`;
 }
 
-export async function render(main, { query }) {
-  main.dataset.titulo = "Votar";
-  main.innerHTML = `<div class="wrap">
-    <div class="pagina-topo"><h1>Votar</h1><p>O público também conta. Escolhe nas votações do Placar dos Youtubers; os resultados aparecem nos vídeos do canal.</p></div>
-    <div id="vt-conta" class="vt-conta"></div>
-    <div id="vt-lista"><div class="a-carregar"><div class="roda"></div></div></div>
-  </div>`;
-  let dados;
-  try {
-    dados = await api("votacoes");
-  } catch (e) {
-    $("#vt-lista", main).innerHTML = `<p class="muted">${esc(e.message)}</p>`;
-    return;
+/**
+ * Mostra as votações dentro de main. pessoas: { id: { name, photo } } para as opções que são Youtubers.
+ * dados: a resposta de /api/votacoes (se já foi pedida).
+ */
+export async function montarVotacoes(main, { dados, pessoas = {} } = {}) {
+  const pessoa = (id) => (pessoas[id] ? { id, ...pessoas[id] } : null);
+  main.innerHTML = `<div id="vt-conta" class="vt-conta"></div>
+    <div id="vt-lista"><div class="a-carregar"><div class="roda"></div></div></div>`;
+  if (!dados) {
+    try {
+      dados = await api("votacoes");
+    } catch (e) {
+      $("#vt-lista", main).innerHTML = `<p class="muted">${esc(e.message)}</p>`;
+      return;
+    }
   }
   const cfg = dados.supabase;
   if (!dados.ligado || !cfg) {
@@ -38,7 +40,6 @@ export async function render(main, { query }) {
     $("#vt-lista", main).innerHTML = `<div class="vidro vt-vazio"><h3>As votações ainda não abriram</h3><p class="muted">Volta em breve.</p></div>`;
     return;
   }
-  if (query.get("erro")) toast(query.get("erro"), { erro: true });
   const eu = await quemSou(cfg);
   let votos = await meusVotos(cfg);
 

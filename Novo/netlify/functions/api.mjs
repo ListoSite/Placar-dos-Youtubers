@@ -1,9 +1,11 @@
 // API do Placar dos Youtubers.
-// Público:  GET /api/dataset, /api/videos, /api/daily, /api/status, POST /api/login
-// Edição:   /api/admin/... (precisa do token obtido no login)
+// Público (página pública): GET /api/publico, /api/votacoes, /api/status, POST /api/login
+// Painel (precisa do token obtido no login): GET /api/dataset, /api/videos, /api/daily, /api/sb,
+//   /api/palco/historico e tudo em /api/admin/...
 
 import { json, todayLisbon, pool } from "../lib/util.mjs";
 import { getJSON, setJSON, listKeys, lerLinhas, adicionarLinhas, armazenamentoAtual, estadoSupabase, migrarParaSupabase } from "../lib/storage.mjs";
+import { dadosPublicos, guardarPublicacao, listarPublicacoes, mudarPublicacao, apagarPublicacao, COLECAO_PUB } from "../lib/publico.mjs";
 import { listarVotacoes, guardarVotacao, apagarVotacao, configPublica } from "../lib/votacoes.mjs";
 import { guardarResultados, resumoHistorico, COLECAO as COLECAO_PALCO } from "../lib/historico.mjs";
 import { adminEnabled, checkPassword, createToken, verifyToken, tokenFromRequest } from "../lib/auth.mjs";
@@ -104,6 +106,7 @@ const publicRoutes = {
     return json({ ok: true, hasApiKey: hasApiKey(), adminEnabled: adminEnabled(), armazenamento: await armazenamentoAtual(), supabase: configPublica(), ...meta });
   },
   "GET votacoes": async () => json({ ...(await listarVotacoes()), supabase: configPublica() }, 200, { "cache-control": "public, max-age=15" }),
+  "GET publico": async () => json(await dadosPublicos(), 200, { "cache-control": "public, max-age=60" }),
   "GET palco/historico": async () => json(await resumoHistorico(), 200, { "cache-control": "public, max-age=60" }),
   "POST login": async (req) => {
     if (!adminEnabled()) throw new HttpError(503, "A edição está desligada: define ADMIN_PASSWORD nas variáveis do Netlify.");
@@ -478,7 +481,7 @@ const adminRoutes = {
     const out = { kind: "placar-backup", version: 2, at: new Date().toISOString(), data: {} };
     for (const k of keys) out.data[k] = await getJSON(k, null);
     for (const k of await listKeys("snap/")) out.data[k] = await getJSON(k, null);
-    out.colecoes = { [COLECAO_PALCO]: await lerLinhas(COLECAO_PALCO) };
+    out.colecoes = { [COLECAO_PALCO]: await lerLinhas(COLECAO_PALCO), [COLECAO_PUB]: await lerLinhas(COLECAO_PUB) };
     return out;
   },
   "POST import/backup": async ({ b }) => {
@@ -490,9 +493,9 @@ const adminRoutes = {
       await setJSON(k, v);
     }
     // Histórico do Palco: só entra se ainda estiver vazio (não duplica resultados)
-    const hist = bk.colecoes?.[COLECAO_PALCO];
-    if (Array.isArray(hist) && hist.length && !(await lerLinhas(COLECAO_PALCO)).length) {
-      await adicionarLinhas(COLECAO_PALCO, hist.map(({ id, ...resto }) => resto));
+    for (const col of [COLECAO_PALCO, COLECAO_PUB]) {
+      const hist = bk.colecoes?.[col];
+      if (Array.isArray(hist) && hist.length && !(await lerLinhas(col)).length) await adicionarLinhas(col, hist.map(({ id, ...resto }) => resto));
     }
     const db = await loadDB();
     return { ok: true, people: Object.keys(db.people).length, rebuildWith: db };
@@ -502,7 +505,19 @@ const adminRoutes = {
   // ---------- Histórico do Palco (resultados dos vídeos gravados) ----------
   "POST palco/resultados": async ({ b }) => {
     const n = await guardarResultados(b.resultados, { espetaculo: b.espetaculo, tema: b.tema, formato: b.formato });
-    return { ok: true, guardados: n };
+    const pub = b.publicacao ? await guardarPublicacao({ ...b.publicacao, espetaculo: b.espetaculo, tema: b.tema, formato: b.formato }) : 0;
+    return { ok: true, guardados: n, publicacao: Boolean(pub) };
+  },
+
+  // ---------- Vídeos publicados (aparecem na página pública) ----------
+  "GET publicacoes": async () => ({ publicacoes: await listarPublicacoes({ todas: true }) }),
+  "POST publicacao": async ({ b }) => {
+    await mudarPublicacao(b.id, b);
+    return { ok: true };
+  },
+  "POST publicacao/apagar": async ({ b }) => {
+    await apagarPublicacao(b.id);
+    return { ok: true };
   },
 
   // ---------- Votações ----------
@@ -516,16 +531,20 @@ const adminRoutes = {
   // ---------- Supabase ----------
   "GET supabase": async () => ({ ...(await estadoSupabase()), armazenamento: await armazenamentoAtual() }),
   "POST supabase/migrar": async ({ b }) => {
-    const r = await migrarParaSupabase({ colecoes: [COLECAO_PALCO], inicio: Number(b.inicio) || 0 });
+    const r = await migrarParaSupabase({ colecoes: [COLECAO_PALCO, COLECAO_PUB], inicio: Number(b.inicio) || 0 });
     return { ok: true, ...r };
   },
 };
+
+// Dados do painel: só com sessão iniciada (o painel é só para o dono do site)
+const PRIVADAS = new Set(["GET dataset", "GET videos", "GET daily", "GET sb", "GET palco/historico"]);
 
 export default async (req) => {
   const url = new URL(req.url);
   const route = url.pathname.replace(/^\/api\/?/, "").replace(/\/+$/, "");
   try {
     const pub = publicRoutes[`${req.method} ${route}`];
+    if (pub && PRIVADAS.has(`${req.method} ${route}`) && !verifyToken(tokenFromRequest(req))) throw new HttpError(401, "Entra no painel para ver estes dados.");
     if (pub) return await pub(req, url);
 
     if (route.startsWith("admin/")) {

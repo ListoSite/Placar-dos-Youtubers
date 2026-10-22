@@ -3,10 +3,10 @@
 // Dados (/api/dataset): primeiro da rede, com a última cópia como reserva.
 // A área de edição (/api/admin) nunca passa pela cache.
 
-const VERSAO = "placar-v9";
+const VERSAO = "placar-v10";
 
 self.addEventListener("install", (e) => {
-  e.waitUntil(caches.open(VERSAO).then((c) => c.addAll(["/", "/index.html", "/assets/css/app.css", "/assets/js/app.js", "/assets/icon.svg"]).catch(() => {})));
+  e.waitUntil(caches.open(VERSAO).then((c) => c.addAll(["/", "/index.html", "/assets/css/app.css", "/assets/css/publico.css", "/assets/js/publico/publico.js", "/assets/icon.svg"]).catch(() => {})));
   self.skipWaiting();
 });
 

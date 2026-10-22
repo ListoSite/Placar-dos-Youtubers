@@ -1,0 +1,284 @@
+/* Página pública do Placar dos Youtubers (o resto do estilo vem de app.css) */
+
+html {
+  scroll-behavior: smooth;
+}
+body.publico main {
+  padding-bottom: 40px;
+}
+body.publico .secao {
+  scroll-margin-top: 100px;
+}
+@media (max-width: 1060px) {
+  body.publico .nav.pub-nav {
+    display: flex;
+    margin-left: auto;
+  }
+  body.publico .nav.pub-nav a {
+    padding: 8px 10px;
+    font-size: 12px;
+  }
+  body.publico .topo-acoes {
+    display: none;
+  }
+  body.publico .marca b span {
+    display: none;
+  }
+}
+
+/* Redes do canal */
+.pub-rede {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 12px 7px 8px;
+  border-radius: 999px;
+  border: 1px solid var(--linha);
+  color: var(--texto-2);
+  font-size: var(--t-sm);
+  font-weight: 600;
+  text-decoration: none;
+  transition: border-color 0.2s, transform 0.35s var(--mola);
+}
+.pub-rede:hover {
+  border-color: var(--rubi);
+  transform: translateY(-1px);
+  text-decoration: none;
+}
+.pub-rede svg {
+  width: 20px;
+  height: 20px;
+}
+#pub-rodape-redes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+/* Herói */
+.pub-heroi {
+  position: relative;
+  padding: 80px 0 40px;
+  overflow: hidden;
+}
+.pub-heroi::before {
+  content: "";
+  position: absolute;
+  inset: -20% -10% auto auto;
+  width: 720px;
+  height: 720px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(224, 41, 79, 0.35), transparent 65%);
+  filter: blur(10px);
+  pointer-events: none;
+  animation: pub-orbe 9s ease-in-out infinite alternate;
+}
+@keyframes pub-orbe {
+  to {
+    translate: -60px 40px;
+    scale: 1.1;
+  }
+}
+.pub-etiqueta {
+  display: inline-block;
+  padding: 7px 16px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--ouro) 16%, transparent);
+  color: var(--ouro);
+  font-size: var(--t-xs);
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.pub-heroi h1 {
+  margin-top: 18px;
+  font-size: clamp(48px, 9vw, 112px);
+  line-height: 0.92;
+}
+.pub-heroi h1 span {
+  color: var(--rubi-claro, #ff6b8a);
+}
+.pub-sub {
+  max-width: 640px;
+  margin-top: 22px;
+  font-size: var(--t-lg, 20px);
+  color: var(--texto-2);
+  line-height: 1.5;
+}
+.pub-acoes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 28px;
+}
+.pub-vazio {
+  padding: 28px;
+  border-radius: 24px;
+  text-align: center;
+}
+
+/* Vídeos */
+.pub-videos {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 16px;
+}
+.pv {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 20px;
+  border-radius: 26px;
+}
+.pv-topo {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+}
+.pv-tipo {
+  padding: 5px 12px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.06);
+  font-size: var(--t-xs);
+  font-weight: 700;
+  color: var(--texto-2);
+}
+.pv-topo small {
+  color: var(--texto-3);
+  font-size: var(--t-xs);
+}
+.pv h3 {
+  font-size: var(--t-base);
+  line-height: 1.3;
+}
+.pv-res {
+  flex: 1;
+}
+.pv-duelo {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  gap: 10px;
+  text-align: center;
+}
+.pv-duelo > div {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  opacity: 0.6;
+}
+.pv-duelo > div.ganha {
+  opacity: 1;
+}
+.pv-duelo > div.ganha .avatar {
+  box-shadow: 0 0 0 3px var(--ouro);
+}
+.pv-duelo b {
+  font-size: var(--t-sm);
+}
+.pv-duelo strong {
+  font-family: var(--f-display);
+  font-size: 30px;
+}
+.pv-campeao {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+.pv-campeao .avatar {
+  box-shadow: 0 0 0 3px var(--ouro);
+}
+.pv-campeao small {
+  display: block;
+  color: var(--ouro);
+  font-weight: 800;
+  font-size: var(--t-xs);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+.pv-campeao b {
+  display: block;
+  font-family: var(--f-display);
+  font-size: var(--t-lg, 20px);
+}
+.pv-campeao span {
+  color: var(--texto-3);
+  font-size: var(--t-xs);
+}
+.pv-medida {
+  color: var(--texto-3);
+  font-size: var(--t-xs);
+  margin-bottom: 6px;
+}
+.pv-top {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: grid;
+  gap: 6px;
+}
+.pv-top li {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.pv-top li > span:not(.avatar) {
+  flex: 1;
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-size: var(--t-sm);
+}
+.pv-top li b {
+  font-family: var(--f-display);
+  font-size: var(--t-sm);
+}
+.pv-top li:first-child b {
+  color: var(--ouro);
+}
+.pv-n {
+  width: 32px;
+  text-align: center;
+  font-family: var(--f-display);
+  color: var(--texto-3);
+}
+.pv-caras {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.pv-nota {
+  margin-top: 8px;
+  color: var(--texto-3);
+  font-size: var(--t-sm);
+}
+.pv-ver {
+  align-self: flex-start;
+}
+.pv-breve {
+  color: var(--texto-3);
+  font-size: var(--t-xs);
+}
+
+/* Hall da fama (a página pública) */
+.hall-explica {
+  font-size: var(--t-xs);
+  margin: -4px 0 8px;
+}
+.hall {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 14px;
+}
+body.publico {
+  overflow-x: hidden;
+}
+body.publico .pub-heroi {
+  overflow: visible;
+}
+.vt-vazio p {
+  margin: 6px auto 0;
+}

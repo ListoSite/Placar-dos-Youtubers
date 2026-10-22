@@ -120,6 +120,8 @@ export async function correr(palco, opts) {
   if (!respondidas || certas / respondidas >= 0.5) palco.festa({ forca: 0.7 });
   else palco.tocar("falha");
   await palco.passo(5000);
+  const L = (p, valor = "", pos) => ({ id: p.id, nome: p.name, valor: String(valor), pos });
+  palco.resumir({ tipo: "jogo", nota: `${rondas.length} perguntas: quem fez mais?`, linhas: rondas.slice(0, 6).map((r) => ({ id: (r.vx > r.vy ? r.x : r.y).id, nome: `${r.x.name} vs ${r.y.name}`, valor: (r.vx > r.vy ? r.x : r.y).name })) });
   await palco.fecho();
 }
 

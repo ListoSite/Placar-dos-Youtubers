@@ -767,7 +767,7 @@
       alert("Os dados são grandes demais para enviar diretamente. Usa \"Copiar resultados\" e cola no Placar.");
       return;
     }
-    const w = window.open(`${ORIGEM}/#/editar/importar?${param}=${encodeURIComponent(b64)}`, "_blank");
+    const w = window.open(`${ORIGEM}/painel/#/editar/importar?${param}=${encodeURIComponent(b64)}`, "_blank");
     if (!w) alert("O browser bloqueou a nova janela. Usa \"Copiar\" e cola no Placar, em Editar > Importar dados.");
   }
   async function copiar(obj, botaoEl) {

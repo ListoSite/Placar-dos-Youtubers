@@ -77,5 +77,7 @@ export async function correr(palco, opts) {
   cena.innerHTML = `<div class="p-centro"><h1 class="p-titulo p-slam" style="font-size:${vertical ? 100 : 120}px">Quantos<br>adivinhaste?</h1><p class="p-sub p-entra" style="animation-delay:.4s">Diz nos comentários.</p></div>`;
   palco.festa({ forca: 0.7 });
   await palco.passo(4500);
+  const L = (p, valor = "", pos) => ({ id: p.id, nome: p.name, valor: String(valor), pos });
+  palco.resumir({ tipo: "jogo", nota: "Adivinha quem é", linhas: escolhidos.map((p) => L(p)) });
   await palco.fecho();
 }

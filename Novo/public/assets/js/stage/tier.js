@@ -94,5 +94,7 @@ export async function correr(palco, opts) {
   palco.ambiente.chuva({ n: 120 });
   await palco.passo(6500);
   palco.tela.classList.remove("denso");
+  const L = (p, valor = "", pos) => ({ id: p.id, nome: p.name, valor: String(valor), pos });
+  palco.resumir({ tipo: "ranking", medida: met.nome(opts.m), linhas: lista.filter((x) => x.fila === "S" || x.fila === "A").map((x) => L(x.p, `Fila ${x.fila}`)), vencedor: lista[0] ? L(lista[0].p, "Fila S", 1) : null });
   await palco.fecho();
 }

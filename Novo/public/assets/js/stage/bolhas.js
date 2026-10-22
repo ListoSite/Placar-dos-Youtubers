@@ -154,5 +154,7 @@ export async function correr(palco, opts) {
   }
   palco.tocar("whoosh");
   await animar(palco, 500, () => {});
+  const L = (p, valor = "", pos) => ({ id: p.id, nome: p.name, valor: String(valor), pos });
+  palco.resumir({ tipo: "grafico", medida: `Os maiores em ${mesNome(m)}`, linhas: base.slice(0, 10).map((p, i) => L(p, fases[0].met.fmt(fases[0].vals[i]))) });
   await palco.fecho();
 }

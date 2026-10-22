@@ -29,7 +29,7 @@ export function lerRegressoDoLogin() {
   const h = location.hash.replace(/^#/, "");
   if (!/(^|&)(access_token|error)=/.test(h)) return null;
   const p = new URLSearchParams(h);
-  let destino = "#/votar";
+  let destino = "#votacoes";
   try {
     destino = sessionStorage.getItem(VOLTAR) || destino;
     sessionStorage.removeItem(VOLTAR);
@@ -49,7 +49,7 @@ export function temConta() {
 
 export function entrarComGoogle(cfg) {
   try {
-    sessionStorage.setItem(VOLTAR, location.hash || "#/votar");
+    sessionStorage.setItem(VOLTAR, "#votacoes");
   } catch {
     /* nada */
   }

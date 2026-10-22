@@ -110,6 +110,8 @@ export async function correr(palco, opts) {
   faixa.innerHTML = "";
   palco.festa({ forca: 0.6, x: p0.x, y: p0.y });
   await palco.passo(3000);
+  const L = (p, valor = "", pos) => ({ id: p.id, nome: p.name, valor: String(valor), pos });
+  palco.resumir({ tipo: "ranking", medida: titulo, linhas: lista.map((x, i) => L(x.p, met.fmt(x.v), i + 1)), vencedor: L(lista[0].p, met.fmt(lista[0].v), 1) });
   await palco.fecho();
 }
 

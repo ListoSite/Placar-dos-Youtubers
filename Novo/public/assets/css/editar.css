@@ -525,3 +525,37 @@ details > summary {
   cursor: pointer;
   padding: 0 4px;
 }
+
+/* Página pública: vídeos */
+.pb-lista {
+  display: grid;
+  gap: 10px;
+  margin-top: 12px;
+}
+.pb-item {
+  padding: 12px 14px;
+  border-radius: 16px;
+  border: 1px solid var(--linha);
+  background: rgba(255, 255, 255, 0.02);
+}
+.pb-item.escondido {
+  opacity: 0.55;
+}
+.pb-topo b {
+  display: block;
+}
+.pb-topo small {
+  color: var(--texto-3);
+  font-size: var(--t-xs);
+}
+.pb-acoes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 10px;
+  align-items: center;
+}
+.pb-acoes .input {
+  flex: 1;
+  min-width: 220px;
+}

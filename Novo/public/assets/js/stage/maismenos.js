@@ -117,5 +117,7 @@ export async function correr(palco, opts) {
     <p class="p-sub p-entra" style="animation-delay:.4s">${respondidas ? `Melhor sequência: ${melhorSerie}` : "Diz nos comentários até onde chegaste."}</p></div>`;
   palco.festa({ forca: 0.8 });
   await palco.passo(5000);
+  const L = (p, valor = "", pos) => ({ id: p.id, nome: p.name, valor: String(valor), pos });
+  palco.resumir({ tipo: "jogo", nota: "Mais ou menos: uma corrente de comparações", linhas: lista.slice(0, 10).map((x) => L(x.p, met.fmt(x.v))) });
   await palco.fecho();
 }

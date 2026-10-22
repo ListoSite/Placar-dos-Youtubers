@@ -233,5 +233,7 @@ export async function correr(palco, opts) {
     palco.festa({ som: !palco.evento("vencedor", { alvo: cena.querySelector(".palco-avatar"), p: vencedor }) });
   }
   await palco.passo(6000);
+  const L = (p, valor = "", pos) => ({ id: p.id, nome: p.name, valor: String(valor), pos });
+  palco.resumir({ tipo: "duelo", linhas: [L(a, jogo ? golos.a : ganhas.a), L(b, jogo ? golos.b : ganhas.b)], vencedor: vencedor ? L(vencedor) : null, placar: jogo ? `${golos.a}–${golos.b}` : `${ganhas.a}–${ganhas.b}`, nota: jogo ? (penaltis ? "Decidido nos penáltis" : "Jogo de futebol") : ko ? "Vitória por K.O." : "Vitória por pontos" });
   await palco.fecho();
 }

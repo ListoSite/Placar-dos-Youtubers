@@ -110,5 +110,7 @@ export async function correr(palco, opts) {
   centroEl.innerHTML = `<small>${esc(mesNome(m))}</small><b class="p-slam">${esc(fmt(total))}</b><span>${esc(unidade)}</span>`;
   palco.festa({ forca: 0.5, x: centro.x, y: centro.y });
   await palco.passo(3000);
+  const L = (p, valor = "", pos) => ({ id: p.id, nome: p.name, valor: String(valor), pos });
+  palco.resumir({ tipo: "grafico", medida: porCanais ? "Canais por categoria" : `Views por categoria em ${mesNome(m)}`, linhas: fatias.map((f) => ({ nome: f.cat, valor: `${Math.round(f.frac * 100)}%` })) });
   await palco.fecho();
 }

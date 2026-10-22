@@ -4,8 +4,10 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <title>Placar dos Youtubers</title>
-    <meta name="description" content="Quem são os maiores Youtubers de Portugal? Rankings mensais, views, subscritores, projetos e o Índice de Influência de cada criador português." />
+    <meta name="description" content="Vota nos Youtubers portugueses e vê os resultados dos vídeos do Placar dos Youtubers: torneios, batalhas, rankings, clássicos e o hall da fama." />
     <meta name="theme-color" content="#12060b" />
+    <meta property="og:title" content="Placar dos Youtubers" />
+    <meta property="og:description" content="Vota nos Youtubers portugueses e vê os resultados dos vídeos do Placar." />
     <link rel="icon" href="/assets/icon.svg" type="image/svg+xml" />
     <link rel="manifest" href="/manifest.webmanifest" />
     <link rel="apple-touch-icon" href="/assets/icons/apple-touch-icon.png" />
@@ -16,65 +18,34 @@
     <link rel="preload" href="/assets/fonts/unbounded-latin-wght-normal.woff2" as="font" type="font/woff2" crossorigin />
     <link rel="preload" href="/assets/fonts/plus-jakarta-sans-latin-wght-normal.woff2" as="font" type="font/woff2" crossorigin />
     <link rel="stylesheet" href="/assets/css/app.css" />
-    <link rel="stylesheet" href="/assets/css/palco.css" />
-    <link rel="stylesheet" href="/assets/css/editar.css" />
-    <script src="/assets/vendor/d3.min.js" defer></script>
-    <script src="/assets/js/app.js" type="module"></script>
+    <link rel="stylesheet" href="/assets/css/publico.css" />
+    <script src="/assets/js/publico/publico.js" type="module"></script>
   </head>
-  <body>
+  <body class="publico">
     <a class="sr-only" href="#conteudo">Saltar para o conteúdo</a>
     <header class="topo" id="topo">
       <div class="wrap">
-        <a class="marca" href="#/" aria-label="Placar dos Youtubers, início">
-          <svg viewBox="0 0 40 40" aria-hidden="true"><defs><linearGradient id="lg-index" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ff4d70"/><stop offset=".55" stop-color="#c3123e"/><stop offset="1" stop-color="#6e0820"/></linearGradient></defs><rect width="40" height="40" rx="13" fill="url(#lg-index)"/><path class="marca-play" d="M16 12.6c0-1.5 1.6-2.4 2.9-1.6l10.1 6.4c1.2.8 1.2 2.5 0 3.3l-10.1 6.4c-1.3.8-2.9-.1-2.9-1.6z" fill="#fff"/><circle class="marca-ponto" cx="32" cy="8" r="4.2" fill="#f4b942" stroke="#12060b" stroke-width="2"/></svg>
+        <a class="marca" href="#inicio" aria-label="Placar dos Youtubers, início">
+          <svg viewBox="0 0 40 40" aria-hidden="true"><defs><linearGradient id="lg-pub" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ff4d70"/><stop offset=".55" stop-color="#c3123e"/><stop offset="1" stop-color="#6e0820"/></linearGradient></defs><rect width="40" height="40" rx="13" fill="url(#lg-pub)"/><path class="marca-play" d="M16 12.6c0-1.5 1.6-2.4 2.9-1.6l10.1 6.4c1.2.8 1.2 2.5 0 3.3l-10.1 6.4c-1.3.8-2.9-.1-2.9-1.6z" fill="#fff"/><circle class="marca-ponto" cx="32" cy="8" r="4.2" fill="#f4b942" stroke="#12060b" stroke-width="2"/></svg>
           <b>Placar <span>dos Youtubers</span></b>
         </a>
-        <nav class="nav" id="nav" aria-label="Principal">
-          <a href="#/">Início</a>
-          <a href="#/ranking">Ranking</a>
-          <a href="#/comparar">Comparar</a>
-          <a href="#/categorias">Categorias</a>
-          <a href="#/projetos">Projetos</a>
-          <a href="#/palco">Palco</a>
-          <a href="#/votar">Votar</a>
+        <nav class="nav pub-nav" aria-label="Secções">
+          <a href="#votacoes">Votar</a>
+          <a href="#videos">Vídeos</a>
+          <a href="#hall">Hall da fama</a>
         </nav>
-        <div class="topo-acoes">
-          <div class="pesquisa" role="search">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="7" /><path d="m20 20-3.5-3.5" /></svg>
-            <label class="sr-only" for="pesquisa">Procurar Youtuber</label>
-            <input id="pesquisa" type="search" placeholder="Procurar Youtuber" autocomplete="off" />
-            <div class="pesquisa-lista" id="pesquisa-lista" role="listbox"></div>
-          </div>
-          <button class="botao-icone" id="som" type="button" aria-pressed="false" title="Ligar som">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M11 5 6 9H3v6h3l5 4z" /><path class="onda" d="M16 9a4 4 0 0 1 0 6M19 6a8 8 0 0 1 0 12" /><path class="corte" d="m16 9 6 6m0-6-6 6" /></svg>
-          </button>
-          <a class="botao-icone" href="#/editar" id="link-editar" title="Editar">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M4 20h4L19 9l-4-4L4 16z" /><path d="m13.5 6.5 4 4" /></svg>
-            <span class="sr-only">Editar</span>
-          </a>
-        </div>
+        <div class="topo-acoes" id="pub-redes"></div>
       </div>
     </header>
     <main id="conteudo" tabindex="-1">
       <div class="a-carregar"><div class="roda" aria-label="A carregar"></div></div>
     </main>
-    <footer class="rodape" id="rodape">
+    <footer class="rodape">
       <div class="wrap">
-        <p>Placar dos Youtubers. Dados públicos do YouTube, do Social Blade e de recolha manual.</p>
-        <p id="rodape-atualizado"></p>
+        <p>Placar dos Youtubers. Os números vêm de dados públicos do YouTube e do Social Blade.</p>
+        <p id="pub-rodape-redes"></p>
       </div>
     </footer>
-    <nav class="abas" id="abas" aria-label="Navegação">
-      <span class="abas-pilula" aria-hidden="true"></span>
-      <a href="#/"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 11 12 4l9 7"/><path d="M5 10v10h14V10"/></svg><span>Início</span></a>
-      <a href="#/ranking"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg><span>Ranking</span></a>
-      <a href="#/comparar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="8" cy="9" r="3.5"/><circle cx="16" cy="9" r="3.5"/><path d="M2 20c.8-3 3.3-5 6-5s5.2 2 6 5M14 15.2c.6-.1 1.3-.2 2-.2 2.7 0 5.2 2 6 5"/></svg><span>Comparar</span></a>
-      <a href="#/categorias"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="8" height="8" rx="2.5"/><rect x="13" y="3" width="8" height="8" rx="2.5"/><rect x="3" y="13" width="8" height="8" rx="2.5"/><rect x="13" y="13" width="8" height="8" rx="2.5"/></svg><span>Categorias</span></a>
-      <a href="#/projetos"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="3"/><path d="m10 9 5 3-5 3z"/></svg><span>Projetos</span></a>
-      <a href="#/palco"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3 14.5 8.5 20 9.3 16 13.2 17 19 12 16.3 7 19 8 13.2 4 9.3 9.5 8.5z"/></svg><span>Palco</span></a>
-      <a href="#/votar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 13h16v7H4z"/><path d="M8 13V6l4-3 4 3v7"/><path d="m10 9 1.5 1.5L14 8"/></svg><span>Votar</span></a>
-    </nav>
     <div class="toasts" id="toasts" aria-live="polite"></div>
-    <div class="dica" id="dica" role="tooltip"></div>
   </body>
 </html>

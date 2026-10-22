@@ -175,5 +175,7 @@ export async function correr(palco, opts) {
     <p class="p-sub p-entra" style="animation-delay:.9s">Comenta a tua pontuação!</p></div>`;
   palco.festa({ forca: 0.8 });
   await palco.passo(5500);
+  const L = (p, valor = "", pos) => ({ id: p.id, nome: p.name, valor: String(valor), pos });
+  palco.resumir({ tipo: "jogo", nota: `${perguntas.length} perguntas para jogar com o vídeo` });
   await palco.fecho();
 }

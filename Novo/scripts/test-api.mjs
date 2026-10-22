@@ -21,14 +21,18 @@ function check(name, cond, extra = "") {
   if (!cond) failures++;
 }
 
-const ds0 = await call("GET", "dataset");
-check("dataset público", ds0.status === 200 && ds0.data.people.length > 0, `(${ds0.data.people?.length} pessoas, meses ${ds0.data.months?.[0]}→${ds0.data.currentMonth})`);
+const fechado = await call("GET", "dataset");
+check("dados do painel fechados sem sessão", fechado.status === 401);
+const pub0 = await call("GET", "publico");
+check("página pública responde", pub0.status === 200 && Array.isArray(pub0.data.publicacoes) && pub0.data.canal, JSON.stringify(Object.keys(pub0.data)));
 
 const bad = await call("POST", "login", { password: "errada" });
 check("login errado recusado", bad.status === 401);
 const ok = await call("POST", "login", { password: process.env.ADMIN_PASSWORD || "teste" });
 check("login certo", ok.status === 200 && ok.data.token);
 token = ok.data.token;
+const ds0 = await call("GET", "dataset");
+check("dataset com sessão", ds0.status === 200 && ds0.data.people.length > 0, `(${ds0.data.people?.length} pessoas, meses ${ds0.data.months?.[0]}→${ds0.data.currentMonth})`);
 
 const noAuth = await fetch(BASE + "/api/admin/db");
 check("admin sem token recusado", noAuth.status === 401);
@@ -99,10 +103,21 @@ const ttEnt = w.socials?.tiktok?.entries || [];
 check("TikTok: total de hoje e do fim de setembro", ttEnt.some((e) => e.date === "2026-10-22" && e.followers === 125400) && ttEnt.some((e) => e.date === "2026-09-30" && e.followers === 121300), JSON.stringify(ttEnt.slice(-2)));
 
 // Histórico do Palco
-const hist = await call("POST", "admin/palco/resultados", { espetaculo: "batalha", resultados: [{ tipo: "duelo", a: wuant.id, b: created.data.person.id, vence: wuant.id, placar: "3-1" }, { tipo: "titulo", vence: wuant.id }, { tipo: "duelo", a: "x", b: "x", vence: "x" }] });
+const hist = await call("POST", "admin/palco/resultados", { espetaculo: "batalha", publicacao: { titulo: "Wuant vs Novo", resumo: { tipo: "duelo", linhas: [{ id: wuant.id, nome: "Wuant", valor: "3" }, { id: created.data.person.id, nome: "Novo", valor: "1" }], vencedor: { id: wuant.id, nome: "Wuant" }, placar: "3–1" } }, resultados: [{ tipo: "duelo", a: wuant.id, b: created.data.person.id, vence: wuant.id, placar: "3-1" }, { tipo: "titulo", vence: wuant.id }, { tipo: "duelo", a: "x", b: "x", vence: "x" }] });
 check("guardar resultados do Palco (ignora os inválidos)", hist.status === 200 && hist.data.guardados === 2, JSON.stringify(hist.data));
 const resumo = await call("GET", "palco/historico");
 check("histórico: confronto e estrela", resumo.data.pessoas?.[wuant.id]?.estrelas === 1 && resumo.data.pessoas?.[wuant.id]?.v === 1, JSON.stringify(resumo.data.pessoas?.[wuant.id]));
+const pubs = await call("GET", "admin/publicacoes");
+const pub = pubs.data.publicacoes?.[0];
+check("vídeo gravado vai para a página pública", pub?.titulo === "Wuant vs Novo" && pub.dados?.resumo?.placar === "3–1", JSON.stringify(pub));
+const mal = await call("POST", "admin/publicacao", { id: pub.id, link: "javascript:alert(1)" });
+check("link do vídeo só https", mal.status === 400);
+await call("POST", "admin/publicacao", { id: pub.id, link: "https://youtube.com/shorts/abc" });
+const pub1 = await call("GET", "publico");
+check("página pública mostra o vídeo, o link e o Youtuber", pub1.data.publicacoes?.[0]?.link === "https://youtube.com/shorts/abc" && pub1.data.pessoas?.[wuant.id]?.name === "Wuant", JSON.stringify(pub1.data.publicacoes?.[0]));
+await call("POST", "admin/publicacao", { id: pub.id, visivel: false });
+const pub2 = await call("GET", "publico");
+check("vídeo escondido sai da página pública", !pub2.data.publicacoes.length);
 const semSessao = await fetch(BASE + "/api/admin/palco/resultados", { method: "POST", body: "{}" });
 check("histórico só com sessão", semSessao.status === 401);
 

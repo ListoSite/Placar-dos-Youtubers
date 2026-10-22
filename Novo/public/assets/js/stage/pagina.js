@@ -319,12 +319,15 @@ function opcoes(main, esp, query) {
     palco.sair();
     // O histórico (rivais, clássicos, estrelas) só conta os espetáculos gravados em vídeo
     let historico = null;
-    if (!erro && video && palco.resultados.length) {
-      if (!temSessao()) historico = { erro: "Inicia sessão em Editar para os resultados deste vídeo contarem para o histórico (clássicos, rivais e estrelas)." };
+    // e cada vídeo gravado aparece na página pública (com o resumo do que mostrou)
+    if (!erro && video) {
+      if (!temSessao()) historico = { erro: "A sessão expirou: este vídeo não foi guardado no histórico nem na página pública." };
       else {
         try {
-          const r = await api("admin/palco/resultados", { corpo: { espetaculo: esp.id, tema: temaId, formato, resultados: palco.resultados } });
-          historico = { n: r.guardados };
+          const t = textoPublicar(esp, opts, { formato, temaId });
+          const publicacao = { titulo: t.titulo, legenda: t.legenda, resumo: palco.resumo || { tipo: "jogo" } };
+          const r = await api("admin/palco/resultados", { corpo: { espetaculo: esp.id, tema: temaId, formato, resultados: palco.resultados, publicacao } });
+          historico = { n: r.guardados, publicacao: r.publicacao };
           carregarHistorico({ forcar: true });
         } catch (e) {
           historico = { erro: `Não foi possível guardar no histórico: ${e.message}` };
@@ -349,7 +352,7 @@ function mostrarPublicar(alvo, esp, opts, { formato, temaId, video, historico })
   const t = textoPublicar(esp, opts, { formato, temaId });
   const nomeFicheiro = `placar-${esp.id}-${temaId}-${formato}-${new Date().toISOString().slice(0, 10)}.${video?.ext || "mp4"}`;
   alvo.innerHTML = `<section class="secao"><div class="secao-cabeca"><div><h2>Pronto para publicar</h2><p>${esc(t.dica)}</p></div></div>
-    ${historico ? `<div class="aviso ${historico.erro ? "" : "info"}" style="margin-bottom:14px"><p>${historico.erro ? esc(historico.erro) : `Guardado no histórico do Palco: ${historico.n} ${historico.n === 1 ? "resultado" : "resultados"} (confrontos, estrelas e coroas).`}</p></div>` : ""}
+    ${historico ? `<div class="aviso ${historico.erro ? "" : "info"}" style="margin-bottom:14px"><p>${historico.erro ? esc(historico.erro) : `${historico.n ? `Guardado no histórico do Palco: ${historico.n} ${historico.n === 1 ? "resultado" : "resultados"} (confrontos, estrelas e coroas). ` : ""}${historico.publicacao ? "O vídeo já aparece na página pública; depois de o publicares, junta o link em Editar, Página pública." : ""}`}</p></div>` : ""}
     <div class="pl-publicar ${video ? "com-video" : ""}">
       ${
         video

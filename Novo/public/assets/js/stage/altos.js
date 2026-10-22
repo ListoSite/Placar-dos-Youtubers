@@ -79,5 +79,7 @@ export async function correr(palco, opts) {
     palco.festa({ som: !palco.evento("vencedor", { alvo: cena.querySelector(".palco-avatar"), p: rei.p }) });
     await palco.passo(6000);
   }
+  const L = (p, valor = "", pos) => ({ id: p.id, nome: p.name, valor: String(valor), pos });
+  palco.resumir({ tipo: "ranking", medida: `Subidas no ranking de ${mesNome(m)}`, linhas: subidas.map((x) => L(x.p, `+${x.ant - x.pos} lugares`)), vencedor: rei ? L(rei.p, `${rei.ant}.º → ${rei.pos}.º`) : null });
   await palco.fecho();
 }

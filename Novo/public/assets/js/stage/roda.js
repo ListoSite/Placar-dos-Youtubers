@@ -122,6 +122,8 @@ export async function correr(palco, opts) {
   }
   palco.festa({ forca: 0.6 });
   await palco.esperar(1500);
+  const L = (p, valor = "", pos) => ({ id: p.id, nome: p.name, valor: String(valor), pos });
+  palco.resumir({ tipo: "jogo", nota: "A roda da sorte escolheu", linhas: [...usados].map((i) => L(pessoas[i])) });
   await palco.fecho();
 }
 

@@ -330,6 +330,8 @@ export async function correr(palco, opts) {
   await palco.esperar(300, { exato: true });
   palco.festa({ forca: 1.2, som: !palco.evento("vencedor", { alvo: cena.querySelector(".palco-avatar"), p: campeao }) });
   await palco.passo(6500);
+  const L = (p, valor = "", pos) => ({ id: p.id, nome: p.name, valor: String(valor), pos });
+  palco.resumir({ tipo: "torneio", linhas: lista.map((p) => L(p)), vencedor: L(campeao), nota: `${lista.length} Youtubers em eliminatórias` });
   await palco.fecho();
 }
 

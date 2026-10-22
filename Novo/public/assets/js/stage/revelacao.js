@@ -121,5 +121,7 @@ export async function correr(palco, opts) {
   palco.tocar("_destaque", {}, 0.4);
   palco.explodir(palco.L / 2, palco.A * 0.4, { n: 80 });
   await palco.passo(6500);
+  const L = (p, valor = "", pos) => ({ id: p.id, nome: p.name, valor: String(valor), pos });
+  palco.resumir({ tipo: "ranking", titulo, medida: met.nome(opts.m), linhas: top.map((x) => L(x.p, met.fmt(x.v), x.pos)), vencedor: L(top[0].p, met.fmt(top[0].v), 1) });
   await palco.fecho();
 }

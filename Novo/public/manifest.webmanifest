@@ -1,9 +1,9 @@
 {
   "name": "Placar dos Youtubers",
   "short_name": "Placar",
-  "description": "Os maiores Youtubers de Portugal: rankings mensais, perfis, projetos e o Índice de Influência.",
+  "description": "Vota nos Youtubers portugueses e vê os resultados dos vídeos do Placar dos Youtubers.",
   "lang": "pt-PT",
-  "start_url": "/#/",
+  "start_url": "/",
   "scope": "/",
   "display": "standalone",
   "orientation": "any",
@@ -13,10 +13,5 @@
     { "src": "/assets/icons/icon-192.png", "sizes": "192x192", "type": "image/png" },
     { "src": "/assets/icons/icon-512.png", "sizes": "512x512", "type": "image/png" },
     { "src": "/assets/icons/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
-  ],
-  "shortcuts": [
-    { "name": "Ranking", "url": "/#/ranking" },
-    { "name": "Palco", "url": "/#/palco" },
-    { "name": "Editar", "url": "/#/editar" }
   ]
 }

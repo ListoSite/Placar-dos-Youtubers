@@ -163,5 +163,7 @@ export async function correr(palco, opts) {
     palco.festa({ forca: 0.5 });
   }
   await palco.passo(3800);
+  const L = (p, valor = "", pos) => ({ id: p.id, nome: p.name, valor: String(valor), pos });
+  palco.resumir({ tipo: "grafico", medida: `Views de ${mesNome(meses[0])} a ${mesNome(meses[meses.length - 1])}`, linhas: cresc.map((x) => L(x.s.p, `${x.pct >= 0 ? "+" : "−"}${Math.abs(Math.round(x.pct))}%`)), vencedor: lider !== null ? L(series[lider].p) : null });
   await palco.fecho();
 }

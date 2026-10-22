@@ -139,3 +139,19 @@ as $$
 $$;
 revoke all on function public.resultados_votacao(uuid) from public;
 grant execute on function public.resultados_votacao(uuid) to anon, authenticated, service_role;
+
+-- ---------------------------------------------------------------------------
+-- Vídeos publicados (o que aparece na página pública, guardado ao gravar no Palco)
+-- ---------------------------------------------------------------------------
+create table if not exists public.palco_publicacoes (
+  id bigint generated always as identity primary key,
+  criado timestamptz not null default now(),
+  espetaculo text not null default '',
+  titulo text not null default '',
+  tema text not null default '',
+  formato text not null default '',
+  link text not null default '',
+  visivel boolean not null default true,
+  dados jsonb not null default '{}'::jsonb
+);
+alter table public.palco_publicacoes enable row level security;

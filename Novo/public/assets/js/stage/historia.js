@@ -150,5 +150,7 @@ export async function correr(palco, opts) {
   cena.querySelectorAll(".hs-num b").forEach((b, k) => contar(b, Number(b.dataset.v), { formato: numeros[k].fmt, duracao: 1200, atraso: 400 + k * 140 }));
   palco.festa({ forca: 0.8, som: !palco.evento("vencedor", { alvo: cena.querySelector(".palco-avatar"), p }) });
   await palco.passo(6500);
+  const L = (p, valor = "", pos) => ({ id: p.id, nome: p.name, valor: String(valor), pos });
+  palco.resumir({ tipo: "historia", vencedor: L(p), nota: rec.melhor ? `Melhor mês: ${curto(rec.melhor.v)} views em ${mesNome(rec.melhor.m)}` : "" });
   await palco.fecho();
 }

@@ -3,7 +3,7 @@
 // um voto por pessoa e por votação). Aqui o servidor lista as votações com as contagens
 // e cria, muda ou apaga votações (com a chave service_role).
 
-import { pedidoSupabase, supabaseConfigurado } from "./storage.mjs";
+import { pedidoSupabase, supabaseConfigurado, getJSON } from "./storage.mjs";
 
 export function exigirSupabase() {
   if (!supabaseConfigurado()) {
@@ -31,7 +31,11 @@ export async function listarVotacoes({ todas = false } = {}) {
     const c = mostrar ? await contagens(v.id) : null;
     out.push({ ...v, aberta: v.estado === "aberta" && !fechou && Date.parse(v.abre) <= agora, fechou, votos: c, total: c ? Object.values(c).reduce((a, b) => a + b, 0) : null });
   }
-  return { ligado: true, votacoes: out };
+  // Nome e foto dos Youtubers que são opções (a página pública não tem os dados do painel)
+  const ids = new Set(out.flatMap((v) => v.opcoes.map((o) => o.pessoa).filter(Boolean)));
+  const pessoas = {};
+  if (ids.size) for (const p of (await getJSON("dataset"))?.people || []) if (ids.has(p.id)) pessoas[p.id] = { name: p.name, photo: p.photo || "", category: p.category || "" };
+  return { ligado: true, votacoes: out, pessoas };
 }
 
 const texto = (x, max) => String(x ?? "").trim().slice(0, max);

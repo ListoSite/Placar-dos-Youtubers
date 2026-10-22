@@ -247,6 +247,22 @@ export async function adicionarLinhas(colecao, linhas) {
   for (const l of linhas) atual.push({ id: ++id, criado: new Date().toISOString(), ...l });
   await b.set(`col/${colecao}`, atual);
 }
+/** Muda campos de uma linha (pelo id). */
+export async function atualizarLinha(colecao, id, campos) {
+  const b = await backend();
+  if (b === supa) return sb(`${colecao}?id=eq.${encodeURIComponent(id)}`, { metodo: "PATCH", corpo: campos, prefer: "return=minimal" });
+  const atual = (await b.get(`col/${colecao}`)) || [];
+  const l = atual.find((x) => String(x.id) === String(id));
+  if (l) Object.assign(l, campos);
+  await b.set(`col/${colecao}`, atual);
+}
+/** Apaga uma linha (pelo id). */
+export async function apagarLinha(colecao, id) {
+  const b = await backend();
+  if (b === supa) return apagar(colecao, [id]);
+  const atual = (await b.get(`col/${colecao}`)) || [];
+  await b.set(`col/${colecao}`, atual.filter((x) => String(x.id) !== String(id)));
+}
 export async function lerLinhas(colecao) {
   const b = await backend();
   if (b === supa) return supa.lerLinhas(colecao);
