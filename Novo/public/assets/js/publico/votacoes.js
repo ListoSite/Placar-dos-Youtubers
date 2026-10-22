@@ -4,7 +4,7 @@
 import { api } from "../data.js";
 import { esc, inteiro } from "../format.js";
 import { $, $$, avatar, toast, confirmar } from "../ui.js";
-import { temConta, entrarComGoogle, sairDaConta, quemSou, meusVotos, votar } from "../conta.js";
+import { temConta, entrarComGoogle, sairDaConta, quemSou, meusVotos, votar, novoNonce, entrarComTokenGoogle, carregarGoogle } from "../conta.js";
 
 const GOOGLE = `<svg viewBox="0 0 24 24" aria-hidden="true"><path fill="#4285F4" d="M23.5 12.3c0-.8-.1-1.6-.2-2.3H12v4.4h6.5a5.6 5.6 0 0 1-2.4 3.6v3h3.9c2.3-2.1 3.5-5.2 3.5-8.7z"/><path fill="#34A853" d="M12 24c3.2 0 6-1.1 8-2.9l-3.9-3c-1.1.7-2.5 1.2-4.1 1.2-3.1 0-5.8-2.1-6.7-5H1.3v3.1A12 12 0 0 0 12 24z"/><path fill="#FBBC05" d="M5.3 14.3a7.2 7.2 0 0 1 0-4.6V6.6h-4a12 12 0 0 0 0 10.8z"/><path fill="#EA4335" d="M12 4.8c1.8 0 3.3.6 4.6 1.8l3.4-3.4A12 12 0 0 0 1.3 6.6l4 3.1c.9-2.9 3.6-4.9 6.7-4.9z"/></svg>`;
 
@@ -46,12 +46,40 @@ export async function montarVotacoes(main, { dados, pessoas = {} } = {}) {
   const desenharConta = () => {
     $("#vt-conta", main).innerHTML = eu
       ? `<div class="vidro vt-eu">${eu.foto ? `<img src="${esc(eu.foto)}" alt="" referrerpolicy="no-referrer">` : ""}<span><b>${esc(eu.nome)}</b><small>Podes votar uma vez em cada votação.</small></span><button class="btn btn-pequeno" id="vt-sair">Sair</button></div>`
-      : `<div class="vidro vt-eu"><span><b>Entra para votar</b><small>Usamos a conta Google só para garantir um voto por pessoa. Não publicamos nada em teu nome.</small></span><button class="btn vt-google" id="vt-entrar">${GOOGLE} Entrar com Google</button></div>`;
+      : `<div class="vidro vt-eu"><span><b>Entra para votar</b><small>Usamos a conta Google só para garantir um voto por pessoa. Não publicamos nada em teu nome.</small></span><div id="vt-gbotao"></div><button class="btn vt-google" id="vt-entrar" ${cfg.google ? "hidden" : ""}>${GOOGLE} Entrar com Google</button></div>`;
     $("#vt-entrar", main)?.addEventListener("click", () => entrarComGoogle(cfg));
+    if (!eu && cfg.google) botaoGoogle();
     $("#vt-sair", main)?.addEventListener("click", async () => {
       await sairDaConta(cfg);
       location.reload();
     });
+  };
+
+  // O botão do próprio Google, no site: a janela de login mostra este site (e não o endereço do Supabase).
+  // Se o Google não carregar, fica o botão de sempre (que passa pelo Supabase).
+  const botaoGoogle = async () => {
+    try {
+      const g = await carregarGoogle();
+      const nonce = await novoNonce();
+      g.accounts.id.initialize({
+        client_id: cfg.google,
+        nonce: nonce.hash,
+        callback: async ({ credential }) => {
+          try {
+            await entrarComTokenGoogle(cfg, credential, nonce.bruto);
+            toast("Entraste. Já podes votar!");
+            setTimeout(() => location.reload(), 600);
+          } catch (e) {
+            toast(e.message, { erro: true, tempo: 6000 });
+          }
+        },
+      });
+      const alvo = $("#vt-gbotao", main);
+      if (alvo) g.accounts.id.renderButton(alvo, { theme: "filled_black", size: "large", shape: "pill", text: "signin_with", locale: "pt-PT" });
+    } catch {
+      const b = $("#vt-entrar", main);
+      if (b) b.hidden = false;
+    }
   };
 
   const desenhar = () => {
@@ -90,7 +118,10 @@ export async function montarVotacoes(main, { dados, pessoas = {} } = {}) {
     $$(".vt-opcao:not([disabled])", main).forEach((b) =>
       b.addEventListener("click", async () => {
         if (!temConta()) {
-          if (await confirmar("Para votar, entra com a tua conta Google. Queres entrar agora?", { sim: "Entrar com Google" })) entrarComGoogle(cfg);
+          if (cfg.google && $("#vt-gbotao iframe, #vt-gbotao div", main)) {
+            toast("Para votar, entra primeiro com a tua conta Google.");
+            $("#vt-conta", main).scrollIntoView({ behavior: "smooth", block: "center" });
+          } else if (await confirmar("Para votar, entra com a tua conta Google. Queres entrar agora?", { sim: "Entrar com Google" })) entrarComGoogle(cfg);
           return;
         }
         const v = dados.votacoes.find((x) => x.id === b.dataset.v);

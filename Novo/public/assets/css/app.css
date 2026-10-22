@@ -2273,9 +2273,15 @@ table.tabela {
   height: 44px;
   border-radius: 50%;
 }
-.vt-eu span {
+.vt-eu > span {
   flex: 1;
   min-width: 200px;
+}
+.vt-eu [hidden] {
+  display: none !important;
+}
+#vt-gbotao:empty {
+  display: none;
 }
 .vt-eu b {
   display: block;

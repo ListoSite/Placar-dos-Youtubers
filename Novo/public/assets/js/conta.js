@@ -60,6 +60,42 @@ export function entrarComGoogle(cfg) {
   location.href = `${cfg.url}/auth/v1/authorize?provider=google&redirect_to=${encodeURIComponent(location.origin + location.pathname)}`;
 }
 
+/** Um valor ao acaso (nonce): o Google recebe a versão em SHA-256, o Supabase a original. */
+export async function novoNonce() {
+  const bruto = [...crypto.getRandomValues(new Uint8Array(24))].map((b) => b.toString(16).padStart(2, "0")).join("");
+  const h = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(bruto));
+  return { bruto, hash: [...new Uint8Array(h)].map((b) => b.toString(16).padStart(2, "0")).join("") };
+}
+
+/** Entrar com o "ID token" que o botão do Google devolve (sem passar pelo endereço do Supabase). */
+export async function entrarComTokenGoogle(cfg, idToken, nonce) {
+  const r = await fetch(`${cfg.url}/auth/v1/token?grant_type=id_token`, {
+    method: "POST",
+    headers: { apikey: cfg.anon, "content-type": "application/json" },
+    body: JSON.stringify({ provider: "google", id_token: idToken, nonce }),
+  });
+  const j = await r.json().catch(() => ({}));
+  if (!r.ok || !j.access_token) throw new Error(j.msg || j.error_description || j.message || `Não foi possível entrar (erro ${r.status}).`);
+  gravar({ access_token: j.access_token, refresh_token: j.refresh_token, expira: j.expires_at ? j.expires_at * 1000 : Date.now() + (j.expires_in || 3600) * 1000 });
+}
+
+/** Carrega o script do Google (Google Identity Services) uma vez. */
+export function carregarGoogle() {
+  if (window.google?.accounts?.id) return Promise.resolve(window.google);
+  return new Promise((resolve, reject) => {
+    let s = document.getElementById("gsi-script");
+    if (!s) {
+      s = document.createElement("script");
+      s.id = "gsi-script";
+      s.src = "https://accounts.google.com/gsi/client";
+      s.async = true;
+      document.head.appendChild(s);
+    }
+    s.addEventListener("load", () => (window.google?.accounts?.id ? resolve(window.google) : reject(new Error("Google indisponível"))));
+    s.addEventListener("error", () => reject(new Error("Não foi possível carregar o Google")));
+  });
+}
+
 export async function sairDaConta(cfg) {
   const s = ler();
   gravar(null);

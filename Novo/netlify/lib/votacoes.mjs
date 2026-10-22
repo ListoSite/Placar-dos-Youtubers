@@ -4,6 +4,7 @@
 // e cria, muda ou apaga votações (com a chave service_role).
 
 import { pedidoSupabase, supabaseConfigurado, getJSON, urlSupabase } from "./storage.mjs";
+import { googleClientId } from "./auth.mjs";
 
 export function exigirSupabase() {
   if (!supabaseConfigurado()) {
@@ -90,5 +91,6 @@ export function configPublica() {
   const url = urlSupabase();
   const anon = (process.env.SUPABASE_ANON_KEY || "").trim();
   if (!url || !anon || chaveSecreta(anon)) return null;
-  return { url, anon };
+  // Com o ID do cliente Google, o botão do Google aparece no próprio site (a janela mostra o site, não o supabase.co)
+  return { url, anon, ...(googleClientId() ? { google: googleClientId() } : {}) };
 }
