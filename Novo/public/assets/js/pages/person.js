@@ -89,6 +89,14 @@ export async function render(main, { params }) {
         <div class="vidro caixa-grafico" style="margin-top:18px" id="sb-semanas"><h3 class="grafico-titulo">Views por semana, no último ano</h3><div id="g-sb-sem"></div></div>
       </section>
 
+      ${p.tt && Object.keys(p.tt.f || {}).length ? `<section class="secao" id="sec-tt">
+        <div class="secao-cabeca"><div><h2>TikTok</h2><p>${p.tt.user ? `<a href="https://www.tiktok.com/@${esc(p.tt.user)}" target="_blank" rel="noopener">@${esc(p.tt.user)}</a>. ` : ""}Ganhos de cada mês, segundo o Social Blade${p.tt.at ? `, atualizados em ${esc(data(p.tt.at))}` : ""}.</p></div></div>
+        <div class="grelha-2">
+          <div class="vidro caixa-grafico"><h3 class="grafico-titulo">Seguidores ganhos por mês</h3><div id="g-tt-seg"></div></div>
+          <div class="vidro caixa-grafico"><h3 class="grafico-titulo">Gostos ganhos por mês</h3><div id="g-tt-gostos"></div></div>
+        </div>
+      </section>` : ""}
+
       <section class="secao grelha-2">
         <div class="painel">
           <h3>Como se calcula o Índice</h3>
@@ -142,6 +150,16 @@ export async function render(main, { params }) {
   if (serie.some((s) => s.tem)) limpeza.push(barrasMensais($("#g-mensal", main), serie, { destaque: rec.melhor?.m }));
   else $("#g-mensal", main).innerHTML = vazio("Ainda sem views por mês", "Liga o canal do YouTube ou importa os dados do Social Blade na área de edição.");
 
+  if ($("#sec-tt", main)) {
+    const pontos = (o, unidade) =>
+      Object.keys(o || {})
+        .sort()
+        .map((m) => ({ k: m, v: Math.max(0, o[m]), dica: `<b>${mesNome(m)}</b><br>${inteiro(o[m])} ${unidade}` }));
+    const rot = (m) => mesNome(m, { curto: true });
+    limpeza.push(barrasSimples($("#g-tt-seg", main), pontos(p.tt.f, "seguidores ganhos"), { rotulo: rot, cor: "#25f4ee", nome: "Seguidores ganhos por mês no TikTok" }));
+    if (Object.keys(p.tt.l || {}).length) limpeza.push(barrasSimples($("#g-tt-gostos", main), pontos(p.tt.l, "gostos ganhos"), { rotulo: rot, cor: "#fe2c55", nome: "Gostos ganhos por mês no TikTok" }));
+    else $("#g-tt-gostos", main).innerHTML = `<p class="muted">Sem dados.</p>`;
+  }
   const contados = canais.filter((c) => c.count);
   if (contados.length) carregarSocialBlade(main, contados, limpeza);
   if (main1) {

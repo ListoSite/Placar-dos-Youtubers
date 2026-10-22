@@ -1,9 +1,11 @@
 // Temas do Palco: cores, cenário, partículas, música e sons de cada ambiente.
 //
-// As cores de cada tema estão no palco.css (classe .tema-<id>). Aqui ficam o nome, a amostra
-// para o menu, o tipo de partículas, as músicas (calma, ação e leve) e os sons de destaque.
+// Os temas feitos à mão têm as cores no palco.css (classe .tema-<id>). Os temas por categoria
+// gerados (temas-gerados.js) levam as cores como variáveis CSS na própria tela.
 
-export const TEMAS = [
+import { GERADOS, variaveis, cenarioGerado } from "./temas-gerados.js";
+
+const FEITOS = [
   {
     id: "rubi",
     nome: "Clássico",
@@ -186,46 +188,32 @@ export const TEMAS = [
   },
 ];
 
+export const TEMAS = [...FEITOS.filter((t) => t.grupo !== "direto"), ...GERADOS, ...FEITOS.filter((t) => t.grupo === "direto")];
+
 export const GRUPOS_TEMAS = [
   { id: "ambientes", nome: "Ambientes" },
   { id: "categorias", nome: "Por categoria" },
   { id: "direto", nome: "Para direto" },
 ];
 
-/** Tema sugerido para cada categoria do site. */
+/** Tema de cada categoria do site (todas as categorias têm o seu). */
 export const TEMA_DA_CATEGORIA = {
   Football: "estadio",
-  Fitness: "estadio",
   Comida: "cozinha",
-  Doméstico: "cozinha",
   Carros: "carros",
-  Mota: "carros",
-  Corrida: "carros",
   Gamer: "gaming",
-  Reacts: "gaming",
   Tech: "tech",
-  Programação: "tech",
-  Educação: "tech",
-  Business: "tech",
-  Física: "tech",
   Comédia: "comedia",
   Pranks: "comedia",
-  Shorts: "comedia",
   Música: "musica",
-  Dança: "musica",
-  Radio: "musica",
-  Vlog: "verao",
-  Pesca: "verao",
-  Animais: "verao",
-  Girly: "verao",
-  Política: "gala",
-  Notícias: "gala",
-  História: "gala",
-  Podcast: "gala",
-  Cinema: "gala",
-  Livros: "gala",
-  Reportagem: "gala",
+  ...Object.fromEntries(GERADOS.flatMap((t) => t.categorias.map((c) => [c, t.id]))),
 };
+
+/** Estilo inline da tela (só os temas gerados precisam). */
+export function estiloTema(t) {
+  if (!t.gerado) return "";
+  return Object.entries(variaveis(t)).map(([k, v]) => `${k}:${v}`).join(";");
+}
 
 export function tema(id) {
   return TEMAS.find((t) => t.id === id) || TEMAS[0];
@@ -246,6 +234,8 @@ const CIRCUITO = [
 
 /** Cenário de cada tema (desenhado em CSS no palco.css). */
 export function cenario(id) {
+  const gerado = GERADOS.find((t) => t.id === id);
+  if (gerado) return cenarioGerado(gerado);
   const ondas = (n) => `<svg class="dc-onda dc-onda-${n}" viewBox="0 0 1600 200" preserveAspectRatio="none" aria-hidden="true"><path d="M0 80 C 200 20, 400 140, 600 80 S 1000 20, 1200 80 S 1400 140, 1600 80 V200 H0Z"/></svg>`;
   const palmeira = (lado) => `<svg class="dc-palmeira ${lado}" viewBox="0 0 300 500" aria-hidden="true"><path d="M150 500 C 140 380, 160 260, 140 160" stroke="currentColor" stroke-width="18" fill="none" stroke-linecap="round"/><path d="M140 160 C 80 120, 30 140, 0 190 C 50 150, 100 150, 140 170Z M140 160 C 200 110, 260 120, 300 170 C 250 140, 190 140, 142 168Z M140 160 C 110 90, 60 60, 10 70 C 70 80, 110 110, 138 165Z M140 160 C 170 80, 230 50, 290 60 C 230 70, 180 110, 143 165Z M140 160 C 140 90, 160 40, 200 10 C 170 50, 155 100, 146 162Z" fill="currentColor"/></svg>`;
   const html = {

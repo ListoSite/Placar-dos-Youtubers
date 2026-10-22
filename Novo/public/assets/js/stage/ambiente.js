@@ -1,5 +1,7 @@
 // Partículas do Palco (canvas): ambiente de cada tema e explosões de festa.
 
+import { ICONES } from "./temas-gerados.js";
+
 const calmo = () => matchMedia("(prefers-reduced-motion: reduce)").matches;
 const aleat = (a, b) => a + Math.random() * (b - a);
 const escolher = (arr) => arr[Math.floor(Math.random() * arr.length)];
@@ -46,6 +48,30 @@ function estrelaSprite(cor) {
   return c;
 }
 
+/** Caminho (Path2D) de cada ícone, criado uma vez. */
+const caminhos = new Map();
+function caminho(nome) {
+  if (!caminhos.has(nome)) caminhos.set(nome, new Path2D((ICONES[nome] || ICONES.estrela).d));
+  return caminhos.get(nome);
+}
+function desenharIcone(g, nome, x, y, r, rot, cor) {
+  const i = ICONES[nome] || ICONES.estrela;
+  g.save();
+  g.translate(x, y);
+  g.rotate(rot);
+  g.scale(r / 12, r / 12);
+  g.translate(-12, -12);
+  if (i.traco) {
+    g.strokeStyle = cor;
+    g.lineWidth = 1.8;
+    g.stroke(caminho(nome));
+  } else {
+    g.fillStyle = cor;
+    g.fill(caminho(nome), i.par ? "evenodd" : "nonzero");
+  }
+  g.restore();
+}
+
 export class Ambiente {
   constructor(canvas, palco, tema) {
     this.c = canvas;
@@ -75,7 +101,7 @@ export class Ambiente {
   criarFundo() {
     const { W, H } = this;
     const tipo = this.tema.particulas;
-    const n = Math.round(({ poeira: 55, bolhas: 42, brasas: 130, neve: 170, neon: 46, estrelas: 260, brilhos: 90, flashes: 0, vapor: 26, velocidade: 40, pixels: 60, codigo: 90, notas: 34, pop: 40 }[tipo] || 0) * this.fator);
+    const n = Math.round(({ poeira: 55, bolhas: 42, brasas: 130, neve: 170, neon: 46, estrelas: 260, brilhos: 90, flashes: 0, vapor: 26, velocidade: 40, pixels: 60, codigo: 90, notas: 34, pop: 40, icones: 26 }[tipo] || 0) * this.fator);
     for (let i = 0; i < n; i++) this.fundo.push(this.novaFundo(tipo, true));
     this.proximoRaio = 2.5;
   }
@@ -99,6 +125,10 @@ export class Ambiente {
     if (tipo === "codigo") Object.assign(p, { y: inicio ? p.y : -30, r: aleat(16, 30), vy: aleat(70, 200), vx: 0, a: aleat(0.12, 0.45), cor: escolher(["#00e0b0", "#3d8bff", "#9bffea"]), ch: escolher(["0", "1", "0", "1", "<", ">", "/", "{", "}", ";"]) });
     if (tipo === "notas") Object.assign(p, { y: inicio ? p.y : H + 40, r: aleat(28, 64), vy: -aleat(30, 80), vx: aleat(-10, 10), a: aleat(0.25, 0.6), cor: escolher(cores), ch: escolher(["♪", "♫", "♩", "♬"]), rot: aleat(-0.4, 0.4) });
     if (tipo === "pop") Object.assign(p, { y: inicio ? p.y : H + 60, r: aleat(10, 40), vy: -aleat(20, 50), vx: aleat(-10, 10), a: aleat(0.12, 0.3), cor: escolher(["#ff2e63", "#2ec4ff", "#ffffff", "#ff9f1c"]) });
+    if (tipo === "icones") {
+      const z = aleat(0.35, 1);
+      Object.assign(p, { y: inicio ? p.y : H + 80, r: 14 + z * 34, vy: -(18 + z * 46), vx: aleat(-8, 8), a: 0.08 + z * 0.22, cor: escolher(cores.slice(0, 3)), ic: escolher(this.tema.icones || ["estrela"]), rot: aleat(-0.5, 0.5), vrot: aleat(-0.4, 0.4) });
+    }
     return p;
   }
   atualizarFundo(dt) {
@@ -106,8 +136,9 @@ export class Ambiente {
     for (let i = 0; i < this.fundo.length; i++) {
       const p = this.fundo[i];
       p.vida += dt;
-      p.x += p.vx * dt + (p.tipo === "neve" || p.tipo === "brasas" || p.tipo === "notas" ? Math.sin(p.vida * 1.6 + p.fase) * (p.tipo === "brasas" ? 40 : 18) * dt : 0);
+      p.x += p.vx * dt + (p.tipo === "neve" || p.tipo === "brasas" || p.tipo === "notas" || p.tipo === "icones" ? Math.sin(p.vida * 1.6 + p.fase) * (p.tipo === "brasas" ? 40 : 18) * dt : 0);
       if (p.cresce) p.r += p.cresce * dt;
+      if (p.vrot) p.rot += p.vrot * dt;
       p.y += p.vy * dt;
       if (p.tipo === "estrelas") {
         if (p.x < -10) p.x = W + 10;
@@ -152,6 +183,7 @@ export class Ambiente {
       if (estilo === "neon") Object.assign(p, { r: aleat(3, 7), g: 300, ar: 1.8 });
       if (estilo === "estrelas") Object.assign(p, { r: aleat(14, 34), g: 150, ar: 2 });
       if (estilo === "pixels") Object.assign(p, { r: escolher([8, 12, 16]), g: 900, ar: 1.4, vr: 0 });
+      if (estilo === "icones") this.comoIcone(p);
       this.festa.push(p);
     }
   }
@@ -161,9 +193,17 @@ export class Ambiente {
     for (let i = 0; i < n; i++) {
       const p = { x: aleat(0, this.W), y: aleat(-this.H * 0.6, -20), vx: aleat(-80, 80), vy: aleat(150, 420), vida: 0, dur: aleat(3.5, 6), cor: escolher(this.tema.cores), rot: aleat(0, 6.28), vr: aleat(-8, 8), estilo, g: 120, ar: 0.6 };
       if (estilo === "confetes" || estilo === "ouro") Object.assign(p, { w: aleat(12, 24), h: aleat(7, 12) });
-      else Object.assign(p, { r: estilo === "estrelas" ? aleat(12, 26) : aleat(3, 7) });
+      else if (estilo === "icones") {
+        this.comoIcone(p);
+        p.vr = aleat(-3, 3);
+      } else Object.assign(p, { r: estilo === "estrelas" ? aleat(12, 26) : aleat(3, 7) });
       this.festa.push(p);
     }
+  }
+  /** Festa dos temas gerados: metade ícones do tema, metade confetes. */
+  comoIcone(p) {
+    if (Math.random() < 0.45) Object.assign(p, { ic: escolher(this.tema.icones || ["estrela"]), r: aleat(16, 38), g: p.g ?? 700, ar: p.ar ?? 1.5, vr: aleat(-5, 5) });
+    else Object.assign(p, { estilo: "confetes", w: aleat(10, 22), h: aleat(6, 12), g: p.g ?? 900, ar: p.ar ?? 1.6 });
   }
   atualizarFesta(dt) {
     for (const p of this.festa) {
@@ -217,6 +257,11 @@ export class Ambiente {
         g.globalAlpha = p.a * (Math.sin(t * 4 + p.fase) > -0.6 ? 1 : 0.3);
         g.fillStyle = p.cor;
         g.fillRect(Math.round(p.x / 4) * 4, Math.round(p.y / 4) * 4, p.r, p.r);
+        continue;
+      }
+      if (p.tipo === "icones") {
+        g.globalAlpha = p.a;
+        desenharIcone(g, p.ic, p.x, p.y, p.r, p.rot, p.cor);
         continue;
       }
       if (p.tipo === "codigo" || p.tipo === "notas") {
@@ -303,6 +348,8 @@ export class Ambiente {
           g.drawImage(estrelaSprite("#fff3c4"), p.x - 14, p.y - 14, 28, 28);
           g.globalCompositeOperation = "source-over";
         }
+      } else if (p.estilo === "icones") {
+        desenharIcone(g, p.ic, p.x, p.y, p.r, p.rot * 0.3, p.cor);
       } else if (p.estilo === "pixels") {
         g.fillStyle = p.cor;
         g.fillRect(Math.round(p.x / 4) * 4, Math.round(p.y / 4) * 4, p.r, p.r);

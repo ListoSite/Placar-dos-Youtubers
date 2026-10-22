@@ -188,3 +188,93 @@ export function fillSocials(db, personId, urls) {
   if (n) p.updatedAt = new Date().toISOString();
   return n;
 }
+
+// ---------- TikTok (pelo Social Blade) ----------
+
+const numOuNull = (x) => (x === null || x === undefined || x === "" || !Number.isFinite(Number(x)) ? null : Math.round(Number(x)));
+function colunasTT(c, re, max) {
+  if (!c || typeof c.ini !== "string" || !re.test(c.ini) || !Array.isArray(c.f)) return null;
+  return { ini: c.ini, f: numeros(c.f, max), l: numeros(c.l, max), n: numeros(c.n, max) };
+}
+
+/** Valida os dados do TikTok que vêm do marcador: perfil, ganhos por mês e totais por dia. */
+export function cleanTikTok(tt) {
+  if (!tt || typeof tt !== "object" || !tt.info || typeof tt.info !== "object") return null;
+  const i = tt.info;
+  const user = String(i.user || "").replace(/^@/, "").trim();
+  if (!/^[\w.]{2,40}$/.test(user)) return null;
+  return {
+    at: /^\d{4}-\d{2}-\d{2}T/.test(tt.at || "") ? tt.at : new Date().toISOString(),
+    info: {
+      id: /^\d{1,30}$/.test(String(i.id || "")) ? String(i.id) : "",
+      user,
+      nome: String(i.nome || "").slice(0, 120),
+      seg: numOuNull(i.seg),
+      gostos: numOuNull(i.gostos),
+      videos: numOuNull(i.videos),
+      criado: /^\d{4}-\d{2}-\d{2}$/.test(i.criado || "") ? i.criado : "",
+    },
+    m: colunasTT(tt.m, /^\d{4}-\d{2}$/, 120),
+    d: colunasTT(tt.d, /^\d{4}-\d{2}-\d{2}$/, 120),
+  };
+}
+
+const mesMais = (ini, i) => {
+  const [y, m] = ini.split("-").map(Number);
+  return new Date(Date.UTC(y, m - 1 + i, 1)).toISOString().slice(0, 7);
+};
+const fimDoMes = (m) => {
+  const [y, mo] = m.split("-").map(Number);
+  return new Date(Date.UTC(y, mo, 0)).toISOString().slice(0, 10);
+};
+
+/**
+ * Liga o TikTok a uma pessoa: preenche o link (se estiver vazio) e junta ao histórico de números
+ * o total de hoje e o total no fim de cada um dos últimos 12 meses (total de hoje menos os ganhos
+ * dos meses seguintes). Os números escritos à mão nunca são substituídos.
+ */
+export function applyTikTok(db, personId, tt) {
+  const p = db.people[personId];
+  if (!p || !tt) return 0;
+  p.socials ||= {};
+  const s = (p.socials.tiktok ||= { url: "", entries: [] });
+  s.entries ||= [];
+  if (!s.url) s.url = `https://www.tiktok.com/@${tt.info.user}`;
+  if (!s.handle) s.handle = tt.info.user;
+  const novos = [];
+  const hoje = tt.at.slice(0, 10);
+  if (tt.info.seg !== null) novos.push({ date: hoje, followers: tt.info.seg, likes: tt.info.gostos ?? undefined, videos: tt.info.videos ?? undefined, src: "socialblade" });
+  if (tt.m && tt.info.seg !== null) {
+    const meses = tt.m.f.map((_, i) => mesMais(tt.m.ini, i));
+    let f = tt.info.seg;
+    let l = tt.info.gostos;
+    let n = tt.info.videos;
+    for (let i = meses.length - 1; i >= 0 && novos.length < 13; i--) {
+      const m = meses[i];
+      if (fimDoMes(m) < hoje) novos.push({ date: fimDoMes(m), followers: Math.max(0, f), likes: l ?? undefined, videos: n ?? undefined, src: "socialblade" });
+      // Antes deste mês: tira os ganhos do próprio mês
+      f -= tt.m.f[i] || 0;
+      if (l !== null) l -= tt.m.l[i] || 0;
+      if (n !== null) n -= tt.m.n[i] || 0;
+    }
+  }
+  let mudou = 0;
+  for (const e of novos) {
+    for (const k of Object.keys(e)) if (e[k] === undefined) delete e[k];
+    const i = s.entries.findIndex((x) => x.date === e.date);
+    if (i >= 0 && s.entries[i].src !== "socialblade") continue;
+    if (i >= 0) s.entries[i] = e;
+    else s.entries.push(e);
+    mudou++;
+  }
+  s.entries.sort((a, b) => a.date.localeCompare(b.date));
+  if (mudou) p.updatedAt = new Date().toISOString();
+  return mudou;
+}
+
+export async function saveTikToks(mapa) {
+  if (!Object.keys(mapa).length) return;
+  const todos = await getJSON("ttextra", {});
+  Object.assign(todos, mapa);
+  await setJSON("ttextra", todos);
+}

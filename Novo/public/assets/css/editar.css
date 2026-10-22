@@ -119,6 +119,11 @@
 .ed-bloco {
   margin-bottom: 20px;
 }
+/* A lista de sugestões de um campo fica por cima do bloco seguinte */
+.ed-bloco:focus-within {
+  position: relative;
+  z-index: 5;
+}
 .ed-bloco h3 {
   margin-bottom: 6px;
 }

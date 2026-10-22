@@ -78,9 +78,11 @@ function opcoes(main, esp, query) {
   const cat = `<label class="campo"><span>Categoria</span><select class="input" name="cat"><option value="">Todas</option>${ds.categories.map((c) => `<option>${esc(c)}</option>`).join("")}</select></label>`;
   const mes = `<label class="campo"><span>Mês</span><select class="input" name="m">${opcaoMes(meses, estado.ref)}</select></label>`;
   const temSubs = ds.people.some((p) => p.sb?.s && Object.keys(p.sb.s).length);
+  const temTT = ds.people.filter((p) => p.socials?.tiktok?.last?.followers).length >= 5;
+  const temTTMes = ds.people.filter((p) => p.tt?.f && Object.keys(p.tt.f).length).length >= 5;
   const metricas = () => `<label class="campo"><span>Ranking por</span><select class="input" name="metric">
       <option value="views">Views do mês</option><option value="indice">Índice de Influência</option>${temSubs ? `<option value="subsMes">Subscritores ganhos no mês</option>` : ""}
-      <option value="crescimento">Crescimento face ao mês anterior</option><option value="subs">Subscritores (total)</option><option value="total">Views totais</option></select></label>`;
+      <option value="crescimento">Crescimento face ao mês anterior</option><option value="subs">Subscritores (total)</option><option value="total">Views totais</option>${temTT ? `<option value="tiktok">Seguidores no TikTok</option>` : ""}${temTTMes ? `<option value="tiktokMes">Seguidores ganhos no TikTok no mês</option>` : ""}</select></label>`;
   const campos = {
     revelacao: `${metricas()}${mes}
       <label class="campo"><span>Quantos</span><select class="input" name="n"><option>5</option><option selected>10</option><option>15</option><option>20</option></select></label>${cat}`,
@@ -93,6 +95,13 @@ function opcoes(main, esp, query) {
       <label class="campo"><span>Quantos</span><select class="input" name="n"><option>12</option><option selected>16</option><option>20</option><option>24</option></select></label>${cat}`,
     altos: `${mes}<label class="campo"><span>Quantos de cada</span><select class="input" name="n"><option>3</option><option selected>5</option><option>7</option></select></label>
       <label class="campo"><span>Entre os</span><select class="input" name="top"><option value="50">Top 50</option><option value="100" selected>Top 100</option><option value="300">Todos</option></select></label>`,
+    barras: `${metricas()}${mes}<label class="campo"><span>Barras</span><select class="input" name="n"><option>6</option><option>8</option><option selected>10</option><option>12</option></select></label>${cat}`,
+    categorias: `${mes}<label class="campo"><span>Medida</span><select class="input" name="medida"><option value="views">Views do mês</option><option value="canais">Número de canais</option></select></label>`,
+    bolhas: `${mes}<label class="campo"><span>Bolhas</span><select class="input" name="n"><option>12</option><option selected>20</option><option>30</option></select></label>${cat}`,
+    linhas: `<label class="campo"><span>Youtubers</span><select class="input" name="n"><option>3</option><option selected>5</option><option>7</option></select></label>
+      <label class="campo"><span>Período</span><select class="input" name="meses"><option value="6">6 meses</option><option value="12" selected>12 meses</option><option value="24">24 meses</option><option value="999">Tudo</option></select></label>
+      <label class="campo"><span>Até</span><select class="input" name="m">${opcaoMes(meses, estado.ref)}</select></label>${cat}`,
+    numeros: `${mes}${cat}`,
     desafio: `<label class="campo"><span>Perguntas</span><select class="input" name="n"><option>6</option><option selected>8</option><option>12</option></select></label>${mes}
       <label class="campo"><span>Entre os</span><select class="input" name="top"><option value="30">Top 30</option><option value="60" selected>Top 60</option><option value="150">Top 150</option></select></label>${cat}`,
     quiz: `<label class="campo"><span>Rondas</span><select class="input" name="n"><option>5</option><option selected>8</option><option>12</option></select></label>${mes}
@@ -121,8 +130,12 @@ function opcoes(main, esp, query) {
       <div class="campo"><span>Para</span><div class="segmentos pl-modo" role="group"><button type="button" data-modo="video" aria-pressed="${modo === "video"}">Vídeo (gravar e publicar)</button><button type="button" data-modo="direto" aria-pressed="${modo === "direto"}">Direto (Twitch)</button></div></div>
       <div class="campo" style="margin-top:18px"><span>Tema</span>
         ${GRUPOS_TEMAS.map(
-          (g) => `<div class="tema-grupo"><small>${esc(g.nome)}</small><div class="tema-escolha" role="radiogroup">${TEMAS.filter((t) => (t.grupo || "ambientes") === g.id)
-            .map((t) => `<button type="button" role="radio" data-tema="${t.id}" aria-checked="${t.id === temaInicial}" style="--a:${t.amostra[0]};--b:${t.amostra[1]};--c:${t.amostra[2]}"><i></i><b>${esc(t.nome)}</b><small>${esc(t.texto)}</small></button>`)
+          (g) => `<div class="tema-grupo"><small>${esc(g.nome)}${g.id === "categorias" ? ` · ${Object.keys(TEMA_DA_CATEGORIA).length} categorias, cada uma com o seu tema` : ""}</small><div class="tema-escolha ${g.id === "categorias" ? "compacto" : ""}" role="radiogroup">${TEMAS.filter((t) => (t.grupo || "ambientes") === g.id)
+            .map((t) => {
+              const cats = Object.entries(TEMA_DA_CATEGORIA).filter(([, id]) => id === t.id).map(([c]) => c);
+              const sub = g.id === "categorias" && cats.length ? cats.join(", ") : t.texto;
+              return `<button type="button" role="radio" data-tema="${t.id}" aria-checked="${t.id === temaInicial}" title="${esc(t.texto)}" style="--a:${t.amostra[0]};--b:${t.amostra[1]};--c:${t.amostra[2]}"><i></i><b>${esc(t.nome)}</b><small>${esc(sub)}</small></button>`;
+            })
             .join("")}</div></div>`,
         ).join("")}
         <small class="muted" id="pl-tema-nota"></small>

@@ -27,6 +27,8 @@ export const METRICAS = {
   media3: { nome: () => "Média de 3 meses", curtoNome: "Média de 3 meses", fmt: curto, unidade: "views por mês", valor: (p, m) => mediaMeses(p, m, 3) },
   videos30: { nome: () => "Vídeos em 30 dias", curtoNome: "Vídeos em 30 dias", fmt: inteiro, unidade: "vídeos", valor: (p) => p.vid?.up30 ?? null },
   porVideo: { nome: () => "Views por vídeo", curtoNome: "Views por vídeo", fmt: curto, unidade: "views por vídeo", valor: (p) => p.vid?.med ?? null },
+  tiktok: { nome: () => "Seguidores no TikTok", curtoNome: "Seguidores no TikTok", fmt: curto, unidade: "seguidores no TikTok", valor: (p) => p.socials?.tiktok?.last?.followers ?? null },
+  tiktokMes: { nome: (m) => `Seguidores ganhos no TikTok em ${mesNome(m)}`, curtoNome: "Seguidores ganhos no TikTok", fmt: curto, unidade: "seguidores no TikTok", valor: (p, m) => p.tt?.f?.[m] ?? null },
   anos: { nome: () => "Anos no YouTube", curtoNome: "Anos no YouTube", fmt: inteiro, unidade: "anos", valor: (p) => (p.since ? new Date().getFullYear() - new Date(p.since).getFullYear() : null) },
 };
 
@@ -41,7 +43,7 @@ export function rankingPor(chave, m, { cat = "", n = Infinity } = {}) {
       .filter((x) => x.v !== null && x.v !== undefined && Number.isFinite(x.v))
       .sort((a, b) => b.v - a.v);
   const lista = linha(m);
-  const temAnterior = ["views", "subsMes"].includes(chave) && ant;
+  const temAnterior = ["views", "subsMes", "tiktokMes"].includes(chave) && ant;
   const posAnt = new Map(temAnterior ? linha(ant).map((x, i) => [x.p.id, i + 1]) : []);
   return lista.slice(0, n).map((x, i) => ({ ...x, pos: i + 1, ant: temAnterior ? posAnt.get(x.p.id) ?? null : undefined }));
 }

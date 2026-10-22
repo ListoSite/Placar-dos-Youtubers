@@ -47,7 +47,7 @@ A quota grátis é de 10 000 unidades por dia. A recolha automática gasta cerca
 Há três formas de os preencher, por esta ordem de facilidade:
 
 1. **Estimativa automática.** Para cada Youtuber com canal ligado, o site lê os vídeos do canal (data e views de hoje) e reparte essas views pelos meses, com uma curva afinada pelos meses que já conhecemos. Corre sozinha (4 Youtubers por hora) ou mais depressa em Editar, Importar dados. Os valores aparecem com ≈ e o erro típico de cada pessoa.
-2. **Marcador do Social Blade (todos de uma vez).** Em Editar, Importar dados: arrastas o botão "Placar ⇄ Social Blade" para a barra de marcadores, copias a lista de canais, abres um canal qualquer no socialblade.com e carregas no marcador. Ele percorre todos os canais da lista (com pausas, e pode ser pausado e continuado) e no fim envia os meses para o Placar, onde confirmas antes de gravar. Além das views de cada mês, traz do Social Blade os subscritores ganhos e os vídeos publicados em cada mês, os totais dos últimos 30 dias, as views das últimas 52 semanas e os links das redes sociais (que só entram onde ainda não há link). Rankings, nota e ganhos estimados não são guardados. Cada canal tem um link direto para o Social Blade no perfil e na área de edição. O código do marcador está em `scripts/marcador/sb.src.js`; depois de o alterar, corre `npm run build:marcador`.
+2. **Marcador do Social Blade (todos de uma vez).** Em Editar, Importar dados: arrastas o botão "Placar ⇄ Social Blade" para a barra de marcadores, copias a lista de canais, abres um canal qualquer no socialblade.com e carregas no marcador. Ele percorre todos os canais da lista (com pausas, e pode ser pausado e continuado) e no fim envia os meses para o Placar, onde confirmas antes de gravar. Além das views de cada mês, traz do Social Blade os subscritores ganhos e os vídeos publicados em cada mês, os totais dos últimos 30 dias, as views das últimas 52 semanas e os links das redes sociais (que só entram onde ainda não há link). Rankings, nota e ganhos estimados não são guardados. Cada canal tem um link direto para o Social Blade no perfil e na área de edição. Quando o Youtuber tem TikTok (link no perfil ou nas redes que o Social Blade mostra no canal), o marcador traz também os seguidores, gostos e vídeos do TikTok e os ganhos de cada mês; para um TikTok que não esteja ligado, abre o perfil em socialblade.com/tiktok/user/nome e carrega no marcador. No Placar ficam o link, os números de hoje e do fim de cada um dos últimos 12 meses (nas Outras redes do perfil), um gráfico de seguidores e gostos ganhos por mês, e as medidas "Seguidores no TikTok" no Palco. O TikTok não tem uma API pública gratuita para isto, por isso o Social Blade é a fonte. O código do marcador está em `scripts/marcador/sb.src.js`; depois de o alterar, corre `npm run build:marcador`.
 3. **Colar da folha de cálculo.** Para muitos meses de uma vez.
 
 Dados reais (YouTube, Social Blade, folha, manual) passam sempre à frente de uma estimativa.
@@ -103,14 +103,15 @@ Novo/
 
 ## Palco
 
-13 espetáculos em ecrã inteiro, em 16:9 ou 9:16, com 15 temas.
+18 espetáculos em ecrã inteiro, em 16:9 ou 9:16, com 40 temas.
 
 - Temas de ambiente: Clássico, Verão, Inferno, Gelo, Neon, Galáxia, Gala.
-- Temas por categoria: Futebol, Cozinha, Carros, Gaming, Tech, Comédia, Música. Ao escolher uma categoria (ou um Youtuber), o tema certo é sugerido.
+- Temas por categoria: todas as 36 categorias do site têm tema. Os feitos à mão (Futebol, Cozinha, Carros, Gaming, Tech, Comédia, Música) e 25 gerados a partir de cores, um padrão de fundo, ícones e música próprios (YouTube, Clips, Shorts, Vlog, Podcast e Rádio, Negócios, Girly, Escola, Tutorial, Política, Notícias, História, Livros, Cinema, Fitness, Reacts, Casa, Pesca, Animais, Kids, Ciência, Dança, Religião, Motas, Programação). Ao escolher uma categoria (ou um Youtuber), o tema certo é sugerido. Os temas gerados estão em `stage/temas-gerados.js`: para criar outro basta uma linha com cores, padrão e ícones.
 - Para direto: Chroma (OBS), com fundo verde para recortar.
 
 Espetáculos:
 - Rankings: Revelação do top, Corrida das views, Tier list, Altos e baixos.
+- Gráficos: Gráfico de barras (as colunas crescem fora de ordem e ordenam-se sozinhas, com a linha da média), O bolo das categorias (donut fatia a fatia), Bolhas (bolhas com física que mudam de tamanho entre views, subscritores e Índice), Linha a linha (até 7 Youtubers mês a mês, com quem vai na frente) e O mês em números (números gigantes, um de cada vez).
 - Jogos: Desafio do Placar (para quem vê o vídeo: escolha múltipla, o intruso, ordenar, verdadeiro ou falso, com pontos), Quem fez mais?, Mais ou menos, Adivinha quem é, Roda da sorte.
 - Duelos: Batalha (barras de vida até ao K.O.) e Torneio (8 ou 16 Youtubers).
 - Histórias: Cartão de Youtuber e A história de….

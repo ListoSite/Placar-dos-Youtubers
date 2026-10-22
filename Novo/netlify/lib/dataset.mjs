@@ -95,6 +95,15 @@ function resumoSB(lista) {
   return { s: ultimos(s), n: ultimos(n) };
 }
 
+/** TikTok (Social Blade): seguidores, gostos e vídeos ganhos por mês, últimos 13 meses. */
+function resumoTT(x) {
+  if (!x?.m) return undefined;
+  const [y0, m0] = x.m.ini.split("-").map(Number);
+  const mes = (i) => new Date(Date.UTC(y0, m0 - 1 + i, 1)).toISOString().slice(0, 7);
+  const tirar = (arr) => Object.fromEntries(arr.map((v, i) => [mes(i), v]).filter(([, v]) => v !== null && v !== undefined).slice(-13));
+  return { user: x.info?.user || "", at: x.at, f: tirar(x.m.f), l: tirar(x.m.l), n: tirar(limparVideos(x.m.n)) };
+}
+
 /** O Social Blade só começou a contar vídeos a certa altura: os meses antes vêm a 0 e o primeiro traz o total. */
 function limparVideos(arr) {
   const n = [...(arr || [])];
@@ -186,7 +195,7 @@ function projectSummary(p, pv, baselineOf) {
 }
 
 export async function buildDataset(db) {
-  const [stats, ytstart, vsum, projvids, meta, quota, sbextra] = await Promise.all([
+  const [stats, ytstart, vsum, projvids, meta, quota, sbextra, ttextra] = await Promise.all([
     getJSON("stats", {}),
     getJSON("ytstart", {}),
     getJSON("videosummary", {}),
@@ -194,6 +203,7 @@ export async function buildDataset(db) {
     getJSON("meta", {}),
     getJSON("quota", null),
     getJSON("sbextra", {}),
+    getJSON("ttextra", {}),
   ]);
   const today = todayLisbon();
   const curM = today.slice(0, 7);
@@ -291,6 +301,7 @@ export async function buildDataset(db) {
       legacy: p.legacy?.pontuacao ? { pontuacao: p.legacy.pontuacao } : {},
       vid: personVideoSummary(counted, vsum),
       sb: resumoSB(counted.map((c) => sbextra[c]).filter(Boolean)),
+      tt: resumoTT(ttextra[p.id]),
       updatedAt: p.updatedAt || "",
     });
   }

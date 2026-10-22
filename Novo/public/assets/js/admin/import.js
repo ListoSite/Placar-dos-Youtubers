@@ -23,6 +23,7 @@ export async function render(alvo, query) {
         <li>No fim, carrega em <b>Enviar resultados para o Placar</b>. Abre-se esta página com tudo pronto para confirmares antes de gravar.</li>
       </ol>
       <p class="muted" style="font-size:var(--t-sm)">Conta com 3 a 8 segundos por canal. Podes pausar e continuar mais tarde, mesmo depois de fechar o browser. Se o Social Blade pedir uma verificação, o marcador para: recarrega a página do Social Blade, espera um pouco e carrega outra vez no marcador para continuar de onde ficou. O mesmo marcador também lê só o canal que tens aberto.</p>
+      <p class="muted" style="font-size:var(--t-sm)"><b>TikTok:</b> quando o Youtuber tem TikTok (no link das redes do perfil ou nas redes que o Social Blade mostra no canal do YouTube), o marcador traz também os seguidores, gostos e vídeos do TikTok e os ganhos de cada mês. Para um TikTok que não aparece ligado, abre o perfil no Social Blade (<b>socialblade.com/tiktok/user/nome</b>) e carrega no marcador.</p>
       <label class="campo" style="margin-top:10px"><span>Ou cola aqui o que o marcador copiou</span><textarea class="input" id="sb-colar" rows="3" placeholder='{"kind":"placar-sb-lote",...}'></textarea></label>
       <div class="ed-acoes" style="justify-content:flex-start"><button class="btn" id="sb-ler">Ler dados colados</button></div>
       <div id="sb-resultado"></div>
@@ -102,7 +103,12 @@ function listaCanais(soFaltam) {
     .filter((c) => c.personId && adm.db.people[c.personId])
     .filter((c) => !soFaltam || !Object.values(c.monthly || {}).some((m) => m.src === "socialblade"))
     .sort((a, b) => (a.role === "principal" ? 0 : 1) - (b.role === "principal" ? 0 : 1) || adm.db.people[a.personId].name.localeCompare(adm.db.people[b.personId].name, "pt"))
-    .map((c) => ({ id: c.id, h: String(c.handle || stats.get(c.id)?.handle || "").replace(/^@/, ""), n: adm.db.people[c.personId].name + (c.role === "principal" ? "" : ` (${c.title || c.role})`), p: c.personId }));
+    .map((c) => {
+      const p = adm.db.people[c.personId];
+      const tt = p.socials?.tiktok;
+      const principal = c.role === "principal" || p.channels?.length === 1;
+      return { id: c.id, h: String(c.handle || stats.get(c.id)?.handle || "").replace(/^@/, ""), n: p.name + (c.role === "principal" ? "" : ` (${c.title || c.role})`), p: c.personId, ...(principal && (tt?.handle || tt?.url) ? { tt: tt.handle || tt.url } : {}) };
+    });
 }
 
 async function codigoMarcador() {
@@ -251,7 +257,50 @@ export function interpretarSocialBlade(raw) {
   return res;
 }
 
+/** Resumo do TikTok lido pelo marcador. */
+function textoTikTok(tt) {
+  if (!tt?.info) return "";
+  const i = tt.info;
+  return `TikTok @${i.user}: ${[i.seg !== null ? `${curto(i.seg)} seguidores` : "", i.gostos !== null ? `${curto(i.gostos)} gostos` : "", i.videos !== null ? `${i.videos} vídeos` : "", tt.m ? `${plural(tt.m.f.length, "mês", "meses")} de ganhos` : ""].filter(Boolean).join(", ")}.`;
+}
+
+/** Só TikTok: o marcador foi usado na página de um perfil do TikTok no Social Blade. */
+function mostrarTikTok(alvo, raw) {
+  const tt = raw.tt;
+  if (!tt) {
+    alvo.innerHTML = `<div class="aviso"><p>Não vieram números do TikTok.</p></div>`;
+    return;
+  }
+  const user = tt.info.user.toLowerCase();
+  let pessoa = pessoasOrdenadas().find((p) => {
+    const s = p.socials?.tiktok;
+    return (s?.handle || "").toLowerCase() === user || /tiktok\.com\/@([\w.]+)/i.exec(s?.url || "")?.[1]?.toLowerCase() === user;
+  });
+  alvo.innerHTML = `<hr class="ed-linha">
+    <h3>${esc(tt.info.nome || "@" + tt.info.user)}</h3>
+    <p class="soft">${esc(textoTikTok(tt))}</p>
+    <p class="muted" style="font-size:var(--t-sm)">Fica no perfil do Youtuber: o link do TikTok (se ainda não houver), os seguidores, gostos e vídeos de hoje e do fim de cada um dos últimos 12 meses, e o gráfico de crescimento.</p>
+    <div class="ed-grelha" style="margin-top:14px;align-items:end">
+      <label class="campo"><span>Guardar em</span><span style="position:relative"><input class="input" id="tt-pessoa" placeholder="Escolher Youtuber" value="${esc(pessoa?.name || "")}"></span></label>
+      <div><button class="btn btn-primario" id="tt-importar" data-a-esperar="A importar" ${pessoa ? "" : "disabled"}>Importar TikTok</button></div>
+    </div>`;
+  const input = $("#tt-pessoa", alvo);
+  escolherPessoa(input, (p) => {
+    pessoa = p;
+    input.value = p.name;
+    $("#tt-importar", alvo).disabled = false;
+  });
+  $("#tt-importar", alvo).addEventListener("click", async (e) => {
+    const res = await chamar("import/socialblade", { payload: { soTikTok: true, tt }, personId: pessoa?.id }, { botao: e.currentTarget }).catch(() => null);
+    if (!res) return;
+    if (res.needsTarget) return toast("Escolhe primeiro o Youtuber.", { erro: true });
+    toast(`TikTok @${res.tiktok} guardado.`);
+    alvo.innerHTML = `<div class="aviso info" style="margin-top:14px"><p>Feito: TikTok guardado em <a href="#/youtuber/${encodeURIComponent(res.personId)}">${esc(adm.db.people[res.personId]?.name || "")}</a>.</p></div>`;
+  });
+}
+
 function mostrarSocialBlade(alvo, raw) {
+  if (raw?.soTikTok) return mostrarTikTok(alvo, raw);
   const r = interpretarSocialBlade(raw);
   const curMes = estado.ds.currentMonth;
   const canal = r.channelId && adm.db.channels[r.channelId];
@@ -264,7 +313,7 @@ function mostrarSocialBlade(alvo, raw) {
   alvo.innerHTML = `<hr class="ed-linha">
     <h3>${esc(r.title || r.handle || "Canal")}</h3>
     <p class="soft">${r.channelId ? `Canal ${esc(r.channelId)}. ` : ""}${canal ? `Já está ligado a <b>${esc(adm.db.people[canal.personId]?.name)}</b>.` : "Este canal ainda não está ligado a ninguém no placar."}</p>
-    <p class="muted" style="font-size:var(--t-sm)">${plural(meses.length, "mês", "meses")} e ${plural(r.daily.length, "dia", "dias")} encontrados. ${esc(r.notas.join(" "))}</p>
+    <p class="muted" style="font-size:var(--t-sm)">${plural(meses.length, "mês", "meses")} e ${plural(r.daily.length, "dia", "dias")} encontrados. ${esc(r.notas.join(" "))} ${esc(textoTikTok(raw.tt))}</p>
     ${!meses.length && !r.daily.length ? `<div class="aviso"><p>Não encontrei números nesta página. Abre os gráficos detalhados no Social Blade e volta a usar o marcador. Se continuar a falhar, copia o texto da caixa abaixo e manda-mo para eu ajustar o marcador.</p></div><textarea class="input" rows="4" readonly>${esc(JSON.stringify({ libs: raw.libs, series: (raw.series || []).map((s) => ({ chart: s.chart, name: s.name, n: s.points.length, ex: s.points.slice(0, 3) })), rows: (raw.rows || []).slice(0, 3), erro: raw.erro }))}</textarea>` : ""}
     ${meses.length ? `<div class="sb-meses">${meses.map((m) => `<span><small>${esc(mesNome(m.month, { curto: true }))}</small><b>${curto(m.views)}</b></span>`).join("")}</div>` : ""}
     ${meses.length || r.daily.length ? `<div class="ed-grelha" style="margin-top:14px;align-items:end">
@@ -279,14 +328,14 @@ function mostrarSocialBlade(alvo, raw) {
       $("#sb-importar", alvo).disabled = false;
     });
   $("#sb-importar", alvo)?.addEventListener("click", async (e) => {
-    const payload = { channelId: r.channelId, handle: r.handle, title: r.title, monthly: r.monthly, daily: r.daily, sb: r.sb };
+    const payload = { channelId: r.channelId, handle: r.handle, title: r.title, monthly: r.monthly, daily: r.daily, sb: r.sb, tt: raw.tt || undefined };
     const corpo = { payload };
     if (canal) corpo.channelId = r.channelId;
     else if (pessoaEscolhida) corpo.personId = pessoaEscolhida.id;
     const res = await chamar("import/socialblade", corpo, { botao: e.currentTarget }).catch(() => null);
     if (!res) return;
     if (res.needsTarget) return toast("Escolhe primeiro o Youtuber.", { erro: true });
-    toast(`Importados ${res.months} meses e ${res.days} dias${res.extra ? ", com subscritores e vídeos" : ""}${res.redes ? ` e ${plural(res.redes, "rede social", "redes sociais")}` : ""}.`);
+    toast(`Importados ${res.months} meses e ${res.days} dias${res.extra ? ", com subscritores e vídeos" : ""}${res.redes ? ` e ${plural(res.redes, "rede social", "redes sociais")}` : ""}${res.tiktok ? `, mais o TikTok @${res.tiktok}` : ""}.`);
     alvo.innerHTML = `<div class="aviso info" style="margin-top:14px"><p>Feito: ${res.months} meses e ${res.days} dias guardados${res.personId ? ` em <a href="#/youtuber/${encodeURIComponent(res.personId)}">${esc(adm.db.people[res.personId]?.name || "")}</a>` : ""}. Podes passar ao canal seguinte.</p></div>`;
   });
 }
@@ -299,7 +348,7 @@ function mostrarLote(alvo, lote) {
     const r = interpretarSocialBlade(it);
     const link = adm.db.channels[it.channelId];
     const pessoa = link ? adm.db.people[link.personId] : null;
-    return { it, link, pessoa, meses: r.monthly.filter((m) => m.month < curMes), notas: r.notas, sb: r.sb };
+    return { it, link, pessoa, meses: r.monthly.filter((m) => m.month < curMes), notas: r.notas, sb: r.sb, tt: it.tt || null };
   });
   let substituirFolha = false;
 
@@ -312,15 +361,16 @@ function mostrarLote(alvo, lote) {
     });
 
   const desenhar = () => {
-    const comDados = linhas.filter((l) => l.meses.length || l.sb);
-    const prontos = linhas.filter((l) => l.link && (aImportar(l).length || l.sb));
+    const comDados = linhas.filter((l) => l.meses.length || l.sb || l.tt);
+    const prontos = linhas.filter((l) => l.link && (aImportar(l).length || l.sb || l.tt));
+    const comTT = prontos.filter((l) => l.tt).length;
     const comExtra = prontos.filter((l) => l.sb).length;
     const redes = prontos.reduce((a, l) => a + (l.sb?.info?.redes?.length || 0), 0);
     const total = prontos.reduce((a, l) => a + aImportar(l).length, 0);
     const semCanal = linhas.filter((l) => !l.link).length;
     alvo.innerHTML = `<hr class="ed-linha">
       <h3>Resultados do Social Blade</h3>
-      <p class="soft">${plural(linhas.length, "canal lido", "canais lidos")}, ${comDados.length} com meses. ${prontos.length ? `Vou gravar <b>${plural(total, "mês", "meses")}</b> de views em ${plural(prontos.length, "canal", "canais")}${comExtra ? `, mais subscritores e vídeos por mês, os últimos 30 dias e as últimas 52 semanas de ${plural(comExtra, "canal", "canais")}${redes ? ` e ${plural(redes, "link", "links")} de redes sociais (só entram onde ainda não há link)` : ""}` : ""}.` : "Nada de novo para gravar."}${semCanal ? ` ${plural(semCanal, "canal já não está", "canais já não estão")} no placar e fica${semCanal > 1 ? "m" : ""} de fora.` : ""}</p>
+      <p class="soft">${plural(linhas.length, "canal lido", "canais lidos")}, ${comDados.length} com meses. ${prontos.length ? `Vou gravar <b>${plural(total, "mês", "meses")}</b> de views em ${plural(prontos.length, "canal", "canais")}${comExtra ? `, mais subscritores e vídeos por mês, os últimos 30 dias e as últimas 52 semanas de ${plural(comExtra, "canal", "canais")}${redes ? ` e ${plural(redes, "link", "links")} de redes sociais (só entram onde ainda não há link)` : ""}` : ""}${comTT ? `, e os números do TikTok de ${plural(comTT, "Youtuber", "Youtubers")}` : ""}.` : "Nada de novo para gravar."}${semCanal ? ` ${plural(semCanal, "canal já não está", "canais já não estão")} no placar e fica${semCanal > 1 ? "m" : ""} de fora.` : ""}</p>
       <label class="ed-check"><input type="checkbox" id="lt-folha" ${substituirFolha ? "checked" : ""}> Substituir também os meses que já vêm da folha ou foram escritos à mão</label>
       <p class="muted" style="font-size:var(--t-sm);margin-top:6px">Sem esta opção, só entram os meses que ainda não têm dados reais (o buraco). Meses fixados (com cadeado) nunca são alterados. As estimativas (≈) são sempre substituídas.</p>
       <div class="ed-acoes" style="justify-content:flex-start"><button class="btn btn-primario" id="lt-importar" data-a-esperar="A gravar" ${prontos.length ? "" : "disabled"}>Gravar ${plural(prontos.length, "canal", "canais")}</button><span class="muted" id="lt-estado"></span></div>
@@ -331,8 +381,8 @@ function mostrarLote(alvo, lote) {
           const n = aImportar(l).length;
           const nome = l.pessoa ? esc(l.pessoa.name) + (l.link.role === "principal" ? "" : ` <small class="muted">${esc(l.link.title || l.link.role)}</small>`) : `<span class="muted">${esc(l.it.title || l.it.channelId)}</span>`;
           const periodo = l.meses.length ? `${mesNome(l.meses[0].month, { curto: true })} a ${mesNome(l.meses[l.meses.length - 1].month, { curto: true })}` : `<span class="muted">${esc(l.it.erro || "sem dados")}</span>`;
-          const mais = l.sb ? [l.sb.m ? "subs e vídeos" : "", l.sb.d ? "30 dias" : "", l.sb.w ? "52 semanas" : "", l.sb.info?.redes?.length ? plural(l.sb.info.redes.length, "rede", "redes") : ""].filter(Boolean).join(", ") : "";
-          return `<tr style="cursor:default;${n || l.sb ? "" : "opacity:.6"}"><td>${nome}</td><td class="dir">${l.meses.length}</td><td class="dir"><b>${n}</b></td><td>${periodo}</td><td class="muted" style="font-size:var(--t-xs)">${esc(mais)}</td><td>${linkSocialBlade(l.it.channelId)}</td></tr>`;
+          const mais = l.sb ? [l.sb.m ? "subs e vídeos" : "", l.sb.d ? "30 dias" : "", l.sb.w ? "52 semanas" : "", l.sb.info?.redes?.length ? plural(l.sb.info.redes.length, "rede", "redes") : "", l.tt ? `TikTok @${l.tt.info?.user}` : ""].filter(Boolean).join(", ") : l.tt ? `TikTok @${l.tt.info?.user}` : "";
+          return `<tr style="cursor:default;${n || l.sb || l.tt ? "" : "opacity:.6"}"><td>${nome}</td><td class="dir">${l.meses.length}</td><td class="dir"><b>${n}</b></td><td>${periodo}</td><td class="muted" style="font-size:var(--t-xs)">${esc(mais)}</td><td>${linkSocialBlade(l.it.channelId)}</td></tr>`;
         })
         .join("")}</tbody></table></div>`;
 
@@ -342,7 +392,7 @@ function mostrarLote(alvo, lote) {
     });
     $("#lt-importar", alvo).addEventListener("click", async (e) => {
       const botao = e.currentTarget;
-      const itens = prontos.map((l) => ({ channelId: l.it.channelId, monthly: aImportar(l), sb: l.sb || undefined }));
+      const itens = prontos.map((l) => ({ channelId: l.it.channelId, monthly: aImportar(l), sb: l.sb || undefined, tt: l.tt || undefined }));
       let canais = 0;
       let meses = 0;
       let redesGravadas = 0;

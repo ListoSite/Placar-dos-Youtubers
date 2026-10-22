@@ -30,6 +30,7 @@ export async function correr(palco, opts) {
     daMetrica("subsMes"),
     daMetrica("crescimento"),
     daMetrica("anos"),
+    daMetrica("tiktok"),
     { nome: "Melhor mês de sempre", f: (p) => (p === a ? ra : rb).melhor?.v ?? null, fmt: METRICAS.views.fmt },
     { nome: "Meses no top 10", f: (p) => (p === a ? ra : rb).top10 || null, fmt: inteiro },
     { nome: "Envolvimento do público", f: (p) => (p.vid?.eng ? p.vid.eng * 100 : null), fmt: (x) => decimal(x, 1) + "%" },

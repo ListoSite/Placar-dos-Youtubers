@@ -6,13 +6,14 @@ import { esc, mesNome, curto } from "../format.js";
 import { $, $$, avatar } from "../ui.js";
 import { som } from "../audio.js";
 import { animate, stagger, spring, engine } from "../../vendor/anime.esm.min.js";
-import { TEMAS, tema as temaPorId, cenario } from "./temas.js";
+import { TEMAS, tema as temaPorId, cenario, estiloTema } from "./temas.js";
 import { Ambiente } from "./ambiente.js";
 
 const I = (d) => `<svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">${d}</svg>`;
 
 export const GRUPOS = [
   { id: "rankings", nome: "Rankings", texto: "Os números do mês contados com suspense." },
+  { id: "graficos", nome: "Gráficos", texto: "Os números em gráficos animados: simples de ler e sempre a mexer." },
   { id: "jogos", nome: "Jogos", texto: "Para jogar com quem está a ver, em direto ou em vídeo." },
   { id: "duelos", nome: "Duelos", texto: "Frente a frente, até haver um vencedor." },
   { id: "historias", nome: "Histórias", texto: "Um Youtuber em destaque." },
@@ -23,6 +24,11 @@ export const ESPETACULOS = [
   { id: "corrida", usos: ["video"], dur: "40–60 s", grupo: "rankings", nome: "Corrida das views", texto: "Barras que se ultrapassam mês a mês, com cada mudança de líder em destaque.", mod: "./corrida.js", icone: I(`<path d="M6 6v36h36"/><path d="M12 14h22M12 22h30M12 30h14" stroke-width="5"/>`) },
   { id: "tier", usos: ["video"], dur: "1–2 min", grupo: "rankings", nome: "Tier list", texto: "Cada Youtuber cai na sua fila: S, A, B, C ou D.", mod: "./tier.js", icone: I(`<rect x="5" y="6" width="38" height="9" rx="3"/><rect x="5" y="19" width="38" height="9" rx="3"/><rect x="5" y="32" width="38" height="9" rx="3"/><path d="M12 6v9M12 19v9M12 32v9"/>`) },
   { id: "altos", usos: ["video"], dur: "1–1,5 min", grupo: "rankings", nome: "Altos e baixos", texto: "Quem subiu e quem caiu mais no ranking do mês.", mod: "./altos.js", icone: I(`<path d="M10 34 22 20l7 7 11-15"/><path d="M32 12h8v8"/><path d="M8 42h32"/>`) },
+  { id: "barras", usos: ["video","direto"], dur: "45 s", grupo: "graficos", nome: "Gráfico de barras", texto: "As colunas crescem fora de ordem, ordenam-se sozinhas e aparece a linha da média.", mod: "./barras.js", icone: I(`<path d="M6 42h36"/><path d="M11 42V26M19 42V12M27 42V20M35 42V30" stroke-width="6"/>`) },
+  { id: "categorias", usos: ["video","direto"], dur: "45 s", grupo: "graficos", nome: "O bolo das categorias", texto: "Um donut com a fatia de cada categoria nas views do mês e o n.º 1 de cada uma.", mod: "./categorias.js", icone: I(`<circle cx="24" cy="24" r="16" stroke-width="8" stroke-dasharray="50 101"/><circle cx="24" cy="24" r="16" stroke-width="8" stroke-dasharray="0 50 30 101" opacity=".6"/>`) },
+  { id: "bolhas", usos: ["video","direto"], dur: "50 s", grupo: "graficos", nome: "Bolhas", texto: "Cada Youtuber é uma bolha do tamanho dos seus números. Muda a medida e as bolhas crescem e encolhem.", mod: "./bolhas.js", icone: I(`<circle cx="18" cy="20" r="12"/><circle cx="35" cy="31" r="8"/><circle cx="33" cy="12" r="5"/><circle cx="14" cy="39" r="4"/>`) },
+  { id: "linhas", usos: ["video"], dur: "40 s", grupo: "graficos", nome: "Linha a linha", texto: "Até 7 Youtubers num gráfico de linhas que se desenha mês a mês, com quem vai na frente.", mod: "./linhas.js", icone: I(`<path d="M6 6v36h36"/><path d="M10 34l9-10 7 5 14-16"/><path d="M10 38l10-6 8 2 12-9" opacity=".55"/>`) },
+  { id: "numeros", usos: ["video"], dur: "35 s", grupo: "graficos", nome: "O mês em números", texto: "Números gigantes, um de cada vez: total de views, subidas, milionários e o n.º 1.", mod: "./numeros.js", icone: I(`<rect x="6" y="8" width="36" height="32" rx="5"/><path d="M14 30V18l-3 3M22 18h6l-6 12M32 18h5v12"/>`) },
   { id: "desafio", usos: ["video"], dur: "1,5–2 min", grupo: "jogos", nome: "Desafio do Placar", texto: "Para jogar com o vídeo: escolha múltipla, o intruso, ordenar e verdadeiro ou falso. Quem vê pausa, responde e conta os pontos.", mod: "./desafio.js", icone: I(`<path d="M8 6h32v26H22l-9 9v-9H8z"/><path d="M19 15a5 5 0 1 1 7 4.6c-1.4.7-2 1.6-2 3.4"/><circle cx="24" cy="27.5" r="1.6" fill="currentColor"/>`) },
   { id: "quiz", usos: ["video","direto"], dur: "1–2 min", grupo: "jogos", nome: "Quem fez mais?", texto: "Perguntas variadas, 5 segundos para pensar e a resposta revelada.", mod: "./quiz.js", icone: I(`<circle cx="24" cy="24" r="19"/><path d="M18 18a6 6 0 1 1 9 5.2c-2 1.2-3 2.3-3 4.8"/><circle cx="24" cy="35" r="1.8" fill="currentColor"/>`) },
   { id: "maismenos", usos: ["video","direto"], dur: "1–2 min", grupo: "jogos", nome: "Mais ou menos", texto: "Mais ou menos views do que o anterior? Uma corrente sem fim.", mod: "./maismenos.js", icone: I(`<path d="M24 6 12 20h24zM24 42 12 28h24z"/>`) },
@@ -64,7 +70,7 @@ export class Palco {
     this.raiz = document.createElement("div");
     this.raiz.className = "palco";
     this.raiz.innerHTML = `
-      <div class="palco-tela tema-${this.tema.id} ${this.vertical ? "vertical" : "horizontal"}" style="width:${this.L}px;height:${this.A}px">
+      <div class="palco-tela tema-${this.tema.id}${this.tema.gerado ? ` tema-gerado${this.tema.claro ? " tema-claro" : ""}` : ""} ${this.vertical ? "vertical" : "horizontal"}" style="width:${this.L}px;height:${this.A}px;${estiloTema(this.tema)}">
         <div class="palco-ondas"></div>
         <div class="palco-decor">${cenario(this.tema.id)}</div>
         <canvas class="palco-particulas"></canvas>

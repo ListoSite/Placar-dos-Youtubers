@@ -465,6 +465,85 @@
     return sb.m || sb.d || sb.info ? sb : null;
   }
   const contarMeses = (sb) => (sb && sb.m ? sb.m.v.filter((x) => x !== null).length : 0);
+  // ---------- TikTok ----------
+  // tiktok.user aceita o nome de utilizador e devolve o id numérico; tiktok.monthly (ganhos por mês)
+  // e tiktok.history (totais por dia) só aceitam o id numérico.
+  function ttUser(x) {
+    if (!x) return "";
+    const s = String(x).trim();
+    const m = /tiktok\.com\/@([\w.]{2,40})/i.exec(s) || /^@?([\w.]{2,40})$/.exec(s);
+    return m ? m[1] : "";
+  }
+  function ttDasRedes(sb) {
+    const redes = (sb && sb.info && sb.info.redes) || [];
+    for (const u of redes) {
+      const n = ttUser(/tiktok\.com/i.test(u) ? u : "");
+      if (n) return n;
+    }
+    return "";
+  }
+  function colunasTT(linhas, passo) {
+    if (!linhas.length) return null;
+    const ini = linhas[0][0];
+    const pos = (d) => (passo === "mes" ? (Number(d.slice(0, 4)) - Number(ini.slice(0, 4))) * 12 + Number(d.slice(5, 7)) - Number(ini.slice(5, 7)) : Math.round((Date.parse(d) - Date.parse(ini)) / DIA));
+    const n = pos(linhas[linhas.length - 1][0]) + 1;
+    if (n > 200) return null;
+    const out = { ini, f: new Array(n).fill(null), l: new Array(n).fill(null), n: new Array(n).fill(null) };
+    for (const [d, f, l, v] of linhas) {
+      const i = pos(d);
+      if (i < 0 || i >= n) continue;
+      out.f[i] = f;
+      out.l[i] = l;
+      out.n[i] = v;
+    }
+    return out;
+  }
+  function linhasTT(arr, fmt) {
+    if (!Array.isArray(arr)) return [];
+    return arr
+      .map((x) => [dataISO(x && x.date), num(x && x.followers), num(x && x.likes), num(x && x.videos)])
+      .filter((r) => r[0])
+      .map((r) => [fmt(r[0]), r[1], r[2], r[3]])
+      .sort((a, b) => a[0].localeCompare(b[0]));
+  }
+  async function trpc(procs, inp) {
+    const t = await lerResposta(`${location.origin}/api/trpc/${procs}?batch=1&input=${encodeURIComponent(JSON.stringify(inp))}`);
+    if (!t) return null;
+    try {
+      const j = JSON.parse(t);
+      return Array.isArray(j) ? j.map((x) => x && x.result && x.result.data && x.result.data.json) : null;
+    } catch (e) {
+      return null;
+    }
+  }
+  async function porTikTok(nome) {
+    if (!nome) return null;
+    const a = await trpc("tiktok.user", { 0: { json: { id: nome } } });
+    const u = a && a[0];
+    if (!u || !u.id) return null;
+    const id = String(u.id);
+    const b = (await trpc("tiktok.monthly,tiktok.history", { 0: { json: { id, period: "monthly" } }, 1: { json: { id, limit: 31 } } })) || [];
+    const tt = {
+      at: new Date().toISOString(),
+      info: { id, user: String(u.username || nome).slice(0, 40), nome: String(u.displayName || "").slice(0, 120), seg: num(u.followers), gostos: num(u.likes), videos: num(u.videos), criado: dataISO(u.createdAt) },
+    };
+    const m = colunasTT(linhasTT(b[0], (x) => x.slice(0, 7)), "mes");
+    const d = colunasTT(linhasTT(b[1], (x) => x), "dia");
+    if (m) tt.m = m;
+    if (d) tt.d = d;
+    return tt;
+  }
+  async function juntarTikTok(r, nome) {
+    if (!nome) return;
+    try {
+      const tt = await porTikTok(nome);
+      if (tt) r.tt = tt;
+    } catch (e) {
+      if (e instanceof Bloqueado) throw e;
+    }
+  }
+  const textoTT = (r) => (r.tt ? `, TikTok @${r.tt.info.user} (${r.tt.m ? r.tt.m.f.length : 0} meses)` : "");
+
 
   // ---------- Página atual ----------
   function chaveDaPagina() {
@@ -473,6 +552,13 @@
   }
 
   async function lerEstaPagina() {
+    const pTT = location.pathname.match(/\/tiktok\/user\/([^/?#]+)/);
+    if (pTT) {
+      const tt = await porTikTok(decodeURIComponent(pTT[1]));
+      const raw = { kind: "placar-sb-raw", v: 3, soTikTok: true, url: location.href, title: tt ? tt.info.nome || tt.info.user : "", handle: "", channelId: "", series: [], meses: 0 };
+      if (tt) raw.tt = tt;
+      return { rec: novaRecolha(), raw };
+    }
     const rec = await lerJanela(window);
     const chave = chaveDaPagina();
     const channelId = idDaPagina(rec);
@@ -491,6 +577,7 @@
           raw.series = [];
           raw.meses = contarMeses(sb);
           if (sb.info && sb.info.nome) raw.title = sb.info.nome;
+          await juntarTikTok(raw, ttDasRedes(sb));
         }
       } catch (e) {
         if (e instanceof Bloqueado) throw e;
@@ -706,8 +793,17 @@
     try {
       atual = await lerEstaPagina();
       const r = atual.raw;
+      if (r.soTikTok) {
+        if (!r.tt) {
+          s1txt.textContent = "Não encontrei os números deste perfil do TikTok.";
+          return;
+        }
+        s1txt.textContent = `TikTok @${r.tt.info.user}: ${r.tt.info.seg !== null ? r.tt.info.seg.toLocaleString("pt-PT") + " seguidores, " : ""}${r.tt.m ? r.tt.m.f.length : 0} meses e ${r.tt.d ? r.tt.d.f.length : 0} dias.`;
+        bEnviar1.style.display = bCopiar1.style.display = "";
+        return;
+      }
       if (!r.series.length && !r.sb) {
-        s1txt.textContent = chaveDaPagina() ? "Ainda não encontrei números nesta página. Espera que os gráficos carreguem e carrega outra vez no marcador." : "Abre a página de um canal do YouTube no Social Blade.";
+        s1txt.textContent = chaveDaPagina() ? "Ainda não encontrei números nesta página. Espera que os gráficos carreguem e carrega outra vez no marcador." : "Abre a página de um canal do YouTube (ou de um perfil do TikTok) no Social Blade.";
         return;
       }
       s1txt.textContent = r.sb ? `${r.title || r.handle}: ${r.meses} meses, ${r.sb.d ? r.sb.d.v.length : 0} dias e ${r.sb.w ? r.sb.w.v.length : 0} semanas (views, subscritores e vídeos)${r.sb.info && r.sb.info.redes.length ? `, ${r.sb.info.redes.length} redes sociais` : ""}.` : `${r.title || r.handle}: encontrei dados de ${r.meses} meses.`;
@@ -753,7 +849,7 @@
   }
 
   let ordem = ["api", "html", "iframe"];
-  const temDados = (x) => Boolean((x.sb && (x.sb.m || x.sb.d || x.sb.info)) || (x.series && x.series.length));
+  const temDados = (x) => Boolean((x.sb && (x.sb.m || x.sb.d || x.sb.info)) || (x.series && x.series.length) || x.tt);
   let falhasSB = 0;
   async function umCanal(alvo, modelos) {
     let ultimo = null;
@@ -762,7 +858,9 @@
       if (sb && sb.outro) ultimo = { erro: "Os dados eram de outro canal." };
       else if (sb) {
         falhasSB = 0;
-        return { kind: "placar-sb-raw", v: 3, channelId: alvo.id, handle: alvo.h || "", title: alvo.n || "", series: [], sb, meses: contarMeses(sb), metodo: "sb" };
+        const r = { kind: "placar-sb-raw", v: 3, channelId: alvo.id, handle: alvo.h || "", title: alvo.n || "", series: [], sb, meses: contarMeses(sb), metodo: "sb" };
+        await juntarTikTok(r, ttUser(alvo.tt) || ttDasRedes(sb));
+        return r;
       } else falhasSB++;
       if (falhasSB < 3) return Object.assign({ channelId: alvo.id, title: alvo.n || "", series: [], meses: 0 }, ultimo || { erro: "O Social Blade não tem este canal." });
     }
@@ -810,7 +908,7 @@
       estado.itens.push(r);
       estado.i++;
       gravarEstado(estado);
-      log(`${temDados(r) ? "✓" : "–"} ${alvo.n || alvo.id}: ${temDados(r) ? `${r.meses} meses${r.sb && r.sb.info && r.sb.info.redes.length ? `, ${r.sb.info.redes.length} redes` : ""} (${r.metodo})` : r.erro || "sem dados"}`);
+      log(`${temDados(r) ? "✓" : "–"} ${alvo.n || alvo.id}: ${temDados(r) ? `${r.meses} meses${r.sb && r.sb.info && r.sb.info.redes.length ? `, ${r.sb.info.redes.length} redes` : ""}${textoTT(r)} (${r.metodo})` : r.erro || "sem dados"}`);
       mostrarEstado();
       if (estado.i < estado.lista.length) await esperar(1500 + Math.random() * 1500);
     }

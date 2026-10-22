@@ -12,7 +12,7 @@ import {
   hasApiKey, takeUnits, resolveChannel, channelsByIds, searchChannels, featuredChannels,
   handleGuesses, parseProjectSource, playlistInfo,
 } from "../lib/youtube.mjs";
-import { cleanPayload, findChannel, applyImport, applyMonths, applyDaily, cleanExtra, dailyFromExtra, saveExtras, fillSocials } from "../lib/socialblade.mjs";
+import { cleanPayload, findChannel, applyImport, applyMonths, applyDaily, cleanExtra, dailyFromExtra, saveExtras, fillSocials, cleanTikTok, applyTikTok, saveTikToks } from "../lib/socialblade.mjs";
 import { estimarPessoa, apagarEstimativas, unidadesUsadas } from "../lib/estimate.mjs";
 
 export const config = { path: "/api/*" };
@@ -342,6 +342,22 @@ const adminRoutes = {
 
   // ---------- Social Blade ----------
   "POST import/socialblade": async ({ db, b }) => {
+    const tiktok = cleanTikTok(b.payload?.tt);
+    // Só TikTok (marcador aberto numa página de TikTok do Social Blade)
+    if (b.payload?.soTikTok) {
+      if (!tiktok) throw new HttpError(400, "Não há dados do TikTok para importar.");
+      const user = tiktok.info.user.toLowerCase();
+      const dono =
+        (db.people[b.personId] && b.personId) ||
+        Object.values(db.people).find((p) => {
+          const s = p.socials?.tiktok;
+          return (s?.handle || "").toLowerCase() === user || /tiktok\.com\/@([\w.]+)/i.exec(s?.url || "")?.[1]?.toLowerCase() === user;
+        })?.id;
+      if (!dono) return { needsTarget: true, tiktok: true, data: { title: tiktok.info.nome || tiktok.info.user, handle: tiktok.info.user, months: tiktok.m ? tiktok.m.f.length : 0, days: 0 } };
+      const tt = applyTikTok(db, dono, tiktok);
+      await saveTikToks({ [dono]: tiktok });
+      return { tiktok: tiktok.info.user, ttEntradas: tt, personId: dono, save: true };
+    }
     const data = cleanPayload(b.payload);
     const stats = await getJSON("stats", {});
     let channelId = b.channelId || findChannel(db, stats, data);
@@ -367,7 +383,11 @@ const adminRoutes = {
       await saveExtras({ [channelId]: extra });
       redes = fillSocials(db, dono, extra.info?.redes);
     }
-    return { ...result, redes, extra: Boolean(extra), channelId, personId: dono, save: true };
+    if (tiktok && dono) {
+      applyTikTok(db, dono, tiktok);
+      await saveTikToks({ [dono]: tiktok });
+    }
+    return { ...result, redes, extra: Boolean(extra), tiktok: tiktok?.info.user || "", channelId, personId: dono, save: true };
   },
 
   "POST import/socialblade-lote": async ({ db, b }) => {
@@ -376,6 +396,7 @@ const adminRoutes = {
     let meses = 0;
     const ignorados = [];
     const extras = {};
+    const tiktoks = {};
     const diarios = [];
     let redes = 0;
     for (const it of itens) {
@@ -391,12 +412,19 @@ const adminRoutes = {
         diarios.push({ channelId: it.channelId, daily: dailyFromExtra(extra) });
         redes += fillSocials(db, db.channels[it.channelId].personId, extra.info?.redes);
       }
-      if (n || extra) canais++;
+      const tiktok = cleanTikTok(it.tt);
+      if (tiktok) {
+        const dono = db.channels[it.channelId].personId;
+        applyTikTok(db, dono, tiktok);
+        tiktoks[dono] = tiktok;
+      }
+      if (n || extra || tiktok) canais++;
       meses += n;
     }
     await saveExtras(extras);
+    await saveTikToks(tiktoks);
     const dias = await applyDaily(diarios);
-    return { canais, meses, dias, redes, extras: Object.keys(extras).length, ignorados, save: canais > 0 };
+    return { canais, meses, dias, redes, extras: Object.keys(extras).length, tiktok: Object.keys(tiktoks).length, ignorados, save: canais > 0 };
   },
 
   // ---------- Estimativa dos meses em falta ----------
@@ -442,7 +470,7 @@ const adminRoutes = {
     return { settings: db.settings, save: true };
   },
   "GET export": async () => {
-    const keys = ["db", "stats", "ytstart", "videosummary", "projvids", "meta", "vstate", "sbextra"];
+    const keys = ["db", "stats", "ytstart", "videosummary", "projvids", "meta", "vstate", "sbextra", "ttextra"];
     const out = { kind: "placar-backup", version: 2, at: new Date().toISOString(), data: {} };
     for (const k of keys) out.data[k] = await getJSON(k, null);
     for (const k of await listKeys("snap/")) out.data[k] = await getJSON(k, null);
@@ -453,7 +481,7 @@ const adminRoutes = {
     if (!bk || bk.kind !== "placar-backup" || !bk.data?.db?.people) throw new HttpError(400, "Ficheiro de cópia inválido.");
     for (const [k, v] of Object.entries(bk.data)) {
       if (v === null) continue;
-      if (!/^(db|stats|ytstart|videosummary|projvids|meta|vstate|sbextra|snap\/\d{4}-\d{2})$/.test(k)) continue;
+      if (!/^(db|stats|ytstart|videosummary|projvids|meta|vstate|sbextra|ttextra|snap\/\d{4}-\d{2})$/.test(k)) continue;
       await setJSON(k, v);
     }
     const db = await loadDB();

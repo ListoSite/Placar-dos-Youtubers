@@ -62,6 +62,17 @@ const sb = await call("POST", "admin/import/socialblade", {
 });
 check("importar Social Blade", sb.status === 200 && sb.data.months === 2, JSON.stringify(sb.data));
 
+// TikTok (Social Blade): só TikTok, ligado à pessoa pelo personId
+const tt = {
+  at: "2026-10-22T10:00:00.000Z",
+  info: { id: "6900001", user: "wuant_tt", nome: "Wuant", seg: 125400, gostos: 3400000, videos: 210, criado: "2019-03-01" },
+  m: { ini: "2026-08", f: [2700, 3400, 4100], l: [90000, 95000, 99000], n: [8, 9, 9] },
+};
+const ttRes = await call("POST", "admin/import/socialblade", { payload: { soTikTok: true, tt }, personId: wuant.id });
+check("importar TikTok", ttRes.status === 200 && ttRes.data.tiktok === "wuant_tt", JSON.stringify(ttRes.data));
+const ttSem = await call("POST", "admin/import/socialblade", { payload: { soTikTok: true, tt: { ...tt, info: { ...tt.info, user: "alguem_sem_dono" } } } });
+check("TikTok sem dono pede pessoa", ttSem.status === 200 && ttSem.data.needsTarget === true);
+
 const proj = await call("POST", "admin/project", {
   project: { name: "Série de teste", personId: wuant.id, guests: [created.data.person.id], source: { playlistId: "PLtesteabc123456", videoIds: [] } },
 });
@@ -82,6 +93,10 @@ check("mês da folha mantém-se", w.monthly["2024-12"]?.src === "folha", JSON.st
 check("totais do YouTube", w.totals?.src === "youtube", JSON.stringify(w.totals));
 const p = ds.data.projects.find((x) => x.name === "Série de teste");
 check("projeto com episódios", p && p.episodes > 0, p ? `${p.episodes} eps, impacto ${p.impact}` : "");
+
+check("TikTok no dataset", w.tt?.user === "wuant_tt" && w.tt.f["2026-10"] === 4100, JSON.stringify(w.tt));
+const ttEnt = w.socials?.tiktok?.entries || [];
+check("TikTok: total de hoje e do fim de setembro", ttEnt.some((e) => e.date === "2026-10-22" && e.followers === 125400) && ttEnt.some((e) => e.date === "2026-09-30" && e.followers === 121300), JSON.stringify(ttEnt.slice(-2)));
 
 const exp = await call("GET", "admin/export");
 check("exportar cópia", exp.status === 200 && exp.data.kind === "placar-backup");
