@@ -3,7 +3,7 @@
 // um voto por pessoa e por votação). Aqui o servidor lista as votações com as contagens
 // e cria, muda ou apaga votações (com a chave service_role).
 
-import { pedidoSupabase, supabaseConfigurado, getJSON } from "./storage.mjs";
+import { pedidoSupabase, supabaseConfigurado, getJSON, urlSupabase } from "./storage.mjs";
 
 export function exigirSupabase() {
   if (!supabaseConfigurado()) {
@@ -87,8 +87,8 @@ function chaveSecreta(k) {
 
 /** Dados públicos para o browser falar com o Supabase (login e votos). A chave anon é pública. */
 export function configPublica() {
-  const url = (process.env.SUPABASE_URL || "").replace(/\/+$/, "");
-  const anon = process.env.SUPABASE_ANON_KEY || "";
+  const url = urlSupabase();
+  const anon = (process.env.SUPABASE_ANON_KEY || "").trim();
   if (!url || !anon || chaveSecreta(anon)) return null;
   return { url, anon };
 }

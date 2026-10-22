@@ -15,8 +15,12 @@ import { promises as fs } from "node:fs";
 import path from "node:path";
 
 const LOCAL_DIR = process.env.PLACAR_LOCAL_DIR;
-const SB_URL = (process.env.SUPABASE_URL || "").replace(/\/+$/, "");
-const SB_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || "";
+/** O endereço do projeto (aceita também o que vem com /rest/v1 ou /auth/v1 no fim, copiado do Supabase). */
+export function urlSupabase() {
+  return (process.env.SUPABASE_URL || "").trim().replace(/\/+$/, "").replace(/\/(rest|auth)\/v1$/, "");
+}
+const SB_URL = urlSupabase();
+const SB_KEY = (process.env.SUPABASE_SERVICE_ROLE_KEY || "").trim();
 export const supabaseConfigurado = () => Boolean(SB_URL && SB_KEY);
 
 // ---------- Ficheiros locais ----------
