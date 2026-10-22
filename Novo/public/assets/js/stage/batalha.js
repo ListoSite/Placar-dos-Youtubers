@@ -1,9 +1,10 @@
-// Batalha: dois Youtubers, categoria a categoria.
+// Batalha: combate com barras de vida. Cada ronda ganha tira vida ao adversário, até ao K.O.
 
-import { estado, pessoa, indice, views, mediaMeses, recordes, projetosDe } from "../data.js";
-import { esc, curto, inteiro, mesNome, decimal } from "../format.js";
+import { estado, pessoa, indice, recordes, projetosDe } from "../data.js";
+import { esc, inteiro, decimal } from "../format.js";
 import { contar } from "../ui.js";
-import { avatarPalco, confetes } from "./stage.js";
+import { avatarPalco, baralhar } from "./stage.js";
+import { METRICAS } from "./metricas.js";
 
 function escolherAoAcaso(excluir) {
   const top = [...estado.posIndice.entries()].filter(([id, pos]) => pos <= 60 && id !== excluir).map(([id]) => id);
@@ -17,89 +18,171 @@ export async function correr(palco, opts) {
   const ref = estado.ref;
   const ra = recordes(a);
   const rb = recordes(b);
-  const anos = (p) => (p.since ? new Date().getFullYear() - new Date(p.since).getFullYear() : null);
-  const rondas = [
-    { nome: "Índice de Influência", f: (p) => indice(p.id).total, fmt: inteiro },
-    { nome: `Views em ${mesNome(ref, { ano: false })}`, f: (p) => views(p, ref), fmt: curto },
-    { nome: "Média de 3 meses", f: (p) => mediaMeses(p, ref, 3), fmt: curto },
-    { nome: "Melhor mês de sempre", f: (p) => (p === a ? ra : rb).melhor?.v ?? null, fmt: curto },
-    { nome: "Meses no top 10", f: (p) => (p === a ? ra : rb).top10, fmt: inteiro },
-    { nome: "Subscritores", f: (p) => p.totals?.subs ?? null, fmt: curto },
-    { nome: "Views totais", f: (p) => p.totals?.views ?? null, fmt: curto },
-    { nome: "Vídeos em 30 dias", f: (p) => p.vid?.up30 ?? null, fmt: inteiro },
-    { nome: "Views por vídeo", f: (p) => p.vid?.med ?? null, fmt: curto },
-    { nome: "Envolvimento", f: (p) => (p.vid?.eng ? p.vid.eng * 100 : null), fmt: (x) => decimal(x, 1) + "%" },
+  const daMetrica = (k) => ({ nome: METRICAS[k].nome(ref), f: (p) => METRICAS[k].valor(p, ref), fmt: METRICAS[k].fmt });
+  let rondas = [
+    daMetrica("views"),
+    daMetrica("media3"),
+    daMetrica("subs"),
+    daMetrica("total"),
+    daMetrica("videos30"),
+    daMetrica("porVideo"),
+    daMetrica("subsMes"),
+    daMetrica("crescimento"),
+    daMetrica("anos"),
+    { nome: "Melhor mês de sempre", f: (p) => (p === a ? ra : rb).melhor?.v ?? null, fmt: METRICAS.views.fmt },
+    { nome: "Meses no top 10", f: (p) => (p === a ? ra : rb).top10 || null, fmt: inteiro },
+    { nome: "Envolvimento do público", f: (p) => (p.vid?.eng ? p.vid.eng * 100 : null), fmt: (x) => decimal(x, 1) + "%" },
     { nome: "Projetos", f: (p) => projetosDe(p.id).length || null, fmt: inteiro },
-    { nome: "Anos no YouTube", f: anos, fmt: inteiro },
   ]
     .map((r) => ({ ...r, va: r.f(a), vb: r.f(b) }))
-    .filter((r) => r.va !== null && r.va !== undefined && r.vb !== null && r.vb !== undefined);
+    .filter((r) => r.va !== null && r.va !== undefined && r.vb !== null && r.vb !== undefined && Number.isFinite(r.va) && Number.isFinite(r.vb));
+  // A última ronda é sempre o Índice (o "golpe final"), as outras vêm baralhadas
+  rondas = baralhar(rondas).slice(0, 8);
+  const ia = indice(a.id).total;
+  const ib = indice(b.id).total;
+  if (ia !== null && ib !== null) rondas.push({ nome: "Golpe final: Índice de Influência", va: ia, vb: ib, fmt: inteiro, final: true });
   if (rondas.length < 3) throw new Error("Estes dois Youtubers têm poucos números para comparar.");
 
-  const vertical = palco.formato === "9x16";
+  const vertical = palco.vertical;
   const cena = palco.cena;
-  const tam = vertical ? 200 : 150;
 
-  // Apresentação
+  // ---------- Apresentação ----------
   palco.musica("tensao", 1);
-  cena.innerHTML = `<div class="p-centro" style="flex-direction:${vertical ? "column" : "row"};gap:${vertical ? 40 : 90}px">
-    <div class="p-entra" style="display:flex;flex-direction:column;align-items:center;gap:30px">${avatarPalco(a, vertical ? 300 : 340)}<div class="p-titulo" style="font-size:${vertical ? 54 : 60}px">${esc(a.name)}</div></div>
-    <div class="qz-vs p-slam" style="animation-delay:.5s;font-size:${vertical ? 90 : 120}px">VS</div>
-    <div class="p-entra" style="display:flex;flex-direction:column;align-items:center;gap:30px;animation-delay:.25s">${avatarPalco(b, vertical ? 300 : 340)}<div class="p-titulo" style="font-size:${vertical ? 54 : 60}px">${esc(b.name)}</div></div></div>`;
+  cena.innerHTML = `<div class="bt-intro">
+    <div class="bt-intro-lado a">${avatarPalco(a, vertical ? 360 : 420)}<div class="p-titulo">${esc(a.name)}</div><small>${esc(a.category || "")}</small></div>
+    <div class="bt-intro-vs">VS</div>
+    <div class="bt-intro-lado b">${avatarPalco(b, vertical ? 360 : 420)}<div class="p-titulo">${esc(b.name)}</div><small>${esc(b.category || "")}</small></div></div>`;
   palco.tocar("whoosh");
-  palco.tocar("impacto", {}, 0.55);
-  await palco.passo(3400);
+  palco.tocar("whoosh", {}, 0.25);
+  await palco.esperar(700, { exato: true });
+  palco.tocar("impacto");
+  palco.tocar("_abertura", {}, 0.1);
+  palco.flash(0.8);
+  palco.tremer(1.2);
+  palco.explodir(palco.L / 2, palco.A / 2, { n: 120 });
+  await palco.passo(3200);
 
+  // ---------- Arena ----------
   cena.innerHTML = `
-    <div class="bt-topo">
-      <div class="bt-lado">${avatarPalco(a, tam)}<b>${esc(a.name)}</b></div>
-      <div class="bt-placar"><span id="bt-a">0</span><i>–</i><span id="bt-b">0</span></div>
-      <div class="bt-lado dir">${avatarPalco(b, tam)}<b>${esc(b.name)}</b></div>
+    <div class="bt-vidas">
+      <div class="bt-vida a"><div class="bt-vida-nome">${avatarPalco(a, vertical ? 84 : 92)}<b>${esc(a.name)}</b><span class="bt-hp" id="hp-a">100</span></div><div class="bt-barra"><i class="dano"></i><i class="vida"></i></div></div>
+      <div class="bt-ronda-num" id="bt-num">1</div>
+      <div class="bt-vida b"><div class="bt-vida-nome"><span class="bt-hp" id="hp-b">100</span><b>${esc(b.name)}</b>${avatarPalco(b, vertical ? 84 : 92)}</div><div class="bt-barra"><i class="dano"></i><i class="vida"></i></div></div>
     </div>
-    <div class="bt-rondas"></div>`;
+    <div class="bt-arena">
+      <div class="bt-lutador a">${avatarPalco(a, vertical ? 300 : 340)}</div>
+      <div class="bt-golpe-info"></div>
+      <div class="bt-lutador b">${avatarPalco(b, vertical ? 300 : 340)}</div>
+    </div>
+    <div class="bt-anuncio"></div>`;
+  const anuncio = cena.querySelector(".bt-anuncio");
+  const info = cena.querySelector(".bt-golpe-info");
+  const luta = { a: cena.querySelector(".bt-lutador.a"), b: cena.querySelector(".bt-lutador.b") };
+  const barra = { a: cena.querySelector(".bt-vida.a .bt-barra"), b: cena.querySelector(".bt-vida.b .bt-barra") };
+  const hpEl = { a: cena.querySelector("#hp-a"), b: cena.querySelector("#hp-b") };
+  const hp = { a: 100, b: 100 };
+  const ganhas = { a: 0, b: 0 };
+
+  const anunciar = async (texto, classe = "") => {
+    anuncio.className = `bt-anuncio ${classe}`;
+    anuncio.innerHTML = `<div class="p-titulo">${esc(texto)}</div>`;
+    anuncio.firstElementChild.classList.add("p-slam");
+    await palco.esperar(900, { exato: true });
+    anuncio.innerHTML = "";
+  };
+  const acertar = (quem, dano, critico) => {
+    const outro = quem === "a" ? "b" : "a";
+    hp[outro] = Math.max(0, hp[outro] - dano);
+    // O atacante avança, o atingido recua e pisca
+    luta[quem].animate([{ transform: "translateX(0)" }, { transform: `translateX(${(quem === "a" ? 1 : -1) * (vertical ? 120 : 220)}px) scale(1.08)` }, { transform: "translateX(0)" }], { duration: 420, easing: "cubic-bezier(.3,1.4,.5,1)" });
+    setTimeout(() => {
+      luta[outro].animate([{ transform: "translateX(0)", filter: "none" }, { transform: `translateX(${outro === "a" ? -40 : 40}px) rotate(${outro === "a" ? -8 : 8}deg)`, filter: "brightness(2.4) saturate(0)" }, { transform: "translateX(0)", filter: "none" }], { duration: 380, easing: "ease-out" });
+      const vida = barra[outro].querySelector(".vida");
+      const sombra = barra[outro].querySelector(".dano");
+      vida.style.width = hp[outro] + "%";
+      setTimeout(() => (sombra.style.width = hp[outro] + "%"), 520);
+      barra[outro].classList.toggle("pouca", hp[outro] <= 30);
+      contar(hpEl[outro], hp[outro], { formato: (x) => String(Math.round(x)), duracao: 500 });
+      const num = document.createElement("div");
+      num.className = `bt-dano ${critico ? "critico" : ""}`;
+      num.textContent = `−${dano}`;
+      luta[outro].appendChild(num);
+      setTimeout(() => num.remove(), 1400);
+      palco.tocar("golpe");
+      palco.tremer(critico ? 1.1 : 0.45);
+      const r = luta[outro].getBoundingClientRect();
+      const t = palco.tela.getBoundingClientRect();
+      const k = palco.L / t.width;
+      palco.explodir((r.left + r.width / 2 - t.left) * k, (r.top + r.height / 2 - t.top) * k, { n: critico ? 70 : 30, forca: critico ? 0.8 : 0.45 });
+      if (critico) palco.flash(0.5);
+    }, 200);
+  };
+
   palco.musica("epico", 1);
-  const lista = cena.querySelector(".bt-rondas");
-  const maxVisiveis = vertical ? 9 : 7;
-  let pa = 0;
-  let pb = 0;
+  await anunciar("Ronda 1");
+  await anunciar("Lutem!", "grande");
+  palco.tocar("impacto");
+
+  let ko = null;
   for (const [i, r] of rondas.entries()) {
-    const row = document.createElement("div");
-    row.className = "bt-ronda";
-    row.innerHTML = `<span class="val"></span><span class="rotulo">${esc(r.nome)}</span><span class="val dir"></span>`;
-    lista.appendChild(row);
-    while (lista.children.length > maxVisiveis) lista.firstElementChild.remove();
-    const [ea, eb] = row.querySelectorAll(".val");
+    cena.querySelector("#bt-num").textContent = i + 1;
+    if (r.final) {
+      await anunciar("Golpe final", "grande");
+      palco.musica("epico", 2);
+    }
+    info.innerHTML = `<div class="bt-cat p-slam">${esc(r.nome)}</div><div class="bt-valores"><span class="val a"></span><i>vs</i><span class="val b"></span></div>`;
+    const [ea, eb] = info.querySelectorAll(".val");
     palco.tocar("virar");
     contar(ea, r.va, { formato: r.fmt, duracao: 900 });
     contar(eb, r.vb, { formato: r.fmt, duracao: 900 });
-    await palco.esperar(1100);
-    if (r.va !== r.vb) {
-      const ganhaA = r.va > r.vb;
-      (ganhaA ? ea : eb).classList.add("ganha");
-      (ganhaA ? eb : ea).classList.add("perde");
-      if (ganhaA) pa++;
-      else pb++;
-      const alvo = cena.querySelector(ganhaA ? "#bt-a" : "#bt-b");
-      alvo.textContent = ganhaA ? pa : pb;
-      alvo.classList.remove("mudou");
-      void alvo.offsetWidth;
-      alvo.classList.add("mudou");
-      palco.tocar("ponto");
+    await palco.esperar(1200);
+    if (r.va === r.vb) {
+      info.querySelector(".bt-valores i").textContent = "empate";
+      palco.tocar("falha");
+    } else {
+      const quem = r.va > r.vb ? "a" : "b";
+      ganhas[quem]++;
+      (quem === "a" ? ea : eb).classList.add("ganha");
+      (quem === "a" ? eb : ea).classList.add("perde");
+      const diferenca = Math.abs(r.va - r.vb) / Math.max(Math.abs(r.va), Math.abs(r.vb), 1e-9);
+      let dano = Math.round(9 + 29 * Math.min(1, diferenca));
+      if (r.final) dano = Math.max(dano, 26);
+      const critico = dano >= 28;
+      acertar(quem, dano, critico);
+      if (critico) setTimeout(() => !palco.terminado && anunciar("Crítico!", "critico"), 350);
+      await palco.esperar(800, { exato: true });
+      if (hp.a <= 0 || hp.b <= 0) {
+        ko = hp.a <= 0 ? "b" : "a";
+        break;
+      }
     }
-    if (i === rondas.length - 3) palco.musica("epico", 2);
-    await palco.passo(1500);
+    if (i === rondas.length - 4) palco.musica("epico", 2);
+    await palco.passo(1700);
   }
 
-  // Resultado
-  await palco.esperar(600);
-  const vencedor = pa === pb ? null : pa > pb ? a : b;
+  // ---------- Resultado ----------
+  const vencedorLado = ko || (hp.a === hp.b ? null : hp.a > hp.b ? "a" : "b");
+  info.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 250, fill: "forwards" });
+  if (ko) {
+    palco.tocar("ko");
+    palco.flash(1);
+    palco.tremer(1.6);
+    anuncio.className = "bt-anuncio ko";
+    anuncio.innerHTML = `<div class="p-titulo p-slam">K.O.</div>`;
+    luta[ko === "a" ? "b" : "a"].classList.add("caido");
+    await palco.esperar(2600, { exato: true });
+  } else {
+    await anunciar(vencedorLado ? "Tempo!" : "Empate!", "grande");
+  }
+  const vencedor = vencedorLado === "a" ? a : vencedorLado === "b" ? b : null;
+  palco.musica("epico", 1);
   cena.innerHTML = vencedor
-    ? `<div class="p-centro">${avatarPalco(vencedor, vertical ? 360 : 300)}
-        <p class="p-sub p-entra" style="margin-top:44px">Vencedor da batalha</p>
-        <h1 class="p-titulo p-slam" style="font-size:${vertical ? 78 : 102}px;margin-top:10px">${esc(vencedor.name)}</h1>
-        <p class="p-sub p-entra" style="animation-delay:.4s;font-family:var(--f-display);font-weight:700;font-size:60px;color:var(--texto)">${Math.max(pa, pb)} – ${Math.min(pa, pb)}</p></div>`
-    : `<div class="p-centro"><h1 class="p-titulo p-slam" style="font-size:180px">Empate</h1><p class="p-sub">${pa} – ${pb}</p></div>`;
-  palco.tocar("vitoria");
-  if (vencedor) confetes(cena);
+    ? `<div class="p-centro">${avatarPalco(vencedor, vertical ? 380 : 320)}
+        <div class="ab-etiqueta" style="margin:50px 0 0">${ko ? "Vitória por K.O." : "Vitória por pontos"}</div>
+        <h1 class="p-titulo p-slam" style="font-size:${vertical ? 96 : 116}px;margin-top:26px">${esc(vencedor.name)}</h1>
+        <p class="p-sub p-entra" style="animation-delay:.4s">${ganhas[vencedorLado]} rondas ganhas, ${hp[vencedorLado]} de vida no fim</p></div>`
+    : `<div class="p-centro"><h1 class="p-titulo p-slam" style="font-size:180px">Empate</h1><p class="p-sub">${ganhas.a} – ${ganhas.b} em rondas</p></div>`;
+  if (vencedor) palco.festa();
   await palco.passo(6000);
+  await palco.fecho();
 }

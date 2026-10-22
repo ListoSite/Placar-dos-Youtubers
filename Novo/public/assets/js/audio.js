@@ -259,6 +259,99 @@ function metal(t, notas, dur, { vol = 0.13, bus = busEfeitos } = {}) {
   }
 }
 
+function palmas(t, { vol = 0.3, bus = busMusica } = {}) {
+  for (const [k, dt] of [[1, 0], [0.8, 0.011], [0.65, 0.022]]) {
+    const n = ruido(t + dt, 0.14);
+    const f = ctx.createBiquadFilter();
+    f.type = "bandpass";
+    f.frequency.value = 1350;
+    f.Q.value = 0.9;
+    const g = ctx.createGain();
+    env(g, t + dt, { a: 0.001, pico: vol * k, d: dt ? 0.03 : 0.13 });
+    n.connect(f).connect(g);
+    saida(g, { bus, rev: 0.2 });
+  }
+}
+
+function tom(t, n, { vol = 0.7, bus = busMusica, dur = 0.6 } = {}) {
+  const o = ctx.createOscillator();
+  o.frequency.setValueAtTime(nota(n) * 1.7, t);
+  o.frequency.exponentialRampToValueAtTime(nota(n), t + 0.09);
+  const g = ctx.createGain();
+  env(g, t, { a: 0.002, pico: vol, d: dur });
+  o.connect(g);
+  saida(g, { bus, rev: 0.35 });
+  o.start(t);
+  o.stop(t + dur + 0.05);
+  const r = ruido(t, 0.08);
+  const f = ctx.createBiquadFilter();
+  f.type = "lowpass";
+  f.frequency.value = 900;
+  const g2 = ctx.createGain();
+  env(g2, t, { a: 0.001, pico: vol * 0.35, d: 0.07 });
+  r.connect(f).connect(g2);
+  saida(g2, { bus });
+}
+
+function marimba(t, n, { vol = 0.14, bus = busMusica, dur = 0.45 } = {}) {
+  for (const [mult, k] of [[1, 1], [4, 0.22], [10, 0.05]]) {
+    const o = ctx.createOscillator();
+    o.type = "sine";
+    o.frequency.value = nota(n) * mult;
+    const g = ctx.createGain();
+    env(g, t, { a: 0.002, pico: vol * k, d: dur / mult ** 0.3 });
+    o.connect(g);
+    saida(g, { bus, rev: 0.25, eco: mult === 1 ? 0.15 : 0 });
+    o.start(t);
+    o.stop(t + dur + 0.05);
+  }
+}
+
+let curvaDist = null;
+function baixoDist(t, n, dur, { vol = 0.22, bus = busMusica } = {}) {
+  if (!curvaDist) {
+    curvaDist = new Float32Array(1024);
+    for (let i = 0; i < 1024; i++) {
+      const x = (i / 1023) * 2 - 1;
+      curvaDist[i] = Math.tanh(x * 7);
+    }
+  }
+  const o = ctx.createOscillator();
+  o.type = "sawtooth";
+  o.frequency.value = nota(n);
+  const o2 = ctx.createOscillator();
+  o2.type = "square";
+  o2.frequency.value = nota(n) * 1.005;
+  const ws = ctx.createWaveShaper();
+  ws.curve = curvaDist;
+  const f = ctx.createBiquadFilter();
+  f.type = "lowpass";
+  f.frequency.setValueAtTime(2200, t);
+  f.frequency.exponentialRampToValueAtTime(400, t + dur);
+  const g = ctx.createGain();
+  env(g, t, { a: 0.004, pico: vol, d: dur * 0.95 });
+  o.connect(ws);
+  o2.connect(ws);
+  ws.connect(f).connect(g);
+  saida(g, { bus });
+  o.start(t);
+  o2.start(t);
+  o.stop(t + dur + 0.05);
+  o2.stop(t + dur + 0.05);
+}
+
+function sub(t, n, dur, { vol = 0.4, bus = busMusica } = {}) {
+  const o = ctx.createOscillator();
+  o.type = "sine";
+  o.frequency.value = nota(n);
+  const g = ctx.createGain();
+  env(g, t, { a: 0.02, pico: vol, d: dur });
+  o.connect(g);
+  saida(g, { bus });
+  o.start(t);
+  o.stop(t + dur + 0.05);
+}
+
 // ---------- Efeitos ----------
 const EFEITOS = {
   clique(t) {
@@ -381,6 +474,170 @@ const EFEITOS = {
   acerto(t) {
     [72, 76, 79, 84].forEach((n, i) => pluck(t + i * 0.06, n, { vol: 0.11, bus: busEfeitos, tipo: "triangle", dur: 0.25, eco: 0.25 }));
   },
+  fogo(t) {
+    // Rugido grave e estalidos de lume
+    const r = ruido(t, 1.4);
+    const f = ctx.createBiquadFilter();
+    f.type = "lowpass";
+    f.frequency.setValueAtTime(180, t);
+    f.frequency.linearRampToValueAtTime(900, t + 0.35);
+    f.frequency.exponentialRampToValueAtTime(140, t + 1.4);
+    const g = ctx.createGain();
+    env(g, t, { a: 0.08, pico: 0.55, d: 1.3 });
+    r.connect(f).connect(g);
+    saida(g, { rev: 0.5 });
+    for (let i = 0; i < 22; i++) {
+      const tt = t + Math.random() * 1.1;
+      const c = ruido(tt, 0.02);
+      const fc = ctx.createBiquadFilter();
+      fc.type = "highpass";
+      fc.frequency.value = 2500 + Math.random() * 3000;
+      const gc = ctx.createGain();
+      env(gc, tt, { a: 0.001, pico: 0.12 + Math.random() * 0.2, d: 0.015 });
+      c.connect(fc).connect(gc);
+      saida(gc);
+    }
+    abaixarMusica(t, 1.2);
+  },
+  cristal(t) {
+    [88, 91, 95, 98, 100, 103].forEach((n, i) => sino(t + i * 0.055 + Math.random() * 0.02, n, { vol: 0.06 }));
+    const r = ruido(t, 1);
+    const f = ctx.createBiquadFilter();
+    f.type = "highpass";
+    f.frequency.value = 9000;
+    const g = ctx.createGain();
+    env(g, t, { a: 0.2, pico: 0.07, d: 0.8 });
+    r.connect(f).connect(g);
+    saida(g, { rev: 0.6 });
+  },
+  laser(t) {
+    const o = ctx.createOscillator();
+    o.type = "square";
+    o.frequency.setValueAtTime(2400, t);
+    o.frequency.exponentialRampToValueAtTime(140, t + 0.32);
+    const f = ctx.createBiquadFilter();
+    f.type = "lowpass";
+    f.frequency.value = 3500;
+    const g = ctx.createGain();
+    env(g, t, { a: 0.002, pico: 0.14, d: 0.32 });
+    o.connect(f).connect(g);
+    saida(g, { eco: 0.45, rev: 0.2 });
+    o.start(t);
+    o.stop(t + 0.4);
+    pad(t, [64, 71, 76], 0.9, { vol: 0.05, bus: busEfeitos, brilho: 4000 });
+  },
+  estrela(t) {
+    const o = ctx.createOscillator();
+    o.type = "sine";
+    o.frequency.setValueAtTime(900, t);
+    o.frequency.exponentialRampToValueAtTime(3600, t + 0.5);
+    const g = ctx.createGain();
+    env(g, t, { a: 0.05, pico: 0.09, d: 0.55 });
+    o.connect(g);
+    saida(g, { eco: 0.5, rev: 0.5 });
+    o.start(t);
+    o.stop(t + 0.6);
+    sino(t + 0.45, 96, { vol: 0.08 });
+    sino(t + 0.55, 103, { vol: 0.05 });
+  },
+  buzina(t) {
+    const f = ctx.createBiquadFilter();
+    f.type = "lowpass";
+    f.frequency.value = 2600;
+    const g = ctx.createGain();
+    g.gain.setValueAtTime(0.0001, t);
+    g.gain.linearRampToValueAtTime(0.16, t + 0.04);
+    g.gain.setTargetAtTime(0.13, t + 0.1, 0.1);
+    g.gain.setTargetAtTime(0.0001, t + 0.95, 0.08);
+    f.connect(g);
+    saida(g, { rev: 0.5 });
+    for (const fr of [233, 293, 349]) {
+      const o = ctx.createOscillator();
+      o.type = "sawtooth";
+      o.frequency.setValueAtTime(fr * 0.94, t);
+      o.frequency.exponentialRampToValueAtTime(fr, t + 0.12);
+      o.connect(f);
+      o.start(t);
+      o.stop(t + 1.3);
+    }
+  },
+  multidao(t, { dur = 3 } = {}) {
+    // Público a festejar: ruído filtrado com ondulação
+    for (const [fr, q, v] of [[700, 0.7, 0.32], [1800, 0.9, 0.2], [3200, 1.2, 0.08]]) {
+      const r = ruido(t, dur);
+      const f = ctx.createBiquadFilter();
+      f.type = "bandpass";
+      f.frequency.value = fr;
+      f.Q.value = q;
+      const g = ctx.createGain();
+      g.gain.setValueAtTime(0.0001, t);
+      g.gain.linearRampToValueAtTime(v, t + 0.35);
+      g.gain.setTargetAtTime(v * 0.75, t + 0.6, 0.4);
+      g.gain.setTargetAtTime(0.0001, t + dur - 0.6, 0.35);
+      const lfo = ctx.createOscillator();
+      lfo.frequency.value = 5 + Math.random() * 3;
+      const lg = ctx.createGain();
+      lg.gain.value = v * 0.25;
+      lfo.connect(lg).connect(g.gain);
+      r.connect(f).connect(g);
+      saida(g, { rev: 0.5 });
+      lfo.start(t);
+      lfo.stop(t + dur + 0.2);
+    }
+  },
+  onda(t) {
+    const r = ruido(t, 2);
+    const f = ctx.createBiquadFilter();
+    f.type = "lowpass";
+    f.frequency.setValueAtTime(300, t);
+    f.frequency.exponentialRampToValueAtTime(2200, t + 0.7);
+    f.frequency.exponentialRampToValueAtTime(250, t + 1.9);
+    const g = ctx.createGain();
+    g.gain.setValueAtTime(0.0001, t);
+    g.gain.linearRampToValueAtTime(0.32, t + 0.7);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + 1.95);
+    r.connect(f).connect(g);
+    saida(g, { rev: 0.4 });
+    [79, 84, 88].forEach((n, i) => marimba(t + 0.5 + i * 0.09, n, { vol: 0.1, bus: busEfeitos }));
+  },
+  trovao(t) {
+    const r = ruido(t, 2.6);
+    const f = ctx.createBiquadFilter();
+    f.type = "lowpass";
+    f.frequency.setValueAtTime(1600, t);
+    f.frequency.exponentialRampToValueAtTime(90, t + 2.4);
+    const g = ctx.createGain();
+    env(g, t, { a: 0.01, pico: 0.7, d: 2.4 });
+    r.connect(f).connect(g);
+    saida(g, { rev: 0.6 });
+    bombo(t, { vol: 1, bus: busEfeitos });
+    abaixarMusica(t, 2);
+  },
+  moeda(t) {
+    pluck(t, 83, { vol: 0.1, bus: busEfeitos, tipo: "square", dur: 0.07, eco: 0 });
+    pluck(t + 0.07, 88, { vol: 0.1, bus: busEfeitos, tipo: "square", dur: 0.3, eco: 0.2 });
+  },
+  golpe(t) {
+    bombo(t, { vol: 1, bus: busEfeitos });
+    const r = ruido(t, 0.18);
+    const f = ctx.createBiquadFilter();
+    f.type = "lowpass";
+    f.frequency.setValueAtTime(3000, t);
+    f.frequency.exponentialRampToValueAtTime(300, t + 0.15);
+    const g = ctx.createGain();
+    env(g, t, { a: 0.001, pico: 0.6, d: 0.16 });
+    r.connect(f).connect(g);
+    saida(g, { rev: 0.3 });
+  },
+  ko(t) {
+    abaixarMusica(t, 3);
+    EFEITOS.trovao(t);
+    metal(t + 0.05, [36, 43, 48], 2.2, { vol: 0.16 });
+    tom(t + 0.05, 33, { vol: 1, bus: busEfeitos, dur: 1.6 });
+  },
+  tambor(t) {
+    tom(t, 38, { vol: 0.9, bus: busEfeitos, dur: 0.8 });
+  },
 };
 
 function abaixarMusica(t, dur) {
@@ -440,6 +697,204 @@ const ESTILOS = {
     arp: "x...x.x...x.x...",
     padVol: 0.075,
   },
+
+  // ---------- Música dos temas do Palco ----------
+  verao_calmo: {
+    bpm: 102,
+    swing: 0.14,
+    acordes: [[60, 64, 67], [57, 60, 64], [53, 57, 60], [55, 59, 62]],
+    baixo: "x..x..x...x..x..",
+    bombo: "x.......x.......",
+    palmas: "....x.......x...",
+    prato: "..x...x...x...x.",
+    arp: "x.xx.x.xx.x.x.x.",
+    arpTipo: "marimba",
+    padVol: 0.035,
+    padBrilho: 2200,
+  },
+  verao_festa: {
+    bpm: 120,
+    acordes: [[60, 64, 67], [57, 60, 64], [53, 57, 60], [55, 59, 62]],
+    baixo: "..x...x...x...x.",
+    bombo: "x...x...x...x...",
+    palmas: "....x.......x...",
+    prato: "..x...x...x...x.",
+    pratoAberto: true,
+    arp: "x.x.xx.x.x.xx.x.",
+    arpTipo: "marimba",
+    padVol: 0.045,
+    padBrilho: 2400,
+  },
+  inferno_tensao: {
+    bpm: 84,
+    acordes: [[45, 48, 52], [41, 45, 48], [40, 44, 47], [45, 48, 52]],
+    baixo: "x.......x.x.....",
+    baixoTipo: "dist",
+    baixoDur: 3,
+    bombo: "x.......x.......",
+    tom: "x.....x...x.....",
+    tomNota: 33,
+    arp: "x.......x.......",
+    arpTipo: "sawtooth",
+    arpOitava: 12,
+    padVol: 0.08,
+    padBrilho: 800,
+  },
+  inferno_fogo: {
+    bpm: 150,
+    acordes: [[45, 48, 52], [44, 48, 51], [41, 45, 48], [40, 44, 47]],
+    baixo: "xxxxxxxxxxxxxxxx",
+    baixoTipo: "dist",
+    baixoDur: 0.9,
+    bombo: "x.x.x.x.x.x.x.x.",
+    bomboVol: 0.6,
+    tarola: "....x.......x...",
+    tarolaVol: 0.3,
+    tom: "x..x..x.........",
+    tomNota: 36,
+    prato: "x...x...x...x...",
+    arp: "x...x...x...x...",
+    arpTipo: "sawtooth",
+    arpOitava: 12,
+    padVol: 0.06,
+    padBrilho: 1000,
+  },
+  gelo_calmo: {
+    bpm: 76,
+    acordes: [[50, 57, 61, 64], [47, 54, 57, 62], [43, 50, 55, 59], [45, 52, 57, 61]],
+    baixo: "x.......x.......",
+    baixoTipo: "sub",
+    bombo: "x...............",
+    prato: "....x.......x...",
+    arp: "x...x.x...x...x.",
+    arpTipo: "sino",
+    arpOitava: 24,
+    padVol: 0.085,
+    padBrilho: 2600,
+  },
+  gelo_epico: {
+    bpm: 112,
+    acordes: [[50, 57, 62, 65], [46, 53, 58, 62], [43, 50, 55, 58], [45, 52, 57, 61]],
+    baixo: "x.x...x.x.x...x.",
+    bombo: "x.....x.x.......",
+    tarola: "....x.......x...",
+    prato: "x.x.x.x.x.x.x.x.",
+    arp: "x.x.x.x.x.x.x.x.",
+    arpTipo: "sino",
+    padVol: 0.07,
+    padBrilho: 2400,
+  },
+  neon_calmo: {
+    bpm: 96,
+    acordes: [[57, 60, 64], [53, 57, 60], [48, 52, 55], [55, 59, 62]],
+    baixo: "x.x.x.x.x.x.x.x.",
+    baixoOitava: true,
+    baixoDur: 1,
+    bombo: "x.......x.......",
+    tarola: "....x.......x...",
+    tarolaVol: 0.26,
+    arp: "xxxxxxxxxxxxxxxx",
+    arpTipo: "square",
+    arpVol: 0.03,
+    padVol: 0.07,
+    padBrilho: 1800,
+  },
+  neon_corrida: {
+    bpm: 124,
+    acordes: [[57, 60, 64], [53, 57, 60], [48, 52, 55], [55, 59, 62]],
+    baixo: "x.xxx.xxx.xxx.xx",
+    bombo: "x...x...x...x...",
+    tarola: "....x.......x...",
+    prato: "..x...x...x...x.",
+    pratoAberto: true,
+    arp: "xxxxxxxxxxxxxxxx",
+    arpTipo: "sawtooth",
+    arpVol: 0.035,
+    padVol: 0.06,
+    padBrilho: 2200,
+  },
+  espaco_calmo: {
+    bpm: 70,
+    acordes: [[48, 55, 62, 64], [45, 52, 59, 60], [41, 48, 55, 57], [43, 50, 57, 59]],
+    baixo: "x...............",
+    baixoTipo: "sub",
+    baixoDur: 14,
+    arp: "x.....x.....x...",
+    arpTipo: "sino",
+    arpOitava: 24,
+    padVol: 0.1,
+    padBrilho: 2000,
+  },
+  espaco_epico: {
+    bpm: 100,
+    acordes: [[48, 55, 60, 64], [45, 52, 57, 60], [41, 48, 53, 57], [43, 50, 55, 59]],
+    baixo: "x.....x.....x...",
+    baixoTipo: "sub",
+    baixoDur: 5,
+    bombo: "x.......x.......",
+    tom: "x.....x.....x...",
+    tomNota: 31,
+    tarola: "....x.......x...",
+    arp: "x..x..x..x..x..x",
+    arpTipo: "sawtooth",
+    arpVol: 0.04,
+    padVol: 0.085,
+    padBrilho: 1800,
+  },
+  gala_calmo: {
+    bpm: 88,
+    swing: 0.22,
+    acordes: [[53, 57, 60, 64], [50, 53, 57, 60], [55, 59, 62, 65], [48, 52, 55, 59]],
+    baixo: "x...x...x...x...",
+    baixoDur: 3,
+    bombo: "x.....x.........",
+    bomboVol: 0.45,
+    prato: "x..xx..xx..xx..x",
+    arp: "x..x..x.x..x..x.",
+    arpTipo: "triangle",
+    padVol: 0.06,
+    padBrilho: 1700,
+  },
+  gala_epico: {
+    bpm: 112,
+    acordes: [[48, 52, 55, 60], [53, 57, 60, 65], [55, 59, 62, 67], [48, 52, 55, 60]],
+    baixo: "x...x...x...x...",
+    bombo: "x...x...x...x...",
+    tom: "x...x...x.x.x...",
+    tomNota: 36,
+    tarola: "....x.......x...",
+    prato: "x.x.x.x.x.x.x.x.",
+    arp: "x.xx.xx.x.xx.xx.",
+    arpTipo: "sawtooth",
+    arpVol: 0.04,
+    padVol: 0.08,
+    padBrilho: 2600,
+  },
+  estadio_calmo: {
+    bpm: 82,
+    acordes: [[52, 55, 59], [48, 52, 55], [50, 53, 57], [52, 55, 59]],
+    bombo: "x.x.....x.x.....",
+    bomboVol: 0.9,
+    palmas: "....x.......x...",
+    palmasVol: 0.4,
+    baixo: "x.......x.......",
+    baixoDur: 4,
+    padVol: 0.04,
+  },
+  estadio_epico: {
+    bpm: 128,
+    acordes: [[52, 55, 59], [48, 52, 55], [50, 53, 57], [55, 59, 62]],
+    baixo: "x.x.x.x.x.x.x.x.",
+    bombo: "x...x...x...x...",
+    palmas: "....x.......x...",
+    tarola: "....x.......x...",
+    prato: "..x...x...x...x.",
+    pratoAberto: true,
+    arp: "x.x.x.x.x.x.x.x.",
+    arpTipo: "square",
+    arpVol: 0.035,
+    padVol: 0.05,
+  },
 };
 
 const musica = {
@@ -471,18 +926,29 @@ const musica = {
       const compasso = Math.floor(this.passo / 16);
       const acorde = e.acordes[compasso % e.acordes.length];
       const forte = this.intensidade >= 1;
-      if (p === 0) pad(t, acorde.map((n) => n + 12), dur16 * 16, { vol: e.padVol });
-      if (e.baixo[p] === "x") baixo(t, acorde[0] - 12, dur16 * 1.6);
-      if (forte && e.bombo[p] === "x") bombo(t, { vol: 0.7 });
-      if (forte && e.tarola[p] === "x") tarola(t, { vol: 0.22 });
-      if (e.prato[p] === "x") prato(t, { vol: p % 4 === 2 ? 0.07 : 0.045 });
-      if (this.intensidade >= 2 && e.arp[p] === "x") {
-        const n = acorde[(p + compasso) % acorde.length] + 24;
-        pluck(t, n, { vol: 0.05, dur: dur16 * 1.5, eco: 0.3 });
-      } else if (this.intensidade >= 1 && e.arp[p] === "x" && p % 2 === 0) {
-        const n = acorde[(p / 2) % acorde.length] + 24;
-        pluck(t, n, { vol: 0.045, dur: dur16 * 2, eco: 0.3 });
+      const tt = t + (p % 2 === 1 ? (e.swing || 0) * dur16 : 0);
+      const tem = (padrao) => padrao && padrao[p] === "x";
+      if (p === 0 && e.padVol) pad(t, acorde.map((n) => n + 12), dur16 * 16, { vol: e.padVol, brilho: e.padBrilho || 1400 });
+      if (tem(e.baixo)) {
+        const nb = acorde[0] - 12 + (e.baixoOitava && p % 4 === 2 ? 12 : 0);
+        if (e.baixoTipo === "dist") baixoDist(tt, nb, dur16 * (e.baixoDur || 1.6));
+        else if (e.baixoTipo === "sub") sub(tt, nb - 12, dur16 * (e.baixoDur || 6));
+        else baixo(tt, nb, dur16 * (e.baixoDur || 1.6));
       }
+      if (forte && tem(e.bombo)) bombo(t, { vol: e.bomboVol || 0.7 });
+      if (forte && tem(e.tarola)) tarola(t, { vol: e.tarolaVol || 0.22 });
+      if (forte && tem(e.palmas)) palmas(t, { vol: e.palmasVol || 0.26 });
+      if (forte && tem(e.tom)) tom(tt, e.tomNota || 40, { vol: e.tomVol || 0.55 });
+      if (tem(e.prato)) prato(tt, { vol: p % 4 === 2 ? 0.07 : 0.045, aberto: e.pratoAberto && p % 4 === 2 });
+      const arpNota = (i) => acorde[i % acorde.length] + (e.arpOitava ?? 24);
+      const tocarArp = (n, dur, vol) => {
+        if (e.arpTipo === "sino") sino(tt, n, { vol: vol * 1.6, bus: busMusica });
+        else if (e.arpTipo === "marimba") marimba(tt, n, { vol: vol * 2.6 });
+        else pluck(tt, n, { vol, dur, eco: 0.3, tipo: e.arpTipo || "triangle" });
+      };
+      const arpVol = e.arpVol || 0.05;
+      if (this.intensidade >= 2 && tem(e.arp)) tocarArp(arpNota(p + compasso), dur16 * 1.5, arpVol);
+      else if (this.intensidade >= 1 && tem(e.arp) && p % 2 === 0) tocarArp(arpNota(p / 2), dur16 * 2, arpVol * 0.9);
       this.proxima += dur16;
       this.passo++;
     }

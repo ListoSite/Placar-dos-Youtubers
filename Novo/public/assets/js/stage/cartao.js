@@ -3,7 +3,7 @@
 import { estado, pessoa, indice, views, mediaMeses, recordes, rankingMes } from "../data.js";
 import { esc, curto, inteiro, mesNome } from "../format.js";
 import { contar } from "../ui.js";
-import { avatarPalco, confetes } from "./stage.js";
+import { avatarPalco } from "./stage.js";
 
 export async function correr(palco, opts) {
   const p = pessoa(opts.id) || pessoa([...estado.posIndice.entries()].find(([, pos]) => pos === 1)?.[0]);
@@ -24,6 +24,8 @@ export async function correr(palco, opts) {
     { nome: "Views totais", v: p.totals?.views },
     { nome: "Melhor mês", v: rec.melhor?.v, extra: rec.melhor ? mesNome(rec.melhor.m) : "" },
     { nome: "Meses no top 10", v: rec.top10, fmt: inteiro },
+    { nome: "Subscritores ganhos num ano", v: p.sb?.s ? Object.values(p.sb.s).slice(-12).reduce((x, y) => x + y, 0) || null : null },
+    { nome: "Vídeos publicados num ano", v: p.sb?.n ? Object.values(p.sb.n).slice(-12).reduce((x, y) => x + y, 0) || null : null, fmt: inteiro },
   ].filter((n) => n.v !== null && n.v !== undefined);
 
   const cena = palco.cena;
@@ -39,6 +41,9 @@ export async function correr(palco, opts) {
     </div></div>`;
   palco.tocar("whoosh");
   palco.tocar("impacto", {}, 0.2);
+  palco.tocar("_abertura", {}, 0.3);
+  palco.flash(0.5);
+  palco.explodir(vertical ? palco.L / 2 : palco.L * 0.27, vertical ? palco.A * 0.22 : palco.A * 0.45, { n: 70, forca: 0.7 });
   const indEl = cena.querySelector("#ct-ind");
   if (indEl) {
     contar(indEl, ind.total, { formato: inteiro, duracao: 1600, atraso: 600 });
@@ -61,8 +66,8 @@ export async function correr(palco, opts) {
   palco.tocar("subida", { dur: 0.9 });
   await palco.passo(4500);
   if (pos && pos <= 10) {
-    confetes(cena, 80);
-    palco.tocar("vitoria");
+    palco.festa({ forca: 0.7 });
     await palco.passo(3500);
   }
+  await palco.fecho();
 }

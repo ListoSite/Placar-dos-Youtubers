@@ -3,7 +3,7 @@
 import { estado, views } from "../data.js";
 import { esc, curto, mesNome } from "../format.js";
 import { avatar } from "../ui.js";
-import { confetes, avatarPalco } from "./stage.js";
+import { avatarPalco } from "./stage.js";
 
 export async function correr(palco, opts) {
   const ds = estado.ds;
@@ -36,7 +36,10 @@ export async function correr(palco, opts) {
   });
   const vertical = palco.formato === "9x16";
   const cena = palco.cena;
-  cena.innerHTML = `
+  palco.musica("tensao", 1);
+  await palco.abertura({ etiqueta: "Corrida", titulo: acumulado ? "Quem soma\nmais views" : "A corrida\ndas views", sub: `${mesNome(meses[0])} a ${mesNome(meses[meses.length - 1])}${opts.cat ? `, ${opts.cat}` : ""}` });
+  palco.tela.classList.add("denso");
+  cena.innerHTML = `<div class="cr-alerta" hidden></div>
     <div class="cr-titulo p-entra"><h2>${acumulado ? "Views acumuladas" : "Quem fez mais views"}</h2><p>${esc(mesNome(meses[0]))} a ${esc(mesNome(meses[meses.length - 1]))}${opts.cat ? `, ${esc(opts.cat)}` : ""}</p></div>
     <div class="cr-mes"></div>
     <div class="cr-barras"></div>`;
@@ -65,6 +68,22 @@ export async function correr(palco, opts) {
   await palco.passo(1600);
   const lideres = new Map();
   let ultimoSom = 0;
+  let liderAtual = null;
+  const alerta = cena.querySelector(".cr-alerta");
+  let alertaTimer = null;
+  const novoLider = (id) => {
+    const p = ds.people.find((x) => x.id === id);
+    alerta.innerHTML = `${avatarPalco(p, vertical ? 90 : 80)}<span><small>Novo líder</small><b>${esc(p.name)}</b></span>`;
+    alerta.hidden = false;
+    alerta.classList.remove("cr-alerta-entra");
+    void alerta.offsetWidth;
+    alerta.classList.add("cr-alerta-entra");
+    clearTimeout(alertaTimer);
+    alertaTimer = setTimeout(() => (alerta.hidden = true), 1800);
+    palco.flash(0.35);
+    palco.tocar("_destaque");
+    palco.explodir(vertical ? palco.L * 0.8 : palco.L * 0.75, vertical ? 520 : 300, { n: 40, forca: 0.5 });
+  };
 
   const desenhar = (i, t) => {
     const lista = [...candidatos].map((id) => {
@@ -89,6 +108,10 @@ export async function correr(palco, opts) {
       }
       e.rank = visivel ? rank : 999;
     });
+    if (lista[0].v > 0 && lista[0].id !== liderAtual) {
+      if (liderAtual !== null) novoLider(lista[0].id);
+      liderAtual = lista[0].id;
+    }
     return lista[0].id;
   };
 
@@ -121,8 +144,7 @@ export async function correr(palco, opts) {
   }
   const ultimo = [...candidatos].sort((a, b) => valores.get(b)[meses.length - 1] - valores.get(a)[meses.length - 1])[0];
   lideres.set(ultimo, (lideres.get(ultimo) || 0) + 1);
-  palco.tocar("vitoria");
-  confetes(cena, 90);
+  palco.festa({ forca: 0.7 });
   await palco.passo(4200);
 
   // Resumo: quem esteve mais vezes em primeiro
@@ -132,6 +154,8 @@ export async function correr(palco, opts) {
     ${avatarPalco(p, vertical ? 320 : 260)}
     <h1 class="p-titulo p-entra" style="font-size:${vertical ? 72 : 90}px;margin-top:50px">${esc(p.name)}</h1>
     <p class="p-sub p-entra" style="animation-delay:.3s">Em primeiro lugar em ${vezes} de ${meses.length} ${meses.length === 1 ? "mês" : "meses"}</p></div>`;
-  palco.tocar("brilho");
+  palco.tocar("_destaque");
+  palco.explodir(palco.L / 2, palco.A * 0.35, { n: 70 });
   await palco.passo(5000);
+  await palco.fecho();
 }

@@ -101,6 +101,17 @@ Novo/
   scripts/                     servidor local, testes, conversão da folha
 ```
 
+## Palco
+
+12 espetáculos em ecrã inteiro, em 16:9 ou 9:16, com 8 temas (Clássico, Verão, Inferno, Gelo, Neon, Galáxia, Gala e Estádio). Cada tema muda as cores, o cenário, as partículas, a música e os sons.
+
+- Rankings: Revelação do top (views, Índice, subscritores ganhos, crescimento, subscritores, views totais), Corrida das views, Tier list, Altos e baixos.
+- Jogos: Quem fez mais? (perguntas variadas), Mais ou menos, Adivinha quem é, Roda da sorte. Quem apresenta pode responder com as setas, as teclas ou tocando no ecrã.
+- Duelos: Batalha (barras de vida até ao K.O.) e Torneio (8 ou 16 Youtubers, até à final).
+- Histórias: Cartão de Youtuber e A história de… (o percurso mês a mês).
+
+Teclas: espaço avança, P pausa, M som, F ecrã inteiro, H esconde os controlos. A velocidade (rápida, normal, lenta) ajusta a duração para TikTok, Reels ou vídeos longos.
+
 ## Sons e música
 
 Todos os efeitos e músicas são criados no próprio browser (Web Audio), sem ficheiros de terceiros, por isso podes usá-los nos teus vídeos sem problemas de direitos de autor. O botão do altifalante no topo liga e desliga o som.

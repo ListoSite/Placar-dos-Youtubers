@@ -70,6 +70,39 @@ function socialSummary(socials = {}) {
   return out;
 }
 
+/** Subscritores ganhos e vídeos publicados por mês (Social Blade), últimos 13 meses. */
+function resumoSB(lista) {
+  if (!lista.length) return undefined;
+  const s = {};
+  const n = {};
+  for (const x of lista) {
+    if (!x.m) continue;
+    const [y0, m0] = x.m.ini.split("-").map(Number);
+    const mes = (i) => new Date(Date.UTC(y0, m0 - 1 + i, 1)).toISOString().slice(0, 7);
+    const vids = limparVideos(x.m.n);
+    x.m.s.forEach((v, i) => {
+      if (v !== null && v !== undefined) s[mes(i)] = (s[mes(i)] || 0) + Math.max(0, v);
+    });
+    vids.forEach((v, i) => {
+      if (v !== null && v !== undefined) n[mes(i)] = (n[mes(i)] || 0) + v;
+    });
+  }
+  const ultimos = (o) => Object.fromEntries(Object.entries(o).sort((a, b) => a[0].localeCompare(b[0])).slice(-13));
+  if (!Object.keys(s).length && !Object.keys(n).length) return undefined;
+  return { s: ultimos(s), n: ultimos(n) };
+}
+
+/** O Social Blade só começou a contar vídeos a certa altura: os meses antes vêm a 0 e o primeiro traz o total. */
+function limparVideos(arr) {
+  const n = [...(arr || [])];
+  const f = n.findIndex((v) => v > 0);
+  if (f < 0) return n.map(() => null);
+  const resto = n.slice(f + 1).filter((v) => v !== null).sort((a, b) => a - b);
+  const mediana = resto.length ? resto[Math.floor(resto.length / 2)] : 0;
+  if (n[f] > 50 && n[f] > 5 * Math.max(1, mediana)) for (let i = 0; i <= f; i++) n[i] = null;
+  return n;
+}
+
 function personVideoSummary(chIds, vsum) {
   const list = chIds.map((id) => vsum[id]).filter(Boolean);
   if (!list.length) return null;
@@ -150,13 +183,14 @@ function projectSummary(p, pv, baselineOf) {
 }
 
 export async function buildDataset(db) {
-  const [stats, ytstart, vsum, projvids, meta, quota] = await Promise.all([
+  const [stats, ytstart, vsum, projvids, meta, quota, sbextra] = await Promise.all([
     getJSON("stats", {}),
     getJSON("ytstart", {}),
     getJSON("videosummary", {}),
     getJSON("projvids", {}),
     getJSON("meta", {}),
     getJSON("quota", null),
+    getJSON("sbextra", {}),
   ]);
   const today = todayLisbon();
   const curM = today.slice(0, 7);
@@ -253,6 +287,7 @@ export async function buildDataset(db) {
       since,
       legacy: p.legacy?.pontuacao ? { pontuacao: p.legacy.pontuacao } : {},
       vid: personVideoSummary(counted, vsum),
+      sb: resumoSB(counted.map((c) => sbextra[c]).filter(Boolean)),
       updatedAt: p.updatedAt || "",
     });
   }
