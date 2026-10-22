@@ -10,6 +10,7 @@ import { TEMAS, tema as temaPorId, cenario, estiloTema } from "./temas.js";
 import { Ambiente } from "./ambiente.js";
 import { criarKit } from "./kits.js";
 import { historicoEmCache } from "./historico.js";
+import { cenaDoTema } from "./cenas.js";
 
 const I = (d) => `<svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">${d}</svg>`;
 
@@ -281,6 +282,13 @@ export class Palco {
   // ---------- Peças comuns ----------
   /** Abertura com o título letra a letra, a etiqueta do espetáculo e o som do tema. */
   async abertura({ etiqueta = "", titulo, sub = "", tamanho }) {
+    // Os temas principais (no modo "Tema completo") têm a sua própria abertura
+    const tema = cenaDoTema(this);
+    if (tema?.abertura) {
+      await tema.abertura(this, { etiqueta, titulo, sub });
+      if (this.foco && this.focoQuando === "inicio") await this.segmentoFoco();
+      return;
+    }
     const t = tamanho || (this.vertical ? 104 : 124);
     this.cena.innerHTML = `<div class="p-centro ab-abertura">
       ${etiqueta ? `<div class="ab-etiqueta">${esc(etiqueta)}</div>` : ""}

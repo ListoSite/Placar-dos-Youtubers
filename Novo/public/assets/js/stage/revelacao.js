@@ -6,6 +6,7 @@ import { contar } from "../ui.js";
 import { avatarPalco } from "./stage.js";
 import { METRICAS, rankingPor } from "./metricas.js";
 import { dadosPessoa } from "./historico.js";
+import { cenaDoTema } from "./cenas.js";
 
 function movimento(x) {
   if (x.ant === undefined) return "";
@@ -36,16 +37,25 @@ export async function correr(palco, opts) {
   const listaEl = cena.querySelector(".rv-lista");
   const maxLista = vertical ? 5 : 8;
 
+  // Nos temas principais (modo "Tema completo") cada lugar é um cartão do tema: carta de jogador, prato, revista…
+  const tema = cenaDoTema(palco);
+  if (tema?.cartao) cartao.classList.add("cn-rv");
   const mostrar = async (x, { cor = "", misterio = false } = {}) => {
-    cartao.innerHTML = `
+    if (tema?.cartao) {
+      cartao.innerHTML = `<div class="cn-wrap">${tema.cartao(x, { met, misterio, cor, vertical, max: top[0].v, total: top.length })}${misterio ? "" : movimento(x)}</div>`;
+      tema.animar?.(cartao.firstElementChild, x, palco, { misterio });
+    } else
+      cartao.innerHTML = `
       <div class="rv-pos p-slam ${cor}">${x.pos}<small>º</small></div>
       <div class="rv-quem p-entra" style="animation-delay:.25s">
         <span class="${misterio ? "rv-misterio" : ""}">${avatarPalco(x.p, vertical ? 300 : 230)}</span>
         <div><div class="rv-nome">${misterio ? "???" : esc(x.p.name)}</div><div class="rv-cat">${misterio ? "Quem será?" : esc(x.p.category || "")}</div></div>
       </div>
       ${misterio ? "" : `<div class="rv-valor p-entra" style="animation-delay:.45s"><b data-v="${x.v}">0</b><span>${esc(met.unidade)}</span></div>${movimento(x)}`}`;
-    palco.tocar("whoosh");
-    palco.tocar("virar", {}, 0.05);
+    if (!tema?.cartao) {
+      palco.tocar("whoosh");
+      palco.tocar("virar", {}, 0.05);
+    }
     if (!misterio && x.pos > 1)
       setTimeout(() => {
         const alvo = cartao.querySelector(".palco-avatar");
@@ -56,7 +66,7 @@ export async function correr(palco, opts) {
       }, 500);
     const b = cartao.querySelector("[data-v]");
     if (b) {
-      contar(b, x.v, { formato: met.fmt, duracao: 1400, atraso: 450 });
+      contar(b, x.v, { formato: met.fmt, duracao: 1400, atraso: tema?.cartao ? 700 : 450 });
       palco.tocar("ponto", {}, 1.85);
     }
   };
@@ -78,12 +88,14 @@ export async function correr(palco, opts) {
 
   // Pódio (antes, o momento do meio: lembrete e Youtuber em foco)
   await palco.meio();
+  cartao.classList.remove("cn-rv");
   cartao.innerHTML = `<div class="p-titulo p-slam" style="font-size:${vertical ? 86 : 112}px">E agora,<br>o pódio</div>`;
   palco.musica("epico", 1);
   palco.tocar("subida", { dur: 2.6 });
   palco.flash(0.4);
   await palco.esperar(2900);
 
+  if (tema?.cartao) cartao.classList.add("cn-rv");
   await mostrar(top[2], { cor: "bronze" });
   palco.tocar("impacto", {}, 0.1);
   palco.tremer(0.5);
