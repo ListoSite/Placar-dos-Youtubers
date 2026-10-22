@@ -14,6 +14,7 @@
 
 import { esc } from "../format.js";
 import { avatarPalco } from "./stage.js";
+import { avatar } from "../ui.js";
 
 const A = (el, quadros, opts) => el?.animate(quadros, { fill: "both", ...opts });
 const todos = (raiz, sel) => [...raiz.querySelectorAll(sel)];
@@ -262,7 +263,7 @@ export const CENAS = {
     cartao(x, { met, misterio, vertical }) {
       return `<div class="cn-video">
         <div class="cn-mini"><span class="cn-mini-fundo"></span><span class="${misterio ? "rv-misterio" : ""}">${avatarPalco(x.p, vertical ? 300 : 240)}</span><b class="cn-n">#${x.pos}</b><i class="cn-dur">N.º ${x.pos}</i><i class="cn-prog"></i></div>
-        <div class="cn-video-info">${avatarPalco(x.p, 70)}<div><b>${misterio ? "Quem será? 👀" : `${esc(x.p.name)}: o n.º ${x.pos}`}</b>
+        <div class="cn-video-info">${misterio ? `<span class="avatar" style="--tam:70px;background:#444">?</span>` : avatar(x.p, 70)}<div><b>${misterio ? "Quem será? 👀" : `${esc(x.p.name)}: o n.º ${x.pos}`}</b>
           ${misterio ? "" : `<small><span data-v="${x.v}">0</span> ${esc(met.unidade)} · ${esc(x.p.category || "Youtuber")}</small>`}</div></div></div>`;
     },
     animar(el, x, palco) {
@@ -378,7 +379,7 @@ export const CENAS = {
       const seg = Math.min(10, total || 10);
       return `<div class="cn-story">
         <div class="cn-segmentos">${Array.from({ length: seg }, (_, i) => `<i class="${seg - i > x.pos ? "" : seg - i === x.pos ? "agora" : "feito"}"></i>`).join("")}</div>
-        <div class="cn-story-topo">${avatarPalco(x.p, 56)}<b>${misterio ? "???" : esc(x.p.name)}</b><small>agora</small></div>
+        <div class="cn-story-topo">${misterio ? `<span class="avatar" style="--tam:56px;background:#444">?</span>` : avatar(x.p, 56)}<b>${misterio ? "???" : esc(x.p.name)}</b><small>agora</small></div>
         <span class="cn-story-foto ${misterio ? "rv-misterio" : ""}">${avatarPalco(x.p, vertical ? 330 : 260)}</span>
         <span class="cn-st pin">📍 ${x.pos}.º lugar</span>
         ${misterio ? "" : `<span class="cn-st valor"><b data-v="${x.v}">0</b> ${esc(met.unidade)}</span>`}</div>`;
