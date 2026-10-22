@@ -278,6 +278,7 @@ body.publico {
 }
 body.publico .pub-heroi {
   overflow: visible;
+  overflow-x: clip;
 }
 .vt-vazio p {
   margin: 6px auto 0;

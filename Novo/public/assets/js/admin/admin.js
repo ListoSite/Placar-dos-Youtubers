@@ -107,8 +107,14 @@ function botaoGoogle(clientId, entrou) {
   s.addEventListener("load", montar);
 }
 
-export function sair() {
+export async function sair() {
   guardarToken("");
+  // Os dados do painel guardados para usar sem internet também saem deste browser
+  try {
+    for (const k of (await window.caches?.keys()) || []) await (await caches.open(k)).delete("/api/dataset");
+  } catch {
+    /* sem cache */
+  }
   $("#link-editar")?.classList.remove("ativo");
   location.hash = "#/";
   location.reload();

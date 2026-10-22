@@ -110,18 +110,31 @@ const publicRoutes = {
   "GET palco/historico": async () => json(await resumoHistorico(), 200, { "cache-control": "public, max-age=60" }),
   "POST login": async (req) => {
     if (!adminEnabled()) throw new HttpError(503, "A edição está desligada: define ADMIN_PASSWORD nas variáveis do Netlify.");
+    // Travão contra quem tenta adivinhar a palavra-passe: 8 erros por endereço em 15 minutos, 40 no total
+    const ip = (req.headers.get("x-nf-client-connection-ip") || req.headers.get("x-forwarded-for") || "?").split(",")[0].trim();
+    const falhas = await getJSON("login-falhas", {});
+    const agora = Date.now();
+    for (const [k, v] of Object.entries(falhas)) if (v.ate < agora) delete falhas[k];
     const { password, google } = await body(req);
+    // (o limite total só conta para a palavra-passe: o login com Google não se adivinha e continua sempre a funcionar)
+    if ((falhas[ip]?.n || 0) >= 8 || (!google && (falhas["*"]?.n || 0) >= 40)) throw new HttpError(429, "Demasiadas tentativas erradas. Espera 15 minutos e tenta outra vez.");
+    const falhou = async () => {
+      for (const k of google ? [ip] : [ip, "*"]) falhas[k] = { n: (falhas[k]?.n || 0) + 1, ate: falhas[k]?.ate || agora + 15 * 60 * 1000 };
+      await setJSON("login-falhas", falhas).catch(() => {});
+    };
     if (google) {
       if (!googleLigado()) throw new HttpError(503, "O login com Google não está ligado: define GOOGLE_CLIENT_ID e ADMIN_EMAILS no Netlify.");
       try {
         await verificarGoogle(google);
       } catch (e) {
+        await falhou();
         await new Promise((r) => setTimeout(r, 400));
         throw new HttpError(401, e.message);
       }
       return json({ token: createToken() });
     }
     if (!checkPassword(password)) {
+      await falhou();
       await new Promise((r) => setTimeout(r, 600));
       throw new HttpError(401, "Palavra-passe errada.");
     }
@@ -555,7 +568,12 @@ export default async (req) => {
   try {
     const pub = publicRoutes[`${req.method} ${route}`];
     if (pub && PRIVADAS.has(`${req.method} ${route}`) && !verifyToken(tokenFromRequest(req))) throw new HttpError(401, "Entra no painel para ver estes dados.");
-    if (pub) return await pub(req, url);
+    if (pub) {
+      const r = await pub(req, url);
+      // Os dados do painel nunca ficam em caches partilhadas (CDN, proxies)
+      if (PRIVADAS.has(`${req.method} ${route}`)) r.headers.set("cache-control", "private, no-store");
+      return r;
+    }
 
     if (route.startsWith("admin/")) {
       if (!verifyToken(tokenFromRequest(req))) throw new HttpError(401, "Sessão expirada. Entra outra vez.");

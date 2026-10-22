@@ -8,9 +8,14 @@ import crypto from "node:crypto";
 
 const DAY = 24 * 60 * 60 * 1000;
 
+// Chave das sessões: ADMIN_SECRET se existir; senão deriva-se da palavra-passe com scrypt (lento de propósito,
+// para que um token roubado não sirva para adivinhar a palavra-passe depressa).
+let chaveCache = null;
 function secret() {
+  if (process.env.ADMIN_SECRET) return process.env.ADMIN_SECRET;
   const pass = process.env.ADMIN_PASSWORD || "";
-  return process.env.ADMIN_SECRET || crypto.createHash("sha256").update("placar|" + pass).digest("hex");
+  if (chaveCache?.pass !== pass) chaveCache = { pass, chave: crypto.scryptSync(pass, "placar-sessoes-v2", 32, { N: 1 << 14, r: 8, p: 1, maxmem: 64 * 1024 * 1024 }).toString("hex") };
+  return chaveCache.chave;
 }
 
 function sign(payload) {
@@ -111,7 +116,7 @@ export async function verificarGoogle(idToken, { chaves, agora = Date.now() } = 
   if (dados.aud !== googleClientId()) throw new Error("Este login não é deste site (ID do cliente diferente).");
   if (!(Number(dados.exp) * 1000 > agora)) throw new Error("O login do Google expirou. Tenta outra vez.");
   const email = String(dados.email || "").toLowerCase();
-  if (!email || dados.email_verified === false) throw new Error("A conta Google não tem um email confirmado.");
+  if (!email || dados.email_verified !== true) throw new Error("A conta Google não tem um email confirmado.");
   if (!emailsAdmin().includes(email)) throw new Error(`A conta ${email} não tem acesso ao painel.`);
   return email;
 }

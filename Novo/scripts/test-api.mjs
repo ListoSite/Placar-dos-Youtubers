@@ -128,5 +128,17 @@ check("votações respondem", vt.status === 200 && Array.isArray(vt.data.votacoe
 const exp = await call("GET", "admin/export");
 check("exportar cópia (com o histórico do Palco)", exp.status === 200 && exp.data.kind === "placar-backup" && exp.data.colecoes?.palco_resultados?.length === 2);
 
+// Dados do painel nunca em caches partilhadas
+const dsCache = await fetch(BASE + "/api/dataset", { headers: { authorization: "Bearer " + token } });
+check("dados do painel com cache privada", /private/.test(dsCache.headers.get("cache-control") || ""), dsCache.headers.get("cache-control"));
+const seedPublico = await fetch(BASE + "/data/seed.json");
+check("folha de cálculo antiga não é servida no site", seedPublico.status === 404);
+
+// Travão contra quem tenta adivinhar a palavra-passe (fica no fim: bloqueia este endereço 15 minutos)
+let ultimo = 0;
+for (let i = 0; i < 9; i++) ultimo = (await call("POST", "login", { password: "errada-" + i })).status;
+const depois = await call("POST", "login", { password: process.env.ADMIN_PASSWORD || "teste" });
+check("demasiadas tentativas erradas bloqueiam", ultimo === 429 && depois.status === 429, `${ultimo} ${depois.status}`);
+
 console.log(failures ? `\n${failures} falha(s)` : "\nTudo certo.");
 process.exit(failures ? 1 : 0);

@@ -99,12 +99,15 @@ create policy "votacoes publicadas" on public.votacoes
   for select to anon, authenticated
   using (estado <> 'rascunho');
 
--- Cada pessoa com sessão iniciada vota uma vez por votação, numa opção válida, enquanto está aberta
+-- Cada pessoa com sessão iniciada pelo Google vota uma vez por votação, numa opção válida, enquanto está aberta
+-- (contas criadas por email ou anónimas não votam: assim não se fazem contas falsas em série)
 drop policy if exists "votar uma vez" on public.votos;
 create policy "votar uma vez" on public.votos
   for insert to authenticated
   with check (
     user_id = auth.uid()
+    and coalesce(auth.jwt() -> 'app_metadata' ->> 'provider', '') = 'google'
+    and not coalesce((auth.jwt() ->> 'is_anonymous')::boolean, false)
     and exists (
       select 1 from public.votacoes v
       where v.id = votacao_id
@@ -134,7 +137,7 @@ as $$
   join public.votacoes va on va.id = vo.votacao_id
   where vo.votacao_id = v
     and va.estado <> 'rascunho'
-    and (va.mostrar_resultados or va.estado = 'fechada')
+    and (va.mostrar_resultados or va.estado = 'fechada' or (va.fecha is not null and va.fecha <= now()))
   group by vo.opcao;
 $$;
 revoke all on function public.resultados_votacao(uuid) from public;

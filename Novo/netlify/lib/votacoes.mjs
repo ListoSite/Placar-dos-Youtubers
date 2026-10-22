@@ -75,9 +75,20 @@ export async function apagarVotacao(id) {
   await pedidoSupabase(`votacoes?id=eq.${encodeURIComponent(id)}`, { metodo: "DELETE", prefer: "return=minimal" });
 }
 
+/** A chave secreta (service_role) nunca pode ir para o browser, mesmo que seja posta em SUPABASE_ANON_KEY por engano. */
+function chaveSecreta(k) {
+  if (k.startsWith("sb_secret_")) return true;
+  try {
+    return JSON.parse(Buffer.from(k.split(".")[1] || "", "base64url").toString()).role === "service_role";
+  } catch {
+    return false;
+  }
+}
+
 /** Dados públicos para o browser falar com o Supabase (login e votos). A chave anon é pública. */
 export function configPublica() {
   const url = (process.env.SUPABASE_URL || "").replace(/\/+$/, "");
   const anon = process.env.SUPABASE_ANON_KEY || "";
-  return url && anon ? { url, anon } : null;
+  if (!url || !anon || chaveSecreta(anon)) return null;
+  return { url, anon };
 }

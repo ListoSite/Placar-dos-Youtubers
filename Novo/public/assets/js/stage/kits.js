@@ -160,7 +160,10 @@ function ferramentas(palco, kitId) {
     /** Um objeto que aparece sobre o alvo. */
     icone(alvo, html, { cls = "", dur = 1600, tam = 140, dy = 0, entrada = "pop" } = {}) {
       const p = ponto(alvo);
-      const el = novo(html, `kt-icone ${cls}`, { x: p.x, y: p.y + dy }, `width:${tam}px;height:${tam}px;font-size:${tam}px`);
+      // Sempre dentro do ecrã
+      const x = Math.min(palco.L - tam / 2 - 10, Math.max(tam / 2 + 10, p.x));
+      const y = Math.min(palco.A - tam / 2 - 10, Math.max(tam / 2 + 10, p.y + dy));
+      const el = novo(html, `kt-icone ${cls}`, { x, y }, `width:${tam}px;height:${tam}px;font-size:${tam}px`);
       const entra = { pop: "scale(0) rotate(-30deg)", cai: `translateY(${-palco.A * 0.6}px)`, sobe: "translateY(200px) scale(.6)" }[entrada];
       anim(el, [{ transform: entra, opacity: 0 }, { transform: "none", opacity: 1, offset: 0.2 }, { transform: "none", opacity: 1, offset: 0.85 }, { transform: "scale(.8)", opacity: 0 }], { duration: dur, easing: "cubic-bezier(.2,1.4,.4,1)" });
       tirar(el, dur + 50);
@@ -1037,7 +1040,9 @@ const KITS = {
       return false;
     },
     vencedor(k, d) {
-      k.icone({ x: k.ponto(d.alvo).x + (k.palco.vertical ? 260 : 300), y: k.ponto(d.alvo).y }, SVG.placa, { tam: 240, dur: 4200, entrada: "sobe", cls: "kt-placa" });
+      const a = k.ponto(d.alvo);
+      const off = k.palco.vertical ? 260 : 300;
+      k.icone({ x: a.x + off + 130 > k.palco.L ? a.x - off : a.x + off, y: a.y }, SVG.placa, { tam: 240, dur: 4200, entrada: "sobe", cls: "kt-placa" });
       k.banner("Placa de ouro!", { y: k.palco.A * 0.16, cls: "kt-yt", dur: 3000 });
       k.som("sino");
       return false;

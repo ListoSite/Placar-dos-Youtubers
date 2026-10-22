@@ -1,4 +1,4 @@
-"""Converte a folha de cálculo antiga (Social Blade à mão) em public/data/seed.json.
+"""Converte a folha de cálculo antiga (Social Blade à mão) em netlify/data/seed.json (e seed-dados.mjs).
 
 Uso:
     python3 scripts/seed_from_xlsx.py caminho/para/folha.xlsx
@@ -110,8 +110,14 @@ def main(path):
         "generatedAt": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
         "people": people,
     }
-    dest = Path(__file__).resolve().parent.parent / "public" / "data" / "seed.json"
+    dest = Path(__file__).resolve().parent.parent / "netlify" / "data" / "seed.json"
     dest.write_text(json.dumps(out, ensure_ascii=False, separators=(",", ":")), encoding="utf-8")
+    # A cópia que a função do Netlify importa (o seed não é servido no site)
+    (dest.parent / "seed-dados.mjs").write_text(
+        "// Dados iniciais da folha de cálculo (gerado por scripts/seed_from_xlsx.py). Só é usado com a base de dados vazia.\nexport default "
+        + json.dumps(out, ensure_ascii=False, separators=(",", ":")) + ";\n",
+        encoding="utf-8",
+    )
     cats = sorted({p["category"] for p in people})
     print(f"{len(people)} pessoas, {len(cats)} categorias -> {dest}")
 

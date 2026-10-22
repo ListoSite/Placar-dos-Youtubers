@@ -35,7 +35,7 @@ export async function correr(palco, opts) {
 
   // ---------- Gráfico ----------
   palco.tela.classList.add("denso");
-  const area = vertical ? { x: 150, y: 470, w: 760, h: 900 } : { x: 170, y: 250, w: 1360, h: 610 };
+  const area = vertical ? { x: 150, y: 470, w: 600, h: 900 } : { x: 170, y: 250, w: 1360, h: 610 };
   const esc_ = escala(Math.max(...series.flatMap((s) => s.v.filter((v) => v !== null))) * 1.05);
   const X = (i) => area.x + (i / (meses.length - 1)) * area.w;
   const Y = (v) => area.y + area.h - (v / esc_.max) * area.h;

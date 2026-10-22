@@ -79,7 +79,18 @@ export function sparkline(valores, { largura = 110, altura = 28, destaque = true
 }
 
 // ---------- Dica (tooltip) ----------
-const dicaEl = () => document.getElementById("dica");
+// (a página pública não tem a dica: cria-se quando é precisa)
+const dicaEl = () => {
+  let d = document.getElementById("dica");
+  if (!d) {
+    d = document.createElement("div");
+    d.className = "dica";
+    d.id = "dica";
+    d.setAttribute("role", "tooltip");
+    document.body.appendChild(d);
+  }
+  return d;
+};
 export function mostrarDica(html, ev) {
   const d = dicaEl();
   d.innerHTML = html;
@@ -97,7 +108,7 @@ export function moverDica(ev) {
   d.style.top = Math.max(8, y) + "px";
 }
 export function esconderDica() {
-  dicaEl().classList.remove("visivel");
+  document.getElementById("dica")?.classList.remove("visivel");
 }
 
 // ---------- Avisos ----------
@@ -105,7 +116,15 @@ export function toast(msg, { erro = false, tempo = 3200 } = {}) {
   const t = document.createElement("div");
   t.className = "toast" + (erro ? " erro" : "");
   t.textContent = msg;
-  document.getElementById("toasts").appendChild(t);
+  let caixa = document.getElementById("toasts");
+  if (!caixa) {
+    caixa = document.createElement("div");
+    caixa.className = "toasts";
+    caixa.id = "toasts";
+    caixa.setAttribute("aria-live", "polite");
+    document.body.appendChild(caixa);
+  }
+  caixa.appendChild(t);
   setTimeout(() => t.remove(), tempo);
 }
 

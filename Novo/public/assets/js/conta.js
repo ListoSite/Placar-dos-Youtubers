@@ -30,13 +30,17 @@ export function lerRegressoDoLogin() {
   if (!/(^|&)(access_token|error)=/.test(h)) return null;
   const p = new URLSearchParams(h);
   let destino = "#votacoes";
+  // Só se aceita a sessão se o login começou neste browser (evita que um link com a sessão de outra pessoa
+  // a troque pela tua sem dares por isso)
+  let comecouAqui = false;
   try {
+    comecouAqui = Boolean(sessionStorage.getItem(VOLTAR));
     destino = sessionStorage.getItem(VOLTAR) || destino;
     sessionStorage.removeItem(VOLTAR);
   } catch {
     /* nada */
   }
-  if (p.get("access_token")) {
+  if (p.get("access_token") && comecouAqui) {
     gravar({ access_token: p.get("access_token"), refresh_token: p.get("refresh_token"), expira: Number(p.get("expires_at")) * 1000 || Date.now() + Number(p.get("expires_in") || 3600) * 1000 });
   }
   history.replaceState(null, "", location.pathname + location.search + destino);

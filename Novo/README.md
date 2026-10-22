@@ -12,7 +12,7 @@ A versão antiga continua na pasta `Antigo/`. Esta pasta (`Novo/`) é independen
   - todos os dias às 03:17 (UTC) lê os números de todos os canais (subscritores, views totais, vídeos);
   - de hora a hora atualiza os últimos vídeos de 20 canais e 3 projetos.
 - **Views por mês**: o YouTube não dá as views de cada mês de canais de outras pessoas. O site guarda o total de views de cada canal todos os dias e a diferença entre o primeiro dia de um mês e o primeiro dia do mês seguinte são as views desse mês.
-- **Dados antigos**: na primeira vez que o site arranca, carrega `public/data/seed.json`, criado a partir da tua folha de cálculo (330 Youtubers, dezembro 2024 a março 2026).
+- **Dados antigos**: na primeira vez que o site arranca, carrega `netlify/data/seed.json` (vai dentro da função, não é servido no site), criado a partir da tua folha de cálculo (330 Youtubers, dezembro 2024 a março 2026).
 
 ## Pôr o site online no Netlify (uma vez)
 
@@ -44,6 +44,8 @@ O painel (`/painel/`) aceita o login com Google, só para os emails da lista. A 
 5. No Netlify, cria as variáveis `GOOGLE_CLIENT_ID` (o ID do cliente) e `ADMIN_EMAILS` (o teu email; vários separados por vírgulas) e faz **Trigger deploy**.
 
 O servidor confirma a assinatura do Google, o ID do cliente e o email antes de abrir o painel. Mantém a `ADMIN_PASSWORD`: serve de alternativa e para assinar as sessões.
+
+**Segurança do painel.** Usa uma `ADMIN_PASSWORD` comprida (16 letras ou mais, ao acaso). Depois de 8 tentativas erradas, o mesmo endereço fica 15 minutos sem poder tentar. Recomendado: cria também `ADMIN_SECRET` com um texto comprido ao acaso (por exemplo, gerado num gestor de palavras-passe); passa a ser a chave das sessões e, se um dia a mudares, todas as sessões abertas fecham.
 
 ## Primeiros passos depois de publicar
 
@@ -112,7 +114,7 @@ Novo/
   public/assets/js/stage/cenas.js cenas próprias dos 10 temas principais (abertura, cartões e arena)
   supabase/schema.sql          tabelas e regras da base de dados no Supabase
   public/assets/js/audio.js    sons e músicas gerados no browser
-  public/data/seed.json        dados iniciais da folha de cálculo
+  netlify/data/seed.json       dados iniciais da folha de cálculo (seed-dados.mjs é a cópia que a função usa)
   scripts/                     servidor local, testes, conversão da folha
 ```
 
@@ -160,8 +162,12 @@ Os dados podem viver no Netlify Blobs (como no início) ou no Supabase, uma base
 1. Na Google Cloud Console, **APIs & Services → Credentials → Create credentials → OAuth client ID**, tipo **Web application**. Em *Authorized redirect URIs* põe `https://<o-teu-projeto>.supabase.co/auth/v1/callback`.
 2. No Supabase, **Authentication → Sign In / Providers → Google**: liga, cola o Client ID e o Client Secret.
 3. No Supabase, **Authentication → URL Configuration**: *Site URL* = o endereço do site no Netlify; em *Redirect URLs* junta o mesmo endereço.
+4. No Supabase, em **Authentication → Sign In / Providers**, desliga **Email** e **Anonymous sign-ins** (só o Google fica ligado). As regras da base de dados já só aceitam votos de contas Google, mas assim nem se criam contas de outro tipo.
+5. Na Google Cloud, no ecrã de consentimento, carrega em **Publicar aplicação** para qualquer pessoa poder entrar (em "Teste" só entram os utilizadores de teste).
 
-As votações criam-se em **Editar → Votações** (pergunta, opções com Youtubers ou texto, data de fecho, mostrar ou esconder resultados). Os visitantes votam em **Votar** com a conta Google, uma vez por votação. Os resultados podem ir para um vídeo com o espetáculo **O público escolheu**.
+Se já tinhas corrido o `schema.sql` antes, corre-o outra vez: pode correr várias vezes sem apagar dados e traz as regras novas.
+
+As votações criam-se em **Editar → Página pública** (pergunta, opções com Youtubers ou texto, data de fecho, mostrar ou esconder resultados). Os visitantes votam na página pública (secção **Votar**) com a conta Google, uma vez por votação. Os resultados podem ir para um vídeo com o espetáculo **O público escolheu**.
 
 ## Sons e música
 

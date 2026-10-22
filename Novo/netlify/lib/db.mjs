@@ -73,9 +73,9 @@ export async function loadDB(origin) {
   db = emptyDB();
   if (origin) {
     try {
-      const res = await fetch(new URL("/data/seed.json", origin));
-      if (res.ok) {
-        const seed = await res.json();
+      // O seed vai dentro da função (não é um ficheiro público do site)
+      const { default: seed } = await import("../data/seed-dados.mjs");
+      {
         const taken = new Set();
         for (const p of seed.people || []) {
           const person = newPerson({ name: p.name, category: p.category, monthly: p.monthly || {}, legacy: p.legacy || {} }, taken);
