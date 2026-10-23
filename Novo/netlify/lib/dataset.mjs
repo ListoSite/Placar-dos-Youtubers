@@ -136,6 +136,24 @@ function personVideoSummary(chIds, vsum) {
   };
 }
 
+/** O que conta um canal a mais: o maior conta inteiro, os outros só em parte. */
+export const PARTE_EXTRA = { subs: 0.35, videos: 0.5 };
+const somaJusta = (lista, parte) => {
+  const v = lista.filter((x) => Number.isFinite(x) && x > 0).sort((a, b) => b - a);
+  return v.length ? v[0] + v.slice(1).reduce((a, x) => a + x * parte, 0) : null;
+};
+export function indiceJusto(canais, resumos) {
+  if (canais.length < 2) return null;
+  const out = { canais: canais.length };
+  const subs = somaJusta(canais.filter((c) => c.views !== null).map((c) => c.subs), PARTE_EXTRA.subs);
+  if (subs !== null) out.subs = Math.round(subs);
+  if (resumos.length > 1) {
+    out.up90 = Math.round(somaJusta(resumos.map((r) => r.up90 || 0), PARTE_EXTRA.videos) || 0);
+    out.up30 = Math.round(somaJusta(resumos.map((r) => r.up30 || 0), PARTE_EXTRA.videos) || 0);
+  }
+  return out;
+}
+
 function projectSummary(p, pv, baselineOf) {
   const vids = pv?.videos || [];
   const base = {
@@ -251,7 +269,11 @@ export async function buildDataset(db) {
   const people = [];
   for (const p of Object.values(db.people)) {
     const chIds = [p.mainChannelId, ...p.channels.filter((c) => c !== p.mainChannelId)].filter((c) => chById.has(c));
-    const counted = chIds.filter((c) => chById.get(c).count);
+    // O que se mede: o Youtuber (todos os canais que contam, como se fossem um só) ou um canal só.
+    // Cada Youtuber pode seguir a regra geral (Definições) ou ter a sua.
+    const medir = p.medir || (db.settings.medir === "principal" ? chIds[0] || "todos" : "todos");
+    const soUm = medir !== "todos" && chIds.includes(medir);
+    const counted = soUm ? [medir] : chIds.filter((c) => chById.get(c).count);
     const months = new Set(Object.keys(p.monthly || {}));
     for (const c of counted) for (const M of Object.keys(chMonthly[c] || {})) months.add(M);
     const monthly = {};
@@ -279,9 +301,15 @@ export async function buildDataset(db) {
         ? { subs: p.legacy.subs || null, views: p.legacy.totalViews || null, videos: null, src: "folha" }
         : null;
     const since = withStats.map((c) => c.publishedAt).filter(Boolean).sort()[0] || p.legacy?.createdAt || "";
+    // Contas do Índice com vários canais: os dados juntam-se como se fosse um canal só, mas sem
+    // vantagem por ter mais canais. Os subscritores repetem-se (muita gente segue os vários canais
+    // da mesma pessoa) e os vídeos espalhados por vários canais não valem o mesmo que num só.
+    const idx = indiceJusto(counted.map((c) => chById.get(c)), counted.map((c) => vsum[c]).filter(Boolean));
     people.push({
       id: p.id,
       name: p.name,
+      medida: soUm ? { canal: medir } : { canais: counted.length },
+      ...(idx ? { idx } : {}),
       realName: p.realName || "",
       bio: p.bio || "",
       category: p.category || "",
@@ -320,7 +348,7 @@ export async function buildDataset(db) {
     today,
     currentMonth: curM,
     months: monthRange(firstMonth, curM),
-    settings: { weights: db.settings.weights, alcanceTopo: db.settings.alcanceTopo, siteTitle: db.settings.siteTitle, canal: { ...DEFAULT_CANAL, ...(db.settings.canal || {}) } },
+    settings: { weights: db.settings.weights, medir: db.settings.medir || "youtuber", alcanceTopo: db.settings.alcanceTopo, siteTitle: db.settings.siteTitle, canal: { ...DEFAULT_CANAL, ...(db.settings.canal || {}) } },
     categories,
     people,
     channels,

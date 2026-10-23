@@ -98,11 +98,31 @@ function preparar(ds) {
 
   const ctx = { janela: estado.janela, pesos: ds.settings.weights, topo: ds.settings.alcanceTopo || 1e7 };
   estado.indices = new Map(ds.people.map((p) => [p.id, calcularIndice(p, ctx)]));
+  // O Caso: o karma fica à parte. Calcula-se sempre o "Índice + karma"; só substitui o Índice
+  // se o dono o ligou no painel (O Caso, "Juntar ao Índice").
+  estado.karma = new Map(Object.entries(ds.karma?.pessoas || {}));
+  estado.karmaPeso = (ds.karma?.peso ?? 10) / 100;
+  estado.indicesKarma = new Map(ds.people.map((p) => [p.id, comKarma(estado.indices.get(p.id), estado.karma.get(p.id))]));
+  estado.karmaNoIndice = Boolean(ds.karma?.noIndice);
+  if (estado.karmaNoIndice) {
+    for (const p of ds.people) {
+      const i = estado.indices.get(p.id);
+      const k = estado.indicesKarma.get(p.id);
+      if (i.total !== null) estado.indices.set(p.id, { ...i, semKarma: i.total, total: k.total, karma: k.karma });
+    }
+  }
   estado.classica = new Map(ds.people.map((p) => [p.id, pontuacaoClassica(p, estado.janela)]));
   const ordem = ds.people
     .filter((p) => estado.indices.get(p.id).total !== null)
     .sort((a, b) => estado.indices.get(b.id).total - estado.indices.get(a.id).total);
   estado.posIndice = new Map(ordem.map((p, i) => [p.id, i + 1]));
+}
+
+/** O Índice mexido pelo karma: até ±peso (10% por defeito), conforme o fator do karma (-1 a 1). */
+function comKarma(i, k) {
+  if (!i || i.total === null) return { total: null, karma: k || null };
+  if (!k) return { total: i.total, karma: null };
+  return { total: Math.max(0, Math.min(1000, Math.round(i.total * (1 + estado.karmaPeso * k.k)))), karma: k };
 }
 
 // ---------- Contas ----------
@@ -111,6 +131,14 @@ export function pessoa(id) {
 }
 export function indice(id) {
   return estado.indices.get(id) || { total: null, partes: {} };
+}
+/** O Índice com o karma do Caso (mesmo que o karma não esteja ligado no Índice do site). */
+export function indiceKarma(id) {
+  return estado.indicesKarma?.get(id) || { total: null, karma: null };
+}
+/** O karma de um Youtuber no Caso: { k (-1 a 1), n (votos) } ou null. */
+export function karmaDe(id) {
+  return estado.karma?.get(id) || null;
 }
 
 /** Valor de views de um mês. Com projecao=true, o mês atual usa a projeção. */

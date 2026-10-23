@@ -1868,3 +1868,264 @@ body.pub-sub-pagina .marca b {
 .sg-meio .sg-fig:not(.sg-fig-top) {
   max-width: none;
 }
+
+/* ---------- O Caso (karma e reações) ---------- */
+.cs #cs-corpo {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.cs .vt-eu {
+  margin: 0;
+}
+.cs-regra {
+  margin: 0;
+  font-size: var(--t-sm);
+  color: var(--texto-3);
+}
+.cs-destaques {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr));
+  gap: 12px;
+}
+.cs-dest {
+  padding: 14px 16px;
+  border-radius: var(--r-lg);
+}
+.cs-dest h3 {
+  font-size: var(--t-md);
+  margin-bottom: 8px;
+}
+.cs-dest.pos {
+  box-shadow: var(--vidro-brilho), inset 0 0 0 1px rgba(79, 227, 160, 0.25);
+}
+.cs-dest.neg {
+  box-shadow: var(--vidro-brilho), inset 0 0 0 1px rgba(224, 41, 79, 0.3);
+}
+.cs-dest-linha {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 5px 0;
+  min-width: 0;
+}
+.cs-dest-linha > span:not(.avatar) {
+  flex: 1;
+  min-width: 0;
+  font-weight: 700;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.cs-dest-linha b {
+  font-family: var(--f-display);
+}
+.cs-dest.pos .cs-dest-linha b {
+  color: var(--sobe);
+}
+.cs-dest.neg .cs-dest-linha b {
+  color: var(--rubi-claro);
+}
+.cs-filtros {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+}
+.cs-filtros .input {
+  flex: 1 1 200px;
+  min-width: 0;
+}
+.cs-seg {
+  display: flex;
+  gap: 4px;
+  padding: 4px;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.05);
+  flex: 1 1 320px;
+  min-width: 0;
+}
+.cs-seg button {
+  flex: 1;
+  min-width: 0;
+  padding: 8px 6px;
+  border: 0;
+  border-radius: 10px;
+  background: none;
+  color: var(--texto-2);
+  font: inherit;
+  font-size: var(--t-sm);
+  font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.cs-seg button[aria-pressed="true"] {
+  background: var(--fundo-4);
+  color: var(--texto);
+}
+.cs-lista {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 340px), 1fr));
+  gap: 12px;
+}
+.cs-cartao {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 14px;
+  border-radius: var(--r-lg);
+  min-width: 0;
+}
+.cs-topo {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+.cs-quem {
+  flex: 1;
+  min-width: 0;
+}
+.cs-quem b {
+  display: block;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.cs-quem b a {
+  color: inherit;
+}
+.cs-quem small {
+  color: var(--texto-3);
+  font-size: var(--t-xs);
+}
+.cs-karma {
+  text-align: right;
+  flex: none;
+}
+.cs-karma b {
+  display: block;
+  font-family: var(--f-display);
+  font-size: var(--t-lg);
+  line-height: 1;
+}
+.cs-karma small {
+  color: var(--texto-3);
+  font-size: var(--t-xs);
+}
+.cs-karma.pos b {
+  color: var(--sobe);
+}
+.cs-karma.neg b {
+  color: var(--rubi-claro);
+}
+.cs-medidor {
+  position: relative;
+  height: 8px;
+  border-radius: 99px;
+  background: linear-gradient(90deg, rgba(224, 41, 79, 0.18), rgba(255, 255, 255, 0.05) 50%, rgba(79, 227, 160, 0.18));
+}
+.cs-medidor i {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+}
+.cs-meio {
+  left: 50%;
+  width: 2px;
+  margin-left: -1px;
+  background: rgba(255, 255, 255, 0.35);
+}
+.cs-barra {
+  border-radius: 99px;
+  transition: width 0.5s cubic-bezier(0.2, 1, 0.3, 1);
+}
+.cs-barra.pos {
+  background: linear-gradient(90deg, #2bbf83, var(--sobe));
+}
+.cs-barra.neg {
+  background: linear-gradient(90deg, var(--rubi), #9b1336);
+}
+.cs-botoes {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+.cs-voto {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 42px;
+  padding: 6px 10px;
+  border-radius: 12px;
+  border: 1px solid var(--linha-forte);
+  background: rgba(255, 255, 255, 0.03);
+  color: var(--texto);
+  font: inherit;
+  font-weight: 800;
+  font-size: var(--t-sm);
+  cursor: pointer;
+  transition: transform 0.2s, background 0.2s, border-color 0.2s;
+}
+.cs-voto b {
+  font-size: var(--t-xs);
+  color: var(--texto-3);
+}
+.cs-voto:hover:not(:disabled) {
+  transform: translateY(-1px);
+}
+.cs-voto.pos[aria-pressed="true"] {
+  border-color: var(--sobe);
+  background: rgba(79, 227, 160, 0.14);
+  color: var(--sobe);
+}
+.cs-voto.neg[aria-pressed="true"] {
+  border-color: var(--rubi);
+  background: var(--rubi-fundo);
+  color: var(--rubi-claro);
+}
+.cs-voto:disabled,
+.cs-reacao:disabled {
+  opacity: 0.6;
+  cursor: progress;
+}
+.cs-reacoes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.cs-reacao {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  height: 34px;
+  padding: 0 10px;
+  border-radius: 99px;
+  border: 1px solid var(--linha);
+  background: rgba(255, 255, 255, 0.03);
+  color: var(--texto);
+  font: inherit;
+  font-size: var(--t-sm);
+  cursor: pointer;
+  transition: transform 0.2s, border-color 0.2s;
+}
+.cs-reacao span {
+  font-size: 17px;
+  line-height: 1;
+}
+.cs-reacao b {
+  font-size: var(--t-xs);
+  color: var(--texto-2);
+}
+.cs-reacao:hover:not(:disabled) {
+  transform: scale(1.08);
+}
+.cs-reacao[aria-pressed="true"] {
+  border-color: var(--ouro);
+  background: var(--ouro-fundo);
+}
+.cs-mais {
+  display: flex;
+  justify-content: center;
+}

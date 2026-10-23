@@ -18,6 +18,7 @@ export const ABAS = [
   { id: "projetos", nome: "Projetos", icone: "serie" },
   { id: "exclusivos", nome: "Exclusivos", icone: "estrela" },
   { id: "sugestoes", nome: "Sugerir", icone: "ideia" },
+  { id: "caso", nome: "O Caso", icone: "balanca" },
 ];
 
 /** Os blocos que se podem pôr no Início (e o que cada um aceita). */
@@ -244,6 +245,8 @@ export function retratoPublico(ds, cfg, incluir = []) {
     pub.channels.push(...ds.channels.filter((c) => c.personId === id));
     tem.add(id);
   }
+  // O karma do Caso desse momento (para o exclusivo repetir igual se usar o Índice com karma)
+  if (ds.karma?.pessoas) pub.karma = { noIndice: Boolean(ds.karma.noIndice), peso: Number.isFinite(Number(ds.karma.peso)) ? Number(ds.karma.peso) : 10, pessoas: Object.fromEntries(Object.entries(ds.karma.pessoas).filter(([id]) => tem.has(id))) };
   return pub;
 }
 

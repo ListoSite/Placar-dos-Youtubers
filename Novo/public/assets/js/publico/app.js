@@ -19,6 +19,7 @@ const PAGINAS = {
   projetos: "../pages/projects.js",
   exclusivos: "./exclusivos.js",
   sugestoes: "./sugestoes.js",
+  caso: "./caso.js",
 };
 // Endereços antigos (e o regresso do login) continuam a funcionar
 const ANTIGOS = { votacoes: "votar", hall: "videos", "": "" };
@@ -180,8 +181,10 @@ async function iniciar() {
   modo.publico = true;
   modo.cfg = r.cfg;
   modo.extra = { publicacoes: r.publicacoes || [], hall: r.hall || {}, pessoas: r.pessoas || {}, canal: r.canal || {}, historico: r.historico || null, exclusivos: r.exclusivos || [] };
-  usarDataset(r.ds);
-  dsOriginal = r.ds;
+  // O karma do Caso só vem quando entra no Índice (ligado no painel)
+  const dsComKarma = r.karma ? { ...r.ds, karma: r.karma } : r.ds;
+  usarDataset(dsComKarma);
+  dsOriginal = dsComKarma;
   const previa = ouvirPrevia();
   if (!r.cfg.abas.length && !previa) {
     main.innerHTML = `<div class="wrap pub-pagina"><div class="vidro pub-vazio"><h2>O Placar está a ser preparado</h2><p class="muted">Volta daqui a pouco.</p></div></div>`;

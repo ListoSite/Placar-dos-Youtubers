@@ -205,3 +205,21 @@ alter table public.sugestao_votos enable row level security;
 revoke all on public.sugestoes from anon, authenticated;
 revoke all on public.sugestao_votos from anon, authenticated;
 -- Sem políticas: só o servidor (service_role) mexe nestas tabelas.
+
+-- ---------- O Caso: karma e reações do público (anónimos) ----------
+-- Um voto por conta e por Youtuber: karma 1 (apoiar), -1 (farto) ou 0, e uma reação.
+-- "autor" é um código anónimo da conta Google. Só o servidor (service_role) mexe aqui.
+create table if not exists public.caso_votos (
+  chave text primary key,
+  pessoa_id text not null,
+  autor text not null,
+  karma smallint not null default 0 check (karma in (-1, 0, 1)),
+  reacao text not null default '',
+  criado timestamptz not null default now(),
+  atualizado timestamptz not null default now()
+);
+create index if not exists caso_votos_pessoa on public.caso_votos (pessoa_id);
+create index if not exists caso_votos_autor on public.caso_votos (autor);
+alter table public.caso_votos enable row level security;
+revoke all on public.caso_votos from anon, authenticated;
+-- Sem políticas: ninguém de fora lê nem escreve diretamente.

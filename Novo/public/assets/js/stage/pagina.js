@@ -112,11 +112,13 @@ function opcoes(main, esp, query) {
   const cat = `<label class="campo"><span>Categoria</span><select class="input" name="cat"><option value="">Todas</option>${ds.categories.map((c) => `<option>${esc(c)}</option>`).join("")}</select></label>`;
   const mes = `<label class="campo"><span>Mês</span><select class="input" name="m">${opcaoMes(meses, estado.ref)}</select></label>`;
   const temSubs = ds.people.some((p) => p.sb?.s && Object.keys(p.sb.s).length);
+  // O Caso: o Índice com o karma do público (só quando já há votos)
+  const opcoesKarma = estado.karma?.size ? (estado.karmaNoIndice ? `<option value="indiceNumeros">Índice só com os números (sem karma)</option>` : `<option value="indiceKarma">Índice com o karma do público (O Caso)</option>`) : "";
   const temTT = ds.people.filter((p) => p.socials?.tiktok?.last?.followers).length >= 5;
   const temTTMes = ds.people.filter((p) => p.tt?.f && Object.keys(p.tt.f).length).length >= 5;
   const metricas = () => `<label class="campo"><span>Ranking por</span><select class="input" name="metric">
       <option value="views">Views do mês</option><option value="indice">Índice de Influência</option>${temSubs ? `<option value="subsMes">Subscritores ganhos no mês</option>` : ""}
-      <option value="crescimento">Crescimento face ao mês anterior</option><option value="subs">Subscritores (total)</option><option value="total">Views totais</option>${temTT ? `<option value="tiktok">Seguidores no TikTok</option>` : ""}${temTTMes ? `<option value="tiktokMes">Seguidores ganhos no TikTok no mês</option>` : ""}</select></label>`;
+      <option value="crescimento">Crescimento face ao mês anterior</option><option value="subs">Subscritores (total)</option><option value="total">Views totais</option>${temTT ? `<option value="tiktok">Seguidores no TikTok</option>` : ""}${temTTMes ? `<option value="tiktokMes">Seguidores ganhos no TikTok no mês</option>` : ""}${opcoesKarma}</select></label>`;
   // Peças das simulações: quantos, quem entra e o que dá o tamanho (ou a vida)
   const numero = (lista, def) => `<label class="campo"><span>Youtubers</span><select class="input" name="n">${lista.map((n) => `<option ${n === def ? "selected" : ""}>${n}</option>`).join("")}</select></label>`;
   const quem = () => `<label class="campo"><span>Quem entra</span><select class="input" name="quem"><option value="acaso">Ao acaso entre os 60 melhores</option><option value="top">Os melhores pelo Índice</option></select></label>`;
@@ -129,7 +131,7 @@ function opcoes(main, esp, query) {
       <label class="campo"><span>De</span><select class="input" name="de">${meses.map((m, i) => `<option value="${m}" ${i === 0 ? "selected" : ""}>${mesNome(m)}</option>`).join("")}</select></label>
       <label class="campo"><span>Até</span><select class="input" name="ate">${meses.map((m) => `<option value="${m}" ${m === estado.ref ? "selected" : ""}>${mesNome(m)}</option>`).join("")}</select></label>
       <label class="campo"><span>Barras</span><select class="input" name="n"><option>8</option><option selected>10</option><option>12</option><option>15</option></select></label>${cat}`,
-    tier: `<label class="campo"><span>Classificar por</span><select class="input" name="metric"><option value="indice">Índice de Influência</option><option value="views">Views do mês</option></select></label>${mes}
+    tier: `<label class="campo"><span>Classificar por</span><select class="input" name="metric"><option value="indice">Índice de Influência</option><option value="views">Views do mês</option>${opcoesKarma}</select></label>${mes}
       <label class="campo"><span>Quantos</span><select class="input" name="n"><option>12</option><option selected>16</option><option>20</option><option>24</option></select></label>${cat}`,
     altos: `${mes}<label class="campo"><span>Quantos de cada</span><select class="input" name="n"><option>3</option><option selected>5</option><option>7</option></select></label>
       <label class="campo"><span>Entre os</span><select class="input" name="top"><option value="50">Top 50</option><option value="100" selected>Top 100</option><option value="300">Todos</option></select></label>`,

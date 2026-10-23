@@ -44,6 +44,16 @@ export async function render(alvo) {
     </div>
 
     <div class="painel ed-bloco">
+      <h3>O que se mede</h3>
+      <p class="muted">Quem tem vários canais: medimos o Youtuber (todos os canais juntos) ou os canais de facto (só o principal)? Vale para os rankings, o Índice e o Palco. Em cada Youtuber podes escolher outra coisa (em Youtubers, Canais do YouTube).</p>
+      <div class="ed-medir-opcoes" id="st-medir">
+        <label class="ed-check"><input type="radio" name="medir" value="youtuber" ${s.medir !== "principal" ? "checked" : ""}> <span><b>O Youtuber</b><small>Todos os canais que contam, juntos, como se fosse um canal só. As views somam-se; os subscritores repetidos e os vídeos dos outros canais contam só em parte, por isso ter mais canais não é uma vantagem por si.</small></span></label>
+        <label class="ed-check"><input type="radio" name="medir" value="principal" ${s.medir === "principal" ? "checked" : ""}> <span><b>Só o canal principal</b><small>Mede o canal, não a pessoa: os outros canais não entram nas contas.</small></span></label>
+      </div>
+      <div class="ed-acoes"><button class="btn btn-primario" id="st-guardar-medir" data-a-esperar="A guardar">Guardar</button></div>
+    </div>
+
+    <div class="painel ed-bloco">
       <h3>Canal nas redes</h3>
       <p class="muted">Aparece no fim de cada espetáculo do Palco (e a meio, nos vídeos), para quem vê seguir o canal. Também entra nas legendas sugeridas para publicar.</p>
       <div class="ed-grelha" id="st-canal">
@@ -108,6 +118,10 @@ export async function render(alvo) {
       r.nextElementSibling.textContent = r.value;
     });
     desenharTop();
+  });
+  $("#st-guardar-medir", alvo).addEventListener("click", (e) => {
+    const medir = $("#st-medir input:checked", alvo)?.value || "youtuber";
+    chamar("settings", { settings: { medir } }, { botao: e.currentTarget, sucesso: medir === "principal" ? "Agora mede-se só o canal principal." : "Agora mede-se o Youtuber, com todos os canais." }).catch(() => {});
   });
   $("#st-guardar-canal", alvo).addEventListener("click", (e) => {
     const c = {};

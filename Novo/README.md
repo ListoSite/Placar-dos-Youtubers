@@ -173,7 +173,7 @@ Teclas: espaço avança, P pausa, M som, F ecrã inteiro, H esconde os controlos
 Os dados podem viver no Netlify Blobs (como no início) ou no Supabase, uma base de dados Postgres grátis onde se vê e mexe em tudo por tabelas. Passo a passo:
 
 1. Em supabase.com cria um projeto (região West EU ou Frankfurt).
-2. No Supabase, **SQL Editor → New query**: cola o ficheiro `supabase/schema.sql` e carrega em **Run**. Cria as tabelas `pessoas`, `canais`, `projetos`, `documentos`, `palco_resultados`, `votacoes`, `votos`, `sugestoes` e `sugestao_votos`, com as regras de segurança (ninguém de fora lê os dados diretamente; cada conta vota uma vez por votação).
+2. No Supabase, **SQL Editor → New query**: cola o ficheiro `supabase/schema.sql` e carrega em **Run**. Cria as tabelas `pessoas`, `canais`, `projetos`, `documentos`, `palco_resultados`, `votacoes`, `votos`, `sugestoes`, `sugestao_votos` e `caso_votos`, com as regras de segurança (ninguém de fora lê os dados diretamente; cada conta vota uma vez por votação).
 3. No Netlify, **Site configuration → Environment variables**: `SUPABASE_URL` (o Project URL, `https://xxxx.supabase.co`), `SUPABASE_ANON_KEY` (a chave pública: **Publishable key** `sb_publishable_…`, ou a antiga `anon`) e `SUPABASE_SERVICE_ROLE_KEY` (a chave secreta: **Secret key** `sb_secret_…`, ou a antiga `service_role`; nunca no código nem no chat). Estão no Supabase em **Project Settings → API Keys** (o URL em **Data API**). Em cada variável, escolhe **Same value for all deploy contexts**. Faz um novo deploy.
 4. No site, **Editar → Definições → Base de dados → Copiar dados para o Supabase**. A cópia vai por partes e não apaga nada do Netlify. Só depois da cópia é que o site passa a usar o Supabase (até lá continua no Netlify, por isso nunca abre vazio).
 
@@ -201,6 +201,23 @@ Na aba **Sugerir** do site, quem entra com a conta Google sugere um vídeo e esc
 - No painel também podes **acabar já**, **tirar do ar**, **apagar** e **abrir no Palco** com os Youtubers da sugestão já escolhidos. Em **Regras** mudas os números (máximo, dias, percentagem, votos mínimos, horas entre sugestões), os tipos e os jogos, ou fechas as sugestões novas.
 
 Para ligar: corre outra vez o `supabase/schema.sql` (cria as tabelas `sugestoes` e `sugestao_votos`, fechadas a quem é de fora) e liga a aba **Sugerir** (no painel, em Sugestões, ou em Página pública → Abas).
+
+### Youtubers com vários canais: o que se mede
+
+Em **Editar → Definições → O que se mede** escolhes se medes **o Youtuber** (todos os canais que contam, juntos como se fossem um canal só) ou **só o canal principal**. Em cada Youtuber (Youtubers → Canais do YouTube) podes escolher outra coisa: seguir as Definições, todos juntos, ou um canal específico.
+
+Com todos juntos, as views de cada mês somam-se (são pessoas diferentes a ver). Para ter mais canais não ser uma vantagem por si, no Índice de Influência os subscritores do canal maior contam inteiros e os dos outros canais só 35% (muita gente segue os vários canais da mesma pessoa), e os vídeos publicados nos outros canais contam a metade na Atividade. O perfil explica isto em "Como se calcula o Índice".
+
+### O Caso: karma e reações do público
+
+Na aba **O Caso** do site, quem entra com a conta Google dá karma a cada Youtuber (👍 apoiar ou 👎 "estou farto") e uma reação (❤️ 👏 😂 😮 😡 🤮). Tudo anónimo, e cada pessoa pode mudar de ideias quando quiser.
+
+- O karma vai de -100 a +100. Os votos antigos pesam menos (perdem metade da força em 60 dias) e, com poucos votos, o karma mexe pouco (força total a partir de 20 votos). As reações boas e más contam meio voto.
+- **Fica à parte do Índice de Influência.** No painel, em **O Caso**, podes ligar "Juntar o karma ao Índice no site" e escolher quanto pode mexer (10% por defeito, para cima ou para baixo). Antes de guardar vês quem muda de lugar no top 50.
+- Mesmo desligado, no Palco podes escolher "Índice com o karma do público" na Revelação do top e na Tier list.
+- No painel vês o karma de cada Youtuber (Índice só com os números → com o karma) e podes apagar os votos de alguém se houver uma enxurrada suspeita.
+
+Para ligar: corre outra vez o `supabase/schema.sql` (cria a tabela `caso_votos`) e liga a aba **O Caso** (no painel, em O Caso, ou em Página pública → Abas).
 
 ## Sons e música
 

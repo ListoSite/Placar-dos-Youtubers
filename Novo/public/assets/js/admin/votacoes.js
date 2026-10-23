@@ -6,6 +6,7 @@ import { esc, inteiro, mesNome } from "../format.js";
 import { $, $$, avatar, toast, janela, confirmar } from "../ui.js";
 import { rankingPeriodo } from "../periodo.js";
 import { chamar } from "./common.js";
+import { subnav } from "./caso.js";
 
 const TIPOS = {
   escolha: { nome: "Votação livre", icone: "🗳️", texto: "Uma pergunta com as opções que quiseres (Youtubers ou texto)." },
@@ -27,7 +28,7 @@ let filtro = "ativas";
 
 export async function render(main) {
   main.dataset.titulo = "Votações";
-  main.innerHTML = `<div class="wrap vv"><div class="vc-topo"><div><h1>Votações</h1><p class="muted">Cria votações e torneios para os vídeos. Os visitantes votam na aba Votar, com a conta Google (um voto por pessoa).</p></div>
+  main.innerHTML = `<div class="wrap vv">${subnav("votacoes")}<div class="vc-topo"><div><h1>Votações</h1><p class="muted">Cria votações e torneios para os vídeos. Os visitantes votam na aba Votar, com a conta Google (um voto por pessoa).</p></div>
     <div class="vc-acoes"><a class="btn" href="/#/votar" target="_blank" rel="noopener">Ver no site</a><button class="btn btn-primario" id="vv-nova">+ Nova votação</button></div></div>
     <div id="vv-corpo"><div class="a-carregar"><div class="roda"></div></div></div></div>`;
   $("#vv-nova", main).addEventListener("click", () => escolherTipo(() => desenhar(main)));

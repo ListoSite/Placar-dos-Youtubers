@@ -166,6 +166,11 @@ function editor(alvo, id, aoMudar, abrir) {
               .join("")
           : `<p class="muted">Ainda sem canais. Cola o link do canal em baixo.</p>`
       }</div>
+      ${canais.length > 1 ? `<label class="campo ed-medir"><span>O que se mede neste Youtuber</span><select class="input" id="ed-medir">
+        <option value="" ${!p.medir ? "selected" : ""}>Igual às Definições: ${adm.db.settings.medir === "principal" ? "só o principal" : "todos juntos"}</option>
+        <option value="todos" ${p.medir === "todos" ? "selected" : ""}>O Youtuber: todos os canais que contam, juntos</option>
+        ${canais.map(({ link, pub: c }) => `<option value="${esc(link.id)}" ${p.medir === link.id ? "selected" : ""}>Só o canal ${esc(c?.title || link.title)}</option>`).join("")}
+      </select><small>Com todos juntos, as views somam-se como se fosse um canal só. Os subscritores repetidos e os vídeos dos outros canais contam só em parte, para ter mais canais não ser uma vantagem por si.</small></label>` : ""}
       <div style="display:flex;gap:8px;margin-top:14px;flex-wrap:wrap"><input class="input" id="ed-novo-canal" placeholder="Link do canal, @handle ou ID" style="flex:1;min-width:220px"><button class="btn" id="ed-procurar-canal" data-a-esperar="A procurar">Procurar canal</button></div>
       <div id="ed-canal-prev"></div>
     </div>
@@ -198,6 +203,8 @@ function editor(alvo, id, aoMudar, abrir) {
       <p class="muted">Juntar serve para quando a mesma pessoa aparece duas vezes (por exemplo "Arganaça" e "Arganaça 2"). Os canais, meses e projetos passam para a pessoa escolhida.</p>
       <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center"><span style="position:relative;flex:1;min-width:220px"><input class="input" id="ed-juntar" placeholder="Juntar ${esc(p.name)} em…"></span><button class="btn btn-perigo" id="ed-apagar">Apagar ${esc(p.name)}</button></div>
     </div>`;
+
+  $("#ed-medir", alvo)?.addEventListener("change", (e) => chamar("person", { person: { id, medir: e.target.value } }, { sucesso: "Guardado. O Índice e os rankings foram recalculados." }).catch(() => {}));
 
   // Dados
   $("#ed-dados", alvo).addEventListener("submit", async (e) => {

@@ -21,7 +21,7 @@ function classificar(lista) {
 }
 
 export async function correr(palco, opts) {
-  const chave = opts.metric === "views" ? "views" : "indice";
+  const chave = ["views", "indiceKarma", "indiceNumeros"].includes(opts.metric) ? opts.metric : "indice";
   const met = METRICAS[chave];
   palco.contexto = { metrica: chave, m: opts.m, cat: opts.cat };
   let top = rankingPor(chave, opts.m, { cat: opts.cat, n: Number(opts.n) || 16 });

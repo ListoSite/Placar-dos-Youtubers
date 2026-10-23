@@ -50,11 +50,12 @@ export function calcularIndice(p, ctx) {
 
   // Atividade
   if (p.vid) {
-    const up = p.vid.up90 || 0;
+    // Com vários canais: os vídeos dos outros canais contam só em parte (ver idx no dataset)
+    const up = p.idx?.up90 ?? p.vid.up90 ?? 0;
     const s1 = clamp(Math.log2(1 + up) / Math.log2(1 + 60));
     const dias = p.vid.last ? (Date.now() - Date.parse(p.vid.last)) / 86400000 : 999;
     const s2 = dias <= 7 ? 1 : dias >= 180 ? 0 : 1 - (dias - 7) / 173;
-    partes.atividade = { s: 0.7 * s1 + 0.3 * s2, info: { up90: up, dias: Math.round(dias) } };
+    partes.atividade = { s: 0.7 * s1 + 0.3 * s2, info: { up90: up, dias: Math.round(dias), canais: p.idx?.up90 !== undefined ? p.idx.canais : undefined } };
   } else if (conhecidos.length) {
     const ult = conhecidos.slice(-3);
     partes.atividade = { s: 0.8 * (ult.filter((v) => v > 0).length / 3), info: { aprox: true } };
@@ -71,9 +72,11 @@ export function calcularIndice(p, ctx) {
   // Peso histórico
   const t = p.totals;
   const hs = [];
-  if (t?.subs) hs.push(clamp(Math.log10(t.subs + 1) / Math.log10(5e6)));
+  // Com vários canais, os subscritores repetidos não contam duas vezes
+  const subs = p.idx?.subs ?? t?.subs;
+  if (subs) hs.push(clamp(Math.log10(subs + 1) / Math.log10(5e6)));
   if (t?.views) hs.push(clamp(Math.log10(t.views + 1) / Math.log10(2e9)));
-  if (hs.length) partes.historico = { s: mean(hs), info: { subs: t.subs, views: t.views } };
+  if (hs.length) partes.historico = { s: mean(hs), info: { subs, views: t?.views, canais: p.idx?.canais } };
 
   // Envolvimento
   if (p.vid && p.vid.eng > 0) partes.envolvimento = { s: clamp(p.vid.eng / 0.06), info: { eng: p.vid.eng } };

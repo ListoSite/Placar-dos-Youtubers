@@ -11,6 +11,7 @@ import { listarVotacoes, guardarVotacao, apagarVotacao, configPublica, mudarEsta
 import { lerConfig, guardarConfig, datasetPublico, configPublicaVitrine, canalPublico, BLOCOS, ABAS } from "../lib/vitrine.mjs";
 import { lerExclusivos, guardarExclusivo, apagarExclusivo, ordenarExclusivos, exclusivosPublicos, prepararRetrato, guardarRetrato, lerRetrato, ESPETACULOS as NOMES_ESP } from "../lib/exclusivos.mjs";
 import { estadoPublico, criarSugestao, votarSugestao, contaDoToken, listarParaPainel, porDecidir, mudarSugestao, guardarRegras as guardarRegrasSugestoes } from "../lib/sugestoes.mjs";
+import { resumo as resumoCaso, karmaParaDataset, meusVotos as meusVotosCaso, votar as votarCaso, limparPessoa as limparCaso, guardarRegras as guardarRegrasCaso, REACOES } from "../lib/caso.mjs";
 import { guardarResultados, resumoHistorico, COLECAO as COLECAO_PALCO } from "../lib/historico.mjs";
 import { adminEnabled, checkPassword, createToken, verifyToken, tokenFromRequest, googleLigado, googleClientId, verificarGoogle } from "../lib/auth.mjs";
 import { loadDB, saveDB, newPerson, attachChannel, detachChannel, mergePeople, deletePerson, PERSON_FIELDS, DEFAULT_SETTINGS } from "../lib/db.mjs";
@@ -35,6 +36,13 @@ async function contextoSugestoes(req) {
   const [ds, cfg] = await Promise.all([getDataset(req), lerConfig()]);
   const aba = cfg.abas.find((a) => a.id === "sugestoes");
   if (!aba?.visivel) throw new HttpError(404, "As sugestões não estão abertas.");
+  return new Map(datasetPublico(ds, cfg).people.map((p) => [p.id, p]));
+}
+
+/** O Caso (karma e reações): só com a aba ligada. Devolve os Youtubers da página pública. */
+async function contextoCaso(req) {
+  const [ds, cfg] = await Promise.all([getDataset(req), lerConfig()]);
+  if (!cfg.abas.find((a) => a.id === "caso")?.visivel) throw new HttpError(404, "O Caso não está aberto.");
   return new Map(datasetPublico(ds, cfg).people.map((p) => [p.id, p]));
 }
 
@@ -86,13 +94,16 @@ function sanitizePerson(input, existing) {
   if ("tags" in out) out.tags = (Array.isArray(out.tags) ? out.tags : String(out.tags).split(",")).map((t) => String(t).trim()).filter(Boolean);
   if ("name" in out) out.name = String(out.name).trim() || existing?.name || "Sem nome";
   if ("mainChannelId" in out && existing && out.mainChannelId && !existing.channels.includes(out.mainChannelId)) delete out.mainChannelId;
+  // Medir: "" (segue as Definições), "todos" ou um dos canais da pessoa
+  if ("medir" in out) out.medir = out.medir === "todos" || (existing && existing.channels.includes(out.medir)) ? out.medir : "";
   return out;
 }
 
 const publicRoutes = {
   "GET dataset": async (req) => {
     const ds = await getDataset(req);
-    return json(publicDataset(ds), 200, { "cache-control": "public, max-age=60" });
+    // O karma do Caso vai à parte: o Índice só o usa se isso estiver ligado (ou no Palco, se escolhido)
+    return json({ ...publicDataset(ds), karma: await karmaParaDataset() }, 200, { "cache-control": "public, max-age=60" });
   },
   "GET videos": async (req, url) => {
     const id = url.searchParams.get("channel") || "";
@@ -142,6 +153,8 @@ const publicRoutes = {
         // Só se a aba ou um bloco do Início os mostrar
         exclusivos: cfg.abas.some((a) => a.id === "exclusivos" && a.visivel) || cfg.inicio.blocos.some((b) => b.tipo === "exclusivos" && b.visivel) ? exclusivosPublicos(excl) : [],
         historico: cfg.perfis.ligado && cfg.perfis.secoes.palco ? historicoPublico(await resumoHistorico(), vivos) : null,
+        // Só quando o karma entra no Índice do site (ligado no painel, em O Caso)
+        karma: await karmaParaDataset().then((k) => (k?.noIndice ? { ...k, pessoas: Object.fromEntries(Object.entries(k.pessoas).filter(([id]) => vivos.has(id))) } : null)),
       },
       200,
       { "cache-control": "public, max-age=60" },
@@ -168,6 +181,26 @@ const publicRoutes = {
     const conta = await contaDoToken(b.token);
     const r = await votarSugestao({ conta, id: b.id, quer: b.quer === true || b.quer === false ? b.quer : null });
     return json({ ...r, ...(await estadoPublico({ conta, pessoas })), supabase: configPublica() }, 200, { "cache-control": "private, no-store" });
+  },
+  // O Caso: karma e reações do público (anónimos). Ler: toda a gente. Votar: com a sessão Google.
+  "GET caso": async (req) => {
+    const pessoas = await contextoCaso(req);
+    const r = await resumoCaso();
+    const regras = { votar: r.regras.votar, reacoes: r.regras.reacoes, meiaVida: r.regras.meiaVida, minVotos: r.regras.minVotos, peso: r.regras.peso, noIndice: r.regras.noIndice };
+    return json({ ligado: r.ligado, regras, reacoes: REACOES, pessoas: Object.fromEntries(Object.entries(r.pessoas || {}).filter(([id]) => pessoas.has(id))), supabase: configPublica() }, 200, { "cache-control": "public, max-age=15" });
+  },
+  "POST caso/eu": async (req) => {
+    await contextoCaso(req);
+    const conta = await contaDoToken((await body(req)).token);
+    return json({ meus: await meusVotosCaso(conta) }, 200, { "cache-control": "private, no-store" });
+  },
+  "POST caso/voto": async (req) => {
+    const pessoas = await contextoCaso(req);
+    const b = await body(req);
+    const conta = await contaDoToken(b.token);
+    const voto = await votarCaso({ conta, pessoa: String(b.pessoa || ""), karma: b.karma, reacao: b.reacao, pessoas });
+    const r = await resumoCaso();
+    return json({ voto, resumo: r.pessoas[b.pessoa] || null }, 200, { "cache-control": "private, no-store" });
   },
   "POST login": async (req) => {
     if (!adminEnabled()) throw new HttpError(503, "A edição está desligada: define ADMIN_PASSWORD nas variáveis do Netlify.");
@@ -550,6 +583,7 @@ const adminRoutes = {
       for (const k of Object.keys(DEFAULT_SETTINGS.weights)) w[k] = Math.max(0, Number(s.weights[k]) || 0);
       db.settings.weights = w;
     }
+    if (s.medir === "youtuber" || s.medir === "principal") db.settings.medir = s.medir;
     if (s.alcanceTopo) db.settings.alcanceTopo = Math.max(10000, Number(s.alcanceTopo) || DEFAULT_SETTINGS.alcanceTopo);
     if (typeof s.siteTitle === "string" && s.siteTitle.trim()) db.settings.siteTitle = s.siteTitle.trim().slice(0, 80);
     if (s.canal && typeof s.canal === "object") {
@@ -631,6 +665,16 @@ const adminRoutes = {
 
   // ---------- Votações ----------
   "GET votacoes": async () => listarVotacoes({ todas: true }),
+
+  // ---------- O Caso ----------
+  "GET caso": async () => {
+    const cfg = await lerConfig();
+    const aba = cfg.abas.find((a) => a.id === "caso");
+    const r = await resumoCaso();
+    return { ...r, reacoes: REACOES, aba: aba ? { nome: aba.nome, visivel: aba.visivel } : null };
+  },
+  "POST caso/regras": async ({ b }) => ({ regras: await guardarRegrasCaso(b.regras || {}) }),
+  "POST caso/limpar": async ({ b }) => limparCaso(String(b.pessoa || "")),
 
   // ---------- Sugestões do público ----------
   "GET sugestoes": async () => {

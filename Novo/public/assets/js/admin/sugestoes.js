@@ -6,6 +6,7 @@ import { api, pessoa } from "../data.js";
 import { esc, inteiro } from "../format.js";
 import { $, $$, avatar, toast, janela, confirmar } from "../ui.js";
 import { chamar } from "./common.js";
+import { subnav } from "./caso.js";
 import { atualizarPorDecidir } from "../app.js";
 
 const ESTADOS = {
@@ -20,7 +21,7 @@ let filtro = null;
 
 export async function render(main) {
   main.dataset.titulo = "Sugestões";
-  main.innerHTML = `<div class="wrap sgp"><div class="vc-topo"><div><h1>Sugestões do público</h1><p class="muted">Quem tem conta Google sugere vídeos na aba Sugerir e vota nas sugestões dos outros. É tudo anónimo. Quando o prazo acaba, a sugestão vem para <b>Por decidir</b> e tu aceitas ou recusas.</p></div>
+  main.innerHTML = `<div class="wrap sgp">${subnav("sugestoes")}<div class="vc-topo"><div><h1>Sugestões do público</h1><p class="muted">Quem tem conta Google sugere vídeos na aba Sugerir e vota nas sugestões dos outros. É tudo anónimo. Quando o prazo acaba, a sugestão vem para <b>Por decidir</b> e tu aceitas ou recusas.</p></div>
     <div class="vc-acoes"><a class="btn" href="/#/sugestoes" target="_blank" rel="noopener">Ver no site</a><button class="btn" id="sgp-regras">Regras</button></div></div>
     <div id="sgp-corpo"><div class="a-carregar"><div class="roda"></div></div></div></div>`;
   await desenhar(main);

@@ -17,6 +17,8 @@ export const DEFAULT_SETTINGS = {
   weights: { alcance: 35, constancia: 20, atividade: 15, momento: 10, historico: 15, envolvimento: 5 },
   // Escala do alcance: views por mês que valem a nota máxima
   alcanceTopo: 10000000,
+  // O que se mede: "youtuber" (todos os canais juntos) ou "principal" (só o canal principal)
+  medir: "youtuber",
   roles: ["principal", "secundário", "clips", "gaming", "podcast", "shorts", "música", "outro"],
   // Divulgação do canal no fim dos espetáculos do Palco
   canal: { nome: "Placar dos Youtubers", youtube: "@placardosyoutubers", tiktok: "", instagram: "", hashtags: "#placardosyoutubers #youtubersportugueses #youtubeportugal" },
@@ -190,5 +192,5 @@ export function deletePerson(db, id) {
 /** Campos que podem ser alterados na edição de uma pessoa. */
 export const PERSON_FIELDS = [
   "name", "realName", "bio", "category", "tags", "status", "hidden", "photo", "location",
-  "mainChannelId", "socials", "notes", "birthYear", "startedYear", "languageNote", "noMatch",
+  "mainChannelId", "socials", "notes", "birthYear", "startedYear", "languageNote", "noMatch", "medir",
 ];

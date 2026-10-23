@@ -122,7 +122,7 @@
   max-width: 1280px;
 }
 .pn-abas {
-  grid-template-columns: repeat(5, minmax(0, 1fr)) !important;
+  grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
 }
 /* Número de sugestões à espera de decisão */
 .pn-conta {
@@ -1526,5 +1526,119 @@ body.sem-sessao .pn-marca-movel {
 @media (max-width: 700px) {
   .sgp-resumo {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+/* Atalhos Votações · Sugestões · O Caso (só no telemóvel, onde não há barra lateral) */
+.pn-subnav {
+  display: none;
+}
+@media (max-width: 860px) {
+  .pn-subnav {
+    display: flex;
+    gap: 4px;
+    padding: 4px;
+    margin-bottom: 14px;
+    border-radius: 14px;
+    background: rgba(255, 255, 255, 0.05);
+  }
+  .pn-subnav a {
+    flex: 1;
+    text-align: center;
+    padding: 8px 6px;
+    border-radius: 10px;
+    color: var(--texto-2);
+    font-weight: 700;
+    font-size: var(--t-sm);
+  }
+  .pn-subnav a[aria-current] {
+    background: var(--fundo-4);
+    color: var(--texto);
+    text-decoration: none;
+  }
+}
+
+/* ---------- O Caso (painel) ---------- */
+.csp-indice .vc-interruptor {
+  margin-bottom: 14px;
+}
+.csp-peso input[type="range"] {
+  width: 100%;
+}
+.csp-efeito-t {
+  margin: 12px 0 6px;
+  font-size: var(--t-sm);
+}
+.csp-movimentos {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.csp-movimentos > span {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 2px 10px 2px 2px;
+  border-radius: 99px;
+  background: rgba(255, 255, 255, 0.05);
+  font-size: var(--t-xs);
+  font-weight: 700;
+}
+.csp-movimentos > span.sobe b {
+  color: var(--sobe);
+}
+.csp-movimentos > span.desce b {
+  color: var(--rubi-claro, #ff8199);
+}
+.csp-lista {
+  display: grid;
+  gap: 6px;
+}
+.csp-linha {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto auto auto;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 10px;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.03);
+}
+.csp-quem b,
+.csp-quem small {
+  display: block;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.csp-quem small {
+  color: var(--texto-3);
+  font-size: var(--t-xs);
+}
+.csp-k {
+  font-family: var(--f-display);
+  font-size: var(--t-lg);
+  min-width: 56px;
+  text-align: right;
+}
+.csp-k.pos {
+  color: var(--sobe);
+}
+.csp-k.neg {
+  color: var(--rubi-claro, #ff8199);
+}
+.csp-ind {
+  font-size: var(--t-sm);
+  color: var(--texto-2);
+  white-space: nowrap;
+}
+@media (max-width: 700px) {
+  .csp-linha {
+    grid-template-columns: auto minmax(0, 1fr) auto;
+  }
+  .csp-ind {
+    grid-column: 2;
+  }
+  .csp-linha .btn {
+    grid-column: 3;
   }
 }

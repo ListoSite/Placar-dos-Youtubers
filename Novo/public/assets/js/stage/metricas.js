@@ -1,6 +1,6 @@
 // Medidas usadas pelos espetáculos (rankings, duelos e jogos).
 
-import { estado, views, indice, mediaMeses, mesAnterior } from "../data.js";
+import { estado, views, indice, mediaMeses, mesAnterior, indiceKarma } from "../data.js";
 import { curto, inteiro, mesNome } from "../format.js";
 
 const pctSinal = (x) => `${x >= 0 ? "+" : "−"}${Math.abs(Math.round(x))}%`;
@@ -8,6 +8,9 @@ const pctSinal = (x) => `${x >= 0 ? "+" : "−"}${Math.abs(Math.round(x))}%`;
 export const METRICAS = {
   views: { nome: (m) => `Views em ${mesNome(m)}`, curtoNome: "Views do mês", fmt: curto, unidade: "views", valor: (p, m) => views(p, m) },
   indice: { nome: () => "Índice de Influência", curtoNome: "Índice", fmt: inteiro, unidade: "pontos", valor: (p) => indice(p.id).total },
+  // O Caso: o Índice mexido pelo karma do público (e o Índice só com os números)
+  indiceKarma: { nome: () => "Índice com o karma do público", curtoNome: "Índice + karma", fmt: inteiro, unidade: "pontos", valor: (p) => indiceKarma(p.id).total },
+  indiceNumeros: { nome: () => "Índice só com os números", curtoNome: "Índice (números)", fmt: inteiro, unidade: "pontos", valor: (p) => indice(p.id).semKarma ?? indice(p.id).total },
   subsMes: { nome: (m) => `Subscritores ganhos em ${mesNome(m)}`, curtoNome: "Subscritores ganhos", fmt: curto, unidade: "subscritores", valor: (p, m) => p.sb?.s?.[m] ?? null },
   crescimento: {
     nome: (m) => `Crescimento em ${mesNome(m)}`,
