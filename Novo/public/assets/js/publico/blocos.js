@@ -10,6 +10,7 @@ import { modo } from "../modo.js";
 import { ligacaoPessoa, cabeca } from "./comum.js";
 import { cartaoVideo, hallHtml } from "./videos.js";
 import { cartaoExclusivo, ligarExclusivos } from "./exclusivos.js";
+import { quando, termometro } from "./noticias.js";
 
 export const CORES = ["#ff4d70", "#f4b942", "#2ec4a0", "#9085e9", "#4db6ff", "#ff8a3d", "#c86bfa", "#8bd450"];
 
@@ -203,6 +204,23 @@ const TIPOS = {
     const lista = (modo.extra.exclusivos || []).slice(0, b.n || 4);
     if (!lista.length) return "";
     return `${cabeca(esc(b.titulo || "Exclusivos"), "Carrega em play e vê.", modo.cfg.abas.some((a) => a.id === "exclusivos") ? `<a class="btn btn-pequeno" href="#/exclusivos">Ver todos</a>` : "")}<div class="px-grelha">${lista.map(cartaoExclusivo).join("")}</div>`;
+  },
+
+  noticias(b) {
+    const lista = (modo.extra.noticias || []).slice(0, b.n || 3);
+    if (!lista.length) return "";
+    const temas = modo.extra.temasNoticia || {};
+    const aba = modo.cfg.abas.some((a) => a.id === "caso");
+    const item = (n) => {
+      const t = temas[n.tema] || { nome: "Notícia", icone: "📰", cor: "#5aa8ff" };
+      const tag = aba ? "a" : "div";
+      return `<${tag} class="vidro pb-noticia" ${aba ? `href="#/caso"` : ""} style="--tc:${t.cor}" data-anim-item>
+        <div class="nt-topo"><span class="nt-tema">${t.icone} ${esc(t.nome)}</span><small>${esc(quando(n.data))}</small></div>
+        <b>${esc(n.titulo)}</b>
+        <div class="pb-noticia-pe"><span>${n.conta?.n ? `${inteiro(n.conta.n)} ${n.conta.n === 1 ? "voto" : "votos"}` : "Ainda sem votos"}</span>${n.conta?.n ? termometro(n.conta.quente) : ""}</div>
+      </${tag}>`;
+    };
+    return `${cabeca(esc(b.titulo || "O que anda a acontecer"), "As notícias do Caso. Reage e diz o que achas.", aba ? `<a class="btn btn-pequeno" href="#/caso">Ver todas</a>` : "")}<div class="pb-noticias">${lista.map(item).join("")}</div>`;
   },
 
   hall(b) {

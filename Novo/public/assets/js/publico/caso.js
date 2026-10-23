@@ -8,6 +8,7 @@ import { temConta, tokenConta } from "../conta.js";
 import { caixaConta } from "./entrar.js";
 import { ligacaoPessoa } from "./comum.js";
 import { animarBlocos } from "./animar.js";
+import { montarNoticias } from "./noticias.js";
 
 const POR_PAGINA = 20;
 
@@ -15,10 +16,10 @@ const POR_PAGINA = 20;
 const pontos = (k) => Math.round((k?.k || 0) * 100);
 const sinal = (n) => (n > 0 ? `+${n}` : String(n));
 
-export async function render(main) {
+export async function render(main, { query } = {}) {
   main.dataset.titulo = "O Caso";
   main.innerHTML = `<div class="wrap pub-pagina cs">
-    <div class="pub-cabeca"><h1>O Caso</h1><p>Os números dizem uma coisa. E tu? Apoia 👍 quem fez algo bom, diz que estás farto 👎 de quem passou das marcas, e deixa a tua reação. Tudo <b>anónimo</b>.</p></div>
+    <div class="pub-cabeca"><h1>O Caso</h1><p>O que anda a acontecer no YouTube português, e o que o público acha. Reage às notícias, apoia 👍 quem fez algo bom e diz que estás farto 👎 de quem passou das marcas. Tudo <b>anónimo</b>.</p></div>
     <div id="cs-corpo"><div class="a-carregar"><div class="roda"></div></div></div>
   </div>`;
   const corpo = $("#cs-corpo", main);
@@ -38,7 +39,11 @@ export async function render(main) {
   const resumo = dados.pessoas || {};
   let meus = {};
 
+  let vista = query?.get("ver") === "karma" ? "karma" : "noticias";
   corpo.innerHTML = `<div id="cs-conta"></div>
+    <div class="cs-abas" role="tablist"><button role="tab" data-vista="noticias" aria-selected="${vista === "noticias"}">📰 Notícias</button><button role="tab" data-vista="karma" aria-selected="${vista === "karma"}">⚖️ Karma</button></div>
+    <section id="cs-noticias" ${vista === "noticias" ? "" : "hidden"}></section>
+    <section id="cs-karma" class="cs-karma-vista" ${vista === "karma" ? "" : "hidden"}>
     <p class="cs-regra">${regras.noIndice ? `O karma mexe no Índice de Influência até ${regras.peso}% (para cima ou para baixo), e só com força total a partir de ${regras.minVotos} votos.` : "O karma fica à parte do Índice de Influência: os números são uma coisa, a opinião do público é outra."} Os votos antigos pesam menos: perdem metade da força em ${regras.meiaVida} dias.</p>
     <div id="cs-destaques"></div>
     <div class="cs-filtros">
@@ -48,7 +53,8 @@ export async function render(main) {
       <input class="input" type="search" id="cs-procura" placeholder="Procurar Youtuber" autocomplete="off">
     </div>
     <div class="cs-lista" id="cs-lista" data-animacao="subir"></div>
-    <div class="cs-mais"><button class="btn" id="cs-mais" hidden>Mostrar mais</button></div>`;
+    <div class="cs-mais"><button class="btn" id="cs-mais" hidden>Mostrar mais</button></div>
+    </section>`;
 
   const conta = await caixaConta($("#cs-conta", corpo), cfg, {
     destino: "#/caso",
@@ -132,6 +138,7 @@ export async function render(main) {
   };
 
   // ---------- Votar ----------
+  const ouvintes = new Set();
   const votar = async (id, mudanca, botoes) => {
     if (!temConta()) return conta.pedir("votar");
     if (!regras.votar) return toast("Os votos estão fechados por agora.", { erro: true });
@@ -150,6 +157,7 @@ export async function render(main) {
         ligar($(`.cs-cartao[data-p="${CSS.escape(id)}"]`, corpo));
       }
       $("#cs-destaques", corpo).innerHTML = destaques();
+      ouvintes.forEach((f) => f(id));
       if ("karma" in mudanca) toast(r.voto.karma === 1 ? "Apoias este Youtuber." : r.voto.karma === -1 ? "Disseste que estás farto." : "Tiraste o teu karma.");
     } catch (e) {
       toast(e.message, { erro: true });
@@ -190,6 +198,23 @@ export async function render(main) {
 
   desenhar();
   $$(".cs-cartao", corpo).forEach(ligar);
+
+  // Separadores: Notícias e Karma
+  $$("[data-vista]", corpo).forEach((b) =>
+    b.addEventListener("click", () => {
+      vista = b.dataset.vista;
+      $$("[data-vista]", corpo).forEach((x) => x.setAttribute("aria-selected", String(x === b)));
+      $("#cs-noticias", corpo).hidden = vista !== "noticias";
+      $("#cs-karma", corpo).hidden = vista !== "karma";
+      history.replaceState(null, "", vista === "karma" ? "#/caso?ver=karma" : "#/caso");
+    }),
+  );
+  await montarNoticias($("#cs-noticias", corpo), {
+    cfg,
+    conta,
+    regrasKarma: regras,
+    karma: { resumo, meus, pontos, votar: (id, karma, botoes) => votar(id, { karma }, botoes), ouvir: (f) => ouvintes.add(f) },
+  });
   const fim = animarBlocos(main);
   jaAnimou = true;
   return fim;

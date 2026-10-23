@@ -173,7 +173,7 @@ Teclas: espaço avança, P pausa, M som, F ecrã inteiro, H esconde os controlos
 Os dados podem viver no Netlify Blobs (como no início) ou no Supabase, uma base de dados Postgres grátis onde se vê e mexe em tudo por tabelas. Passo a passo:
 
 1. Em supabase.com cria um projeto (região West EU ou Frankfurt).
-2. No Supabase, **SQL Editor → New query**: cola o ficheiro `supabase/schema.sql` e carrega em **Run**. Cria as tabelas `pessoas`, `canais`, `projetos`, `documentos`, `palco_resultados`, `votacoes`, `votos`, `sugestoes`, `sugestao_votos` e `caso_votos`, com as regras de segurança (ninguém de fora lê os dados diretamente; cada conta vota uma vez por votação).
+2. No Supabase, **SQL Editor → New query**: cola o ficheiro `supabase/schema.sql` e carrega em **Run**. Cria as tabelas `pessoas`, `canais`, `projetos`, `documentos`, `palco_resultados`, `votacoes`, `votos`, `sugestoes`, `sugestao_votos`, `caso_votos` e `noticia_votos`, com as regras de segurança (ninguém de fora lê os dados diretamente; cada conta vota uma vez por votação).
 3. No Netlify, **Site configuration → Environment variables**: `SUPABASE_URL` (o Project URL, `https://xxxx.supabase.co`), `SUPABASE_ANON_KEY` (a chave pública: **Publishable key** `sb_publishable_…`, ou a antiga `anon`) e `SUPABASE_SERVICE_ROLE_KEY` (a chave secreta: **Secret key** `sb_secret_…`, ou a antiga `service_role`; nunca no código nem no chat). Estão no Supabase em **Project Settings → API Keys** (o URL em **Data API**). Em cada variável, escolhe **Same value for all deploy contexts**. Faz um novo deploy.
 4. No site, **Editar → Definições → Base de dados → Copiar dados para o Supabase**. A cópia vai por partes e não apaga nada do Netlify. Só depois da cópia é que o site passa a usar o Supabase (até lá continua no Netlify, por isso nunca abre vazio).
 
@@ -217,7 +217,13 @@ Na aba **O Caso** do site, quem entra com a conta Google dá karma a cada Youtub
 - Mesmo desligado, no Palco podes escolher "Índice com o karma do público" na Revelação do top e na Tier list.
 - No painel vês o karma de cada Youtuber (Índice só com os números → com o karma) e podes apagar os votos de alguém se houver uma enxurrada suspeita.
 
-Para ligar: corre outra vez o `supabase/schema.sql` (cria a tabela `caso_votos`) e liga a aba **O Caso** (no painel, em O Caso, ou em Página pública → Abas).
+**Notícias do Caso.** No painel, em **O Caso → Notícias**, escreves o que anda a acontecer e escolhes o tema: 📰 Notícia, 🔥 Polémica, 💚 Coisas boas, 🤝 Colaboração, 🏆 Marco, 👀 Rumor, 📅 Evento ou 👋 Pausa ou saída. Cada notícia pode ter texto, a fonte (link), uma imagem, os Youtubers envolvidos e uma pergunta ao público (2 a 4 respostas).
+
+- No site (O Caso → Notícias), o público reage (🔥 🍿 😮 😡 😢 😂 👏 ❤️), responde à pergunta (os resultados só aparecem depois de responder) e dá karma aos Youtubers envolvidos ali mesmo. Cada notícia tem um termómetro de stress (Calmo, Morno, Quente, A ferver), feito com a parte das reações quentes.
+- No painel: rascunho, publicar, arquivar, fixar no topo, fechar os votos, editar e apagar, com as reações e as respostas de cada notícia.
+- O Início pode mostrar as últimas com o bloco **Notícias do Caso**.
+
+Para ligar: corre outra vez o `supabase/schema.sql` (cria as tabelas `caso_votos` e `noticia_votos`) e liga a aba **O Caso** (no painel, em O Caso, ou em Página pública → Abas).
 
 ## Sons e música
 

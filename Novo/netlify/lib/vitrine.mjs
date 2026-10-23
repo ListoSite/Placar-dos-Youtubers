@@ -36,6 +36,7 @@ export const BLOCOS = {
   videos: { nome: "Últimos vídeos", campos: ["titulo", "n", "animacao"] },
   hall: { nome: "Hall da fama", campos: ["titulo", "animacao"] },
   exclusivos: { nome: "Exclusivos (play)", campos: ["titulo", "n", "animacao"] },
+  noticias: { nome: "Notícias do Caso", campos: ["titulo", "n", "animacao"] },
   texto: { nome: "Texto ou aviso", campos: ["titulo", "texto", "link", "rotuloLink", "estilo", "animacao"] },
 };
 

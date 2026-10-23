@@ -1642,3 +1642,179 @@ body.sem-sessao .pn-marca-movel {
     grid-column: 3;
   }
 }
+
+/* Separadores feitos com ligações (O Caso: Notícias · Karma) */
+.segmentos a.btn-seg {
+  display: inline-flex;
+  align-items: center;
+  height: 34px;
+  padding: 0 16px;
+  border-radius: 999px;
+  color: var(--texto-2);
+  font-size: var(--t-sm);
+  font-weight: 700;
+  text-decoration: none;
+}
+.segmentos a.btn-seg[aria-pressed="true"] {
+  background: var(--grad-rubi);
+  color: #fff;
+  box-shadow: 0 6px 16px rgba(224, 41, 79, 0.35);
+}
+
+/* ---------- O Caso: notícias (painel) ---------- */
+.ntp-lista {
+  display: grid;
+  gap: 4px;
+}
+.ntp-cartao {
+  box-shadow: inset 4px 0 0 var(--tc);
+}
+.ntp-cartao h3 {
+  margin: 6px 0 4px;
+  overflow-wrap: anywhere;
+}
+.ntp-cartao.rascunho,
+.ntp-cartao.arquivada {
+  opacity: 0.75;
+}
+.ntp-tema {
+  font-size: var(--t-xs);
+  font-weight: 800;
+  padding: 3px 10px;
+  border-radius: 99px;
+  background: color-mix(in srgb, var(--tc) 22%, transparent);
+  color: color-mix(in srgb, var(--tc) 70%, #fff);
+}
+.ntp-texto {
+  color: var(--texto-2);
+  font-size: var(--t-sm);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.ntp-numeros {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 14px;
+  margin: 10px 0;
+  font-size: var(--t-sm);
+  color: var(--texto-2);
+}
+.ntp-numeros .nt-termo {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: var(--t-xs);
+  font-weight: 800;
+}
+.ntp-numeros .nt-termo-barra {
+  width: 70px;
+  height: 7px;
+  border-radius: 99px;
+  background: rgba(255, 255, 255, 0.08);
+  overflow: hidden;
+}
+.ntp-numeros .nt-termo-barra i {
+  display: block;
+  height: 100%;
+  background: linear-gradient(90deg, #5aa8ff, #f4b942 50%, #ff4d4d);
+  background-size: 70px 100%;
+}
+.ntp-respostas {
+  display: grid;
+  gap: 4px;
+  max-width: 460px;
+  margin-bottom: 10px;
+}
+.ntp-respostas div {
+  position: relative;
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 5px 10px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.04);
+  font-size: var(--t-sm);
+  overflow: hidden;
+}
+.ntp-respostas i {
+  position: absolute;
+  inset: 0 auto 0 0;
+  background: color-mix(in srgb, var(--tc) 20%, transparent);
+}
+.ntp-respostas span,
+.ntp-respostas b {
+  position: relative;
+}
+.ntp-temas {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.ntp-temas button {
+  padding: 7px 12px;
+  border-radius: 99px;
+  border: 1px solid var(--linha-forte);
+  background: none;
+  color: var(--texto-2);
+  font: inherit;
+  font-size: var(--t-sm);
+  font-weight: 700;
+  cursor: pointer;
+}
+.ntp-temas button[aria-pressed="true"] {
+  border-color: var(--tc);
+  background: color-mix(in srgb, var(--tc) 20%, transparent);
+  color: var(--texto);
+}
+.ntp-form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.ntp-pessoas {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 6px;
+}
+.ntp-pessoas button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 2px 10px 2px 2px;
+  border-radius: 99px;
+  border: 1px solid var(--linha-forte);
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--texto);
+  font: inherit;
+  font-size: var(--t-sm);
+  font-weight: 700;
+  cursor: pointer;
+}
+.ntp-resultados {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 6px;
+}
+.ntp-resultados button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px 4px 4px;
+  border-radius: 12px;
+  border: 1px solid var(--linha);
+  background: rgba(255, 255, 255, 0.03);
+  color: var(--texto);
+  font: inherit;
+  font-size: var(--t-sm);
+  cursor: pointer;
+}
+.ntp-opcoes {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 200px), 1fr));
+  gap: 8px;
+}

@@ -223,3 +223,20 @@ create index if not exists caso_votos_autor on public.caso_votos (autor);
 alter table public.caso_votos enable row level security;
 revoke all on public.caso_votos from anon, authenticated;
 -- Sem políticas: ninguém de fora lê nem escreve diretamente.
+
+-- ---------- O Caso: votos nas notícias (anónimos) ----------
+-- Uma linha por conta e por notícia: a reação e a resposta à pergunta (-1 = sem resposta).
+create table if not exists public.noticia_votos (
+  chave text primary key,
+  noticia_id text not null,
+  autor text not null,
+  reacao text not null default '',
+  opcao smallint not null default -1,
+  criado timestamptz not null default now(),
+  atualizado timestamptz not null default now()
+);
+create index if not exists noticia_votos_noticia on public.noticia_votos (noticia_id);
+create index if not exists noticia_votos_autor on public.noticia_votos (autor);
+alter table public.noticia_votos enable row level security;
+revoke all on public.noticia_votos from anon, authenticated;
+-- Sem políticas: só o servidor mexe aqui.

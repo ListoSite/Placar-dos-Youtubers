@@ -180,7 +180,7 @@ async function iniciar() {
   }
   modo.publico = true;
   modo.cfg = r.cfg;
-  modo.extra = { publicacoes: r.publicacoes || [], hall: r.hall || {}, pessoas: r.pessoas || {}, canal: r.canal || {}, historico: r.historico || null, exclusivos: r.exclusivos || [] };
+  modo.extra = { publicacoes: r.publicacoes || [], hall: r.hall || {}, pessoas: r.pessoas || {}, canal: r.canal || {}, historico: r.historico || null, exclusivos: r.exclusivos || [], noticias: r.noticias || [], temasNoticia: r.temasNoticia || {} };
   // O karma do Caso só vem quando entra no Índice (ligado no painel)
   const dsComKarma = r.karma ? { ...r.ds, karma: r.karma } : r.ds;
   usarDataset(dsComKarma);

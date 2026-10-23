@@ -12,7 +12,7 @@ const ROTAS = [
   { re: /^publica(?:\/([a-z]+))?$/, mod: "./admin/vitrine.js", nav: "#/" },
   { re: /^votacoes$/, mod: "./admin/votacoes.js", nav: "#/votacoes" },
   { re: /^sugestoes$/, mod: "./admin/sugestoes.js", nav: "#/sugestoes" },
-  { re: /^caso$/, mod: "./admin/caso.js", nav: "#/caso" },
+  { re: /^caso(?:\/(karma|noticias))?$/, mod: "./admin/caso.js", nav: "#/caso" },
   { re: /^palco(?:\/([a-z-]+))?$/, mod: "./stage/stage.js", nav: "#/palco" },
   { re: /^editar(?:\/([a-z-]+))?$/, mod: "./admin/admin.js", nav: "#/editar" },
 ];
@@ -116,7 +116,7 @@ function marcarNavegacao(caminho) {
   const lateral = (h) => h === atual || (h === "#/" && (c === "" || c.startsWith("publica"))) || (h !== "#/" && atual.startsWith(h + "/"));
   // Nas abas do telemóvel, "Dados" junta todas as partes de edição
   // Nas abas do telemóvel, "Público" junta as votações, as sugestões e O Caso
-  const aba = (h) => (h.startsWith("#/editar") ? c.startsWith("editar") : h === "#/votacoes" ? ["votacoes", "sugestoes", "caso"].includes(c) : lateral(h));
+  const aba = (h) => (h.startsWith("#/editar") ? c.startsWith("editar") : h === "#/votacoes" ? ["votacoes", "sugestoes", "caso"].includes(c.split("/")[0]) : lateral(h));
   for (const a of document.querySelectorAll(".pn-nav a")) a.toggleAttribute("aria-current", lateral(a.getAttribute("href")));
   for (const a of document.querySelectorAll(".abas a")) {
     if (aba(a.getAttribute("href"))) a.setAttribute("aria-current", "page");

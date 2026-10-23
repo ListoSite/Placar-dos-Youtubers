@@ -335,7 +335,7 @@ function novoBloco(tipo) {
   const campos = new Set(estadoV.blocos[tipo].campos);
   if (campos.has("periodo")) base.periodo = { tipo: "ultimo" };
   if (campos.has("metrica")) base.metrica = "views";
-  if (campos.has("n")) base.n = tipo === "subidas" ? 3 : tipo === "videos" || tipo === "exclusivos" ? 4 : tipo === "evolucao" ? 5 : 10;
+  if (campos.has("n")) base.n = tipo === "subidas" ? 3 : tipo === "videos" || tipo === "exclusivos" ? 4 : tipo === "noticias" ? 3 : tipo === "evolucao" ? 5 : 10;
   if (campos.has("estilo")) base.estilo = tipo === "texto" ? "normal" : "lista";
   if (campos.has("pessoas")) base.pessoas = [];
   if (campos.has("votacao")) base.votacao = "abertas";
@@ -359,6 +359,7 @@ const DESCRICOES = {
   videos: "Os últimos vídeos gravados no Palco.",
   hall: "Estrelas, coroas, duelos e clássicos.",
   exclusivos: "Os teus exclusivos, para verem com play ali mesmo.",
+  noticias: "As últimas notícias do Caso (polémicas, coisas boas…).",
   texto: "Um título, um texto e um botão (avisos, novidades).",
 };
 

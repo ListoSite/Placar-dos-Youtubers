@@ -12,6 +12,7 @@ import { lerConfig, guardarConfig, datasetPublico, configPublicaVitrine, canalPu
 import { lerExclusivos, guardarExclusivo, apagarExclusivo, ordenarExclusivos, exclusivosPublicos, prepararRetrato, guardarRetrato, lerRetrato, ESPETACULOS as NOMES_ESP } from "../lib/exclusivos.mjs";
 import { estadoPublico, criarSugestao, votarSugestao, contaDoToken, listarParaPainel, porDecidir, mudarSugestao, guardarRegras as guardarRegrasSugestoes } from "../lib/sugestoes.mjs";
 import { resumo as resumoCaso, karmaParaDataset, meusVotos as meusVotosCaso, votar as votarCaso, limparPessoa as limparCaso, guardarRegras as guardarRegrasCaso, REACOES } from "../lib/caso.mjs";
+import { TEMAS as TEMAS_NOTICIA, REACOES_NOTICIA, noticiasPublicas, noticiasPainel, guardarNoticia, apagarNoticia, minhasNoticias, votarNoticia } from "../lib/noticias.mjs";
 import { guardarResultados, resumoHistorico, COLECAO as COLECAO_PALCO } from "../lib/historico.mjs";
 import { adminEnabled, checkPassword, createToken, verifyToken, tokenFromRequest, googleLigado, googleClientId, verificarGoogle } from "../lib/auth.mjs";
 import { loadDB, saveDB, newPerson, attachChannel, detachChannel, mergePeople, deletePerson, PERSON_FIELDS, DEFAULT_SETTINGS } from "../lib/db.mjs";
@@ -153,6 +154,9 @@ const publicRoutes = {
         // Só se a aba ou um bloco do Início os mostrar
         exclusivos: cfg.abas.some((a) => a.id === "exclusivos" && a.visivel) || cfg.inicio.blocos.some((b) => b.tipo === "exclusivos" && b.visivel) ? exclusivosPublicos(excl) : [],
         historico: cfg.perfis.ligado && cfg.perfis.secoes.palco ? historicoPublico(await resumoHistorico(), vivos) : null,
+        // As últimas notícias do Caso (só se a aba O Caso ou um bloco do Início as mostrar)
+        noticias: cfg.abas.some((a) => a.id === "caso" && a.visivel) || cfg.inicio.blocos.some((b) => b.tipo === "noticias" && b.visivel) ? await noticiasPublicas({ n: 12, vivos }).catch(() => []) : [],
+        temasNoticia: TEMAS_NOTICIA,
         // Só quando o karma entra no Índice do site (ligado no painel, em O Caso)
         karma: await karmaParaDataset().then((k) => (k?.noIndice ? { ...k, pessoas: Object.fromEntries(Object.entries(k.pessoas).filter(([id]) => vivos.has(id))) } : null)),
       },
@@ -188,6 +192,22 @@ const publicRoutes = {
     const r = await resumoCaso();
     const regras = { votar: r.regras.votar, reacoes: r.regras.reacoes, meiaVida: r.regras.meiaVida, minVotos: r.regras.minVotos, peso: r.regras.peso, noIndice: r.regras.noIndice };
     return json({ ligado: r.ligado, regras, reacoes: REACOES, pessoas: Object.fromEntries(Object.entries(r.pessoas || {}).filter(([id]) => pessoas.has(id))), supabase: configPublica() }, 200, { "cache-control": "public, max-age=15" });
+  },
+  // Notícias do Caso: ler (toda a gente), reagir e responder (com a sessão Google)
+  "GET caso/noticias": async (req) => {
+    const pessoas = await contextoCaso(req);
+    return json({ temas: TEMAS_NOTICIA, reacoes: REACOES_NOTICIA, noticias: await noticiasPublicas({ vivos: new Set(pessoas.keys()) }), supabase: configPublica() }, 200, { "cache-control": "public, max-age=15" });
+  },
+  "POST caso/noticias/eu": async (req) => {
+    await contextoCaso(req);
+    const conta = await contaDoToken((await body(req)).token);
+    return json({ minhas: await minhasNoticias(conta) }, 200, { "cache-control": "private, no-store" });
+  },
+  "POST caso/noticia/voto": async (req) => {
+    await contextoCaso(req);
+    const b = await body(req);
+    const conta = await contaDoToken(b.token);
+    return json(await votarNoticia({ conta, id: String(b.id || ""), reacao: b.reacao, opcao: b.opcao }), 200, { "cache-control": "private, no-store" });
   },
   "POST caso/eu": async (req) => {
     await contextoCaso(req);
@@ -675,6 +695,9 @@ const adminRoutes = {
   },
   "POST caso/regras": async ({ b }) => ({ regras: await guardarRegrasCaso(b.regras || {}) }),
   "POST caso/limpar": async ({ b }) => limparCaso(String(b.pessoa || "")),
+  "GET caso/noticias": async () => ({ temas: TEMAS_NOTICIA, reacoes: REACOES_NOTICIA, noticias: await noticiasPainel() }),
+  "POST caso/noticia": async ({ db, b }) => ({ noticia: await guardarNoticia(b.noticia || {}, new Set(Object.keys(db.people))) }),
+  "POST caso/noticia/apagar": async ({ b }) => apagarNoticia(String(b.id || "")),
 
   // ---------- Sugestões do público ----------
   "GET sugestoes": async () => {
