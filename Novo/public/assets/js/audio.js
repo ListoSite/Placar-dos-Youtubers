@@ -892,6 +892,39 @@ const EFEITOS = {
     lfo.start(t);
     lfo.stop(t + 1.2);
   },
+  estatica(t, { dur = 0.7 } = {}) {
+    // Interferência de televisão: ruído cortado aos solavancos
+    const n = ruido(t, dur);
+    const f = ctx.createBiquadFilter();
+    f.type = "highpass";
+    f.frequency.value = 900;
+    const g = ctx.createGain();
+    g.gain.setValueAtTime(0.0001, t);
+    for (let i = 0; i < 9; i++) {
+      const x = t + (i * dur) / 9;
+      g.gain.setValueAtTime(i % 2 ? 0.05 : 0.32, x);
+    }
+    g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+    n.connect(f).connect(g);
+    saida(g, { rev: 0.1 });
+  },
+  alarme(t, { vezes = 3 } = {}) {
+    // Alerta de última hora: dois tons a alternar
+    for (let i = 0; i < vezes * 2; i++) {
+      const o = ctx.createOscillator();
+      o.type = "square";
+      o.frequency.value = i % 2 ? 660 : 880;
+      const f = ctx.createBiquadFilter();
+      f.type = "lowpass";
+      f.frequency.value = 2600;
+      const g = ctx.createGain();
+      env(g, t + i * 0.18, { a: 0.005, pico: 0.07, d: 0.16 });
+      o.connect(f).connect(g);
+      saida(g, { rev: 0.25 });
+      o.start(t + i * 0.18);
+      o.stop(t + i * 0.18 + 0.2);
+    }
+  },
   urgente(t) {
     // Genérico de última hora: três golpes de metais e um tímpano
     [0, 0.16, 0.42].forEach((d, i) => {

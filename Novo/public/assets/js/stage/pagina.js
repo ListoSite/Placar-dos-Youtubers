@@ -1,6 +1,7 @@
 // Página do Palco: lista de espetáculos (para vídeos e para direto) e opções de cada um.
 
 import { estado, pessoa, mesesComDados, procurar, api, temSessao } from "../data.js";
+import { TEMAS as TEMAS_CASO, retratoNoticia } from "./caso.js";
 import { CENAS, ONDES, novaCena, roteiroPadrao, resumoCena, cenaPronta } from "./roteiro.js";
 import { semear, largar, novaSemente } from "./sorte.js";
 import { quemAparece } from "../quem.js";
@@ -142,6 +143,9 @@ function opcoes(main, esp, query) {
       <label class="campo"><span>Período</span><select class="input" name="meses"><option value="6">6 meses</option><option value="12" selected>12 meses</option><option value="24">24 meses</option><option value="999">Tudo</option></select></label>
       <label class="campo"><span>Até</span><select class="input" name="m">${opcaoMes(meses, estado.ref)}</select></label>${cat}`,
     numeros: `${mes}${cat}`,
+    caso: `<label class="campo cresce"><span>Notícia</span><select class="input" name="noticia" id="pl-noticia"><option value="">As últimas publicadas</option></select></label>
+      <label class="campo"><span>Quantas (as últimas)</span><select class="input" name="n"><option>1</option><option selected>3</option><option>5</option></select></label>
+      <label class="campo"><span>Tema</span><select class="input" name="tema"><option value="">Todos</option>${Object.entries(TEMAS_CASO).map(([k, t]) => `<option value="${k}">${t.icone} ${esc(t.nome)}</option>`).join("")}</select></label>`,
     votacao: `<label class="campo cresce"><span>Votação</span><select class="input" name="votacao" id="pl-votacao"><option value="">A mais recente com votos</option></select></label>`,
     desafio: `<label class="campo"><span>Perguntas</span><select class="input" name="n"><option>6</option><option selected>8</option><option>12</option></select></label>${mes}
       <label class="campo"><span>Entre os</span><select class="input" name="top"><option value="30">Top 30</option><option value="60" selected>Top 60</option><option value="150">Top 150</option></select></label>${cat}`,
@@ -366,6 +370,15 @@ function opcoes(main, esp, query) {
   atualizarModo();
   notaKit();
   pintarTema();
+  // Lista das notícias (para o espetáculo "Última hora")
+  if (esp.id === "caso")
+    api("admin/caso/noticias")
+      .then((r) => {
+        const sel = $("#pl-noticia", main);
+        if (!sel) return;
+        for (const n of (r.noticias || []).filter((x) => x.estado === "publicada")) sel.insertAdjacentHTML("beforeend", `<option value="${esc(n.id)}" ${query.get("noticia") === n.id ? "selected" : ""}>${esc(TEMAS_CASO[n.tema]?.icone || "")} ${esc(n.titulo)}</option>`);
+      })
+      .catch(() => {});
   // Lista das votações (para o espetáculo "O público escolheu")
   if (esp.id === "votacao")
     api("votacoes")
@@ -381,6 +394,7 @@ function opcoes(main, esp, query) {
   // ---------- Cenas do vídeo (roteiro) ----------
   let avisos = [];
   let exclusivosLista = null;
+  let noticiasLista = null;
   let ligacoes = { linkVotar: "", textoBio: "Link na bio", avisoVideos: true };
   const curto = (l) => l.replace(/^https?:\/\//, "").replace(/\/$/, "");
   const cfgVotacao = (a) => {
@@ -468,7 +482,7 @@ function opcoes(main, esp, query) {
         const t = b.dataset.tipo;
         const cfg = t === "site" ? { link: location.origin, textoBio: ligacoes.textoBio || "Link na bio" } : {};
         const c = novaCena(t, cfg);
-        if (["votacao", "exclusivo", "foco", "titulo", "proximo"].includes(t)) configurarCena(c, true);
+        if (["votacao", "exclusivo", "foco", "titulo", "proximo", "noticia"].includes(t)) configurarCena(c, true);
         else {
           roteiro.cenas.push(c);
           desenharRoteiro();
@@ -497,6 +511,11 @@ function opcoes(main, esp, query) {
       corpo = `<label class="campo"><span>Etiqueta (opcional)</span><input class="input" name="etiqueta" maxlength="40" value="${esc(g.etiqueta || "")}" placeholder="Por exemplo: Especial 100 mil"></label>
         <label class="campo"><span>Título</span><input class="input" name="titulo" maxlength="70" value="${esc(g.titulo || "")}"></label>
         <label class="campo"><span>Frase (opcional)</span><input class="input" name="texto" maxlength="140" value="${esc(g.texto || "")}"></label>`;
+    } else if (c.tipo === "noticia") {
+      noticiasLista ??= ((await api("admin/caso/noticias").catch(() => ({}))).noticias || []).filter((x) => x.estado === "publicada");
+      corpo = noticiasLista.length
+        ? `<div class="rt-opcoes">${noticiasLista.map((x, i) => `<label class="ed-check"><input type="radio" name="escolha" value="${esc(x.id)}" ${g.id === x.id || (!g.id && i === 0) ? "checked" : ""}> ${esc(TEMAS_CASO[x.tema]?.icone || "")} <b>${esc(x.titulo)}</b> <small class="muted">${x.conta?.n || 0} votos</small></label>`).join("")}</div><p class="muted" style="font-size:var(--t-sm)">Os votos ficam como estão agora. Para atualizar, volta a escolher a notícia antes de gravar.</p>`
+        : `<p class="muted">Ainda não há notícias publicadas. Escreve uma em <a href="#/caso">O Caso, Notícias</a>.</p>`;
     } else if (c.tipo === "proximo") {
       corpo = `<label class="campo"><span>O que vem no próximo vídeo</span><input class="input" name="texto" maxlength="90" value="${esc(g.texto || "")}" placeholder="Por exemplo: o torneio dos Gamers"></label>`;
     }
@@ -539,6 +558,11 @@ function opcoes(main, esp, query) {
       } else if (c.tipo === "titulo") {
         if (!f.titulo.value.trim()) return toast("Escreve o título.", { erro: true });
         c.cfg = { etiqueta: f.etiqueta.value.trim(), titulo: f.titulo.value.trim(), texto: f.texto.value.trim() };
+      } else if (c.tipo === "noticia") {
+        const x = noticiasLista.find((y) => y.id === v);
+        if (!x) return toast("Escolhe uma notícia.", { erro: true });
+        const link = `${location.origin}/#/caso`;
+        c.cfg = { ...retratoNoticia(x), link, textoBio: ligacoes.textoBio || "Link na bio" };
       } else if (c.tipo === "proximo") {
         if (!f.texto.value.trim()) return toast("Escreve a frase.", { erro: true });
         c.cfg = { texto: f.texto.value.trim() };

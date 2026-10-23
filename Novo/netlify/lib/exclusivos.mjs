@@ -11,6 +11,7 @@ const CHAVE = "exclusivos";
 
 /** Os espetáculos do Palco (o mesmo id que em public/assets/js/stage/stage.js). */
 export const ESPETACULOS = {
+  caso: "Última hora (O Caso)",
   revelacao: "Revelação do top",
   corrida: "Corrida das views",
   tier: "Tier list",
@@ -86,6 +87,7 @@ export function prepararRetrato(r, exclusivo, cfg) {
   for (const c of roteiro.cenas) {
     if (c.cfg?.pessoa && ids.has(c.cfg.pessoa)) incluir.add(c.cfg.pessoa);
     for (const o of Array.isArray(c.cfg?.opcoes) ? c.cfg.opcoes : []) if (o?.id && ids.has(o.id)) incluir.add(o.id);
+    for (const id of Array.isArray(c.cfg?.pessoas) ? c.cfg.pessoas : []) if (ids.has(id)) incluir.add(id);
   }
   const ds = retratoPublico(r.ds, cfg, [...incluir]);
   const retrato = {

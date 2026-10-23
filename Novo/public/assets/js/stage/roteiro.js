@@ -17,6 +17,7 @@ export const CENAS = {
   data: { nome: "Data dos números", icone: "📅", onde: "antes", texto: "De quando são os números (o mês e o dia)." },
   contagem: { nome: "Contagem 3, 2, 1", icone: "3", onde: "antes", texto: "Uma contagem decrescente antes de começar." },
   site: { nome: "Visita o site", icone: "🌐", onde: "depois", texto: "O endereço do site e o código QR: rankings, votações e exclusivos." },
+  noticia: { nome: "Última hora (O Caso)", icone: "🚨", onde: "meio", texto: "Uma notícia do Caso que interrompe o vídeo do nada: interferência, alarme, o título letra a letra e o que o público diz." },
   proximo: { nome: "No próximo vídeo", icone: "⏭", onde: "depois", texto: "Uma frase a anunciar o que vem a seguir." },
 };
 
@@ -38,6 +39,7 @@ export function resumoCena(c, nomePessoa = (id) => id) {
   if (c.tipo === "foco") return g.pessoa ? nomePessoa(g.pessoa) : "Escolhe o Youtuber";
   if (c.tipo === "titulo") return g.titulo || "Escreve o texto";
   if (c.tipo === "proximo") return g.texto || "Escreve a frase";
+  if (c.tipo === "noticia") return g.titulo || "Escolhe a notícia";
   if (c.tipo === "data") return g.quando ? "Data da publicação" : "A data de hoje e o mês dos números";
   return CENAS[c.tipo]?.texto || "";
 }
@@ -50,6 +52,7 @@ export function cenaPronta(c) {
   if (c.tipo === "foco") return Boolean(g.pessoa);
   if (c.tipo === "titulo") return Boolean(g.titulo);
   if (c.tipo === "proximo") return Boolean(g.texto);
+  if (c.tipo === "noticia") return Boolean(g.titulo);
   return true;
 }
 

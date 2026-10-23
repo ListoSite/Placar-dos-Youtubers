@@ -65,6 +65,7 @@ export async function desenharNoticias(main) {
         <button class="btn btn-pequeno" data-editar>Editar</button>
         ${n.estado !== "publicada" ? `<button class="btn btn-primario btn-pequeno" data-estado="publicada">Publicar</button>` : `<button class="btn btn-pequeno" data-estado="arquivada">Arquivar</button>`}
         <button class="btn btn-pequeno" data-fixar>${n.fixada ? "Desafixar" : "📌 Fixar no topo"}</button>
+        ${n.estado === "publicada" ? `<a class="btn btn-pequeno" href="#/palco/caso?para=video&noticia=${encodeURIComponent(n.id)}">🎬 Fazer vídeo</a>` : ""}
         <button class="btn btn-pequeno" data-votar>${n.votar ? "Fechar votos" : "Abrir votos"}</button>
         <button class="botao-icone" data-apagar title="Apagar">✕</button>
       </div>

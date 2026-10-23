@@ -223,6 +223,11 @@ Na aba **O Caso** do site, quem entra com a conta Google dá karma a cada Youtub
 - No painel: rascunho, publicar, arquivar, fixar no topo, fechar os votos, editar e apagar, com as reações e as respostas de cada notícia.
 - O Início pode mostrar as últimas com o bloco **Notícias do Caso**.
 
+**Notícias nos vídeos (sempre com suspense).** As notícias aparecem do nada, como uma emissão interrompida: interferência e "⚠ Interrompemos o vídeo", alarme e faixa de ÚLTIMA HORA (ou BOAS NOTÍCIAS, MOMENTO HISTÓRICO…, conforme o tema), reticências e o título letra a letra, os Youtubers envolvidos escondidos e revelados um a um, e o que o público diz (o termómetro de stress a subir, as reações e a resposta à pergunta). Depois volta ao vídeo com a mesma interferência.
+
+- **Entre os vídeos:** no Palco, em Cenas do vídeo, junta a cena **🚨 Última hora (O Caso)** e escolhe a notícia. Fica a meio por defeito (podes pô-la antes ou depois). Os votos ficam como estavam quando a escolheste.
+- **Vídeo sozinho:** o espetáculo **Última hora (O Caso)**, no grupo O Caso: as últimas 1, 3 ou 5 notícias (ou só de um tema, ou uma só) e, no fim, a notícia mais quente. Em O Caso → Notícias, cada notícia publicada tem o botão **🎬 Fazer vídeo**.
+
 Para ligar: corre outra vez o `supabase/schema.sql` (cria as tabelas `caso_votos` e `noticia_votos`) e liga a aba **O Caso** (no painel, em O Caso, ou em Página pública → Abas).
 
 ## Sons e música

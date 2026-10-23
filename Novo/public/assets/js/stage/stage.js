@@ -23,6 +23,7 @@ export const GRUPOS = [
   { id: "graficos", nome: "Gráficos", texto: "Os números em gráficos animados: simples de ler e sempre a mexer." },
   { id: "jogos", nome: "Jogos", texto: "Para jogar com quem está a ver, em direto ou em vídeo." },
   { id: "duelos", nome: "Duelos", texto: "Frente a frente, até haver um vencedor." },
+  { id: "caso", nome: "O Caso", texto: "Notícias com suspense: aparecem do nada, como uma emissão interrompida." },
   { id: "historias", nome: "Histórias", texto: "Um Youtuber em destaque." },
 ];
 
@@ -49,6 +50,7 @@ export const ESPETACULOS = [
   { id: "roda", usos: ["direto","video"], dur: "1–2 min", grupo: "jogos", nome: "Roda da sorte", texto: "A roda gira e escolhe um Youtuber ao acaso. Depois, os números dele.", mod: "./roda.js", icone: I(`<circle cx="24" cy="26" r="17"/><path d="M24 9v34M7 26h34M12 14l24 24M36 14 12 38"/><path d="M20 3h8l-4 6z" fill="currentColor"/>`) },
   { id: "batalha", usos: ["video","direto"], dur: "1–1,5 min", grupo: "duelos", nome: "Batalha", texto: "Combate com barras de vida: cada ronda ganha tira vida ao outro, até ao K.O.", mod: "./batalha.js", icone: I(`<path d="M6 6l20 20M42 6 22 26M10 30l8 8M38 30l-8 8M14 34l-6 6M34 34l6 6"/>`) },
   { id: "torneio", usos: ["direto","video"], dur: "3–4 min", grupo: "duelos", nome: "Torneio", texto: "8 ou 16 Youtubers em eliminatórias até à grande final.", mod: "./torneio.js", icone: I(`<path d="M5 9h8v10h7M5 29h8V19M20 14v10h8M5 33h8v6h7M20 34V24"/><path d="M33 17h10v6a5 5 0 0 1-10 0z" fill="currentColor" stroke="none"/><path d="M38 28v6M34 37h8"/>`) },
+  { id: "caso", usos: ["video", "direto"], dur: "40 s–3 min", grupo: "caso", nome: "Última hora (O Caso)", texto: "As notícias do Caso com suspense: interferência, alarme, o título letra a letra, quem está envolvido e o que o público diz.", mod: "./caso.js", icone: I(`<rect x="5" y="9" width="38" height="28" rx="4"/><path d="M5 30h38"/><path d="M11 16h14M11 22h9"/><circle cx="35" cy="19" r="4" fill="currentColor"/><path d="M17 41h14"/>`) },
   { id: "cartao", usos: ["video"], dur: "30 s", grupo: "historias", nome: "Cartão de Youtuber", texto: "Um Youtuber em destaque, com o Índice e os números mais importantes.", mod: "./cartao.js", icone: I(`<rect x="5" y="9" width="38" height="30" rx="5"/><circle cx="17" cy="21" r="5"/><path d="M10 33c2-4 12-4 14 0M29 19h9M29 26h9"/>`) },
   { id: "historia", usos: ["video"], dur: "1 min", grupo: "historias", nome: "A história de…", texto: "O percurso de um Youtuber mês a mês, com os momentos marcantes.", mod: "./historia.js", icone: I(`<path d="M5 38c6-2 8-14 14-14s7 8 12 8 6-16 12-22"/><circle cx="43" cy="10" r="3" fill="currentColor"/><path d="M5 43h38"/>`) },
 ];
@@ -346,6 +348,7 @@ export class Palco {
     if (c.tipo === "contagem") return this.cenaContagem();
     if (c.tipo === "site") return this.cenaSite(g);
     if (c.tipo === "proximo") return this.cenaProximo(g);
+    if (c.tipo === "noticia") return (await import("./caso.js")).cenaNoticia(this, g);
   }
 
   /** O que o espetáculo vai buscar fora (por exemplo as votações): num exclusivo, devolve o que ficou guardado. */
@@ -654,7 +657,7 @@ export class Palco {
 }
 
 /** Código QR em SVG para um endereço (vazio se não der). */
-function qrSvg(link) {
+export function qrSvg(link) {
   if (!link) return "";
   try {
     const c = qrcode(0, "M");
