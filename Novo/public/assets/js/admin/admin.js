@@ -15,11 +15,11 @@ const SEPARADORES = [
 ];
 
 export async function render(main, { params, query }) {
-  main.dataset.titulo = "Youtubers e dados";
   if (!temSessao()) return login(main);
   const sep = SEPARADORES.find((s) => s.id === params[0]) || SEPARADORES[0];
+  main.dataset.titulo = sep.nome;
   main.innerHTML = `<div class="wrap editar">
-    <div class="pagina-topo" style="padding-bottom:12px"><h1>Youtubers e dados</h1><p class="muted" id="ed-estado"></p></div>
+    <div class="pagina-topo"><p class="pn-migalha">Dados</p><h1>${esc(sep.nome)}</h1><p class="muted" id="ed-estado"></p></div>
     <nav class="ed-separadores" aria-label="Secções de edição">${SEPARADORES.map((s) => `<a href="#/editar/${s.id}" ${s.id === sep.id ? 'aria-current="page"' : ""}>${s.nome}</a>`).join("")}</nav>
     <div id="ed-conteudo"><div class="a-carregar" style="min-height:30vh"><div class="roda"></div></div></div></div>`;
   try {

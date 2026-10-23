@@ -24,16 +24,18 @@ export async function render(main, { params, query }) {
 // ---------- Lista ----------
 function escolha(main, query) {
   let filtro = ["video", "direto"].includes(query.get("para")) ? query.get("para") : "todos";
-  main.innerHTML = `<div class="wrap">
-    <div class="pagina-topo"><h1>Palco</h1><p>Espetáculos em ecrã inteiro, com música, efeitos e ${TEMAS.length} temas. Para gravar vídeos para o YouTube, TikTok, Reels e Shorts, ou para mostrar em direto na Twitch.</p></div>
-    <div class="segmentos pl-filtro" role="group">
-      <button type="button" data-para="todos">Tudo</button>
-      <button type="button" data-para="video">Para vídeos</button>
-      <button type="button" data-para="direto">Para direto (Twitch)</button>
+  main.innerHTML = `<div class="wrap pl-pagina">
+    <div class="pagina-topo pn-topo-acoes">
+      <div><p class="pn-migalha">Criar vídeos</p><h1>Palco</h1><p>Escolhe um espetáculo, ajusta-o e grava o vídeo. ${ESPETACULOS.length} espetáculos e ${TEMAS.length} temas.</p></div>
+      <div class="segmentos pl-filtro" role="group" aria-label="Mostrar">
+        <button type="button" data-para="todos">Tudo</button>
+        <button type="button" data-para="video">Para vídeos</button>
+        <button type="button" data-para="direto">Para direto</button>
+      </div>
     </div>
     <div class="pl-dica" id="pl-dica"></div>
-    <div id="pl-hall"></div>
     <div id="pl-grupos"></div>
+    <div id="pl-hall"></div>
   </div>`;
   const dicas = {
     todos: "",
@@ -46,7 +48,7 @@ function escolha(main, query) {
     $("#pl-grupos", main).innerHTML = GRUPOS.map((g) => {
       const lista = ESPETACULOS.filter((e) => e.grupo === g.id && (filtro === "todos" || e.usos.includes(filtro)));
       if (!lista.length) return "";
-      return `<section class="secao palco-grupo"><div class="secao-cabeca"><div><h2>${esc(g.nome)}</h2><p>${esc(g.texto)}</p></div></div>
+      return `<section class="pl-grupo"><header class="pl-grupo-cabeca"><h2>${esc(g.nome)} <span>${lista.length}</span></h2><p>${esc(g.texto)}</p></header>
         <div class="palco-lista">${lista
           .map(
             (e) => `<a class="palco-opcao" href="#/palco/${e.id}${filtro !== "todos" ? `?para=${filtro}` : ""}">
@@ -91,7 +93,7 @@ async function hallDaFama(alvo) {
           .join("")}</div>`
       : "",
   ].filter(Boolean);
-  alvo.innerHTML = `<section class="secao palco-grupo"><div class="secao-cabeca"><div><h2>Hall da fama</h2><p>Os resultados dos vídeos gravados ficam para sempre: estrelas dos torneios, coroas dos rankings e os clássicos.</p></div></div><div class="hall" style="margin-top:0">${caixas.join("")}</div></section>`;
+  alvo.innerHTML = `<section class="pl-grupo pl-hall"><header class="pl-grupo-cabeca"><h2>Hall da fama</h2><p>Os resultados dos vídeos gravados ficam para sempre: estrelas dos torneios, coroas dos rankings e os clássicos.</p></header><div class="hall" style="margin-top:0">${caixas.join("")}</div></section>`;
 }
 
 // ---------- Opções ----------
@@ -154,60 +156,103 @@ function opcoes(main, esp, query) {
   }[esp.id];
   const temFoco = !["cartao", "historia", "votacao"].includes(esp.id);
 
-  main.innerHTML = `<div class="wrap">
-    <div class="pagina-topo"><p><a href="#/palco${query.get("para") ? `?para=${esc(query.get("para"))}` : ""}">Palco</a></p><h1>${esc(esp.nome)}</h1><p>${esc(esp.texto)}</p></div>
-    <form class="painel palco-form" id="pl-form">
-      <div class="campo"><span>Para</span><div class="segmentos pl-modo" role="group"><button type="button" data-modo="video" aria-pressed="${modo === "video"}">Vídeo (gravar e publicar)</button><button type="button" data-modo="direto" aria-pressed="${modo === "direto"}">Direto (Twitch)</button></div></div>
-      <div class="campo" style="margin-top:18px"><span>Tema</span>
-        ${GRUPOS_TEMAS.map(
-          (g) => `<div class="tema-grupo"><small>${esc(g.nome)}${g.id === "categorias" ? ` · ${Object.keys(TEMA_DA_CATEGORIA).length} categorias, cada uma com o seu tema` : ""}</small><div class="tema-escolha ${g.id === "categorias" ? "compacto" : ""}" role="radiogroup">${TEMAS.filter((t) => (t.grupo || "ambientes") === g.id)
-            .map((t) => {
-              const cats = Object.entries(TEMA_DA_CATEGORIA).filter(([, id]) => id === t.id).map(([c]) => c);
-              const sub = g.id === "categorias" && cats.length ? cats.join(", ") : t.texto;
-              return `<button type="button" role="radio" data-tema="${t.id}" aria-checked="${t.id === temaInicial}" title="${esc(t.texto)}" style="--a:${t.amostra[0]};--b:${t.amostra[1]};--c:${t.amostra[2]}"><i></i><b>${esc(t.nome)}</b><small>${esc(sub)}</small></button>`;
-            })
-            .join("")}</div></div>`,
-        ).join("")}
-        <small class="muted" id="pl-tema-nota"></small>
-        <div class="campo" style="margin-top:14px"><span>Efeitos do tema</span><div class="segmentos" role="group"><button type="button" data-efeitos="completo" aria-pressed="${lerModoTema() === "completo"}">Tema completo</button><button type="button" data-efeitos="cores" aria-pressed="${lerModoTema() === "cores"}">Só cores</button></div>
-          <small class="muted" id="pl-kit-nota"></small></div>
-      </div>
-      <div class="filtros" style="margin:18px 0 0">
-        <div class="campo"><span>Formato</span><div class="segmentos" role="group"><button type="button" data-fmt="16x9" aria-pressed="${fmt === "16x9"}">16:9 horizontal</button><button type="button" data-fmt="9x16" aria-pressed="${fmt === "9x16"}">9:16 vertical</button></div></div>
-        ${campos}
-      </div>
-      ${
-        temFoco
-          ? `<div class="pl-foco">
-        <div class="filtros" style="margin:0">
-          ${campoPessoa("foco", "Youtuber em foco (opcional)", query, "Por exemplo o teu canal")}
-          <label class="campo"><span>Mostrar em foco</span><select class="input" name="focoQuando"><option value="fim">No fim</option><option value="meio">A meio</option><option value="inicio">No início</option></select></label>
+  const voltar = `#/palco${query.get("para") ? `?para=${esc(query.get("para"))}` : ""}`;
+  const passo = (n, titulo, texto, corpo, extra = "") => `<section class="pl-passo ${extra}"><header class="pl-passo-cabeca"><i>${n}</i><div><h2>${titulo}</h2>${texto ? `<p>${texto}</p>` : ""}</div></header><div class="pl-passo-corpo">${corpo}</div></section>`;
+  const opcaoGrande = (attr, v, ativo, titulo, sub, icone = "") => `<button type="button" class="pl-grande" data-${attr}="${v}" aria-pressed="${ativo}">${icone}<b>${titulo}</b><small>${sub}</small></button>`;
+  const iconeFmt = (h) => `<span class="pl-fmt-icone ${h ? "h" : "v"}"></span>`;
+  const temaBotao = (t, g) => {
+    const cats = Object.entries(TEMA_DA_CATEGORIA).filter(([, id]) => id === t.id).map(([c]) => c);
+    const sub = g.id === "categorias" && cats.length ? cats.join(", ") : t.texto;
+    return `<button type="button" role="radio" data-tema="${t.id}" aria-checked="${t.id === temaInicial}" title="${esc(t.texto)}" style="--a:${t.amostra[0]};--b:${t.amostra[1]};--c:${t.amostra[2]}"><i></i><b>${esc(t.nome)}</b><small>${esc(sub)}</small></button>`;
+  };
+
+  main.innerHTML = `<div class="wrap pl-pagina">
+    <div class="pagina-topo pl-topo">
+      <a class="pn-voltar" href="${voltar}">← Todos os espetáculos</a>
+      <div class="pl-topo-linha"><span class="pl-topo-icone">${esp.icone}</span><div><h1>${esc(esp.nome)}</h1><p>${esc(esp.texto)}</p></div></div>
+    </div>
+    <div class="pl-estudio" id="pl-estudio">
+      <form class="palco-form" id="pl-form">
+        ${passo(
+          1,
+          "Onde vai passar",
+          "",
+          `<div class="pl-duas">
+            <div class="campo"><span>Para</span><div class="pl-grandes">
+              ${opcaoGrande("modo", "video", modo === "video", "Vídeo", "Gravar e publicar", `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="6" width="13" height="12" rx="2"/><path d="m16 10 5-3v10l-5-3z"/></svg>`)}
+              ${opcaoGrande("modo", "direto", modo === "direto", "Direto", "Twitch ou OBS", `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="2.5"/><path d="M7.8 7.8a6 6 0 0 0 0 8.4M16.2 7.8a6 6 0 0 1 0 8.4M5 5a10 10 0 0 0 0 14M19 5a10 10 0 0 1 0 14"/></svg>`)}
+            </div></div>
+            <div class="campo"><span>Formato</span><div class="pl-grandes">
+              ${opcaoGrande("fmt", "16x9", fmt === "16x9", "16:9", "YouTube", iconeFmt(true))}
+              ${opcaoGrande("fmt", "9x16", fmt === "9x16", "9:16", "TikTok, Reels, Shorts", iconeFmt(false))}
+            </div></div>
+          </div>`,
+        )}
+        ${passo(2, "O que mostrar", "Os dados deste espetáculo.", `<div class="pl-campos">${campos}</div>`)}
+        ${passo(
+          3,
+          "Tema",
+          "As cores, o cenário, a música e os efeitos.",
+          `<div class="pl-tema-atual">
+            <div class="pl-tema-amostra" id="pl-tema-amostra"></div>
+            <div class="pl-tema-texto"><b id="pl-tema-nome"></b><small id="pl-tema-desc"></small><small class="pl-tema-nota" id="pl-tema-nota"></small></div>
+            <button type="button" class="btn" id="pl-tema-abrir" aria-expanded="false">Mudar tema</button>
+          </div>
+          <div class="pl-temas" id="pl-temas" hidden>
+            <div class="segmentos pl-temas-grupos" role="group">${GRUPOS_TEMAS.map((g, i) => `<button type="button" data-tgrupo="${g.id}" aria-pressed="${i === 0}">${esc(g.nome)}</button>`).join("")}</div>
+            ${GRUPOS_TEMAS.map((g, i) => `<div class="tema-grupo" data-grupo-temas="${g.id}" ${i === 0 ? "" : "hidden"}>${g.id === "categorias" ? `<small>${Object.keys(TEMA_DA_CATEGORIA).length} categorias, cada uma com o seu tema. Escolher uma categoria ou um Youtuber sugere o tema dele.</small>` : ""}<div class="tema-escolha ${g.id === "categorias" ? "compacto" : ""}" role="radiogroup">${TEMAS.filter((t) => (t.grupo || "ambientes") === g.id).map((t) => temaBotao(t, g)).join("")}</div></div>`).join("")}
+          </div>
+          <div class="campo pl-efeitos"><span>Efeitos do tema</span><div class="segmentos" role="group"><button type="button" data-efeitos="completo" aria-pressed="${lerModoTema() === "completo"}">Tema completo</button><button type="button" data-efeitos="cores" aria-pressed="${lerModoTema() === "cores"}">Só cores</button></div>
+            <small class="muted" id="pl-kit-nota"></small></div>`,
+        )}
+        ${passo(
+          4,
+          "Extras",
+          "Opcional.",
+          `${
+            temFoco
+              ? `<div class="pl-extra">
+            <div class="pl-campos">
+              ${campoPessoa("foco", "Youtuber em foco", query, "Ninguém (por exemplo o teu canal)")}
+              <label class="campo"><span>Quando aparece</span><select class="input" name="focoQuando"><option value="fim">No fim</option><option value="meio">A meio</option><option value="inicio">No início</option></select></label>
+            </div>
+            <small class="muted">No momento escolhido, mostra onde ficou este Youtuber e os números dele, com um brilho especial.</small>
+          </div>`
+              : ""
+          }
+          <div class="pl-extra pl-aviso pl-so-video" id="pl-aviso" hidden>
+            <label class="campo"><span>Aviso de votação antes do fim</span><select class="input" id="pl-aviso-v"><option value="">Sem aviso</option></select></label>
+            <small class="muted" id="pl-aviso-nota"></small>
+          </div>
+          <p class="muted pl-sem-extras" id="pl-sem-extras" ${temFoco ? "hidden" : ""}>Este espetáculo não tem extras.</p>`,
+          "pl-passo-extras",
+        )}
+        ${passo(
+          5,
+          "Ritmo e som",
+          "",
+          `<div class="pl-campos">
+            <div class="campo"><span>Ritmo</span><div class="segmentos" role="group"><button type="button" data-ritmo="auto" aria-pressed="${modo === "video"}">Automático</button><button type="button" data-ritmo="manual" aria-pressed="${modo === "direto"}">Eu avanço</button></div></div>
+            <div class="campo"><span>Velocidade</span><div class="segmentos" role="group"><button type="button" data-vel="rapido" aria-pressed="false">Rápida</button><button type="button" data-vel="normal" aria-pressed="true">Normal</button><button type="button" data-vel="lento" aria-pressed="false">Lenta</button></div></div>
+          </div>
+          <div class="pl-checks">
+            <label class="vc-interruptor"><input type="checkbox" name="som" ${som.ligado ? "checked" : ""}><span class="vc-bola"></span><span><b>Música e efeitos sonoros</b><small>Ficam gravados no vídeo.</small></span></label>
+            <label class="vc-interruptor pl-so-direto"><input type="checkbox" name="repetir"><span class="vc-bola"></span><span><b>Repetir no fim</b><small>Para deixar a correr entre conversas.</small></span></label>
+          </div>`,
+        )}
+      </form>
+      <aside class="pl-resumo" id="pl-resumo">
+        <div class="pl-previa-caixa"><div class="pl-previa" id="pl-previa"><span class="pl-previa-icone">${esp.icone}</span><b>${esc(esp.nome)}</b><small id="pl-previa-fmt"></small></div></div>
+        <dl class="pl-resumo-lista" id="pl-resumo-lista"></dl>
+        <div class="pl-resumo-botoes">
+          ${podeGravar() ? `<button class="btn btn-primario pl-so-video pl-gravar" type="button" id="pl-gravar">● Gravar vídeo</button>` : ""}
+          <button class="btn btn-ouro pl-comecar" type="submit" form="pl-form">▶ Ver sem gravar</button>
+          <button class="btn btn-texto" type="button" id="pl-legenda">Legenda para publicar</button>
         </div>
-        <small class="muted">O espetáculo corre normalmente e, no momento escolhido, mostra onde ficou este Youtuber e os números dele. Sempre que aparecer, tem um brilho especial. Nos jogos e duelos, entra de certeza.</small>
-      </div>`
-          : ""
-      }
-      <div class="pl-aviso pl-so-video" id="pl-aviso" hidden>
-        <label class="campo cresce"><span>Votação a decorrer: aviso antes do fim do vídeo</span><select class="input" id="pl-aviso-v"><option value="">Sem aviso</option></select></label>
-        <small class="muted" id="pl-aviso-nota"></small>
-      </div>
-      <div class="filtros" style="margin:18px 0 0">
-        <div class="campo"><span>Ritmo</span><div class="segmentos" role="group"><button type="button" data-ritmo="auto" aria-pressed="${modo === "video"}">Automático</button><button type="button" data-ritmo="manual" aria-pressed="${modo === "direto"}">Eu avanço</button></div></div>
-        <div class="campo"><span>Velocidade</span><div class="segmentos" role="group"><button type="button" data-vel="rapido" aria-pressed="false">Rápida</button><button type="button" data-vel="normal" aria-pressed="true">Normal</button><button type="button" data-vel="lento" aria-pressed="false">Lenta</button></div></div>
-      </div>
-      <div class="ed-acoes pl-acoes">
-        <div class="pl-checks">
-          <label class="ed-check" style="margin:0"><input type="checkbox" name="som" ${som.ligado ? "checked" : ""}> Com música e efeitos</label>
-          <label class="ed-check pl-so-direto" style="margin:0"><input type="checkbox" name="repetir"> Repetir no fim (deixar a correr)</label>
-        </div>
-        <div class="pl-botoes">
-          <button class="btn" type="button" id="pl-legenda">Legenda para publicar</button>
-          ${podeGravar() ? `<button class="btn btn-primario pl-so-video" type="button" id="pl-gravar">● Gravar vídeo</button>` : ""}
-          <button class="btn btn-ouro" type="submit" style="height:48px;padding:0 28px;font-size:var(--t-base)">Começar</button>
-        </div>
-      </div>
-      ${podeGravar() ? `<p class="muted pl-so-video" style="font-size:var(--t-sm);margin:12px 0 0">Gravar vídeo: o browser pede para partilhar este separador (escolhe <b>Este separador</b>). O vídeo é gravado em Full HD (1080×1920 na vertical, 1920×1080 na horizontal), com som, e aparece aqui no fim. Para a melhor qualidade, usa o Chrome no computador, com a janela grande. Esc termina a gravação.</p>` : `<p class="muted pl-so-video" style="font-size:var(--t-sm);margin:12px 0 0">Para gravar neste aparelho, usa a gravação de ecrã do sistema. No computador, com o Chrome, aparece aqui o botão Gravar vídeo.</p>`}
-    </form>
+        ${podeGravar() ? `<p class="muted pl-so-video pl-resumo-nota">O browser pede para partilhar este separador: escolhe <b>Este separador</b>. Grava em Full HD, com som. Esc termina.</p>` : `<p class="muted pl-so-video pl-resumo-nota">Para gravar neste aparelho, usa a gravação de ecrã do sistema. No computador, com o Chrome, aparece aqui o botão Gravar vídeo.</p>`}
+        <p class="muted pl-so-direto pl-resumo-nota">Espaço avança, Esc sai, P pausa, F ecrã inteiro.</p>
+      </aside>
+    </div>
     <div id="pl-publicar"></div></div>`;
 
   let formato = fmt;
@@ -228,20 +273,68 @@ function opcoes(main, esp, query) {
         marcar(attr, b.dataset[attr]);
       }),
     );
+  const estudio = $("#pl-estudio", main);
   const atualizarModo = () => {
-    form.classList.toggle("modo-direto", modo === "direto");
-    form.classList.toggle("modo-video", modo === "video");
+    for (const el of [form, estudio]) {
+      el.classList.toggle("modo-direto", modo === "direto");
+      el.classList.toggle("modo-video", modo === "video");
+    }
+    $(".pl-comecar", main).textContent = modo === "direto" ? "▶ Começar" : "▶ Ver sem gravar";
+    resumo();
+  };
+  // O tema escolhido aparece num cartão; a grelha de todos os temas só abre quando se quer mudar
+  const pintarTema = () => {
+    const t = TEMAS.find((x) => x.id === temaId) || TEMAS[0];
+    const fundo = `radial-gradient(120% 90% at 20% 10%, ${t.amostra[1]}, transparent 60%), linear-gradient(150deg, ${t.amostra[0]}, ${t.amostra[2]})`;
+    $("#pl-tema-amostra", main).style.background = fundo;
+    $("#pl-previa", main).style.background = fundo;
+    $("#pl-tema-nome", main).textContent = t.nome;
+    $("#pl-tema-desc", main).textContent = t.texto;
+  };
+  const resumo = () => {
+    const t = TEMAS.find((x) => x.id === temaId);
+    const aviso = $("#pl-aviso-v", main);
+    const linhas = [
+      ["Para", modo === "video" ? "Vídeo" : "Direto"],
+      ["Formato", formato === "9x16" ? "9:16 vertical" : "16:9 horizontal"],
+      ["Tema", `${t?.nome || ""}${efeitos === "cores" ? " (só cores)" : ""}`],
+      ["Ritmo", `${ritmo === "manual" ? "Eu avanço" : "Automático"}, ${{ rapido: "rápida", normal: "normal", lento: "lenta" }[velocidade]}`],
+      modo === "video" && aviso && !$("#pl-aviso", main).hidden ? ["Votação", aviso.value ? "Com aviso no fim" : "Sem aviso"] : null,
+    ].filter(Boolean);
+    $("#pl-resumo-lista", main).innerHTML = linhas.map(([k, v]) => `<div><dt>${k}</dt><dd>${esc(v)}</dd></div>`).join("");
+    const previa = $("#pl-previa", main);
+    previa.classList.toggle("vertical", formato === "9x16");
+    $("#pl-previa-fmt", main).textContent = formato === "9x16" ? "9:16" : "16:9";
   };
   const mudarTema = (id, nota = "") => {
     temaId = id;
     marcar("tema", id);
     $("#pl-tema-nota", main).textContent = nota;
     notaKit();
+    pintarTema();
+    resumo();
   };
+  $("#pl-tema-abrir", main).addEventListener("click", (e) => {
+    const caixa = $("#pl-temas", main);
+    caixa.hidden = !caixa.hidden;
+    e.currentTarget.setAttribute("aria-expanded", String(!caixa.hidden));
+    e.currentTarget.textContent = caixa.hidden ? "Mudar tema" : "Fechar";
+    if (!caixa.hidden) {
+      const g = TEMAS.find((x) => x.id === temaId)?.grupo || "ambientes";
+      $(`[data-tgrupo="${g}"]`, main)?.click();
+    }
+  });
+  $$("[data-tgrupo]", main).forEach((b) =>
+    b.addEventListener("click", () => {
+      $$("[data-tgrupo]", main).forEach((x) => x.setAttribute("aria-pressed", String(x === b)));
+      $$("[data-grupo-temas]", main).forEach((x) => (x.hidden = x.dataset.grupoTemas !== b.dataset.tgrupo));
+    }),
+  );
   grupo("efeitos", (v) => {
     efeitos = v;
     guardarModoTema(v);
     notaKit();
+    resumo();
   });
   grupo("modo", (v) => {
     modo = v;
@@ -249,19 +342,22 @@ function opcoes(main, esp, query) {
     marcar("ritmo", ritmo);
     atualizarModo();
   });
-  grupo("fmt", (v) => (formato = v));
-  grupo("ritmo", (v) => (ritmo = v));
-  grupo("vel", (v) => (velocidade = v));
+  grupo("fmt", (v) => ((formato = v), resumo()));
+  grupo("ritmo", (v) => ((ritmo = v), resumo()));
+  grupo("vel", (v) => ((velocidade = v), resumo()));
   grupo("tema", (v) => {
     temaId = v;
     temaEscolhidoAMao = true;
     guardarTema(v);
     $("#pl-tema-nota", main).textContent = "";
     notaKit();
+    pintarTema();
+    resumo();
     som.tocar("clique");
   });
   atualizarModo();
   notaKit();
+  pintarTema();
   // Lista das votações (para o espetáculo "O público escolheu")
   if (esp.id === "votacao")
     api("votacoes")
@@ -288,6 +384,9 @@ function opcoes(main, esp, query) {
       if (ligacoes.avisoVideos) sel.value = avisos[0].id;
       $("#pl-aviso-nota", main).textContent = `Aparece antes do "Subscreve": "${ligacoes.textoBio}", o endereço e um código QR. Liga ou desliga por defeito em Página pública, Dados e ligações.`;
       caixa.hidden = false;
+      $("#pl-sem-extras", main).hidden = true;
+      sel.addEventListener("change", resumo);
+      resumo();
     })
     .catch(() => {});
   const avisoEscolhido = () => {

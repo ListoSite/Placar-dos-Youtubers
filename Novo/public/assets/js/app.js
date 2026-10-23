@@ -41,12 +41,7 @@ async function navegar() {
   const main = $("#conteudo");
   esconderDica();
   const rota = ROTAS.find((r) => r.re.test(caminho));
-  for (const a of document.querySelectorAll(".nav a, .abas a")) {
-    if (rota && a.getAttribute("href") === rota.nav) a.setAttribute("aria-current", "page");
-    else a.removeAttribute("aria-current");
-  }
-  pilulaNav($("#nav"));
-  pilulaNav($("#abas"), ".abas-pilula");
+  marcarNavegacao(caminho);
   limparScroll?.();
   limparScroll = null;
   if (typeof limpar === "function") {
@@ -84,7 +79,9 @@ async function navegar() {
     window.scrollTo({ top: 0, behavior: "instant" });
     limpar = await mod.render(main, { params, query });
     limparScroll = revelarAoScroll(main);
-    document.title = (main.dataset.titulo ? main.dataset.titulo + " · " : "") + "Placar dos Youtubers";
+    document.title = (main.dataset.titulo ? main.dataset.titulo + " · " : "") + "Painel do Placar";
+    const titulo = $("#pn-barra-titulo");
+    if (titulo) titulo.textContent = main.dataset.titulo || "";
   } catch (e) {
     console.error(e);
     if (e.status === 401) {
@@ -93,6 +90,22 @@ async function navegar() {
     }
     main.innerHTML = `<div class="wrap pagina-topo"><h1>Não foi possível abrir esta página</h1><p>${esc(e.message)}</p><p><button class="btn" onclick="location.reload()">Tentar de novo</button></p></div>`;
   }
+}
+
+/** Marca a secção atual na barra lateral (computador) e nas abas (telemóvel). */
+function marcarNavegacao(caminho) {
+  const c = caminho === "editar" ? "editar/youtubers" : caminho;
+  const atual = "#/" + c;
+  const lateral = (h) => h === atual || (h === "#/" && (c === "" || c.startsWith("publica"))) || (h !== "#/" && atual.startsWith(h + "/"));
+  // Nas abas do telemóvel, "Dados" junta todas as partes de edição
+  const aba = (h) => (h.startsWith("#/editar") ? c.startsWith("editar") : lateral(h));
+  for (const a of document.querySelectorAll(".pn-nav a")) a.toggleAttribute("aria-current", lateral(a.getAttribute("href")));
+  for (const a of document.querySelectorAll(".abas a")) {
+    if (aba(a.getAttribute("href"))) a.setAttribute("aria-current", "page");
+    else a.removeAttribute("aria-current");
+  }
+  for (const a of document.querySelectorAll(".pn-nav a[aria-current]")) a.setAttribute("aria-current", "page");
+  pilulaNav($("#abas"), ".abas-pilula");
 }
 
 function atualizarRodape() {
@@ -179,14 +192,11 @@ window.addEventListener("placar:recarregar", async () => {
   await carregar({ forcar: true });
   atualizarRodape();
 });
-addEventListener("resize", () => {
-  pilulaNav($("#nav"));
-  pilulaNav($("#abas"), ".abas-pilula");
-});
+addEventListener("resize", () => pilulaNav($("#abas"), ".abas-pilula"));
 if ("serviceWorker" in navigator && location.protocol === "https:") {
   addEventListener("load", () => navigator.serviceWorker.register("/sw.js").catch(() => {}));
 }
-logoEntra(document.querySelector(".marca svg"));
+logoEntra(document.querySelector(".pn-marca svg"));
 iniciarPesquisa();
 iniciarSom();
 $("#link-editar")?.classList.toggle("ativo", temSessao());

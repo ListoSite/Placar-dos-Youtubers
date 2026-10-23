@@ -68,7 +68,6 @@ export async function render(main, { params }) {
       <div class="vc-acoes">
         <span class="vc-estado" id="vc-estado"></span>
         <button class="btn" id="vc-ver-previa" type="button">Pré-visualizar</button>
-        <a class="btn" href="/" target="_blank" rel="noopener">Abrir o site</a>
         <button class="btn btn-primario" id="vc-publicar" type="button" data-a-esperar="A publicar">Publicar</button>
       </div>
     </div>
