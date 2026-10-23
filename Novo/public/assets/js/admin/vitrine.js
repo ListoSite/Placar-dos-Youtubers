@@ -5,6 +5,7 @@ import { api, estado, procurar } from "../data.js";
 import { esc, mesNome, ha } from "../format.js";
 import { $, $$, avatar, toast, janela, confirmar } from "../ui.js";
 import { chamar } from "./common.js";
+import { quemAparece, regraQuem, valorQuem, MEDIDAS_QUEM } from "../quem.js";
 
 const NOMES_MEDIDA = {
   views: "Views (soma do período)",
@@ -43,9 +44,11 @@ const SECOES = [
 const SECCOES_PAINEL = [
   { id: "abas", nome: "Abas" },
   { id: "inicio", nome: "Início" },
+  { id: "quem", nome: "Quem aparece" },
   { id: "paginas", nome: "Páginas" },
-  { id: "perfis", nome: "Youtubers e perfis" },
+  { id: "perfis", nome: "Perfis" },
   { id: "videos", nome: "Vídeos e hall" },
+  { id: "exclusivos", nome: "Exclusivos" },
   { id: "dados", nome: "Dados e ligações" },
 ];
 
@@ -85,7 +88,10 @@ export async function render(main, { params }) {
   </div>`;
 
   const iframe = $("#vc-iframe", main);
-  const enviar = () => iframe.contentWindow?.postMessage({ tipo: "placar-previa", cfg: publicaDe(estadoV.cfg) }, location.origin);
+  const enviar = () => {
+    const q = calcQuem();
+    iframe.contentWindow?.postMessage({ tipo: "placar-previa", cfg: publicaDe(estadoV.cfg), quem: { aparece: [...q.aparece], semPerfil: [...q.aparece].filter((id) => !q.perfil.has(id)) } }, location.origin);
+  };
   const aoMudar = () => {
     marcarEstado(main);
     enviar();
@@ -154,9 +160,9 @@ function mudou() {
 function desenharSeccao(main) {
   $$("[data-seccao]", main).forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.seccao === estadoV.seccao)));
   const alvo = $("#vc-conteudo", main);
-  const f = { abas: seccaoAbas, inicio: seccaoInicio, paginas: seccaoPaginas, perfis: seccaoPerfis, videos: seccaoVideos, dados: seccaoDados }[estadoV.seccao];
+  const f = { abas: seccaoAbas, inicio: seccaoInicio, quem: seccaoQuem, paginas: seccaoPaginas, perfis: seccaoPerfis, videos: seccaoVideos, exclusivos: seccaoExclusivos, dados: seccaoDados }[estadoV.seccao];
   f(alvo, main);
-  const hash = { abas: "#/", inicio: "#/inicio", paginas: "#/ranking", perfis: "#/youtubers", videos: "#/videos", dados: "#/votar" }[estadoV.seccao];
+  const hash = { abas: "#/", inicio: "#/inicio", quem: "#/youtubers", paginas: "#/ranking", perfis: "#/youtubers", videos: "#/videos", exclusivos: "#/exclusivos", dados: "#/votar" }[estadoV.seccao];
   estadoV.irPara?.(hash);
 }
 
@@ -329,7 +335,7 @@ function novoBloco(tipo) {
   const campos = new Set(estadoV.blocos[tipo].campos);
   if (campos.has("periodo")) base.periodo = { tipo: "ultimo" };
   if (campos.has("metrica")) base.metrica = "views";
-  if (campos.has("n")) base.n = tipo === "subidas" ? 3 : tipo === "videos" ? 4 : tipo === "evolucao" ? 5 : 10;
+  if (campos.has("n")) base.n = tipo === "subidas" ? 3 : tipo === "videos" || tipo === "exclusivos" ? 4 : tipo === "evolucao" ? 5 : 10;
   if (campos.has("estilo")) base.estilo = tipo === "texto" ? "normal" : "lista";
   if (campos.has("pessoas")) base.pessoas = [];
   if (campos.has("votacao")) base.votacao = "abertas";
@@ -352,6 +358,7 @@ const DESCRICOES = {
   votacao: "Uma votação (ou as abertas), para votar ali mesmo.",
   videos: "Os últimos vídeos gravados no Palco.",
   hall: "Estrelas, coroas, duelos e clássicos.",
+  exclusivos: "Os teus exclusivos, para verem com play ali mesmo.",
   texto: "Um título, um texto e um botão (avisos, novidades).",
 };
 
@@ -616,10 +623,6 @@ function seccaoDados(alvo) {
       <p class="muted">Meses fora deste intervalo não aparecem em lado nenhum da página pública (rankings, gráficos, perfis). Só muda no site depois de publicares.</p>
       <div class="ed-grelha"><label class="campo"><span>Desde</span><select class="input" data-caminho="dados.desde">${opcoes(c.dados.desde)}</select></label>
       <label class="campo"><span>Até</span><select class="input" data-caminho="dados.ate">${opcoes(c.dados.ate)}</select></label></div></div>
-    <div class="painel ed-bloco"><h3>Youtubers escondidos</h3>
-      <p class="muted">Não aparecem na página pública: nem nos rankings, nem nos gráficos, nem nos perfis. (Os que marcaste como escondidos em Youtubers também ficam de fora.)</p>
-      <div class="vc-pessoas" id="vc-esc"></div>
-      <div style="position:relative;max-width:420px"><input class="input" id="vc-esc-q" placeholder="Esconder um Youtuber" autocomplete="off"><div class="pesquisa-lista" id="vc-esc-lista" style="left:0;right:auto;width:100%"></div></div></div>
     <div class="painel ed-bloco"><h3>Votações nos vídeos</h3>
       ${interruptor("ligacoes.avisoVideos", "Aviso de votação nos vídeos", "Quando houver uma votação aberta, os vídeos do Palco mostram antes do fim que podem votar (com o endereço e o código QR).")}
       <div class="ed-grelha" style="margin-top:12px">
@@ -627,32 +630,330 @@ function seccaoDados(alvo) {
         <label class="campo"><span>Texto a dizer onde está o link</span><input class="input" data-caminho="ligacoes.textoBio" value="${esc(c.ligacoes.textoBio)}" maxlength="60" placeholder="Link na bio"></label>
       </div></div>`;
   ligarCampos(alvo);
-  const pintar = () => {
-    $("#vc-esc", alvo).innerHTML =
-      c.dados.escondidos.map((id) => estado.pessoas.get(id) || { id, name: id }).map((p) => `<span class="vt-chip">${avatar(p, 24)}${esc(p.name)}<button type="button" data-tirar="${esc(p.id)}">×</button></span>`).join("") || `<span class="muted">Ninguém escondido.</span>`;
-    $$("[data-tirar]", alvo).forEach((x) =>
-      x.addEventListener("click", () => {
-        c.dados.escondidos = c.dados.escondidos.filter((id) => id !== x.dataset.tirar);
-        mudou();
-        pintar();
-      }),
-    );
-  };
-  const q = $("#vc-esc-q", alvo);
-  const lista = $("#vc-esc-lista", alvo);
-  q.addEventListener("input", () => {
-    const r = procurar(q.value, 8).filter((p) => !c.dados.escondidos.includes(p.id));
-    lista.innerHTML = r.map((p) => `<button type="button" class="pesquisa-item" style="width:100%;border:0;background:none;text-align:left" data-id="${esc(p.id)}">${avatar(p, 28)}<span><b>${esc(p.name)}</b><small>${esc(p.category || "")}</small></span></button>`).join("");
-    lista.classList.toggle("aberta", r.length > 0);
-  });
-  lista.addEventListener("click", (e) => {
-    const x = e.target.closest("[data-id]");
-    if (!x) return;
-    c.dados.escondidos.push(x.dataset.id);
-    q.value = "";
-    lista.classList.remove("aberta");
+}
+
+// ---------- Quem aparece ----------
+/** Quem aparece e quem tem perfil, com as regras ainda por publicar (as mesmas contas do servidor). */
+function calcQuem() {
+  const indices = new Map([...estado.indices].map(([id, x]) => [id, x?.total ?? null]));
+  return quemAparece(estado.ds, estadoV.cfg.dados, estadoV.cfg.perfis, { ref: estado.ref, indices });
+}
+const vq = { q: "", filtro: "todos", cat: "", ordem: "medida", sel: new Set(), limite: 60 };
+
+function seccaoQuem(alvo) {
+  const c = estadoV.cfg;
+  c.dados.quem = regraQuem(c.dados.quem);
+  const r = c.dados.quem;
+  const cats = estado.ds.categories;
+  const modoBotao = (v, titulo, sub) => `<button type="button" class="pl-grande" data-qmodo="${v}" aria-pressed="${r.modo === v}"><b>${titulo}</b><small>${sub}</small></button>`;
+  alvo.innerHTML = `<div class="painel ed-bloco">
+      <h3>Quem aparece no site</h3>
+      <p class="muted">Quem não aparece não está em nenhum ranking, gráfico, lista ou perfil da página pública.</p>
+      <div class="vq-modos">
+        ${modoBotao("todos", "Todos", "Todos os Youtubers, menos os que esconderes.")}
+        ${modoBotao("top", "Os melhores", "Só os primeiros de um ranking. Muda sozinho todos os meses.")}
+        ${modoBotao("lista", "Só os que eu escolher", "Escolhes um a um na lista de baixo.")}
+      </div>
+      ${
+        r.modo === "top"
+          ? `<div class="vq-top">
+        <label class="campo"><span>Ranking por</span><select class="input" id="vq-medida">${Object.entries(MEDIDAS_QUEM).map(([k, n]) => `<option value="${k}" ${r.medida === k ? "selected" : ""}>${esc(n)}</option>`).join("")}</select></label>
+        <label class="campo"><span>Quantos</span><input class="input" type="number" min="1" max="400" id="vq-n" value="${r.n}"></label>
+        <div class="campo"><span>Atalhos</span><div class="segmentos">${[10, 20, 50, 100].map((n) => `<button type="button" data-qn="${n}" aria-pressed="${r.n === n}">Top ${n}</button>`).join("")}</div></div>
+      </div>
+      <p class="muted vq-nota">O último mês completo agora é ${esc(mesNome(estado.ref))}. Quando entrar o mês seguinte, a lista atualiza-se sozinha. Os que marcares com "Sempre" aparecem mesmo fora do top.</p>`
+          : ""
+      }
+      ${
+        r.modo !== "lista"
+          ? `<div class="campo vq-cats"><span>Categorias ${r.categorias.length ? `(${r.categorias.length})` : "(todas)"}</span><div class="vq-chips">
+        <button type="button" class="vq-chip" data-qcat="" aria-pressed="${!r.categorias.length}">Todas</button>
+        ${cats.map((k) => `<button type="button" class="vq-chip" data-qcat="${esc(k)}" aria-pressed="${r.categorias.includes(k)}">${esc(k)}</button>`).join("")}</div></div>`
+          : ""
+      }
+    </div>
+    <div class="painel ed-bloco">
+      <h3>Quem tem perfil</h3>
+      ${
+        c.perfis.ligado
+          ? `<p class="muted">O perfil é a página de cada Youtuber, com os números dele. Quem não tem perfil aparece nos rankings, mas o nome não abre nada.</p>
+      <div class="segmentos" role="group">
+        <button type="button" data-qperfil="todos" aria-pressed="${c.perfis.quem !== "lista"}">Todos os que aparecem</button>
+        <button type="button" data-qperfil="lista" aria-pressed="${c.perfis.quem === "lista"}">Só os que eu escolher</button>
+      </div>`
+          : `<p class="muted">Os perfis estão desligados para todos. Liga-os em <a href="#/publica/perfis" data-ir-seccao="perfis">Perfis</a>.</p>`
+      }
+    </div>
+    <div class="painel ed-bloco vq-caixa">
+      <div class="vq-resumo" id="vq-resumo"></div>
+      <div class="vq-barra">
+        <input class="input" type="search" id="vq-q" placeholder="Procurar Youtuber" value="${esc(vq.q)}">
+        <div class="segmentos" role="group">${[["todos", "Todos"], ["sim", "Aparecem"], ["nao", "Não aparecem"], ["esc", "Escondidos"]].map(([k, n]) => `<button type="button" data-qfiltro="${k}" aria-pressed="${vq.filtro === k}">${n}</button>`).join("")}</div>
+        <select class="input" id="vq-cat"><option value="">Todas as categorias</option>${cats.map((k) => `<option ${vq.cat === k ? "selected" : ""}>${esc(k)}</option>`).join("")}</select>
+        <select class="input" id="vq-ordem"><option value="medida">Ordenar: ${esc(MEDIDAS_QUEM[r.medida])}</option><option value="indice">Ordenar: Índice</option><option value="nome">Ordenar: nome</option></select>
+      </div>
+      <div class="vq-acoes" id="vq-acoes"></div>
+      <div class="vq-tabela" id="vq-tabela"></div>
+    </div>`;
+
+  $$("[data-qmodo]", alvo).forEach((b) => b.addEventListener("click", () => {
+    r.modo = b.dataset.qmodo;
+    if (r.modo === "lista" && !r.lista.length) r.lista = [...calcQuem().aparece];
     mudou();
-    pintar();
+    seccaoQuem(alvo);
+  }));
+  $("#vq-medida", alvo)?.addEventListener("change", (e) => ((r.medida = e.target.value), mudou(), seccaoQuem(alvo)));
+  $("#vq-n", alvo)?.addEventListener("change", (e) => ((r.n = Math.min(400, Math.max(1, Number(e.target.value) || 10))), mudou(), seccaoQuem(alvo)));
+  $$("[data-qn]", alvo).forEach((b) => b.addEventListener("click", () => ((r.n = Number(b.dataset.qn)), mudou(), seccaoQuem(alvo))));
+  $$("[data-qcat]", alvo).forEach((b) => b.addEventListener("click", () => {
+    const k = b.dataset.qcat;
+    if (!k) r.categorias = [];
+    else r.categorias = r.categorias.includes(k) ? r.categorias.filter((x) => x !== k) : [...r.categorias, k];
+    mudou();
+    seccaoQuem(alvo);
+  }));
+  $$("[data-qperfil]", alvo).forEach((b) => b.addEventListener("click", () => {
+    c.perfis.quem = b.dataset.qperfil;
+    if (c.perfis.quem === "lista" && !c.perfis.lista?.length) c.perfis.lista = [...calcQuem().aparece];
+    mudou();
+    seccaoQuem(alvo);
+  }));
+  $("[data-ir-seccao]", alvo)?.addEventListener("click", (e) => {
+    e.preventDefault();
+    $(`[data-seccao="perfis"]`)?.click();
   });
-  pintar();
+  $("#vq-q", alvo).addEventListener("input", (e) => ((vq.q = e.target.value), (vq.limite = 60), tabelaQuem(alvo)));
+  $$("[data-qfiltro]", alvo).forEach((b) => b.addEventListener("click", () => {
+    vq.filtro = b.dataset.qfiltro;
+    vq.limite = 60;
+    $$("[data-qfiltro]", alvo).forEach((x) => x.setAttribute("aria-pressed", String(x === b)));
+    tabelaQuem(alvo);
+  }));
+  $("#vq-cat", alvo).addEventListener("change", (e) => ((vq.cat = e.target.value), (vq.limite = 60), tabelaQuem(alvo)));
+  $("#vq-ordem", alvo).value = vq.ordem;
+  $("#vq-ordem", alvo).addEventListener("change", (e) => ((vq.ordem = e.target.value), tabelaQuem(alvo)));
+  tabelaQuem(alvo);
+}
+
+function tabelaQuem(alvo) {
+  const c = estadoV.cfg;
+  const r = c.dados.quem;
+  const res = calcQuem();
+  const indices = new Map([...estado.indices].map(([id, x]) => [id, x?.total ?? null]));
+  const esc_ = new Set(c.dados.escondidos);
+  const sempre = new Set(r.sempre);
+  const naLista = new Set(r.lista);
+  const perfisLista = c.perfis.ligado && c.perfis.quem === "lista";
+  const comPerfil = new Set(c.perfis.lista || []);
+  const valor = (p) => valorQuem(p, r.medida, estado.ds, { ref: estado.ref, indices });
+  const fmt = (v) => (v === null || v === undefined ? "—" : r.medida === "indice" ? Math.round(v) : new Intl.NumberFormat("pt-PT", { notation: "compact", maximumFractionDigits: 1 }).format(v));
+  // Posição de cada um na medida (para se ver logo quem está no top)
+  const pos = new Map(
+    estado.ds.people
+      .map((p) => ({ p, v: valor(p) }))
+      .filter((x) => x.v !== null && x.v !== undefined)
+      .sort((a, b) => b.v - a.v)
+      .map((x, i) => [x.p.id, i + 1]),
+  );
+  const t = vq.q.trim().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+  let lista = estado.ds.people.filter((p) => {
+    if (vq.cat && p.category !== vq.cat) return false;
+    if (t && !p.name.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").includes(t)) return false;
+    if (vq.filtro === "sim") return res.aparece.has(p.id);
+    if (vq.filtro === "nao") return !res.aparece.has(p.id);
+    if (vq.filtro === "esc") return esc_.has(p.id) || p.hidden;
+    return true;
+  });
+  lista.sort((a, b) => (vq.ordem === "nome" ? a.name.localeCompare(b.name, "pt") : vq.ordem === "indice" ? (indices.get(b.id) ?? -1) - (indices.get(a.id) ?? -1) : (pos.get(a.id) ?? 1e9) - (pos.get(b.id) ?? 1e9)));
+  const total = estado.ds.people.length;
+  const nEsc = estado.ds.people.filter((p) => esc_.has(p.id) || p.hidden).length;
+  $("#vq-resumo", alvo).innerHTML = `<div><b>${res.aparece.size}</b><small>aparecem</small></div><div><b>${res.perfil.size}</b><small>com perfil</small></div><div><b>${nEsc}</b><small>escondidos</small></div><div><b>${total}</b><small>no total</small></div>`;
+
+  const estadoDe = (p) => {
+    if (p.hidden) return `<span class="vq-estado esc" title="Marcado como escondido em Youtubers">Escondido (Youtubers)</span>`;
+    if (esc_.has(p.id)) return `<span class="vq-estado esc">Escondido</span>`;
+    if (res.aparece.has(p.id)) return `<span class="vq-estado sim">Aparece</span>${r.modo === "top" && sempre.has(p.id) ? ` <span class="vq-estado fixo">Sempre</span>` : ""}`;
+    return `<span class="vq-estado nao">${r.modo === "lista" ? "Fora da lista" : r.modo === "top" ? "Fora do top" : "Fora das categorias"}</span>`;
+  };
+  const icone = (d) => `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${d}</svg>`;
+  const OLHO = icone(`<path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/>`);
+  const OLHO_NAO = icone(`<path d="M3 3l18 18"/><path d="M10.6 5.1A10 10 0 0 1 12 5c6.4 0 10 7 10 7a17 17 0 0 1-3.2 4.1M6.6 6.6C3.7 8.4 2 12 2 12s3.6 7 10 7a9.7 9.7 0 0 0 4.4-1"/>`);
+  const visiveis = lista.slice(0, vq.limite);
+  const todosSel = visiveis.length && visiveis.every((p) => vq.sel.has(p.id));
+  $("#vq-tabela", alvo).innerHTML = lista.length
+    ? `<table class="vq-t"><thead><tr>
+        <th class="vq-c"><input type="checkbox" id="vq-todos" ${todosSel ? "checked" : ""} aria-label="Selecionar todos"></th>
+        <th class="dir">#</th><th>Youtuber</th><th class="dir">${{ views: "Views", media3: "Média 3 m", indice: "Índice", subs: "Subs", total: "Views totais" }[r.medida]}</th><th>No site</th><th class="dir">Ações</th></tr></thead>
+      <tbody>${visiveis
+        .map((p) => {
+          const ap = res.aparece.has(p.id);
+          const perfilOk = res.perfil.has(p.id);
+          return `<tr data-p="${esc(p.id)}" class="${ap ? "" : "fora"} ${vq.sel.has(p.id) ? "sel" : ""}">
+          <td class="vq-c"><input type="checkbox" data-sel ${vq.sel.has(p.id) ? "checked" : ""} aria-label="Selecionar ${esc(p.name)}"></td>
+          <td class="dir vq-pos">${pos.get(p.id) || "—"}</td>
+          <td><span class="vq-quem">${avatar(p, 30)}<span><b>${esc(p.name)}</b><small>${esc(p.category || "Sem categoria")}</small></span></span></td>
+          <td class="dir">${fmt(valor(p))}</td>
+          <td><div class="vq-estados">${estadoDe(p)}${c.perfis.ligado && ap && !perfilOk ? `<span class="vq-estado nao">Sem perfil</span>` : ""}</div></td>
+          <td class="dir"><div class="vq-btns">
+            ${p.hidden ? "" : `<button type="button" class="botao-icone" data-a="esconder" title="${esc_.has(p.id) ? "Deixar de esconder" : "Esconder"}">${esc_.has(p.id) ? OLHO_NAO : OLHO}</button>`}
+            ${r.modo === "lista" ? `<button type="button" class="btn btn-pequeno ${naLista.has(p.id) ? "ativo" : ""}" data-a="lista">${naLista.has(p.id) ? "✓ Na lista" : "+ Lista"}</button>` : ""}
+            ${r.modo === "top" ? `<button type="button" class="btn btn-pequeno ${sempre.has(p.id) ? "ativo" : ""}" data-a="sempre" title="Aparece mesmo fora do top">${sempre.has(p.id) ? "★" : "☆"} Sempre</button>` : ""}
+            ${perfisLista && ap ? `<button type="button" class="btn btn-pequeno ${comPerfil.has(p.id) ? "ativo" : ""}" data-a="perfil">${comPerfil.has(p.id) ? "Perfil ✓" : "Perfil"}</button>` : ""}
+          </div></td></tr>`;
+        })
+        .join("")}</tbody></table>
+      ${lista.length > vq.limite ? `<div class="vq-mais"><button type="button" class="btn" id="vq-mais">Mostrar mais (${lista.length - vq.limite})</button></div>` : ""}`
+    : `<p class="muted" style="padding:16px 0">Ninguém com estes filtros.</p>`;
+
+  // Ações em massa
+  const n = vq.sel.size;
+  const botoes = [
+    ["esconder", "Esconder"],
+    ["mostrar", "Deixar de esconder"],
+    ...(r.modo === "lista" ? [["lista+", "Pôr na lista"], ["lista-", "Tirar da lista"]] : []),
+    ...(r.modo === "top" ? [["sempre+", "Mostrar sempre"], ["sempre-", "Tirar de sempre"]] : []),
+    ...(perfisLista ? [["perfil+", "Abrir perfil"], ["perfil-", "Fechar perfil"]] : []),
+  ];
+  $("#vq-acoes", alvo).innerHTML = n
+    ? `<b>${n} ${n === 1 ? "selecionado" : "selecionados"}</b>${botoes.map(([k, t]) => `<button type="button" class="btn btn-pequeno" data-massa="${k}">${t}</button>`).join("")}<button type="button" class="btn btn-pequeno btn-texto" data-massa="limpar">Limpar seleção</button>`
+    : `<button type="button" class="btn btn-pequeno" data-massa="todos">Selecionar os ${lista.length} da lista</button><span class="muted">Seleciona Youtubers para os esconder${r.modo === "lista" ? ", pôr na lista" : r.modo === "top" ? ", mostrar sempre" : ""}${perfisLista ? " ou abrir o perfil" : ""} de uma vez.</span>`;
+
+  const alterar = (k, ids) => {
+    const juntar = (l, add) => [...new Set(add ? [...l, ...ids] : l.filter((x) => !ids.includes(x)))];
+    if (k === "esconder") c.dados.escondidos = juntar(c.dados.escondidos, true);
+    if (k === "mostrar") c.dados.escondidos = juntar(c.dados.escondidos, false);
+    if (k === "lista+") r.lista = juntar(r.lista, true);
+    if (k === "lista-") r.lista = juntar(r.lista, false);
+    if (k === "sempre+") r.sempre = juntar(r.sempre, true);
+    if (k === "sempre-") r.sempre = juntar(r.sempre, false);
+    if (k === "perfil+") c.perfis.lista = juntar(c.perfis.lista || [], true);
+    if (k === "perfil-") c.perfis.lista = juntar(c.perfis.lista || [], false);
+    mudou();
+    tabelaQuem(alvo);
+  };
+  $$("[data-massa]", alvo).forEach((b) => b.addEventListener("click", () => {
+    if (b.dataset.massa === "limpar") {
+      vq.sel.clear();
+      return tabelaQuem(alvo);
+    }
+    if (b.dataset.massa === "todos") {
+      for (const p of lista) vq.sel.add(p.id);
+      return tabelaQuem(alvo);
+    }
+    alterar(b.dataset.massa, [...vq.sel]);
+  }));
+  $("#vq-todos", alvo)?.addEventListener("change", (e) => {
+    for (const p of visiveis) e.target.checked ? vq.sel.add(p.id) : vq.sel.delete(p.id);
+    tabelaQuem(alvo);
+  });
+  $("#vq-mais", alvo)?.addEventListener("click", () => ((vq.limite += 100), tabelaQuem(alvo)));
+  $$("tr[data-p]", alvo).forEach((tr) => {
+    const id = tr.dataset.p;
+    $("[data-sel]", tr).addEventListener("change", (e) => {
+      e.target.checked ? vq.sel.add(id) : vq.sel.delete(id);
+      tabelaQuem(alvo);
+    });
+    $$("[data-a]", tr).forEach((b) => b.addEventListener("click", () => {
+      const a = b.dataset.a;
+      if (a === "esconder") alterar(esc_.has(id) ? "mostrar" : "esconder", [id]);
+      if (a === "lista") alterar(naLista.has(id) ? "lista-" : "lista+", [id]);
+      if (a === "sempre") alterar(sempre.has(id) ? "sempre-" : "sempre+", [id]);
+      if (a === "perfil") alterar(comPerfil.has(id) ? "perfil-" : "perfil+", [id]);
+    }));
+  });
+}
+
+// ---------- Exclusivos ----------
+async function seccaoExclusivos(alvo) {
+  const c = estadoV.cfg;
+  const aba = c.abas.find((a) => a.id === "exclusivos");
+  const bloco = c.inicio.blocos.some((b) => b.tipo === "exclusivos" && b.visivel);
+  alvo.innerHTML = `<div class="painel ed-bloco">
+      <h3>Exclusivos</h3>
+      <p class="muted">Espetáculos do Palco que os visitantes veem a correr no site: carregam em play e veem a batalha, o torneio ou o top, com a música e os efeitos. Não são vídeos gravados.</p>
+      <div class="vx-onde">
+        ${interruptorAba(aba)}
+        <div class="vx-onde-texto"><b>Bloco no Início</b><small>${bloco ? "Há um bloco Exclusivos no Início." : "Podes juntar um bloco Exclusivos ao Início (em Início, + Adicionar bloco)."}</small></div>
+      </div>
+    </div>
+    <div class="painel ed-bloco">
+      <div class="vc-cabeca"><div><h3>Os teus exclusivos</h3><p class="muted">Para criar um: escolhe um espetáculo no Palco, ajusta-o e carrega em <b>☆ Publicar como exclusivo</b>.</p></div><a class="btn btn-primario btn-pequeno" href="#/palco?para=video">+ Criar no Palco</a></div>
+      <div id="vx-lista"><div class="a-carregar" style="min-height:10vh"><div class="roda"></div></div></div>
+    </div>`;
+  $("[data-aba-excl]", alvo)?.addEventListener("change", (e) => {
+    aba.visivel = e.target.checked;
+    mudou();
+    seccaoExclusivos(alvo);
+  });
+  let r;
+  try {
+    r = await api("admin/exclusivos");
+  } catch (e) {
+    $("#vx-lista", alvo).innerHTML = `<p>${esc(e.message)}</p>`;
+    return;
+  }
+  const lista = r.exclusivos || [];
+  const agora = Date.now();
+  const estadoDe = (x) =>
+    !x.visivel ? `<span class="vq-estado nao">Escondido</span>` : x.desde && Date.parse(x.desde) > agora ? `<span class="vq-estado fixo">A partir de ${new Date(x.desde).toLocaleString("pt-PT", { dateStyle: "short", timeStyle: "short" })}</span>` : x.ate && Date.parse(x.ate) <= agora ? `<span class="vq-estado esc">Terminou</span>` : `<span class="vq-estado sim">No site</span>${x.ate ? ` <span class="vq-estado">até ${new Date(x.ate).toLocaleString("pt-PT", { dateStyle: "short", timeStyle: "short" })}</span>` : ""}`;
+  const palco = (x) => `#/palco/${x.esp}?${new URLSearchParams({ ...x.opts, tema: x.tema, fmt: x.formato, vel: x.velocidade, efeitos: x.efeitos, para: "video", excl: x.id })}`;
+  $("#vx-lista", alvo).innerHTML = lista.length
+    ? `<div class="vc-lista">${lista
+        .map(
+          (x, i) => `<div class="vc-item vx-item ${x.visivel ? "" : "desligado"}" data-x="${esc(x.id)}">
+        <label class="vc-interruptor so" title="Visível no site"><input type="checkbox" data-visivel ${x.visivel ? "checked" : ""}><span class="vc-bola"></span></label>
+        <span class="vx-capa ${x.formato === "9x16" ? "v" : ""}" style="background:linear-gradient(150deg, ${x.cores?.[0] || "#8f0d2c"}, ${x.cores?.[2] || x.cores?.[1] || "#f4b942"})">▶</span>
+        <div class="vc-item-texto"><b>${esc(x.titulo)}</b><small class="muted">${esc(x.nomeEsp || x.esp)} · ${x.formato === "9x16" ? "9:16" : "16:9"}</small><div class="vq-estados" style="margin-top:6px">${estadoDe(x)}</div></div>
+        <span class="vc-mover">
+          <button class="botao-icone" data-subir title="Subir" ${i === 0 ? "disabled" : ""}>↑</button>
+          <button class="botao-icone" data-descer title="Descer" ${i === lista.length - 1 ? "disabled" : ""}>↓</button>
+          <button class="btn btn-pequeno" data-texto>Texto e datas</button>
+          <a class="btn btn-pequeno" href="${palco(x)}">Mudar no Palco</a>
+          <button class="botao-icone" data-apagar title="Apagar">✕</button>
+        </span></div>`,
+        )
+        .join("")}</div>`
+    : `<p class="muted">Ainda não há exclusivos.</p>`;
+  const guardar = (x, mudar, msg) => chamar("exclusivo", { exclusivo: { ...x, ...mudar } }, { recarregar: false, sucesso: msg }).then(() => seccaoExclusivos(alvo)).catch(() => {});
+  const ordem = (ids) => chamar("exclusivos/ordem", { ids }, { recarregar: false }).then(() => seccaoExclusivos(alvo)).catch(() => {});
+  $$("[data-x]", alvo).forEach((el) => {
+    const i = lista.findIndex((x) => x.id === el.dataset.x);
+    const x = lista[i];
+    $("[data-visivel]", el).addEventListener("change", (e) => guardar(x, { visivel: e.target.checked }, e.target.checked ? "Já está no site." : "Escondido."));
+    $("[data-subir]", el).addEventListener("click", () => {
+      const ids = lista.map((y) => y.id);
+      [ids[i - 1], ids[i]] = [ids[i], ids[i - 1]];
+      ordem(ids);
+    });
+    $("[data-descer]", el).addEventListener("click", () => {
+      const ids = lista.map((y) => y.id);
+      [ids[i + 1], ids[i]] = [ids[i], ids[i + 1]];
+      ordem(ids);
+    });
+    $("[data-apagar]", el).addEventListener("click", async () => {
+      if (!(await confirmar(`Apagar o exclusivo "${x.titulo}"?`, { sim: "Apagar", perigo: true }))) return;
+      chamar("exclusivo/apagar", { id: x.id }, { recarregar: false, sucesso: "Apagado." }).then(() => seccaoExclusivos(alvo)).catch(() => {});
+    });
+    $("[data-texto]", el).addEventListener("click", () => {
+      const local = (iso) => (iso ? new Date(Date.parse(iso) - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 16) : "");
+      const { el: j, fechar } = janela(
+        `<h2>${esc(x.titulo)}</h2><form class="vc-form" id="vx-form">
+          <label class="campo"><span>Título</span><input class="input" name="titulo" maxlength="100" value="${esc(x.titulo)}"></label>
+          <label class="campo"><span>Texto</span><textarea class="input" name="texto" rows="3" maxlength="400">${esc(x.texto || "")}</textarea></label>
+          <div class="ed-grelha"><label class="campo"><span>Disponível a partir de</span><input class="input" type="datetime-local" name="desde" value="${local(x.desde)}"></label>
+          <label class="campo"><span>Até</span><input class="input" type="datetime-local" name="ate" value="${local(x.ate)}"></label></div>
+        </form><div class="janela-acoes"><button class="btn" data-fechar>Cancelar</button><button class="btn btn-primario" data-ok>Guardar</button></div>`,
+      );
+      const f = $("#vx-form", j);
+      $("[data-ok]", j).addEventListener("click", () => {
+        fechar();
+        guardar(x, { titulo: f.titulo.value, texto: f.texto.value, desde: f.desde.value ? new Date(f.desde.value).toISOString() : null, ate: f.ate.value ? new Date(f.ate.value).toISOString() : null }, "Guardado.");
+      });
+    });
+  });
+}
+
+function interruptorAba(aba) {
+  if (!aba) return "";
+  return `<label class="vc-interruptor"><input type="checkbox" data-aba-excl ${aba.visivel ? "checked" : ""}><span class="vc-bola"></span><span><b>Aba "${esc(aba.nome)}"</b><small>${aba.visivel ? "Os exclusivos têm a sua aba no site." : "A aba está desligada: liga-a para os visitantes verem os exclusivos (e carrega em Publicar)."}</small></span></label>`;
 }

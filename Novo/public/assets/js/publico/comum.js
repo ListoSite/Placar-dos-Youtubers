@@ -5,7 +5,7 @@ import { modo } from "../modo.js";
 /** Ligação para o perfil público (ou null se os perfis estiverem desligados no painel). */
 export function ligacaoPessoa(p) {
   if (!p) return null;
-  if (modo.publico && !modo.cfg?.perfis?.ligado) return null;
+  if (modo.publico && (!modo.cfg?.perfis?.ligado || p.semPerfil)) return null;
   return `#/youtuber/${encodeURIComponent(p.id)}`;
 }
 
@@ -23,6 +23,7 @@ export const ICONES_ABA = {
   duelo: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 4l9 9M20 4l-9 9M6 15l3 3M18 15l-3 3M7.5 16.5 4 20M16.5 16.5 20 20"/></svg>`,
   bolo: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 3v9l6.4 6.4"/></svg>`,
   serie: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="7" width="18" height="13" rx="3"/><path d="M8 3h8M6 5h12"/></svg>`,
+  estrela: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3 14.5 8.5 20 9.3 16 13.2 17 19 12 16.3 7 19 8 13.2 4 9.3 9.5 8.5z"/></svg>`,
   mais: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><circle cx="5" cy="12" r="1.2"/><circle cx="12" cy="12" r="1.2"/><circle cx="19" cy="12" r="1.2"/></svg>`,
 };
 

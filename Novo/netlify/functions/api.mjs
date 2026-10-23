@@ -8,6 +8,7 @@ import { getJSON, setJSON, listKeys, lerLinhas, adicionarLinhas, armazenamentoAt
 import { dadosPublicos, guardarPublicacao, listarPublicacoes, mudarPublicacao, apagarPublicacao, COLECAO_PUB } from "../lib/publico.mjs";
 import { listarVotacoes, guardarVotacao, apagarVotacao, configPublica, mudarEstado, resolverVotacao, criarTorneio, avancarTorneio, apagarTorneio } from "../lib/votacoes.mjs";
 import { lerConfig, guardarConfig, datasetPublico, configPublicaVitrine, canalPublico, BLOCOS, ABAS } from "../lib/vitrine.mjs";
+import { lerExclusivos, guardarExclusivo, apagarExclusivo, ordenarExclusivos, exclusivosPublicos, ESPETACULOS as NOMES_ESP } from "../lib/exclusivos.mjs";
 import { guardarResultados, resumoHistorico, COLECAO as COLECAO_PALCO } from "../lib/historico.mjs";
 import { adminEnabled, checkPassword, createToken, verifyToken, tokenFromRequest, googleLigado, googleClientId, verificarGoogle } from "../lib/auth.mjs";
 import { loadDB, saveDB, newPerson, attachChannel, detachChannel, mergePeople, deletePerson, PERSON_FIELDS, DEFAULT_SETTINGS } from "../lib/db.mjs";
@@ -21,6 +22,11 @@ import { cleanPayload, findChannel, applyImport, applyMonths, applyDaily, cleanE
 import { estimarPessoa, apagarEstimativas, unidadesUsadas } from "../lib/estimate.mjs";
 
 export const config = { path: "/api/*" };
+
+async function abaExclusivos() {
+  const cfg = await lerConfig();
+  return cfg.abas.some((a) => a.id === "exclusivos" && a.visivel) || cfg.inicio.blocos.some((b) => b.tipo === "exclusivos" && b.visivel);
+}
 
 class HttpError extends Error {
   constructor(status, message) {
@@ -111,7 +117,7 @@ const publicRoutes = {
   "GET votacoes": async () => json({ ...(await listarVotacoes()), supabase: configPublica() }, 200, { "cache-control": "public, max-age=15" }),
   // A página pública: a configuração (o que aparece) e só os dados que podem aparecer
   "GET publico": async (req) => {
-    const [ds, cfg, extra] = await Promise.all([getDataset(req), lerConfig(), dadosPublicos()]);
+    const [ds, cfg, extra, excl] = await Promise.all([getDataset(req), lerConfig(), dadosPublicos(), lerExclusivos()]);
     const pub = datasetPublico(ds, cfg);
     const vivos = new Set(pub.people.map((p) => p.id));
     const pessoas = Object.fromEntries(Object.entries(extra.pessoas || {}).filter(([id]) => vivos.has(id)));
@@ -123,6 +129,8 @@ const publicRoutes = {
         publicacoes: cfg.videos.publicacoes ? extra.publicacoes.slice(0, cfg.videos.n) : [],
         hall: cfg.videos.hall ? extra.hall : {},
         pessoas,
+        // Só se a aba ou um bloco do Início os mostrar
+        exclusivos: cfg.abas.some((a) => a.id === "exclusivos" && a.visivel) || cfg.inicio.blocos.some((b) => b.tipo === "exclusivos" && b.visivel) ? exclusivosPublicos(excl) : [],
         historico: cfg.perfis.ligado && cfg.perfis.secoes.palco ? historicoPublico(await resumoHistorico(), vivos) : null,
       },
       200,
@@ -568,6 +576,15 @@ const adminRoutes = {
   // ---------- Página pública (o que aparece) ----------
   "GET vitrine": async () => ({ config: await lerConfig(), blocos: BLOCOS, abas: ABAS }),
   "POST vitrine": async ({ b }) => ({ ok: true, config: await guardarConfig(b.config) }),
+
+  // ---------- Exclusivos (espetáculos que os visitantes veem no browser) ----------
+  "GET exclusivos": async () => ({ exclusivos: (await lerExclusivos()).map((x) => ({ ...x, nomeEsp: NOMES_ESP[x.esp] })), abaVisivel: await abaExclusivos() }),
+  "POST exclusivo": async ({ b }) => ({ ok: true, exclusivo: await guardarExclusivo(b.exclusivo || {}), abaVisivel: await abaExclusivos() }),
+  "POST exclusivo/apagar": async ({ b }) => {
+    await apagarExclusivo(b.id);
+    return { ok: true };
+  },
+  "POST exclusivos/ordem": async ({ b }) => ({ ok: true, exclusivos: await ordenarExclusivos(b.ids) }),
 
   // ---------- Votações ----------
   "GET votacoes": async () => listarVotacoes({ todas: true }),

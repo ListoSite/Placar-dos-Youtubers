@@ -2,6 +2,7 @@
 // nada aparece na página pública sem estar ligado aqui.
 
 import { getJSON, setJSON, listKeys } from "./storage.mjs";
+import { quemAparece, contextoQuem, regraQuem } from "../../public/assets/js/quem.js";
 
 const CHAVE = "vitrine";
 
@@ -15,6 +16,7 @@ export const ABAS = [
   { id: "comparar", nome: "Comparar", icone: "duelo" },
   { id: "categorias", nome: "Categorias", icone: "bolo" },
   { id: "projetos", nome: "Projetos", icone: "serie" },
+  { id: "exclusivos", nome: "Exclusivos", icone: "estrela" },
 ];
 
 /** Os blocos que se podem pôr no Início (e o que cada um aceita). */
@@ -31,6 +33,7 @@ export const BLOCOS = {
   votacao: { nome: "Votação", campos: ["titulo", "votacao", "animacao"] },
   videos: { nome: "Últimos vídeos", campos: ["titulo", "n", "animacao"] },
   hall: { nome: "Hall da fama", campos: ["titulo", "animacao"] },
+  exclusivos: { nome: "Exclusivos (play)", campos: ["titulo", "n", "animacao"] },
   texto: { nome: "Texto ou aviso", campos: ["titulo", "texto", "link", "rotuloLink", "estilo", "animacao"] },
 };
 
@@ -62,13 +65,13 @@ export function configBase() {
     },
     ranking: { metricas: ["views", "indice", "crescimento", "subs", "media"], escolherPeriodo: true, filtroCategoria: true, periodo: { tipo: "ultimo" }, n: 100, animacao: "subir", movimento: true },
     youtubers: { pesquisa: true, ordem: "indice", categorias: true },
-    perfis: { ligado: true, secoes: Object.fromEntries(SECOES_PERFIL.map((s) => [s, s !== "diario"])) },
+    perfis: { ligado: true, quem: "todos", lista: [], secoes: Object.fromEntries(SECOES_PERFIL.map((s) => [s, s !== "diario"])) },
     comparar: { max: 4 },
     categorias: { periodo: { tipo: "ultimo" }, escolherPeriodo: true },
     projetos: { trabalho: true },
     videos: { publicacoes: true, hall: true, n: 30 },
     votar: { fechadas: true, explicacao: true },
-    dados: { escondidos: [], desde: "", ate: "" },
+    dados: { escondidos: [], desde: "", ate: "", quem: regraQuem({}) },
     ligacoes: { linkVotar: "", textoBio: "Link na bio", avisoVideos: true },
   };
 }
@@ -162,7 +165,12 @@ export function limparConfig(c) {
       movimento: bool(r.movimento, true),
     },
     youtubers: { pesquisa: bool(c.youtubers?.pesquisa, true), ordem: um(c.youtubers?.ordem, ["indice", "nome", "views"], "indice"), categorias: bool(c.youtubers?.categorias, true) },
-    perfis: { ligado: bool(perfis.ligado, true), secoes },
+    perfis: {
+      ligado: bool(perfis.ligado, true),
+      quem: um(perfis.quem, ["todos", "lista"], "todos"),
+      lista: (Array.isArray(perfis.lista) ? perfis.lista : []).map(idOk).filter(Boolean).slice(0, 2000),
+      secoes,
+    },
     comparar: { max: num(c.comparar?.max, 2, 4, 4) },
     categorias: { periodo: limparPeriodo(c.categorias?.periodo), escolherPeriodo: bool(c.categorias?.escolherPeriodo, true) },
     projetos: { trabalho: bool(c.projetos?.trabalho, true) },
@@ -170,6 +178,7 @@ export function limparConfig(c) {
     votar: { fechadas: bool(c.votar?.fechadas, true), explicacao: bool(c.votar?.explicacao, true) },
     dados: {
       escondidos: (Array.isArray(dados.escondidos) ? dados.escondidos : []).map(idOk).filter(Boolean).slice(0, 1000),
+      quem: regraQuem(dados.quem),
       desde: mesOk(dados.desde),
       ate: mesOk(dados.ate),
     },
@@ -190,16 +199,18 @@ export async function guardarConfig(c) {
 /** O dataset que vai para a página pública: sem Youtubers escondidos, sem meses fora do período e sem notas internas. */
 export function datasetPublico(ds, cfg) {
   if (!ds) return null;
-  const fora = new Set([...cfg.dados.escondidos, ...ds.people.filter((p) => p.hidden).map((p) => p.id)]);
+  // Quem passa a regra escolhida no painel (todos, os melhores, ou só os escolhidos) e quem tem perfil
+  const { aparece, perfil } = quemAparece(ds, cfg.dados, cfg.perfis, contextoQuem(ds));
   const mesBom = (m) => (!cfg.dados.desde || m >= cfg.dados.desde) && (!cfg.dados.ate || m <= cfg.dados.ate || m === ds.currentMonth);
   const months = ds.months.filter(mesBom);
   const filtrarMeses = (o) => (o ? Object.fromEntries(Object.entries(o).filter(([m]) => mesBom(m))) : o);
   const people = ds.people
-    .filter((p) => !fora.has(p.id))
+    .filter((p) => aparece.has(p.id))
     .map((p) => {
       const { hidden, legacy, updatedAt, ...resto } = p;
       return {
         ...resto,
+        ...(perfil.has(p.id) ? {} : { semPerfil: true }),
         monthly: filtrarMeses(p.monthly),
         sb: p.sb ? { ...p.sb, s: filtrarMeses(p.sb.s), n: filtrarMeses(p.sb.n) } : p.sb,
         tt: p.tt ? { ...p.tt, f: filtrarMeses(p.tt.f), l: filtrarMeses(p.tt.l) } : p.tt,
@@ -223,7 +234,8 @@ export function datasetPublico(ds, cfg) {
 /** Só o que o browser precisa da configuração (sem a lista de escondidos). */
 export function configPublicaVitrine(cfg) {
   const { dados, ...resto } = cfg;
-  return { ...resto, abas: cfg.abas.filter((a) => a.visivel), inicio: { ...cfg.inicio, blocos: cfg.inicio.blocos.filter((b) => b.visivel) } };
+  const { lista, ...perfis } = cfg.perfis;
+  return { ...resto, perfis, abas: cfg.abas.filter((a) => a.visivel), inicio: { ...cfg.inicio, blocos: cfg.inicio.blocos.filter((b) => b.visivel) } };
 }
 
 /** Dados extra de um canal para o perfil público (vídeos, últimos dias, Social Blade), só o que estiver ligado. */
@@ -231,7 +243,7 @@ export async function canalPublico(ds, cfg, idCanal) {
   if (!cfg.perfis.ligado || !/^UC[\w-]{22}$/.test(idCanal || "")) return null;
   const pub = datasetPublico(ds, cfg);
   const canal = pub.channels.find((c) => c.id === idCanal);
-  if (!canal) return null;
+  if (!canal || pub.people.find((p) => p.id === canal.personId)?.semPerfil) return null;
   const s = cfg.perfis.secoes;
   const out = {};
   if (s.videos) out.videos = await getJSON("videos/" + idCanal, { items: [] });

@@ -17,11 +17,13 @@ const PAGINAS = {
   comparar: "../pages/compare.js",
   categorias: "../pages/categories.js",
   projetos: "../pages/projects.js",
+  exclusivos: "./exclusivos.js",
 };
 // Endereços antigos (e o regresso do login) continuam a funcionar
 const ANTIGOS = { votacoes: "votar", hall: "videos", "": "" };
 
 let limpar = null;
+let dsOriginal = null;
 
 function lerHash() {
   const h = decodeURI(location.hash.replace(/^#\/?/, ""));
@@ -48,7 +50,7 @@ async function navegar() {
   const mProjeto = /^projeto\/(.+)$/.exec(caminho);
   if (mPessoa) {
     aba = "youtubers";
-    if (modo.cfg.perfis.ligado) {
+    if (modo.cfg.perfis.ligado && ligacaoPessoa(estado.pessoas.get(decodeURIComponent(mPessoa[1])))) {
       mod = "../pages/person.js";
       params = [decodeURIComponent(mPessoa[1])];
     }
@@ -130,7 +132,7 @@ function montarPesquisa() {
   const input = $("#pesquisa");
   const lista = $("#pesquisa-lista");
   input.addEventListener("input", () => {
-    const r = modo.cfg.perfis.ligado ? procurar(input.value, 8) : [];
+    const r = modo.cfg.perfis.ligado ? procurar(input.value, 20).filter((p) => ligacaoPessoa(p)).slice(0, 8) : [];
     lista.innerHTML = r.length
       ? r.map((p) => `<a class="pesquisa-item" href="${ligacaoPessoa(p)}">${avatar(p, 32)}<span><b>${esc(p.name)}</b><small>${esc(p.category || "")}</small></span></a>`).join("")
       : input.value.trim()
@@ -176,8 +178,9 @@ async function iniciar() {
   }
   modo.publico = true;
   modo.cfg = r.cfg;
-  modo.extra = { publicacoes: r.publicacoes || [], hall: r.hall || {}, pessoas: r.pessoas || {}, canal: r.canal || {}, historico: r.historico || null };
+  modo.extra = { publicacoes: r.publicacoes || [], hall: r.hall || {}, pessoas: r.pessoas || {}, canal: r.canal || {}, historico: r.historico || null, exclusivos: r.exclusivos || [] };
   usarDataset(r.ds);
+  dsOriginal = r.ds;
   const previa = ouvirPrevia();
   if (!r.cfg.abas.length && !previa) {
     main.innerHTML = `<div class="wrap pub-pagina"><div class="vidro pub-vazio"><h2>O Placar está a ser preparado</h2><p class="muted">Volta daqui a pouco.</p></div></div>`;
@@ -201,6 +204,13 @@ function ouvirPrevia() {
     if (e.origin !== location.origin || e.source !== window.parent) return;
     if (e.data?.tipo === "placar-previa" && e.data.cfg?.abas) {
       modo.cfg = e.data.cfg;
+      // Quem aparece (ainda por publicar): só se pode tirar quem já está publicado, não juntar
+      if (e.data.quem && dsOriginal) {
+        const ap = new Set(e.data.quem.aparece || []);
+        const sp = new Set(e.data.quem.semPerfil || []);
+        const people = dsOriginal.people.filter((p) => ap.has(p.id)).map((p) => ({ ...p, semPerfil: sp.has(p.id) || undefined }));
+        usarDataset({ ...dsOriginal, people, channels: dsOriginal.channels.filter((c) => ap.has(c.personId)) });
+      }
       montarAbas();
       $("#pub-pesquisa").hidden = !modo.cfg.perfis?.ligado;
       if (!modo.cfg.abas.length) {

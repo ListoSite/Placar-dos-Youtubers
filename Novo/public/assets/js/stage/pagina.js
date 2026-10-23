@@ -2,7 +2,7 @@
 
 import { estado, pessoa, mesesComDados, procurar, api, temSessao } from "../data.js";
 import { esc, mesNome } from "../format.js";
-import { $, $$, avatar, toast } from "../ui.js";
+import { $, $$, avatar, toast, janela } from "../ui.js";
 import { som } from "../audio.js";
 import { Palco, ESPETACULOS, GRUPOS, eAbortado } from "./stage.js";
 import { TEMAS, GRUPOS_TEMAS, TEMA_DA_CATEGORIA } from "./temas.js";
@@ -247,6 +247,7 @@ function opcoes(main, esp, query) {
         <div class="pl-resumo-botoes">
           ${podeGravar() ? `<button class="btn btn-primario pl-so-video pl-gravar" type="button" id="pl-gravar">● Gravar vídeo</button>` : ""}
           <button class="btn btn-ouro pl-comecar" type="submit" form="pl-form">▶ Ver sem gravar</button>
+          <button class="btn pl-exclusivo" type="button" id="pl-exclusivo">☆ ${query.get("excl") ? "Guardar o exclusivo" : "Publicar como exclusivo"}</button>
           <button class="btn btn-texto" type="button" id="pl-legenda">Legenda para publicar</button>
         </div>
         ${podeGravar() ? `<p class="muted pl-so-video pl-resumo-nota">O browser pede para partilhar este separador: escolhe <b>Este separador</b>. Grava em Full HD, com som. Esc termina.</p>` : `<p class="muted pl-so-video pl-resumo-nota">Para gravar neste aparelho, usa a gravação de ecrã do sistema. No computador, com o Chrome, aparece aqui o botão Gravar vídeo.</p>`}
@@ -413,6 +414,68 @@ function opcoes(main, esp, query) {
     for (const el of form.elements) if (el.name && !["som", "repetir"].includes(el.name)) opts[el.name] = el.dataset.pessoa !== undefined ? el.dataset.pessoa : el.value;
     return opts;
   };
+
+  // Abrir um exclusivo para o mudar: as opções vêm no endereço
+  for (const el of form.elements) if (el.name && el.tagName === "SELECT" && query.has(el.name) && [...el.options].some((o) => o.value === query.get(el.name))) el.value = query.get(el.name);
+  if (["rapido", "normal", "lento"].includes(query.get("vel"))) $(`[data-vel="${query.get("vel")}"]`, main)?.click();
+  if (["completo", "cores"].includes(query.get("efeitos"))) $(`[data-efeitos="${query.get("efeitos")}"]`, main)?.click();
+
+  // Exclusivo: os visitantes veem este espetáculo a correr no site, com estas opções, este tema e este formato
+  $("#pl-exclusivo", main).addEventListener("click", async () => {
+    const exclId = query.get("excl");
+    let atual = null;
+    if (exclId) atual = ((await api("admin/exclusivos").catch(() => ({}))).exclusivos || []).find((x) => x.id === exclId) || null;
+    const t = textoPublicar(esp, lerOpcoes(), { formato, temaId });
+    const local = (iso) => (iso ? new Date(Date.parse(iso) - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 16) : "");
+    const { el, fechar } = janela(
+      `<h2>${atual ? "Guardar o exclusivo" : "Publicar como exclusivo"}</h2>
+      <p class="muted">Os visitantes carregam em play e veem este espetáculo a correr no site, com as opções, o tema e o formato que escolheste aqui. Não é um vídeo: corre na hora, com os números do site.</p>
+      <form class="vc-form" id="ex-form">
+        <label class="campo"><span>Título</span><input class="input" name="titulo" maxlength="100" value="${esc(atual?.titulo || t.titulo.replace(/\s*[\p{Extended_Pictographic}]+$/u, ""))}"></label>
+        <label class="campo"><span>Texto (opcional)</span><textarea class="input" name="texto" rows="2" maxlength="400">${esc(atual?.texto || "")}</textarea></label>
+        <div class="ed-grelha">
+          <label class="campo"><span>Disponível a partir de (opcional)</span><input class="input" type="datetime-local" name="desde" value="${local(atual?.desde)}"></label>
+          <label class="campo"><span>Até (opcional)</span><input class="input" type="datetime-local" name="ate" value="${local(atual?.ate)}"></label>
+        </div>
+        <label class="vc-interruptor"><input type="checkbox" name="visivel" ${atual?.visivel === false ? "" : "checked"}><span class="vc-bola"></span><span><b>Visível no site</b><small>Podes esconder e mostrar quando quiseres em Página pública, Exclusivos.</small></span></label>
+      </form>
+      <div class="janela-acoes"><button class="btn" data-fechar>Cancelar</button><button class="btn btn-primario" data-ok data-a-esperar="A guardar">${atual ? "Guardar" : "Publicar"}</button></div>`,
+      { larga: true },
+    );
+    const f = $("#ex-form", el);
+    $("[data-ok]", el).addEventListener("click", async (e) => {
+      const tema = TEMAS.find((x) => x.id === temaId);
+      const exclusivo = {
+        ...(atual ? { id: atual.id } : {}),
+        titulo: f.titulo.value,
+        texto: f.texto.value,
+        desde: f.desde.value ? new Date(f.desde.value).toISOString() : null,
+        ate: f.ate.value ? new Date(f.ate.value).toISOString() : null,
+        visivel: f.visivel.checked,
+        esp: esp.id,
+        opts: lerOpcoes(),
+        tema: temaId,
+        cores: tema?.amostra || [],
+        formato,
+        efeitos,
+        velocidade,
+      };
+      const b = e.currentTarget;
+      b.disabled = true;
+      try {
+        const r = await api("admin/exclusivo", { corpo: { exclusivo } });
+        fechar();
+        toast(atual ? "Exclusivo guardado." : "Publicado como exclusivo.");
+        if (!r.abaVisivel) toast("Para os visitantes o verem, liga a aba Exclusivos (Página pública, Abas) e carrega em Publicar.", { tempo: 9000 });
+        if (!atual) history.replaceState(null, "", `${location.hash.split("?")[0]}?${new URLSearchParams({ ...Object.fromEntries(query), excl: r.exclusivo.id })}`);
+        query.set("excl", r.exclusivo.id);
+        $("#pl-exclusivo", main).textContent = "☆ Guardar o exclusivo";
+      } catch (err) {
+        toast(err.message, { erro: true });
+        b.disabled = false;
+      }
+    });
+  });
 
   const iniciar = async (gravarVideo) => {
     const opts = lerOpcoes();

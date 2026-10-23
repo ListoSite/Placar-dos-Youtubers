@@ -9,6 +9,7 @@ import { MEDIDAS, mesesDoPeriodo, rotuloPeriodo, rankingPeriodo, nomeMedida, per
 import { modo } from "../modo.js";
 import { ligacaoPessoa, cabeca } from "./comum.js";
 import { cartaoVideo, hallHtml } from "./videos.js";
+import { cartaoExclusivo, ligarExclusivos } from "./exclusivos.js";
 
 export const CORES = ["#ff4d70", "#f4b942", "#2ec4a0", "#9085e9", "#4db6ff", "#ff8a3d", "#c86bfa", "#8bd450"];
 
@@ -194,6 +195,12 @@ const TIPOS = {
     return `${cabeca(esc(b.titulo || "Os últimos vídeos"), "", modo.cfg.abas.some((a) => a.id === "videos") ? `<a class="btn btn-pequeno" href="#/videos">Ver todos</a>` : "")}<div class="pub-videos">${pubs.map(cartaoVideo).join("")}</div>`;
   },
 
+  exclusivos(b) {
+    const lista = (modo.extra.exclusivos || []).slice(0, b.n || 4);
+    if (!lista.length) return "";
+    return `${cabeca(esc(b.titulo || "Exclusivos"), "Carrega em play e vê.", modo.cfg.abas.some((a) => a.id === "exclusivos") ? `<a class="btn btn-pequeno" href="#/exclusivos">Ver todos</a>` : "")}<div class="px-grelha">${lista.map(cartaoExclusivo).join("")}</div>`;
+  },
+
   hall(b) {
     return `${cabeca(esc(b.titulo || "Hall da fama"), "Estrelas, coroas e clássicos que ficam para sempre.")}${hallHtml(modo.extra.hall || {})}`;
   },
@@ -216,6 +223,7 @@ export function blocoHtml(b) {
     console.error(e);
     return "";
   }
+  if (!html) return "";
   return `<section class="pb pbt-${b.tipo}" data-animacao="${esc(b.animacao || "subir")}" data-bloco="${esc(b.id)}">${html}</section>`;
 }
 
@@ -239,6 +247,7 @@ export async function montarBlocos(raiz) {
     const { montarVotacoes } = await import("./votacoes.js");
     for (const el of vots) montarVotacoes(el, { filtro: el.dataset.votacao, compacto: true });
   }
+  for (const el of raiz.querySelectorAll(".pbt-exclusivos")) ligarExclusivos(el);
   return () => limpar.forEach((f) => typeof f === "function" && f());
 }
 
