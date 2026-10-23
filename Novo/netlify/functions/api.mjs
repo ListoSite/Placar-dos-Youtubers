@@ -102,6 +102,8 @@ const publicRoutes = {
     for (const id of ids) if (todos[id]) out[id] = todos[id];
     return json(out, 200, { "cache-control": "public, max-age=600" });
   },
+  // O painel pergunta se a sessão guardada ainda vale (sem dar erro 401 na consola)
+  "GET sessao": async (req) => json({ valida: verifyToken(tokenFromRequest(req)) }, 200, { "cache-control": "private, no-store" }),
   "GET status": async () => {
     const meta = await getJSON("meta", {});
     return json({ ok: true, hasApiKey: hasApiKey(), adminEnabled: adminEnabled(), loginGoogle: googleLigado() ? googleClientId() : "", armazenamento: await armazenamentoAtual(), supabase: configPublica(), ...meta });

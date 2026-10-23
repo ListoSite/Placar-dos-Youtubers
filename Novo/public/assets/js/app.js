@@ -1,7 +1,7 @@
 // Arranque do painel (só para o dono do site): pede a palavra-passe, carrega os dados,
 // trata da navegação, da pesquisa e do som. O painel controla a página pública (publico/app.js).
 
-import { carregar, estado, procurar, temSessao } from "./data.js";
+import { api, carregar, estado, guardarToken, procurar, temSessao } from "./data.js";
 import { esc, ha } from "./format.js";
 import { avatar, linkPessoa, $, esconderDica } from "./ui.js";
 import { som } from "./audio.js";
@@ -25,6 +25,7 @@ const REDIRECIONAR = [
 let limpar = null;
 let limparScroll = null;
 let carregado = false;
+let sessaoConfirmada = false;
 
 function lerHash() {
   const h = decodeURI(location.hash.replace(/^#\/?/, ""));
@@ -62,6 +63,18 @@ async function navegar() {
     document.title = "Entrar · Painel do Placar";
     return;
   }
+  // A sessão guardada pode já não valer (expirou ou a palavra-passe mudou): confirma-se uma vez, antes de pedir dados
+  if (!sessaoConfirmada) {
+    const r = await api("sessao").catch(() => ({ valida: true }));
+    if (!r.valida) {
+      guardarToken("");
+      document.body.classList.add("sem-sessao");
+      const { login } = await import("./admin/admin.js");
+      document.title = "Entrar · Painel do Placar";
+      return login(main, "A sessão expirou. Entra outra vez.");
+    }
+    sessaoConfirmada = true;
+  }
   if (!rota) {
     main.innerHTML = `<div class="wrap pagina-topo"><h1>Página não encontrada</h1><p>Este endereço não existe. <a href="#/">Voltar ao início</a>.</p></div>`;
     return;
@@ -83,11 +96,12 @@ async function navegar() {
     const titulo = $("#pn-barra-titulo");
     if (titulo) titulo.textContent = main.dataset.titulo || "";
   } catch (e) {
-    console.error(e);
     if (e.status === 401) {
+      document.body.classList.add("sem-sessao");
       const { login } = await import("./admin/admin.js");
       return login(main, "A sessão expirou. Entra outra vez.");
     }
+    console.error(e);
     main.innerHTML = `<div class="wrap pagina-topo"><h1>Não foi possível abrir esta página</h1><p>${esc(e.message)}</p><p><button class="btn" onclick="location.reload()">Tentar de novo</button></p></div>`;
   }
 }
