@@ -89,6 +89,11 @@ export async function correr(palco, opts) {
     await palco.esperar(350);
   }
   destaque.innerHTML = "";
+  // No vertical, as filas crescem para ocupar o espaço do destaque (que já não é preciso)
+  if (vertical) {
+    cena.classList.add("tl-fim");
+    await palco.esperar(850);
+  }
   const primeiro = cena.querySelector('.tl-itens[data-fila="S"] .tl-item .avatar');
   if (!(primeiro && palco.evento("vencedor", { alvo: primeiro, p: ordem.find((x) => x.fila === "S")?.p }))) palco.tocar("vitoria");
   palco.ambiente.chuva({ n: 120 });

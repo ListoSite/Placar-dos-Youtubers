@@ -105,6 +105,24 @@ function ferramentas(palco, kitId) {
     return el.animate(quadros, { fill: "both", ...opts, ...(quadros.length <= 2 && easing ? { easing } : {}) });
   };
   const tirar = (el, ms) => depois(ms, () => el.remove());
+  // A faixa ao alto ou em baixo: escolhe a altura com menos texto do espetáculo por baixo
+  const alturaLivre = (alturas) => {
+    const t = palco.tela.getBoundingClientRect();
+    const k = palco.L / (t.width || palco.L);
+    const textos = [...palco.cena.querySelectorAll("*")].filter((e) => [...e.childNodes].some((n) => n.nodeType === 3 && n.textContent.trim()));
+    const caixas = textos.map((e) => e.getBoundingClientRect()).filter((r) => r.width && r.height).map((r) => ({ x0: (r.left - t.left) * k, x1: (r.right - t.left) * k, y0: (r.top - t.top) * k, y1: (r.bottom - t.top) * k }));
+    let melhor = alturas[0];
+    let menos = Infinity;
+    for (const y of alturas) {
+      const yy = y * palco.A;
+      const n = caixas.filter((c) => c.y1 > yy - 100 && c.y0 < yy + 100 && c.x1 > palco.L / 2 - 480 && c.x0 < palco.L / 2 + 480).length;
+      if (n < menos) {
+        menos = n;
+        melhor = y;
+      }
+    }
+    return melhor * palco.A;
+  };
 
   const k = {
     palco,
@@ -113,17 +131,23 @@ function ferramentas(palco, kitId) {
     depois,
     ponto,
     novo,
+    alturaLivre,
     som(nome, atraso = 0, op) {
       palco.tocar(nome, op, atraso);
     },
     /** Texto grande a bater no ecrã (ou junto de um alvo). */
     banner(texto, { cls = "", dur = 1900, alvo, y, escala = 1 } = {}) {
       const p = alvo ? ponto(alvo) : { x: palco.L / 2, y: y ?? palco.A * 0.42 };
-      const el = novo(`<span>${esc(texto)}</span>`, `kt-banner ${cls}`, { x: p.x, y: Math.max(140, p.y - (alvo ? p.h / 2 + 40 : 0)) }, `--s:${escala}`);
+      const el = novo(`<span>${esc(texto)}</span>`, `kt-banner ${cls}`, { x: p.x, y: Math.max(78, p.y - (alvo ? p.h / 2 + 40 : 0)) }, `--s:${escala}`);
       dentro(el, p.x);
       anim(el, [{ transform: "scale(2.6) rotate(-6deg)", opacity: 0, filter: "blur(6px)" }, { transform: "scale(1) rotate(-3deg)", opacity: 1, filter: "blur(0)", offset: 0.25 }, { transform: "scale(1.04) rotate(-3deg)", opacity: 1, offset: 0.8 }, { transform: "scale(.9) rotate(-3deg)", opacity: 0 }], { duration: dur, easing: "cubic-bezier(.2,1.3,.4,1)" });
       tirar(el, dur + 50);
       return el;
+    },
+    /** Altura logo abaixo de um alvo (para faixas que não podem tapar o texto que está no centro). */
+    abaixo(alvo) {
+      const q = ponto(alvo);
+      return Math.min(palco.A * 0.9, q.y + (q.h || 200) / 2 + 90);
     },
     /** Rótulo em baixo, estilo televisão. */
     rotulo(titulo, texto, { cls = "", dur = 2600 } = {}) {
@@ -165,8 +189,11 @@ function ferramentas(palco, kitId) {
     /** Um objeto que aparece sobre o alvo. */
     icone(alvo, html, { cls = "", dur = 1600, tam = 140, dy = 0, entrada = "pop" } = {}) {
       const p = ponto(alvo);
+      // Num alvo largo (uma linha com texto, uma opção), o objeto vai para a ponta direita em vez de tapar o texto
+      const largo = p.w > p.h * 2.2 && p.w > tam * 1.6;
+      const px = largo ? p.x + p.w / 2 - tam * 0.55 : p.x;
       // Sempre dentro do ecrã
-      const x = Math.min(palco.L - tam / 2 - 10, Math.max(tam / 2 + 10, p.x));
+      const x = Math.min(palco.L - tam / 2 - 10, Math.max(tam / 2 + 10, px));
       const y = Math.min(palco.A - tam / 2 - 10, Math.max(tam / 2 + 10, p.y + dy));
       const el = novo(html, `kt-icone ${cls}`, { x, y }, `width:${tam}px;height:${tam}px;font-size:${tam}px`);
       const entra = { pop: "scale(0) rotate(-30deg)", cai: `translateY(${-palco.A * 0.6}px)`, sobe: "translateY(200px) scale(.6)" }[entrada];
@@ -262,7 +289,7 @@ const KITS = {
     ko(k, d) {
       k.som("apito", 0, { longo: true });
       k.icone(d.perdedor, `<i class="kt-cartao vermelho"></i>`, { tam: 200, dur: 2600, dy: -60, entrada: "sobe" });
-      k.banner("Expulso!", { alvo: d.perdedor, cls: "kt-cartao-txt", dur: 2400 });
+      k.banner("Expulso!", { y: k.abaixo(d.perdedor), cls: "kt-cartao-txt", dur: 2400 });
       k.som("vaia", 0.6);
       return true;
     },
@@ -280,7 +307,7 @@ const KITS = {
       k.moldura(d.alvo, "kt-camisola", { html: `<b>${d.pos}</b>`, dur: 2000 });
       if (d.pos <= 3) {
         k.som("multidao", 0.1, { dur: 3, vol: pos1(d) ? 1.4 : 0.9 });
-        k.banner(pos1(d) ? "O número 1!" : `${d.pos}.º lugar`, { y: k.palco.A * 0.16, cls: "kt-cachecol", dur: 2200 });
+        k.banner(pos1(d) ? "O número 1!" : `${d.pos}.º lugar`, { y: k.alturaLivre(k.palco.vertical ? [0.905, 0.07, 0.5] : [0.885, 0.075, 0.5]), cls: "kt-cachecol", dur: 2200 });
       }
       return false;
     },
@@ -405,7 +432,7 @@ const KITS = {
     ko(k, d) {
       k.estado.combo = 0;
       k.banner("K.O.", { cls: "kt-pixel kt-ko", dur: 2200, escala: 2 });
-      k.banner("GAME OVER", { alvo: d.perdedor, cls: "kt-pixel kt-over", dur: 2400 });
+      k.banner("GAME OVER", { y: k.abaixo(d.perdedor), cls: "kt-pixel kt-over", dur: 2400 });
       k.som("ko");
       k.som("gameover", 0.6);
       return true;
@@ -536,7 +563,7 @@ const KITS = {
     },
     ko(k, d) {
       k.icone(d.perdedor, SVG.coracaoPartido, { tam: 220, dur: 2400, cls: "kt-parte" });
-      k.banner("Ups… 💔", { alvo: d.perdedor, cls: "kt-fofo", dur: 2200 });
+      k.banner("Ups… 💔", { y: k.abaixo(d.perdedor), cls: "kt-fofo", dur: 2200 });
       k.som("boing");
       return true;
     },
@@ -827,9 +854,11 @@ const KITS = {
     },
     vencedor(k, d) {
       k.moldura(d.alvo, "kt-holofote", { dur: 4200 });
-      k.icone({ x: k.ponto(d.alvo).x + (k.palco.vertical ? 260 : 300), y: k.ponto(d.alvo).y }, SVG.estatueta, { tam: 260, dur: 4200, entrada: "sobe", cls: "kt-estatueta" });
+      const a = k.ponto(d.alvo);
+      const tam = Math.round(Math.max(100, Math.min(k.palco.vertical ? 200 : 220, (a.w || 200) * 0.6)));
+      k.icone({ x: a.x + (a.w || 200) * 0.32, y: a.y + (a.h || 200) * 0.2 }, SVG.estatueta, { tam, dur: 4200, entrada: "sobe", cls: "kt-estatueta" });
       k.subir([SVG.rosa, "🌹"], { n: 24, tam: 64 });
-      k.banner("E o vencedor é…", { y: k.palco.A * 0.16, cls: "kt-gala", dur: 2400 });
+      k.banner("E o vencedor é…", { y: k.alturaLivre(k.palco.vertical ? [0.905, 0.07, 0.5] : [0.885, 0.075, 0.5]), cls: "kt-gala", dur: 2400 });
       k.som("rufo", 0, { dur: 1 });
       k.som("aplauso", 0.9, { dur: 3.5 });
       return true;
@@ -864,7 +893,7 @@ const KITS = {
     },
     ko(k, d) {
       k.moldura(d.perdedor, "kt-glitch longo", { dur: 2200, folga: 0 });
-      k.banner("Sistema desligado", { alvo: d.perdedor, cls: "kt-terminal kt-mau", dur: 2400 });
+      k.banner("Sistema desligado", { y: k.abaixo(d.perdedor), cls: "kt-terminal kt-mau", dur: 2400 });
       k.som("gameover");
       return true;
     },
@@ -891,7 +920,7 @@ const KITS = {
     },
     vencedor(k, d) {
       k.moldura(d.alvo, "kt-holograma", { html: "<i></i><i></i><i></i>", dur: 4200, folga: 60 });
-      k.banner(`> vencedor: ${d.p?.name || ""}`, { y: k.palco.A * 0.16, cls: "kt-terminal", dur: 3600 });
+      k.banner(`> vencedor: ${d.p?.name || ""}`, { y: k.alturaLivre(k.palco.vertical ? [0.905, 0.07, 0.5] : [0.885, 0.075, 0.5]), cls: "kt-terminal", dur: 3600 });
       k.som("powerup");
       k.som("laser", 0.4);
       return true;
@@ -949,7 +978,7 @@ const KITS = {
     },
     vencedor(k, d) {
       k.icone(d.alvo, `<b class="kt-selo grande">1</b>`, { tam: 180, dur: 4200, dy: (k.ponto(d.alvo).h || 200) / 2 });
-      k.banner("Diploma de honra", { y: k.palco.A * 0.16, cls: "kt-tinta", dur: 3200 });
+      k.banner("Diploma de honra", { y: k.alturaLivre(k.palco.vertical ? [0.905, 0.07, 0.5] : [0.885, 0.075, 0.5]), cls: "kt-tinta", dur: 3200 });
       k.som("sino");
       k.som("aplauso", 0.5, { dur: 2 });
       return true;
@@ -974,7 +1003,7 @@ const KITS = {
     },
     ko(k, d) {
       k.explosao(d.perdedor, ["💨"], { n: 10, tam: 80, raio: 160 });
-      k.banner("Queimou!", { alvo: d.perdedor, cls: "kt-chef kt-mau", dur: 2200 });
+      k.banner("Queimou!", { y: k.abaixo(d.perdedor), cls: "kt-chef kt-mau", dur: 2200 });
       k.som("fritar");
       k.som("ding", 0.8);
       return true;
@@ -1030,7 +1059,9 @@ const KITS = {
     },
     ko(k, d) {
       k.icone(d.perdedor, "👎", { tam: 180, dur: 2200 });
-      k.banner("Fim de transmissão", { alvo: d.perdedor, cls: "kt-yt", dur: 2200 });
+      // Por baixo de quem perdeu (por cima chocava com o "K.O." grande da batalha)
+      const q = k.ponto(d.perdedor);
+      k.banner("Fim de transmissão", { y: Math.min(k.palco.A * 0.9, q.y + (q.h || 200) / 2 + 90), cls: "kt-yt", dur: 2200, escala: 0.8 });
       return false;
     },
     acerto(k, d) {
@@ -1043,14 +1074,17 @@ const KITS = {
       return false;
     },
     revelar(k, d) {
-      k.icone(d.alvo, "🔔", { tam: 90, dur: 1500, dy: -((k.ponto(d.alvo).h || 200) / 2), cls: "kt-sino" });
+      // No canto de cima da cara (por cima dela tapava o texto que está acima)
+      const a = k.ponto(d.alvo);
+      k.icone({ x: a.x + (a.w || 160) * 0.34, y: a.y - (a.h || 160) * 0.3 }, "🔔", { tam: 90, dur: 1500, cls: "kt-sino" });
       return false;
     },
     vencedor(k, d) {
       const a = k.ponto(d.alvo);
-      const off = k.palco.vertical ? 260 : 300;
-      k.icone({ x: a.x + off + 130 > k.palco.L ? a.x - off : a.x + off, y: a.y }, SVG.placa, { tam: 240, dur: 4200, entrada: "sobe", cls: "kt-placa" });
-      k.banner("Placa de ouro!", { y: k.palco.A * 0.16, cls: "kt-yt", dur: 3000 });
+      // A placa fica como um selo no canto da cara do vencedor (ao lado tapava nomes e números)
+      const tam = Math.round(Math.max(70, Math.min(k.palco.vertical ? 160 : 170, (a.w || 200) * 0.42)));
+      k.icone({ x: a.x + (a.w || 200) * 0.38, y: a.y + (a.h || 200) * 0.36 }, SVG.placa, { tam, dur: 4200, entrada: "sobe", cls: "kt-placa" });
+      k.banner("Placa de ouro!", { y: k.alturaLivre(k.palco.vertical ? [0.905, 0.07, 0.5] : [0.885, 0.075, 0.5]), cls: "kt-yt", dur: 3000 });
       k.som("sino");
       return false;
     },
@@ -1067,7 +1101,7 @@ const KITS = {
       return true;
     },
     ko(k, d) {
-      k.banner("Apanhado!", { alvo: d.perdedor, cls: "kt-postal", dur: 2200 });
+      k.banner("Apanhado!", { y: k.abaixo(d.perdedor), cls: "kt-postal", dur: 2200 });
       k.icone(d.perdedor, "🎣", { tam: 160, entrada: "cai" });
       return false;
     },

@@ -43,7 +43,7 @@ async function listaVotos(palco, v) {
 
   const alturaLinha = Math.min(vertical ? 170 : 120, ((vertical ? 1300 : 720) - (mostrar.length - 1) * 12) / mostrar.length);
   cena.innerHTML = `${cabecalho(v.titulo, `${inteiro(total)} ${total === 1 ? "voto" : "votos"} no site do Placar`)}
-    <div class="vo-lista" style="--h:${alturaLinha}px">${mostrar
+    <div class="vo-lista" style="--h:${alturaLinha}px${vertical ? `;top:${Math.round(380 + Math.max(0, 1300 - mostrar.length * (alturaLinha + 12)) * 0.4)}px` : ""}">${mostrar
       .map((o, i) => `<div class="vo-linha" data-i="${i}">
         <span class="vo-pos">${i + 1}</span>
         ${cara(o, Math.round(alturaLinha * 0.78))}

@@ -525,7 +525,7 @@ body.modo-palco {
 }
 .vertical .cr-mes {
   right: 60px;
-  bottom: 170px;
+  bottom: 140px;
   font-size: 93px;
 }
 .cr-barras {
@@ -533,7 +533,7 @@ body.modo-palco {
   left: 90px;
   right: 90px;
   top: 250px;
-  bottom: 120px;
+  bottom: 150px;
 }
 .vertical .cr-barras {
   left: 50px;
@@ -815,7 +815,7 @@ body.modo-palco {
 }
 .vertical .qz-lado b {
   margin-top: 0;
-  font-size: 40px;
+  font-size: 50px;
 }
 .qz-lado small {
   font-size: 30px;
@@ -831,7 +831,7 @@ body.modo-palco {
   min-height: 1em;
 }
 .vertical .qz-lado .qz-valor {
-  font-size: 52px;
+  font-size: 62px;
   margin-top: 8px;
 }
 .qz-vs {
@@ -1873,10 +1873,12 @@ body.modo-palco {
 .cr-alerta .palco-avatar {
   box-shadow: 0 0 0 4px var(--pt-anel);
 }
+/* No vertical, o aviso fica no espaço livre por baixo das barras (em cima tapava o líder) */
 .vertical .cr-alerta {
   right: 50%;
   transform: translateX(50%);
-  top: 330px;
+  top: auto;
+  bottom: 262px;
 }
 .cr-alerta-entra {
   animation: alerta 0.6s cubic-bezier(0.2, 1.4, 0.4, 1) both;
@@ -2482,15 +2484,37 @@ body.modo-palco {
   text-align: center;
   transition: opacity 0.4s, filter 0.4s, transform 0.5s cubic-bezier(0.2, 1.4, 0.4, 1);
 }
+/* No vertical: a cara de um lado e, do outro, o nome com o número por baixo (lado a lado não cabia) */
 .vertical .tn-lado {
-  flex-direction: row;
-  justify-content: center;
-  gap: 40px;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  grid-template-rows: auto auto;
+  align-items: center;
+  column-gap: 40px;
+  row-gap: 6px;
   text-align: left;
+  justify-self: center;
+  max-width: 100%;
+}
+.vertical .tn-lado > .avatar,
+.vertical .tn-lado > .palco-avatar {
+  grid-row: span 2;
+}
+.vertical .tn-lado .p-titulo {
+  align-self: end;
+}
+.vertical .tn-lado .tn-grande-v {
+  align-self: start;
+  white-space: nowrap;
 }
 .vertical .tn-lado.l1 {
-  flex-direction: row-reverse;
+  grid-template-columns: minmax(0, 1fr) auto;
   text-align: right;
+}
+.vertical .tn-lado.l1 > .avatar,
+.vertical .tn-lado.l1 > .palco-avatar {
+  grid-column: 2;
+  grid-row: 1 / span 2;
 }
 .tn-lado .p-titulo {
   font-size: 64px;
@@ -2501,6 +2525,7 @@ body.modo-palco {
   max-width: 560px;
 }
 .tn-grande-v {
+  white-space: nowrap;
   font-family: var(--f-display);
   font-weight: 900;
   font-size: 84px;
@@ -2758,7 +2783,7 @@ body.modo-palco {
 }
 .av-mesa {
   position: absolute;
-  inset: 130px 90px 200px;
+  inset: 115px 90px 250px;
   display: grid;
   grid-template-columns: 620px 1fr;
   gap: 70px;
@@ -2857,7 +2882,10 @@ body.modo-palco {
   letter-spacing: -0.03em;
 }
 .vertical .av-pista b {
-  font-size: 36px;
+  font-size: 40px;
+}
+.vertical .av-pista small {
+  font-size: 26px;
 }
 .av-pista:last-child {
   border-color: var(--ouro);
@@ -2866,14 +2894,14 @@ body.modo-palco {
   position: absolute;
   left: 0;
   right: 0;
-  bottom: 120px;
+  bottom: 70px;
   text-align: center;
 }
 .vertical .av-nome {
   bottom: 190px;
 }
 .av-nome .p-titulo {
-  font-size: 110px;
+  font-size: 100px;
   padding: 0 40px;
   overflow-wrap: break-word;
 }
@@ -3064,7 +3092,8 @@ body.modo-palco {
   left: 0;
   right: 0;
   text-align: center;
-  top: 80px;
+  top: 76px;
+  font-size: 36px;
 }
 .tl-filas {
   position: absolute;
@@ -3092,6 +3121,16 @@ body.modo-palco {
 }
 .vertical .tl-fila {
   grid-template-columns: 120px 1fr;
+}
+.vertical .tl-filas {
+  transition: bottom 0.8s cubic-bezier(0.2, 1, 0.3, 1);
+}
+.vertical .tl-fim .tl-filas {
+  bottom: 270px;
+}
+.vertical .tl-fim .tl-item {
+  transition: transform 0.8s cubic-bezier(0.2, 1, 0.3, 1);
+  transform: scale(1.12);
 }
 .tl-rotulo {
   display: flex;
@@ -3306,6 +3345,14 @@ body.modo-palco {
   grid-template-columns: auto 1fr auto;
   border-radius: 40px;
   gap: 20px;
+  padding: 24px 30px 24px 20px;
+}
+/* No vertical há mais altura: linhas maiores e mais legíveis */
+.vertical .al-lista {
+  gap: 28px;
+}
+.vertical .al-quem small {
+  font-size: 30px;
 }
 .vertical .al-linha .al-pos {
   grid-column: 2 / 4;
@@ -4059,7 +4106,7 @@ body.modo-palco {
 .lb-lembrete {
   position: absolute;
   left: 50px;
-  bottom: 50px;
+  bottom: 24px;
   z-index: 8;
   display: flex;
   align-items: center;
@@ -4071,10 +4118,17 @@ body.modo-palco {
   box-shadow: 0 20px 50px rgba(0, 0, 0, 0.45);
   animation: lembrete-entra 0.7s cubic-bezier(0.2, 1.3, 0.4, 1) both;
 }
+/* No vertical, a faixa fica bem em baixo (no lugar da marca, que se esconde) para não tapar o espetáculo */
 .vertical .lb-lembrete {
   left: 50%;
   translate: -50% 0;
-  bottom: 160px;
+  bottom: 34px;
+}
+.vertical .palco-marca {
+  transition: opacity 0.4s;
+}
+.vertical.com-lembrete .palco-marca {
+  opacity: 0;
 }
 .lb-lembrete.sai {
   animation: lembrete-sai 0.6s ease-in both;
@@ -4445,13 +4499,13 @@ body.modo-palco {
   position: absolute;
   left: 0;
   right: 0;
-  top: 240px;
+  top: 275px;
   display: flex;
   justify-content: center;
   gap: 40px;
 }
 .vertical .df-pessoa {
-  top: 340px;
+  top: 380px;
 }
 .df-pessoas {
   top: 330px;
@@ -4471,7 +4525,7 @@ body.modo-palco {
 .vertical .df-opcoes {
   left: 50px;
   right: 50px;
-  bottom: 300px;
+  bottom: 370px;
   grid-template-columns: 1fr;
 }
 .df-opcoes.tipo-numero {
@@ -4494,7 +4548,7 @@ body.modo-palco {
 .vertical .df-opcoes.tipo-ordena,
 .vertical .df-opcoes.tipo-intruso {
   top: 400px;
-  bottom: 300px;
+  bottom: 370px;
 }
 .df-opcao {
   display: flex;
@@ -4506,6 +4560,13 @@ body.modo-palco {
   border: 3px solid color-mix(in srgb, var(--texto) 14%, transparent);
   transition: border-color 0.35s, background 0.35s, opacity 0.35s, transform 0.4s cubic-bezier(0.2, 1.4, 0.4, 1);
   min-height: 110px;
+}
+/* No vertical há altura de sobra: opções mais altas e afastadas */
+.vertical .df-opcao {
+  min-height: 140px;
+}
+.vertical .df-opcoes {
+  gap: 28px;
 }
 .df-letra {
   flex: none;
@@ -4592,7 +4653,7 @@ body.modo-palco {
   color: var(--texto);
 }
 .vertical .df-explica {
-  bottom: 230px;
+  bottom: 240px;
   padding: 0 50px;
 }
 .df-ponto {
@@ -4609,8 +4670,10 @@ body.modo-palco {
 }
 .vertical .df-ponto {
   top: auto;
-  right: 50%;
-  translate: 50% 0;
+  right: auto;
+  left: 50%;
+  translate: -50% 0;
+  white-space: nowrap;
   bottom: 380px;
 }
 .tema-comedia .df-ponto {
@@ -4623,13 +4686,27 @@ body.modo-palco {
   flex-wrap: wrap;
   justify-content: center;
 }
+.df-escala,
+.df-escala div {
+  flex-shrink: 0;
+}
+/* No vertical: duas em cima e a melhor em baixo, a toda a largura */
+.vertical .df-escala {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  width: 760px;
+  max-width: 100%;
+}
+.vertical .df-escala div.df-nivel-top {
+  grid-column: span 2;
+}
 .df-escala div {
   padding: 20px 34px;
   border-radius: 28px;
   background: var(--pt-painel);
   text-align: center;
 }
-.df-escala div.topo {
+.df-escala div.df-nivel-top {
   border: 3px solid var(--ouro);
 }
 .df-escala b {
@@ -4787,11 +4864,11 @@ body.modo-palco {
 }
 
 .df-opcoes.tipo-numero {
-  top: 500px;
+  top: 520px;
   bottom: auto;
 }
 .vertical .df-opcoes.tipo-numero {
-  top: 680px;
+  top: 690px;
 }
 .df-opcoes.tipo-vf {
   top: 560px;
@@ -4808,7 +4885,7 @@ body.modo-palco {
   bottom: 160px;
 }
 .vertical .df-ponto {
-  bottom: 360px;
+  bottom: 296px;
 }
 
 /* =====================================================================
@@ -5286,6 +5363,10 @@ body.modo-palco {
 .vertical .bb-pessoa small {
   font-size: 19px;
 }
+/* No vertical as colunas são estreitas: números um pouco menores para não chocarem com os do lado */
+.vertical .bb-val {
+  font-size: 24px;
+}
 .bb-col.lider .palco-avatar {
   box-shadow: 0 0 0 5px var(--ouro), 0 0 40px color-mix(in srgb, var(--ouro) 60%, transparent);
 }
@@ -5423,14 +5504,14 @@ body.modo-palco {
 .ct-quem {
   position: absolute;
   right: 110px;
-  bottom: 100px;
+  bottom: 82px;
   width: 720px;
 }
 .vertical .ct-quem {
   left: 60px;
   right: 60px;
   width: auto;
-  bottom: 140px;
+  bottom: 175px;
 }
 .ct-quem > div {
   display: flex;
@@ -6842,7 +6923,7 @@ body.modo-palco {
   text-overflow: ellipsis;
 }
 .vertical .vo-barra b {
-  font-size: 28px;
+  font-size: 34px;
 }
 .vo-pct {
   font-family: var(--f-display);
@@ -7429,6 +7510,9 @@ body.modo-palco {
   -webkit-backdrop-filter: blur(12px);
   opacity: 0;
 }
+.com-vencedor .kt-camada {
+  z-index: 20;
+}
 .jg-vencedor .p-centro {
   gap: 26px;
 }
@@ -7622,4 +7706,45 @@ body.modo-palco {
 .jg-dano.critico {
   color: var(--ouro);
   font-size: 46px;
+}
+
+/* Cena "Exclusivo no site" no 16:9: a capa e o código QR lado a lado (em coluna não cabia na altura) */
+.horizontal .rc-excl {
+  display: grid;
+  grid-template-columns: auto auto;
+  grid-template-areas: "etq etq" "capa onde" "titulo titulo" "sub sub";
+  justify-content: center;
+  align-content: center;
+  justify-items: center;
+  align-items: center;
+  column-gap: 56px;
+  row-gap: 26px;
+}
+.horizontal .rc-excl > .vv-etiqueta {
+  grid-area: etq;
+}
+.horizontal .rc-excl > .rc-capa {
+  grid-area: capa;
+  width: 500px;
+}
+.horizontal .rc-excl > .vv-onde {
+  grid-area: onde;
+}
+.horizontal .rc-excl > .rc-titulo {
+  grid-area: titulo;
+  font-size: 84px;
+}
+.horizontal .rc-excl > .p-sub {
+  grid-area: sub;
+}
+.vertical .rc-excl {
+  gap: 36px;
+}
+.vertical .rc-excl > .rc-capa {
+  width: 640px;
+}
+/* Com a faixa "Subscreve" em baixo à esquerda, as faixas de baixo do espetáculo afastam-se para a direita */
+.horizontal.com-lembrete .bb-faixa {
+  left: 640px;
+  transition: left 0.4s;
 }

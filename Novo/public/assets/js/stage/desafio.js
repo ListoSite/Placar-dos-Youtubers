@@ -171,7 +171,7 @@ export async function correr(palco, opts) {
     <div class="df-escala p-entra" style="animation-delay:.5s">
       <div><b>0–${Math.floor(perguntas.length * 0.4)}</b><span>Principiante</span></div>
       <div><b>${Math.floor(perguntas.length * 0.4) + 1}–${Math.floor(perguntas.length * 0.75)}</b><span>Fã do Placar</span></div>
-      <div class="topo"><b>${Math.floor(perguntas.length * 0.75) + 1}–${perguntas.length}</b><span>Mestre dos Youtubers</span></div>
+      <div class="df-nivel-top"><b>${Math.floor(perguntas.length * 0.75) + 1}–${perguntas.length}</b><span>Mestre dos Youtubers</span></div>
     </div>
     <p class="p-sub p-entra" style="animation-delay:.9s">Comenta a tua pontuação!</p></div>`;
   palco.festa({ forca: 0.8 });

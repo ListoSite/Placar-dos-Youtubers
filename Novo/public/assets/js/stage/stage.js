@@ -478,6 +478,7 @@ export class Palco {
     el.className = "lb-lembrete";
     el.innerHTML = `${LOGO_CANAL}<span><b>${esc(this.canal.nome)}</b><small>${esc(this.canal.youtube || "Subscreve o canal")}</small></span><i class="lb-botao">Subscrever</i><i class="lb-sino">${SINO}</i>`;
     this.tela.appendChild(el);
+    this.tela.classList.add("com-lembrete");
     this.tocar("bip", {}, 0.2);
     setTimeout(() => {
       el.classList.add("carregado");
@@ -485,7 +486,10 @@ export class Palco {
       this.tocar("sino", {}, 0.15);
     }, 1600);
     setTimeout(() => el.classList.add("sai"), 5200);
-    setTimeout(() => el.remove(), 6000);
+    setTimeout(() => {
+      el.remove();
+      this.tela.classList.remove("com-lembrete");
+    }, 6000);
   }
 
   /** Mostra o Youtuber em foco: onde ficou neste espetáculo e os seus números. */

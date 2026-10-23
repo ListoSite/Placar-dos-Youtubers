@@ -24,6 +24,8 @@ function quemHtml(p, tam = 40, extra = "") {
 }
 
 const vazioBloco = (t) => `<div class="pb-vazio muted">${esc(t)}</div>`;
+// Avisos para o dono (o que falta configurar): só na pré-visualização do painel; no site o bloco não aparece
+const avisoPainel = (t) => (document.body.classList.contains("pub-previa") ? vazioBloco(t) : "");
 
 // ---------- Cada tipo de bloco ----------
 const TIPOS = {
@@ -104,7 +106,7 @@ const TIPOS = {
       <div class="pb-faixa" data-anim-item>${mostrar.map((x, i) => `<i style="width:${((x.v / total) * 100).toFixed(2)}%;--cor:${CORES[i % CORES.length]}" data-w="${((x.v / total) * 100).toFixed(2)}%" title="${esc(x.c)}"></i>`).join("")}</div>
       <div class="pb-cats">${mostrar
         .map(
-          (x, i) => `<div class="pb-cat" data-anim-item><i style="--cor:${CORES[i % CORES.length]}"></i><span><b>${esc(x.c)}</b><small>n.º 1: ${esc(x.top.p.name)}</small></span><span class="pb-valor"><b data-n="${(x.v / total) * 100}" data-fmt="texto">${Math.round((x.v / total) * 100)}</b>%</span></div>`,
+          (x, i) => `<div class="pb-cat" data-anim-item><i style="--cor:${CORES[i % CORES.length]}"></i><span><b>${esc(x.c)}</b><small>n.º 1: ${esc(x.top.p.name)}</small></span><span class="pb-valor"><b data-n="${Math.round((x.v / total) * 100)}" data-fmt="inteiro">${Math.round((x.v / total) * 100)}</b>%</span></div>`,
         )
         .join("")}</div>`;
   },
@@ -142,12 +144,14 @@ const TIPOS = {
 
   youtuber(b) {
     const p = estado.pessoas.get(b.pessoas?.[0]) || rankingPeriodo("views", b.periodo, { n: 1 })[0]?.p;
-    if (!p) return vazioBloco("Escolhe um Youtuber no painel.");
+    if (!p) return avisoPainel("Escolhe um Youtuber para este bloco.");
     const meses = mesesDoPeriodo(b.periodo);
     const v = MEDIDAS.views.valor(p, meses);
     const pos = rankingPeriodo("views", b.periodo).find((x) => x.p.id === p.id)?.pos;
     const ind = indice(p.id).total;
-    const ultimos = estado.ds.months.filter((m) => m < estado.ds.currentMonth).slice(-12);
+    // Os últimos 12 meses com dados até ao período do bloco (sem meses vazios, que deixavam a linha em branco)
+    const fim = meses[meses.length - 1] || estado.ds.currentMonth;
+    const serie = estado.ds.months.filter((m) => m <= fim && m < estado.ds.currentMonth).slice(-12).map((m) => views(p, m)).filter((x) => x !== null && x !== undefined);
     const href = ligacaoPessoa(p);
     return `${cabeca(esc(b.titulo || "Em destaque"), "")}<div class="vidro pb-destaque" data-anim-item>
       <div class="pb-destaque-topo">${avatar(p, 84)}<div><h3>${esc(p.name)}</h3><small>${esc(p.category || "")}</small></div></div>
@@ -157,14 +161,14 @@ const TIPOS = {
         <div><span>Lugar</span><b>${pos ? pos + ".º" : "–"}</b></div>
         <div><span>Índice</span>${ind !== null ? `<b data-n="${ind}" data-fmt="inteiro">${inteiro(ind)}</b>` : "<b>–</b>"}</div>
       </div>
-      <div class="pb-spark">${sparkline(ultimos.map((m) => views(p, m)), { largura: 320, altura: 56 })}</div>
+      ${serie.length >= 2 ? `<div class="pb-spark">${sparkline(serie, { largura: 320, altura: 56 })}</div>` : ""}
       ${href ? `<a class="btn btn-pequeno" href="${href}">Ver o perfil</a>` : ""}
     </div>`;
   },
 
   duelo(b) {
     const [a, c] = (b.pessoas || []).map((id) => estado.pessoas.get(id)).filter(Boolean);
-    if (!a || !c) return vazioBloco("Escolhe dois Youtubers no painel.");
+    if (!a || !c) return avisoPainel("Escolhe dois Youtubers para este bloco.");
     const meses = mesesDoPeriodo(b.periodo);
     const linhas = [
       { rot: `Views, ${rotuloPeriodo(meses)}`, va: MEDIDAS.views.valor(a, meses), vb: MEDIDAS.views.valor(c, meses), chave: "views" },

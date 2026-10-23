@@ -649,9 +649,23 @@ body.pub-sub-pagina .marca b {
   color: var(--texto-3);
   font-size: var(--t-xs);
 }
+.pb-mini-numeros > div {
+  min-width: 0;
+  padding: 10px 12px;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.04);
+}
+.pb-mini-numeros span {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
 .pb-mini-numeros b {
+  display: block;
+  margin-top: 2px;
   font-family: var(--f-display);
-  font-size: var(--t-lg, 20px);
+  font-size: clamp(17px, 4.8vw, 22px);
+  white-space: nowrap;
 }
 .pb-spark svg {
   width: 100%;

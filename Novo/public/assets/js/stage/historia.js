@@ -45,7 +45,7 @@ export async function correr(palco, opts) {
 
   // ---------- Gráfico ----------
   palco.tela.classList.add("denso");
-  const area = vertical ? { x: 90, y: 560, w: 920, h: 820 } : { x: 150, y: 260, w: 1640, h: 620 };
+  const area = vertical ? { x: 90, y: 700, w: 920, h: 960 } : { x: 150, y: 260, w: 1640, h: 620 };
   const max = Math.max(...pontos.map((x) => x.v)) * 1.12;
   const X = (i) => area.x + ((i - pontos[0].i) / Math.max(1, ultimo.i - pontos[0].i)) * area.w;
   const Y = (v) => area.y + area.h - (v / max) * area.h;
@@ -122,7 +122,7 @@ export async function correr(palco, opts) {
     const py = Y(x.v);
     popup.className = `hs-popup visivel ${ouro ? "ouro" : ""} ${px > palco.L * 0.6 ? "esq" : ""}`;
     popup.style.left = px + "px";
-    popup.style.top = Math.max(vertical ? 380 : 170, py - (vertical ? 260 : 220)) + "px";
+    popup.style.top = Math.max(vertical ? 450 : 205, py - (vertical ? 260 : 220)) + "px";
     popup.innerHTML = itens.map((y) => `<div><small>${esc(y.titulo)}</small><b>${esc(y.texto)}</b></div>`).join("");
     popup.animate([{ transform: `${px > palco.L * 0.6 ? "translateX(-100%) " : ""}scale(.5)`, opacity: 0 }, { transform: `${px > palco.L * 0.6 ? "translateX(-100%) " : ""}scale(1)`, opacity: 1 }], { duration: 450, easing: "cubic-bezier(.2,1.4,.4,1)" });
     if (!(ouro && palco.evento("subida", { alvo: { x: px, y: py }, p }))) palco.tocar(ouro ? "_destaque" : "revelar");

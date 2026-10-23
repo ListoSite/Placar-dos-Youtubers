@@ -56,6 +56,7 @@ export const textoMedida = (medida, m = estado.ref) => (medida === "igual" ? "Ta
 
 /** A área de jogo dentro do palco (abaixo do cabeçalho). */
 export function arena(palco, { topo } = {}) {
+  // (não mudar: os exclusivos guardados repetem a simulação com estas medidas)
   return palco.vertical ? { x0: 50, y0: topo ?? 360, x1: 1030, y1: 1760 } : { x0: 90, y0: topo ?? 220, x1: 1830, y1: 1030 };
 }
 
@@ -223,6 +224,8 @@ export async function vencedor(palco, p, { espetaculo, etiqueta = "Vencedor", fr
   camada.className = "jg-vencedor";
   camada.innerHTML = `<div class="p-centro"><div class="vv-etiqueta"><i></i>${esc(etiqueta)}</div>${avatarPalco(p, palco.vertical ? 380 : 300)}<h2 class="p-titulo">${esc(p.name)}</h2>${frase ? `<p class="p-sub">${esc(frase)}</p>` : ""}</div>`;
   palco.cena.appendChild(camada);
+  // Os efeitos do tema (placa, faixas) ficam por cima deste ecrã, e não esbatidos por trás dele
+  palco.mundo.classList.add("com-vencedor");
   camada.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 400, fill: "forwards" });
   camada.querySelector(".palco-avatar").animate([{ transform: "scale(.3) rotate(-12deg)" }, { transform: "scale(1.08)" }, { transform: "none" }], { duration: 900, easing: "cubic-bezier(.2,1.3,.4,1)" });
   palco.flash(0.6);
