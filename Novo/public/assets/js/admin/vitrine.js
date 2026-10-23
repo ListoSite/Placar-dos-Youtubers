@@ -877,7 +877,7 @@ async function seccaoExclusivos(alvo) {
       </div>
     </div>
     <div class="painel ed-bloco">
-      <div class="vc-cabeca"><div><h3>Os teus exclusivos</h3><p class="muted">Para criar um: escolhe um espetáculo no Palco, ajusta-o e carrega em <b>☆ Publicar como exclusivo</b>.</p></div><a class="btn btn-primario btn-pequeno" href="#/palco?para=video">+ Criar no Palco</a></div>
+      <div class="vc-cabeca"><div><h3>Os teus exclusivos</h3><p class="muted">Para criar um: corre um espetáculo no Palco e, no fim, escolhe <b>☆ Exclusivo no site</b>. Fica guardado exatamente como o viste.</p></div><a class="btn btn-primario btn-pequeno" href="#/palco?para=video">+ Criar no Palco</a></div>
       <div id="vx-lista"><div class="a-carregar" style="min-height:10vh"><div class="roda"></div></div></div>
     </div>`;
   $("[data-aba-excl]", alvo)?.addEventListener("change", (e) => {
@@ -903,10 +903,11 @@ async function seccaoExclusivos(alvo) {
           (x, i) => `<div class="vc-item vx-item ${x.visivel ? "" : "desligado"}" data-x="${esc(x.id)}">
         <label class="vc-interruptor so" title="Visível no site"><input type="checkbox" data-visivel ${x.visivel ? "checked" : ""}><span class="vc-bola"></span></label>
         <span class="vx-capa ${x.formato === "9x16" ? "v" : ""}" style="background:linear-gradient(150deg, ${x.cores?.[0] || "#8f0d2c"}, ${x.cores?.[2] || x.cores?.[1] || "#f4b942"})">▶</span>
-        <div class="vc-item-texto"><b>${esc(x.titulo)}</b><small class="muted">${esc(x.nomeEsp || x.esp)} · ${x.formato === "9x16" ? "9:16" : "16:9"}</small><div class="vq-estados" style="margin-top:6px">${estadoDe(x)}</div></div>
+        <div class="vc-item-texto"><b>${esc(x.titulo)}</b><small class="muted">${esc(x.nomeEsp || x.esp)} · ${x.formato === "9x16" ? "9:16" : "16:9"}${x.retrato?.publicado ? ` · números de ${esc(new Date(x.retrato.publicado).toLocaleDateString("pt-PT", { day: "numeric", month: "short", year: "numeric" }))}` : " · números do dia (antigo)"}</small><div class="vq-estados" style="margin-top:6px">${estadoDe(x)}</div></div>
         <span class="vc-mover">
           <button class="botao-icone" data-subir title="Subir" ${i === 0 ? "disabled" : ""}>↑</button>
           <button class="botao-icone" data-descer title="Descer" ${i === lista.length - 1 ? "disabled" : ""}>↓</button>
+          <button class="btn btn-pequeno" data-ver title="Corre aqui exatamente como no site">▶ Ver</button>
           <button class="btn btn-pequeno" data-texto>Texto e datas</button>
           <a class="btn btn-pequeno" href="${palco(x)}">Mudar no Palco</a>
           <button class="botao-icone" data-apagar title="Apagar">✕</button>
@@ -920,6 +921,10 @@ async function seccaoExclusivos(alvo) {
     const i = lista.findIndex((x) => x.id === el.dataset.x);
     const x = lista[i];
     $("[data-visivel]", el).addEventListener("change", (e) => guardar(x, { visivel: e.target.checked }, e.target.checked ? "Já está no site." : "Escondido."));
+    $("[data-ver]", el).addEventListener("click", async (e) => {
+      const { tocar } = await import("../publico/exclusivos.js");
+      tocar(x, e.currentTarget, { buscarRetrato: (id) => api(`admin/exclusivo/retrato?id=${encodeURIComponent(id)}`) });
+    });
     $("[data-subir]", el).addEventListener("click", () => {
       const ids = lista.map((y) => y.id);
       [ids[i - 1], ids[i]] = [ids[i], ids[i - 1]];

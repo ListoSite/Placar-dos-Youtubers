@@ -13,7 +13,7 @@ const pctDe = (n, total) => (total ? Math.round((n / total) * 100) : 0);
 const cara = (o, tam) => (o.p ? avatarPalco(o.p, tam) : `<span class="vo-letra" style="width:${tam}px;height:${tam}px">${esc(o.nome.slice(0, 1))}</span>`);
 
 export async function correr(palco, opts) {
-  const r = await api(`votacoes?t=${Date.now()}`);
+  const r = await palco.captura("votacoes", () => api(`votacoes?t=${Date.now()}`));
   const lista = r.votacoes || [];
   if (String(opts.votacao || "").startsWith("g:")) return torneio(palco, lista.filter((v) => v.grupo === opts.votacao.slice(2) && v.estado !== "rascunho"));
   const v = lista.find((x) => x.id === opts.votacao) || lista.find((x) => !x.grupo && x.votos && x.total);

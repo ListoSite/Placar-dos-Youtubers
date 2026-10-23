@@ -8,7 +8,7 @@ import { getJSON, setJSON, listKeys, lerLinhas, adicionarLinhas, armazenamentoAt
 import { dadosPublicos, guardarPublicacao, listarPublicacoes, mudarPublicacao, apagarPublicacao, COLECAO_PUB } from "../lib/publico.mjs";
 import { listarVotacoes, guardarVotacao, apagarVotacao, configPublica, mudarEstado, resolverVotacao, criarTorneio, avancarTorneio, apagarTorneio } from "../lib/votacoes.mjs";
 import { lerConfig, guardarConfig, datasetPublico, configPublicaVitrine, canalPublico, BLOCOS, ABAS } from "../lib/vitrine.mjs";
-import { lerExclusivos, guardarExclusivo, apagarExclusivo, ordenarExclusivos, exclusivosPublicos, ESPETACULOS as NOMES_ESP } from "../lib/exclusivos.mjs";
+import { lerExclusivos, guardarExclusivo, apagarExclusivo, ordenarExclusivos, exclusivosPublicos, prepararRetrato, guardarRetrato, lerRetrato, ESPETACULOS as NOMES_ESP } from "../lib/exclusivos.mjs";
 import { guardarResultados, resumoHistorico, COLECAO as COLECAO_PALCO } from "../lib/historico.mjs";
 import { adminEnabled, checkPassword, createToken, verifyToken, tokenFromRequest, googleLigado, googleClientId, verificarGoogle } from "../lib/auth.mjs";
 import { loadDB, saveDB, newPerson, attachChannel, detachChannel, mergePeople, deletePerson, PERSON_FIELDS, DEFAULT_SETTINGS } from "../lib/db.mjs";
@@ -579,7 +579,19 @@ const adminRoutes = {
 
   // ---------- Exclusivos (espetáculos que os visitantes veem no browser) ----------
   "GET exclusivos": async () => ({ exclusivos: (await lerExclusivos()).map((x) => ({ ...x, nomeEsp: NOMES_ESP[x.esp] })), abaVisivel: await abaExclusivos() }),
-  "POST exclusivo": async ({ b }) => ({ ok: true, exclusivo: await guardarExclusivo(b.exclusivo || {}), abaVisivel: await abaExclusivos() }),
+  "POST exclusivo": async ({ b }) => {
+    const ex = b.exclusivo || {};
+    // Com retrato: o site repete exatamente o que correu no painel
+    const r = b.retrato ? prepararRetrato(b.retrato, ex, await lerConfig()) : null;
+    const novo = await guardarExclusivo(r ? { ...ex, retrato: r.meta } : ex);
+    if (r) await guardarRetrato(novo.id, r.retrato);
+    return { ok: true, exclusivo: novo, abaVisivel: await abaExclusivos() };
+  },
+  "GET exclusivo/retrato": async ({ url }) => {
+    const r = await lerRetrato(String(url.searchParams.get("id") || "").replace(/[^a-z0-9]/g, ""));
+    if (!r) throw new HttpError(404, "Este exclusivo não tem números guardados.");
+    return r;
+  },
   "POST exclusivo/apagar": async ({ b }) => {
     await apagarExclusivo(b.id);
     return { ok: true };
@@ -638,6 +650,14 @@ export default async (req) => {
       const r = await canalPublico(ds, cfg, mCanal[1]);
       if (!r) throw new HttpError(404, "Este canal não está disponível.");
       return json(r, 200, { "cache-control": "public, max-age=300" });
+    }
+    // O retrato de um exclusivo (só dos que estão no site agora)
+    const mExcl = req.method === "GET" && /^publico\/exclusivo\/(x[a-z0-9]{4,30})$/.exec(route);
+    if (mExcl) {
+      const x = (await abaExclusivos()) && exclusivosPublicos(await lerExclusivos()).find((e) => e.id === mExcl[1]);
+      const retrato = x?.retrato ? await lerRetrato(x.id) : null;
+      if (!retrato) throw new HttpError(404, "Este exclusivo não está disponível.");
+      return json(retrato, 200, { "cache-control": "public, max-age=300" });
     }
     const pub = publicRoutes[`${req.method} ${route}`];
     if (pub && PRIVADAS.has(`${req.method} ${route}`) && !verifyToken(tokenFromRequest(req))) throw new HttpError(401, "Entra no painel para ver estes dados.");

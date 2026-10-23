@@ -6,6 +6,7 @@ import { esc, mesNome } from "../format.js";
 import { avatarPalco, comFoco } from "./stage.js";
 import { METRICAS, rankingPor } from "./metricas.js";
 import { animar, ciclo, cabecalho } from "./grafico.js";
+import { aleatorio } from "./sorte.js";
 
 export async function correr(palco, opts) {
   const m = opts.m || estado.ref;
@@ -43,7 +44,7 @@ export async function correr(palco, opts) {
   const faixa = cena.querySelector(".bb-faixa");
   const cab = cena.querySelector(".gf-cabeca h2");
   const corpos = base.map((p, i) => {
-    const ang = Math.random() * Math.PI * 2;
+    const ang = aleatorio() * Math.PI * 2;
     const d = Math.max(palco.L, palco.A) * 0.75;
     return { i, x: cx + Math.cos(ang) * d, y: cy + Math.sin(ang) * d, vx: 0, vy: 0, r: 0, alvo: 0, ativo: false };
   });

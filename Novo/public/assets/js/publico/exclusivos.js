@@ -1,6 +1,7 @@
 // Exclusivos: espetáculos do Palco que correm no browser de quem vê (não são vídeos gravados).
 // O painel escolhe o espetáculo, as opções, o tema e o formato; aqui carrega-se em play.
 
+import { api, estado, usarDataset } from "../data.js";
 import { esc } from "../format.js";
 import { modo } from "../modo.js";
 import { toast } from "../ui.js";
@@ -40,23 +41,49 @@ function css(href) {
 
 let aTocar = false;
 
-/** Corre o espetáculo em ecrã inteiro, aqui no browser de quem vê. */
-export async function tocar(x, botao) {
+/**
+ * Corre o espetáculo em ecrã inteiro, aqui no browser de quem vê.
+ * Com retrato (os exclusivos novos), corre com os números, a sorte e as cenas guardadas quando foi
+ * publicado, por isso fica exatamente igual ao que se viu no painel, com a data da publicação no início.
+ */
+export async function tocar(x, botao, { buscarRetrato = (id) => api(`publico/exclusivo/${id}`) } = {}) {
   if (aTocar || !x) return;
   aTocar = true;
   const textoAntes = botao?.innerHTML;
   if (botao?.classList.contains("btn")) botao.innerHTML = `<span class="mini-roda"></span> A preparar`;
   let palco = null;
+  const dsAntes = estado.ds;
+  let trocouDados = false;
+  let largar = () => {};
   try {
-    const [{ Palco, ESPETACULOS, eAbortado }, { carregarHistorico }, { som }] = await Promise.all([import("../stage/stage.js"), import("../stage/historico.js"), import("../audio.js"), css("/assets/css/palco.css"), css("/assets/css/cenas.css")]);
+    const [{ Palco, ESPETACULOS, eAbortado }, { carregarHistorico }, { som }, sorte, { novaCena }, retrato] = await Promise.all([
+      import("../stage/stage.js"),
+      import("../stage/historico.js"),
+      import("../audio.js"),
+      import("../stage/sorte.js"),
+      import("../stage/roteiro.js"),
+      x.retrato ? buscarRetrato(x.id) : null,
+      css("/assets/css/palco.css"),
+      css("/assets/css/cenas.css"),
+    ]);
+    largar = sorte.largar;
     const esp = ESPETACULOS.find((e) => e.id === x.esp);
     if (!esp) throw new Error("Este espetáculo já não existe.");
-    const [mod] = await Promise.all([import(`../stage/${esp.mod.replace(/^\.\//, "")}`), carregarHistorico()]);
+    const [mod] = await Promise.all([import(`../stage/${esp.mod.replace(/^\.\//, "")}`), retrato ? null : carregarHistorico()]);
+    let roteiro = x.roteiro || null;
+    if (retrato) {
+      usarDataset(retrato.ds);
+      trocouDados = true;
+      roteiro = retrato.roteiro || roteiro || { intro: true, fim: true, cenas: [] };
+      // Antes de tudo: o dia em que foi publicado e o mês dos números
+      roteiro = { ...roteiro, cenas: [novaCena("data", { quando: x.retrato.publicado, ref: x.retrato.ref }, { onde: "antes" }), ...roteiro.cenas] };
+    }
     som.definir(true);
     som.desbloquear();
-    palco = new Palco({ formato: x.formato, manual: false, tema: x.tema, velocidade: x.velocidade, modo: "video", completo: x.efeitos !== "cores" });
+    if (retrato) sorte.semear(retrato.semente);
+    palco = new Palco({ formato: x.formato, manual: false, tema: x.tema, velocidade: x.velocidade, modo: "video", completo: x.efeitos !== "cores", roteiro, historico: retrato?.historico || null, reproduzir: retrato?.capturas || null });
     try {
-      await mod.correr(palco, { ...x.opts });
+      await palco.correr(mod, { ...x.opts });
       await palco.esperar(800, { exato: true });
     } catch (e) {
       if (!eAbortado(e)) {
@@ -69,7 +96,9 @@ export async function tocar(x, botao) {
     console.error(e);
     toast(`Não foi possível abrir: ${e.message}`, { erro: true });
   } finally {
+    largar();
     palco?.sair();
+    if (trocouDados) usarDataset(dsAntes);
     aTocar = false;
     if (botao && textoAntes) botao.innerHTML = textoAntes;
   }

@@ -12,6 +12,8 @@ import { criarKit } from "./kits.js";
 import { historicoEmCache } from "./historico.js";
 import { cenaDoTema } from "./cenas.js";
 import qrcode from "../../vendor/qrcode.esm.js";
+import { limparRoteiro, roteiroPadrao, cenaPronta } from "./roteiro.js";
+import { aleatorio } from "./sorte.js";
 
 const I = (d) => `<svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">${d}</svg>`;
 
@@ -53,19 +55,21 @@ const VELOCIDADE = { rapido: 0.72, normal: 1, lento: 1.35 };
 export class Palco {
   static atual = null;
 
-  constructor({ formato = "16x9", manual = false, tema = "rubi", velocidade = "normal", foco = "", focoQuando = "fim", modo = "video", completo = true, votacao = null }) {
+  constructor({ formato = "16x9", manual = false, tema = "rubi", velocidade = "normal", modo = "video", completo = true, roteiro = null, historico = null, reproduzir = null }) {
     Palco.atual = this;
-    // Votação a decorrer no site: nos vídeos, aparece um aviso antes do fim
-    this.votacaoAviso = votacao;
-    this.votacaoMostrada = false;
-    this.foco = foco || "";
-    this.focoQuando = focoQuando;
+    // Roteiro escolhido no painel: a intro, as cenas extra (antes, a meio, depois) e o fim
+    this.roteiro = roteiro ? limparRoteiro(roteiro) : roteiroPadrao({ modo });
+    this.cenasFeitas = new Set();
+    this.foco = this.roteiro.cenas.find((c) => c.tipo === "foco" && c.ligada && c.cfg?.pessoa)?.cfg.pessoa || "";
     this.focoMostrado = false;
+    // O que o espetáculo foi buscar fora (votações) fica guardado; num exclusivo usa-se o guardado
+    this.capturas = {};
+    this.reproduzir = reproduzir;
     this.modo = modo;
     this.canal = { nome: "Placar dos Youtubers", youtube: "@placardosyoutubers", tiktok: "", instagram: "", ...(estado.ds?.settings?.canal || {}) };
     this.contexto = { metrica: "indice", m: estado.ref };
     // Histórico (confrontos, estrelas) e os resultados deste espetáculo, guardados se for gravado
-    this.historico = historicoEmCache();
+    this.historico = historico || historicoEmCache();
     this.resultados = [];
     this.formato = formato;
     this.vertical = formato === "9x16";
@@ -286,11 +290,12 @@ export class Palco {
   // ---------- Peças comuns ----------
   /** Abertura com o título letra a letra, a etiqueta do espetáculo e o som do tema. */
   async abertura({ etiqueta = "", titulo, sub = "", tamanho }) {
+    // A intro pode estar desligada no roteiro
+    if (this.roteiro.intro === false) return;
     // Os temas principais (no modo "Tema completo") têm a sua própria abertura
     const tema = cenaDoTema(this);
     if (tema?.abertura) {
       await tema.abertura(this, { etiqueta, titulo, sub });
-      if (this.foco && this.focoQuando === "inicio") await this.segmentoFoco();
       return;
     }
     const t = tamanho || (this.vertical ? 104 : 124);
@@ -306,13 +311,157 @@ export class Palco {
     setTimeout(() => !this.terminado && this.explodir(this.L / 2, this.A * 0.42, { n: 50, forca: 0.6 }), 700);
     await this.passo(3600);
     await this.sair_(c.firstElementChild);
-    if (this.foco && this.focoQuando === "inicio") await this.segmentoFoco();
   }
 
-  /** A meio do espetáculo: o Youtuber em foco (se for esse o momento) e o lembrete para subscrever. */
+  /** Corre o espetáculo com o roteiro: as cenas de antes e depois o espetáculo (que chama o meio e o fim). */
+  async correr(mod, opts) {
+    await this.correrCenas("antes");
+    await mod.correr(this, opts);
+  }
+
+  /** As cenas extra de um momento (antes, meio, depois), pela ordem do roteiro. */
+  async correrCenas(onde) {
+    for (const c of this.roteiro.cenas) {
+      if (this.terminado) return;
+      if (c.onde !== onde || !c.ligada || this.cenasFeitas.has(c.id) || !cenaPronta(c)) continue;
+      this.cenasFeitas.add(c.id);
+      await this.correrCena(c);
+    }
+  }
+
+  async correrCena(c) {
+    const g = c.cfg || {};
+    if (c.tipo === "lembrete") return this.lembrete();
+    if (c.tipo === "foco") return this.segmentoFoco();
+    if (c.tipo === "votacao") return this.segmentoVotacao(g);
+    if (c.tipo === "exclusivo") return this.cenaExclusivo(g);
+    if (c.tipo === "titulo") return this.cenaTexto(g);
+    if (c.tipo === "data") return this.cenaData(g);
+    if (c.tipo === "contagem") return this.cenaContagem();
+    if (c.tipo === "site") return this.cenaSite(g);
+    if (c.tipo === "proximo") return this.cenaProximo(g);
+  }
+
+  /** O que o espetáculo vai buscar fora (por exemplo as votações): num exclusivo, devolve o que ficou guardado. */
+  async captura(nome, buscar) {
+    if (this.reproduzir && nome in this.reproduzir) return this.reproduzir[nome];
+    const v = await buscar();
+    this.capturas[nome] = v;
+    return v;
+  }
+
+  /** A meio do espetáculo: as cenas que estiverem marcadas para o meio. */
   async meio() {
-    if (this.foco && this.focoQuando === "meio") await this.segmentoFoco();
-    if (this.modo === "video") this.lembrete();
+    await this.correrCenas("meio");
+  }
+
+  /** Uma cena por cima do palco (não apaga o espetáculo que está por baixo). */
+  async camada(html, { dur = 6000, depois } = {}) {
+    const el = document.createElement("div");
+    el.className = "rc-camada";
+    el.innerHTML = html;
+    this.mundo.appendChild(el);
+    const raiz = el.firstElementChild;
+    animate(el.querySelectorAll("[data-entra]"), { translateY: [70, 0], opacity: [0, 1], delay: stagger(150, { start: 80 }), duration: 900, ease: spring({ stiffness: 140, damping: 14 }) });
+    depois?.(raiz);
+    await this.passo(dur);
+    el.classList.add("p-sai");
+    await this.esperar(420, { exato: true });
+    el.remove();
+  }
+
+  /** Há um exclusivo para ver no site. */
+  async cenaExclusivo(g) {
+    const [a = "#c3123e", b = "#5c0619", c = "#f4b942"] = g.cores || [];
+    const qr = qrSvg(g.link);
+    this.tocar("whoosh");
+    this.tocar("_destaque", {}, 0.5);
+    await this.camada(
+      `<div class="p-centro rc-cena rc-excl">
+        <div class="vv-etiqueta" data-entra><i></i>Exclusivo no site</div>
+        <div class="rc-capa" data-entra style="--a:${a};--b:${b};--c:${c}"><span class="rc-play">▶</span><small>${esc(g.nomeEsp || "Palco")}</small></div>
+        <h2 class="p-titulo rc-titulo" data-entra>${esc(g.titulo || "")}</h2>
+        <p class="p-sub" data-entra>Só no site. Não sai em vídeo.</p>
+        <div class="vv-onde" data-entra><div class="vv-texto"><b>Vai ver!</b><span class="vv-bio">👉 ${esc(g.textoBio || "Link na bio")}</span>${g.linkCurto ? `<small>ou em <b>${esc(g.linkCurto)}</b></small>` : ""}</div>${qr ? `<div class="vv-qr">${qr}</div>` : ""}</div>
+      </div>`,
+      { dur: 6500, depois: (raiz) => setTimeout(() => !this.terminado && this.explodir(this.L / 2, this.A * 0.32, { n: 60, forca: 0.6 }), 700) },
+    );
+  }
+
+  /** Um título e uma frase escritos no painel. */
+  async cenaTexto(g) {
+    this.tocar("_abertura", {}, 0.1);
+    await this.camada(
+      `<div class="p-centro rc-cena rc-texto">
+        ${g.etiqueta ? `<div class="ab-etiqueta" data-entra>${esc(g.etiqueta)}</div>` : ""}
+        <h1 class="p-titulo" data-entra style="font-size:${this.vertical ? 96 : 110}px">${esc(g.titulo || "")}</h1>
+        ${g.texto ? `<p class="p-sub" data-entra>${esc(g.texto)}</p>` : ""}
+      </div>`,
+      { dur: 4500 },
+    );
+  }
+
+  /** De quando são os números (num exclusivo: o dia em que foi publicado). */
+  async cenaData(g) {
+    const quando = g.quando ? new Date(g.quando) : new Date();
+    const ref = g.ref || estado.ref;
+    this.tocar("_destaque", {}, 0.1);
+    await this.camada(
+      `<div class="p-centro rc-cena rc-data">
+        <div class="vv-etiqueta" data-entra>📅 ${g.quando ? "Publicado a" : "Hoje"}</div>
+        <h1 class="p-titulo" data-entra style="font-size:${this.vertical ? 104 : 120}px">${esc(quando.toLocaleDateString("pt-PT", { day: "numeric", month: "long", year: "numeric" }))}</h1>
+        <p class="p-sub" data-entra>Com os números de ${esc(mesNome(ref))}${g.quando ? ". É assim que ficou." : ""}</p>
+      </div>`,
+      { dur: 3800 },
+    );
+  }
+
+  /** Contagem decrescente: 3, 2, 1. */
+  async cenaContagem() {
+    const el = document.createElement("div");
+    el.className = "rc-camada rc-contagem";
+    this.mundo.appendChild(el);
+    for (const n of ["3", "2", "1"]) {
+      el.innerHTML = `<div class="p-centro"><b class="rc-numero">${n}</b></div>`;
+      animate(el.querySelector(".rc-numero"), { scale: [2.2, 1], opacity: [0, 1], duration: 600, ease: spring({ stiffness: 200, damping: 14 }) });
+      this.tocar("bip");
+      await this.esperar(850);
+    }
+    this.tocar("_destaque");
+    this.flash(0.4);
+    el.classList.add("p-sai");
+    await this.esperar(420, { exato: true });
+    el.remove();
+  }
+
+  /** O endereço do site e o código QR. */
+  async cenaSite(g) {
+    const link = g.link || location.origin;
+    const curto = link.replace(/^https?:\/\//, "").replace(/\/$/, "");
+    const qr = qrSvg(link);
+    this.tocar("whoosh");
+    await this.camada(
+      `<div class="p-centro rc-cena rc-site">
+        <div class="vv-etiqueta" data-entra><i></i>O site do Placar</div>
+        <h2 class="p-titulo rc-titulo" data-entra>${esc(curto)}</h2>
+        <p class="p-sub" data-entra>Os rankings de todos os meses, as votações e os exclusivos.</p>
+        <div class="vv-onde" data-entra><div class="vv-texto"><b>Vai ver!</b><span class="vv-bio">👉 ${esc(g.textoBio || "Link na bio")}</span></div>${qr ? `<div class="vv-qr">${qr}</div>` : ""}</div>
+      </div>`,
+      { dur: 5500 },
+    );
+  }
+
+  /** O que vem no próximo vídeo. */
+  async cenaProximo(g) {
+    this.tocar("_abertura", {}, 0.1);
+    await this.camada(
+      `<div class="p-centro rc-cena rc-proximo">
+        <div class="vv-etiqueta" data-entra>⏭ No próximo vídeo</div>
+        <h2 class="p-titulo rc-titulo" data-entra>${esc(g.texto || "")}</h2>
+        <p class="p-sub" data-entra>Subscreve para não perderes.</p>
+      </div>`,
+      { dur: 4500 },
+    );
   }
 
   /** Faixa a lembrar de subscrever o canal (só nos vídeos). */
@@ -379,41 +528,36 @@ export class Palco {
     camada.remove();
     if (musicaAntes && this.musicaAtual !== musicaAntes) som.musica.iniciar(musicaAntes);
   }
-  /** Antes do fim dos vídeos: há uma votação a decorrer no site, e onde se vota (link na bio, endereço e QR). */
-  async segmentoVotacao() {
-    const v = this.votacaoAviso;
-    this.votacaoMostrada = true;
-    let qr = "";
-    try {
-      const c = qrcode(0, "M");
-      c.addData(v.link);
-      c.make();
-      qr = c.createSvgTag({ cellSize: 1, margin: 2, scalable: true });
-    } catch {
-      /* sem QR */
-    }
-    const dois = v.opcoes.length === 2 && ["confronto", "torneio"].includes(v.tipo);
-    const caras = v.opcoes.slice(0, 4);
+  /** Há uma votação a decorrer no site, e onde se vota (link na bio, endereço e QR). */
+  async segmentoVotacao(v) {
+    if (!v?.titulo) return;
+    const qr = qrSvg(v.link);
+    const opcoes = (v.opcoes || []).map((o) => ({ ...o, p: o.p || (o.id ? pessoa(o.id) : null) }));
+    const dois = opcoes.length === 2 && ["confronto", "torneio"].includes(v.tipo);
+    const caras = opcoes.slice(0, 4);
     const nCaras = caras.length + (v.mais ? 1 : 0);
     const tam = this.vertical ? (dois ? 230 : nCaras > 4 ? 140 : 170) : dois ? 190 : 140;
-    this.cena.innerHTML = `<div class="p-centro vv-aviso ${dois ? "dois" : ""}">
-      <div class="vv-etiqueta"><i></i>${esc(v.etiqueta)}</div>
-      <h2 class="p-titulo vv-pergunta">${esc(v.titulo)}</h2>
-      ${caras.length ? `<div class="vv-caras">${caras.map((o, i) => `${dois && i === 1 ? `<b class="vv-vs">VS</b>` : ""}<div class="vv-cara">${o.p ? avatarPalco(o.p, tam) : `<span class="vo-letra" style="width:${tam}px;height:${tam}px">${esc(o.nome.slice(0, 1))}</span>`}<span>${esc(o.nome)}</span></div>`).join("")}${v.mais ? `<div class="vv-cara vv-mais"><span class="vo-letra" style="width:${tam}px;height:${tam}px">+${v.mais}</span><span>e mais</span></div>` : ""}</div>` : ""}
-      <div class="vv-onde">
-        <div class="vv-texto"><b>Vai votar!</b><span class="vv-bio">👉 ${esc(v.textoBio)}</span><small>ou em <b>${esc(v.linkCurto)}</b></small></div>
-        ${qr ? `<div class="vv-qr">${qr}</div>` : ""}
-      </div></div>`;
-    const raiz = this.cena.firstElementChild;
-    animate(raiz.querySelectorAll(".vv-etiqueta, .vv-pergunta"), { translateY: [70, 0], opacity: [0, 1], delay: stagger(160), duration: 900, ease: spring({ stiffness: 140, damping: 14 }) });
-    animate(raiz.querySelectorAll(".vv-cara, .vv-vs"), { scale: [0.3, 1], opacity: [0, 1], delay: stagger(130, { start: 450 }), duration: 900, ease: spring({ stiffness: 160, damping: 12 }) });
-    animate(raiz.querySelectorAll(".vv-onde"), { translateY: [90, 0], opacity: [0, 1], delay: 1000, duration: 900, ease: "outExpo" });
     this.tocar("whoosh");
     this.tocar("_destaque", {}, 0.5);
-    setTimeout(() => !this.terminado && this.explodir(this.L / 2, this.A * 0.3, { n: 60, forca: 0.6 }), 900);
-    setTimeout(() => !this.terminado && raiz.querySelector(".vv-bio")?.classList.add("pulsa"), 1700);
-    await this.passo(6500);
-    await this.sair_(raiz);
+    await this.camada(
+      `<div class="p-centro vv-aviso ${dois ? "dois" : ""}">
+      <div class="vv-etiqueta" data-entra><i></i>${esc(v.etiqueta || "Votação a decorrer")}</div>
+      <h2 class="p-titulo vv-pergunta" data-entra>${esc(v.titulo)}</h2>
+      ${caras.length ? `<div class="vv-caras">${caras.map((o, i) => `${dois && i === 1 ? `<b class="vv-vs">VS</b>` : ""}<div class="vv-cara">${o.p ? avatarPalco(o.p, tam) : `<span class="vo-letra" style="width:${tam}px;height:${tam}px">${esc((o.nome || "?").slice(0, 1))}</span>`}<span>${esc(o.nome || "")}</span></div>`).join("")}${v.mais ? `<div class="vv-cara vv-mais"><span class="vo-letra" style="width:${tam}px;height:${tam}px">+${v.mais}</span><span>e mais</span></div>` : ""}</div>` : ""}
+      <div class="vv-onde">
+        <div class="vv-texto"><b>Vai votar!</b><span class="vv-bio">👉 ${esc(v.textoBio || "Link na bio")}</span>${v.linkCurto ? `<small>ou em <b>${esc(v.linkCurto)}</b></small>` : ""}</div>
+        ${qr ? `<div class="vv-qr">${qr}</div>` : ""}
+      </div></div>`,
+      {
+        dur: 6500,
+        depois: (raiz) => {
+          animate(raiz.querySelectorAll(".vv-cara, .vv-vs"), { scale: [0.3, 1], opacity: [0, 1], delay: stagger(130, { start: 450 }), duration: 900, ease: spring({ stiffness: 160, damping: 12 }) });
+          animate(raiz.querySelectorAll(".vv-onde"), { translateY: [90, 0], opacity: [0, 1], delay: 1000, duration: 900, ease: "outExpo" });
+          setTimeout(() => !this.terminado && this.explodir(this.L / 2, this.A * 0.3, { n: 60, forca: 0.6 }), 900);
+          setTimeout(() => !this.terminado && raiz.querySelector(".vv-bio")?.classList.add("pulsa"), 1700);
+        },
+      },
+    );
   }
   /** Faz um elemento sair (com a animação p-sai) e espera. */
   async sair_(el) {
@@ -423,9 +567,12 @@ export class Palco {
   /** Final: o Youtuber em foco (se ficou para o fim) e a divulgação do canal. */
   async fecho() {
     this.tela.classList.remove("denso");
-    if (this.foco && !this.focoMostrado) await this.segmentoFoco();
-    if (this.modo === "video" && this.votacaoAviso && !this.votacaoMostrada) await this.segmentoVotacao();
+    // As cenas do meio que o espetáculo não chegou a mostrar e as de depois
+    await this.correrCenas("meio");
+    await this.correrCenas("depois");
+    if (this.roteiro.fim === false) return this.esperar(300, { exato: true });
     const c = this.canal;
+    const linkSite = this.roteiro.cenas.find((x) => x.tipo === "votacao" && x.ligada && x.cfg?.linkCurto)?.cfg.linkCurto || location.host;
     const redes = [
       c.youtube ? { i: ICONE_YT, t: c.youtube } : null,
       c.tiktok ? { i: ICONE_TT, t: c.tiktok } : null,
@@ -440,7 +587,7 @@ export class Palco {
       <div class="fc-acoes"><span class="fc-botao">Subscrever</span><span class="fc-sino">${SINO}</span><span class="fc-gosto">${GOSTO}</span></div>
       <div class="fc-cursor">${CURSOR}</div>
       ${redes.length ? `<div class="fc-redes">${redes.map((r) => `<span>${r.i}${esc(r.t)}</span>`).join("")}</div>` : ""}
-      <p class="fc-site-linha">Vota e vê os resultados em <b class="fc-site">${esc(this.votacaoAviso ? this.votacaoAviso.linkCurto : location.host)}</b></p></div>`;
+      <p class="fc-site-linha">Vota e vê os resultados em <b class="fc-site">${esc(linkSite)}</b></p></div>`;
     const raiz = this.cena.firstElementChild;
     animate(raiz.querySelectorAll(".fc-pergunta, .fc-canal, .fc-acoes, .fc-redes, .fc-site-linha"), { translateY: [60, 0], opacity: [0, 1], delay: stagger(140), duration: 900, ease: spring({ stiffness: 140, damping: 14 }) });
     this.tocar("_abertura", {}, 0.1);
@@ -496,6 +643,19 @@ export class Palco {
   }
 }
 
+/** Código QR em SVG para um endereço (vazio se não der). */
+function qrSvg(link) {
+  if (!link) return "";
+  try {
+    const c = qrcode(0, "M");
+    c.addData(link);
+    c.make();
+    return c.createSvgTag({ cellSize: 1, margin: 2, scalable: true });
+  } catch {
+    return "";
+  }
+}
+
 export function eAbortado(e) {
   return e instanceof Abortado || e?.message === "abortado";
 }
@@ -538,7 +698,7 @@ export function comFoco(lista, palco, { chave = (x) => x, criar = (p) => p } = {
   const p = pessoa(id);
   if (!p) return lista;
   const nova = [...lista];
-  nova[Math.max(0, nova.length - 1 - Math.floor(Math.random() * Math.min(3, nova.length)))] = criar(p);
+  nova[Math.max(0, nova.length - 1 - Math.floor(aleatorio() * Math.min(3, nova.length)))] = criar(p);
   return nova;
 }
 
@@ -554,7 +714,7 @@ const ICONE_IG = `<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" 
 export function baralhar(lista) {
   const a = [...lista];
   for (let i = a.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
+    const j = Math.floor(aleatorio() * (i + 1));
     [a[i], a[j]] = [a[j], a[i]];
   }
   return a;

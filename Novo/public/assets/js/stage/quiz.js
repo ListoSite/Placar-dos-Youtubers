@@ -5,6 +5,7 @@ import { esc, mesNome as nomeMes } from "../format.js";
 import { contar } from "../ui.js";
 import { avatarPalco, baralhar, contagem, comFoco } from "./stage.js";
 import { METRICAS, melhores } from "./metricas.js";
+import { aleatorio } from "./sorte.js";
 
 const TIPOS = [
   { id: "views", pergunta: (m) => `Quem fez mais views em ${nomeMes(m, { ano: false })}?`, met: "views" },
@@ -32,8 +33,8 @@ function criarRondas(pool, n, m, misto) {
   let tentativas = 0;
   while (out.length < n && tentativas++ < 2000) {
     const t = tipos[(out.length + Math.floor(tentativas / 50)) % tipos.length];
-    const x = pool[Math.floor(Math.random() * pool.length)];
-    const y = pool[Math.floor(Math.random() * pool.length)];
+    const x = pool[Math.floor(aleatorio() * pool.length)];
+    const y = pool[Math.floor(aleatorio() * pool.length)];
     if (!x || !y || x.id === y.id || usados.has(x.id) || usados.has(y.id)) continue;
     const vx = valor(t, x, m);
     const vy = valor(t, y, m);

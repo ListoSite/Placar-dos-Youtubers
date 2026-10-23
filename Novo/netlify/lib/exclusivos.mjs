@@ -2,7 +2,10 @@
 // O painel guarda o espetáculo, as opções, o tema e o formato; a página pública mostra os que estiverem
 // visíveis e dentro das datas, e cada visitante carrega em play.
 
-import { getJSON, setJSON } from "./storage.mjs";
+import { getJSON, setJSON, remove } from "./storage.mjs";
+import { retratoPublico } from "./vitrine.mjs";
+import { mesReferencia } from "../../public/assets/js/quem.js";
+import { limparRoteiro } from "../../public/assets/js/stage/roteiro.js";
 
 const CHAVE = "exclusivos";
 
@@ -56,7 +59,47 @@ function limpar(e, antigo = {}) {
     visivel: e.visivel !== false,
     desde: data(e.desde),
     ate: data(e.ate),
+    roteiro: e.roteiro ? limparRoteiro(e.roteiro) : antigo.roteiro || null,
+    // Com retrato: repete-se no site com os números, a sorte e as cenas guardadas
+    retrato: e.retrato && typeof e.retrato === "object" ? { publicado: data(e.retrato.publicado), ref: /^\d{4}-\d{2}$/.test(e.retrato.ref || "") ? e.retrato.ref : null } : antigo.retrato || null,
   };
+}
+
+const chaveRetrato = (id) => `exclusivos/retrato/${id}`;
+
+/**
+ * O retrato de um exclusivo: os números, o histórico, o que foi buscado fora (votações), a semente da
+ * sorte e o roteiro, tal como estavam quando o espetáculo correu no painel. Só entram os Youtubers que
+ * aparecem no site (e os escolhidos nas opções do espetáculo).
+ */
+export function prepararRetrato(r, exclusivo, cfg) {
+  if (!r?.ds?.people || !Array.isArray(r.ds.people)) throw Object.assign(new Error("Faltam os dados do espetáculo."), { status: 400 });
+  const ids = new Set(r.ds.people.map((p) => p.id));
+  const roteiro = limparRoteiro(r.roteiro);
+  const incluir = new Set();
+  for (const v of Object.values(exclusivo.opts || {})) if (ids.has(v)) incluir.add(v);
+  for (const c of roteiro.cenas) {
+    if (c.cfg?.pessoa && ids.has(c.cfg.pessoa)) incluir.add(c.cfg.pessoa);
+    for (const o of Array.isArray(c.cfg?.opcoes) ? c.cfg.opcoes : []) if (o?.id && ids.has(o.id)) incluir.add(o.id);
+  }
+  const ds = retratoPublico(r.ds, cfg, [...incluir]);
+  const retrato = {
+    ds,
+    historico: r.historico && typeof r.historico === "object" ? r.historico : { pares: {}, pessoas: {}, classicos: [] },
+    capturas: r.capturas && typeof r.capturas === "object" ? r.capturas : {},
+    semente: Number.isFinite(Number(r.semente)) ? Number(r.semente) >>> 0 : 1,
+    roteiro,
+  };
+  if (JSON.stringify(retrato).length > 4_500_000) throw Object.assign(new Error("Os dados deste espetáculo são grandes demais para guardar."), { status: 413 });
+  return { retrato, meta: { publicado: new Date().toISOString(), ref: mesReferencia(ds).ref } };
+}
+
+export async function guardarRetrato(id, retrato) {
+  await setJSON(chaveRetrato(id), retrato);
+}
+
+export async function lerRetrato(id) {
+  return getJSON(chaveRetrato(id), null);
 }
 
 export async function lerExclusivos() {
@@ -79,6 +122,7 @@ export async function guardarExclusivo(e) {
 export async function apagarExclusivo(id) {
   const lista = await lerExclusivos();
   await setJSON(CHAVE, lista.filter((x) => x.id !== id));
+  await remove(chaveRetrato(id)).catch(() => {});
 }
 
 export async function ordenarExclusivos(ids) {
@@ -93,5 +137,5 @@ export async function ordenarExclusivos(ids) {
 export function exclusivosPublicos(lista, agora = Date.now()) {
   return lista
     .filter((x) => x.visivel && (!x.desde || Date.parse(x.desde) <= agora) && (!x.ate || Date.parse(x.ate) > agora))
-    .map(({ id, titulo, texto, esp, opts, tema, cores, formato, efeitos, velocidade, desde, ate }) => ({ id, titulo, texto, esp, nomeEsp: ESPETACULOS[esp], opts, tema, cores, formato, efeitos, velocidade, desde, ate }));
+    .map(({ id, titulo, texto, esp, opts, tema, cores, formato, efeitos, velocidade, desde, ate, roteiro, retrato }) => ({ id, titulo, texto, esp, nomeEsp: ESPETACULOS[esp], opts, tema, cores, formato, efeitos, velocidade, desde, ate, roteiro, retrato }));
 }

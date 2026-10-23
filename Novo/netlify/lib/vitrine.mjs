@@ -231,6 +231,21 @@ export function datasetPublico(ds, cfg) {
   };
 }
 
+/** O dataset de um exclusivo: o que aparece no site, mais os Youtubers escolhidos no espetáculo. */
+export function retratoPublico(ds, cfg, incluir = []) {
+  const pub = datasetPublico(ds, cfg);
+  const tem = new Set(pub.people.map((p) => p.id));
+  for (const id of incluir) {
+    const p = ds.people.find((x) => x.id === id);
+    if (!p || tem.has(id)) continue;
+    const { hidden, legacy, updatedAt, ...resto } = p;
+    pub.people.push({ ...resto, semPerfil: true });
+    pub.channels.push(...ds.channels.filter((c) => c.personId === id));
+    tem.add(id);
+  }
+  return pub;
+}
+
 /** Só o que o browser precisa da configuração (sem a lista de escondidos). */
 export function configPublicaVitrine(cfg) {
   const { dados, ...resto } = cfg;

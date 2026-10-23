@@ -5,6 +5,7 @@ import { esc, curto, inteiro, mesNome } from "../format.js";
 import { contar } from "../ui.js";
 import { avatarPalco, baralhar, comFoco } from "./stage.js";
 import { melhores } from "./metricas.js";
+import { aleatorio } from "./sorte.js";
 
 export async function correr(palco, opts) {
   const n = Math.min(12, Math.max(6, Number(opts.n) || 10));
@@ -56,12 +57,12 @@ export async function correr(palco, opts) {
   const usados = new Set();
   for (let v = 0; v < voltas; v++) {
     const livres = pessoas.map((_, i) => i).filter((i) => !usados.has(i));
-    const alvo = livres[Math.floor(Math.random() * livres.length)];
+    const alvo = livres[Math.floor(aleatorio() * livres.length)];
     usados.add(alvo);
     cartao.innerHTML = `<div class="rd-gira p-entra">A girar…</div>`;
     // Ângulo final: o alvo fica debaixo do ponteiro (topo), com voltas extra
-    const desvio = (Math.random() - 0.5) * fatia * 0.7;
-    const final = angulo + 360 * (4 + Math.floor(Math.random() * 2)) + (((-(alvo * fatia) - angulo) % 360) + 360) % 360 + desvio;
+    const desvio = (aleatorio() - 0.5) * fatia * 0.7;
+    const final = angulo + 360 * (4 + Math.floor(aleatorio() * 2)) + (((-(alvo * fatia) - angulo) % 360) + 360) % 360 + desvio;
     const inicio = angulo;
     const dur = 5200 * palco.fator;
     let feito = 0;

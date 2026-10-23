@@ -1,6 +1,9 @@
 // Página do Palco: lista de espetáculos (para vídeos e para direto) e opções de cada um.
 
 import { estado, pessoa, mesesComDados, procurar, api, temSessao } from "../data.js";
+import { CENAS, ONDES, novaCena, roteiroPadrao, resumoCena, cenaPronta } from "./roteiro.js";
+import { semear, largar, novaSemente } from "./sorte.js";
+import { quemAparece } from "../quem.js";
 import { esc, mesNome } from "../format.js";
 import { $, $$, avatar, toast, janela } from "../ui.js";
 import { som } from "../audio.js";
@@ -9,7 +12,7 @@ import { TEMAS, GRUPOS_TEMAS, TEMA_DA_CATEGORIA } from "./temas.js";
 import { NOME_DO_KIT, kitDoTema } from "./kits.js";
 import { podeGravar, prepararGravacao } from "./gravar.js";
 import { textoPublicar } from "./legenda.js";
-import { carregarHistorico } from "./historico.js";
+import { carregarHistorico, historicoEmCache } from "./historico.js";
 
 const USOS = { video: "Vídeo", direto: "Direto" };
 
@@ -154,7 +157,6 @@ function opcoes(main, esp, query) {
     cartao: campoPessoa("id", "Youtuber", query, "Procurar"),
     historia: campoPessoa("id", "Youtuber", query, "Procurar"),
   }[esp.id];
-  const temFoco = !["cartao", "historia", "votacao"].includes(esp.id);
 
   const voltar = `#/palco${query.get("para") ? `?para=${esc(query.get("para"))}` : ""}`;
   const passo = (n, titulo, texto, corpo, extra = "") => `<section class="pl-passo ${extra}"><header class="pl-passo-cabeca"><i>${n}</i><div><h2>${titulo}</h2>${texto ? `<p>${texto}</p>` : ""}</div></header><div class="pl-passo-corpo">${corpo}</div></section>`;
@@ -207,25 +209,10 @@ function opcoes(main, esp, query) {
         )}
         ${passo(
           4,
-          "Extras",
-          "Opcional.",
-          `${
-            temFoco
-              ? `<div class="pl-extra">
-            <div class="pl-campos">
-              ${campoPessoa("foco", "Youtuber em foco", query, "Ninguém (por exemplo o teu canal)")}
-              <label class="campo"><span>Quando aparece</span><select class="input" name="focoQuando"><option value="fim">No fim</option><option value="meio">A meio</option><option value="inicio">No início</option></select></label>
-            </div>
-            <small class="muted">No momento escolhido, mostra onde ficou este Youtuber e os números dele, com um brilho especial.</small>
-          </div>`
-              : ""
-          }
-          <div class="pl-extra pl-aviso pl-so-video" id="pl-aviso" hidden>
-            <label class="campo"><span>Aviso de votação antes do fim</span><select class="input" id="pl-aviso-v"><option value="">Sem aviso</option></select></label>
-            <small class="muted" id="pl-aviso-nota"></small>
-          </div>
-          <p class="muted pl-sem-extras" id="pl-sem-extras" ${temFoco ? "hidden" : ""}>Este espetáculo não tem extras.</p>`,
-          "pl-passo-extras",
+          "Cenas do vídeo",
+          "A ordem em que tudo aparece. Liga, desliga, muda de sítio e junta cenas novas.",
+          `<div class="rt" id="pl-roteiro"></div>`,
+          "pl-passo-cenas",
         )}
         ${passo(
           5,
@@ -247,7 +234,6 @@ function opcoes(main, esp, query) {
         <div class="pl-resumo-botoes">
           ${podeGravar() ? `<button class="btn btn-primario pl-so-video pl-gravar" type="button" id="pl-gravar">● Gravar vídeo</button>` : ""}
           <button class="btn btn-ouro pl-comecar" type="submit" form="pl-form">▶ Ver sem gravar</button>
-          <button class="btn pl-exclusivo" type="button" id="pl-exclusivo">☆ ${query.get("excl") ? "Guardar o exclusivo" : "Publicar como exclusivo"}</button>
           <button class="btn btn-texto" type="button" id="pl-legenda">Legenda para publicar</button>
         </div>
         ${podeGravar() ? `<p class="muted pl-so-video pl-resumo-nota">O browser pede para partilhar este separador: escolhe <b>Este separador</b>. Grava em Full HD, com som. Esc termina.</p>` : `<p class="muted pl-so-video pl-resumo-nota">Para gravar neste aparelho, usa a gravação de ecrã do sistema. No computador, com o Chrome, aparece aqui o botão Gravar vídeo.</p>`}
@@ -261,6 +247,8 @@ function opcoes(main, esp, query) {
   let velocidade = "normal";
   let temaId = temaInicial;
   let efeitos = lerModoTema();
+  // O roteiro do vídeo: intro, cenas extra e fim (o editor está no passo 4)
+  let roteiro = roteiroPadrao({ modo });
   const notaKit = () => {
     $("#pl-kit-nota", main).textContent = efeitos === "completo" ? `${NOME_DO_KIT[kitDoTema(temaId)]}. Os golpes, acertos, revelações e o vencedor ganham animações e sons próprios do tema.` : "Só as cores, o cenário e a música do tema. As animações são as de sempre.";
   };
@@ -294,13 +282,13 @@ function opcoes(main, esp, query) {
   };
   const resumo = () => {
     const t = TEMAS.find((x) => x.id === temaId);
-    const aviso = $("#pl-aviso-v", main);
+    const ligadas = roteiro.cenas.filter((c) => c.ligada && cenaPronta(c));
     const linhas = [
       ["Para", modo === "video" ? "Vídeo" : "Direto"],
       ["Formato", formato === "9x16" ? "9:16 vertical" : "16:9 horizontal"],
       ["Tema", `${t?.nome || ""}${efeitos === "cores" ? " (só cores)" : ""}`],
       ["Ritmo", `${ritmo === "manual" ? "Eu avanço" : "Automático"}, ${{ rapido: "rápida", normal: "normal", lento: "lenta" }[velocidade]}`],
-      modo === "video" && aviso && !$("#pl-aviso", main).hidden ? ["Votação", aviso.value ? "Com aviso no fim" : "Sem aviso"] : null,
+      ["Cenas", `${roteiro.intro ? "Intro, " : ""}${ligadas.length ? `${ligadas.length} ${ligadas.length === 1 ? "extra" : "extras"}` : "sem extras"}${roteiro.fim ? ", fim" : ""}`],
     ].filter(Boolean);
     $("#pl-resumo-lista", main).innerHTML = linhas.map(([k, v]) => `<div><dt>${k}</dt><dd>${esc(v)}</dd></div>`).join("");
     const previa = $("#pl-previa", main);
@@ -371,31 +359,190 @@ function opcoes(main, esp, query) {
         for (const v of r.votacoes || []) if (v.votos && !v.grupo) sel.insertAdjacentHTML("beforeend", `<option value="${esc(v.id)}" ${query.get("votacao") === v.id ? "selected" : ""}>${esc(v.titulo)} (${v.total || 0} votos)</option>`);
       })
       .catch(() => {});
-  // Votações abertas no site: o vídeo avisa antes do fim que se pode votar (e onde)
+  // ---------- Cenas do vídeo (roteiro) ----------
   let avisos = [];
+  let exclusivosLista = null;
   let ligacoes = { linkVotar: "", textoBio: "Link na bio", avisoVideos: true };
-  Promise.all([api("votacoes"), api("admin/vitrine").catch(() => null)])
-    .then(([r, vit]) => {
+  const curto = (l) => l.replace(/^https?:\/\//, "").replace(/\/$/, "");
+  const cfgVotacao = (a) => {
+    const link = ligacoes.linkVotar || `${location.origin}/#/votar`;
+    return { id: a.id, tipo: a.tipo, etiqueta: a.etiqueta, titulo: a.titulo, opcoes: a.opcoes, mais: a.mais, link, linkCurto: curto(link), textoBio: ligacoes.textoBio || "Link na bio" };
+  };
+  const cfgExclusivo = (x) => {
+    const link = `${location.origin}/#/exclusivos`;
+    return { id: x.id, titulo: x.titulo, nomeEsp: x.nomeEsp, cores: x.cores, link, linkCurto: curto(link), textoBio: ligacoes.textoBio || "Link na bio" };
+  };
+  const nomePessoa = (id) => pessoa(id)?.name || id;
+
+  const desenharRoteiro = () => {
+    const alvo = $("#pl-roteiro", main);
+    const linha = (c) => {
+      const d = CENAS[c.tipo];
+      const pronta = cenaPronta(c);
+      const configuravel = ["votacao", "exclusivo", "foco", "titulo", "proximo"].includes(c.tipo);
+      return `<div class="rt-cena ${c.ligada ? "" : "desligada"} ${pronta ? "" : "falta"}" data-c="${esc(c.id)}">
+        <label class="vc-interruptor so" title="${c.ligada ? "Desligar" : "Ligar"}"><input type="checkbox" data-ligar ${c.ligada ? "checked" : ""}><span class="vc-bola"></span></label>
+        <span class="rt-icone">${d.icone}</span>
+        <div class="rt-texto"><b>${esc(d.nome)}</b><small>${pronta ? "" : "⚠ "}${esc(resumoCena(c, nomePessoa))}</small></div>
+        <span class="rt-botoes">
+          <button type="button" class="botao-icone" data-subir title="Mais cedo">↑</button>
+          <button type="button" class="botao-icone" data-descer title="Mais tarde">↓</button>
+          ${configuravel ? `<button type="button" class="btn btn-pequeno" data-editar>Mudar</button>` : ""}
+          <button type="button" class="botao-icone" data-tirar title="Tirar">✕</button>
+        </span></div>`;
+    };
+    const grupoHtml = (onde) => {
+      const cs = roteiro.cenas.filter((c) => c.onde === onde);
+      return `<div class="rt-grupo"><div class="rt-grupo-nome">${ONDES[onde]}</div>${cs.length ? cs.map(linha).join("") : `<div class="rt-vazio">Nenhuma cena.</div>`}</div>`;
+    };
+    alvo.innerHTML = `${grupoHtml("antes")}
+      <div class="rt-fixa ${roteiro.intro ? "" : "desligada"}"><label class="vc-interruptor so" title="Intro"><input type="checkbox" data-intro ${roteiro.intro ? "checked" : ""}><span class="vc-bola"></span></label><span class="rt-icone rt-icone-esp">${esp.icone}</span><div class="rt-texto"><b>${esc(esp.nome)}</b><small>${roteiro.intro ? "Com a intro: o título a entrar antes de começar." : "Sem intro: começa logo."}</small></div></div>
+      ${grupoHtml("meio")}
+      ${grupoHtml("depois")}
+      <div class="rt-fixa ${roteiro.fim ? "" : "desligada"}"><label class="vc-interruptor so" title="Fim"><input type="checkbox" data-fim ${roteiro.fim ? "checked" : ""}><span class="vc-bola"></span></label><span class="rt-icone">🔔</span><div class="rt-texto"><b>Fim: Subscreve o canal</b><small>${roteiro.fim ? "O cartão do canal, com o rato a carregar em Subscrever." : "Sem cartão do fim."}</small></div></div>
+      <button type="button" class="btn rt-juntar" id="rt-juntar">+ Juntar cena</button>`;
+    $("[data-intro]", alvo).addEventListener("change", (e) => ((roteiro.intro = e.target.checked), desenharRoteiro()));
+    $("[data-fim]", alvo).addEventListener("change", (e) => ((roteiro.fim = e.target.checked), desenharRoteiro()));
+    $("#rt-juntar", alvo).addEventListener("click", juntarCena);
+    const ordem = ["antes", "meio", "depois"];
+    $$("[data-c]", alvo).forEach((el) => {
+      const c = roteiro.cenas.find((x) => x.id === el.dataset.c);
+      $("[data-ligar]", el).addEventListener("change", (e) => ((c.ligada = e.target.checked), desenharRoteiro()));
+      $("[data-tirar]", el).addEventListener("click", () => ((roteiro.cenas = roteiro.cenas.filter((x) => x !== c)), desenharRoteiro()));
+      $("[data-editar]", el)?.addEventListener("click", () => configurarCena(c));
+      const mover = (d) => {
+        const doGrupo = roteiro.cenas.filter((x) => x.onde === c.onde);
+        const k = doGrupo.indexOf(c);
+        const vizinho = doGrupo[k + d];
+        const lista = roteiro.cenas.filter((x) => x !== c);
+        if (vizinho) {
+          // Troca com a cena ao lado, no mesmo momento
+          const j = lista.indexOf(vizinho);
+          lista.splice(d < 0 ? j : j + 1, 0, c);
+        } else {
+          // Passa para o momento anterior (fica no fim) ou seguinte (fica no início)
+          const o = ordem[ordem.indexOf(c.onde) + d];
+          if (!o) return;
+          c.onde = o;
+          if (d < 0) lista.push(c);
+          else lista.unshift(c);
+        }
+        roteiro.cenas = lista;
+        desenharRoteiro();
+      };
+      $("[data-subir]", el).addEventListener("click", () => mover(-1));
+      $("[data-descer]", el).addEventListener("click", () => mover(1));
+    });
+    resumo();
+  };
+
+  const juntarCena = () => {
+    const { el, fechar } = janela(
+      `<h2>Juntar cena</h2><div class="vc-tipos">${Object.entries(CENAS)
+        .map(([t, d]) => `<button type="button" class="vc-tipo" data-tipo="${t}"><b>${d.icone} ${esc(d.nome)}</b><small>${esc(d.texto)}</small></button>`)
+        .join("")}</div><div class="janela-acoes"><button class="btn" data-fechar>Cancelar</button></div>`,
+      { larga: true },
+    );
+    $$("[data-tipo]", el).forEach((b) =>
+      b.addEventListener("click", () => {
+        fechar();
+        const t = b.dataset.tipo;
+        const cfg = t === "site" ? { link: location.origin, textoBio: ligacoes.textoBio || "Link na bio" } : {};
+        const c = novaCena(t, cfg);
+        if (["votacao", "exclusivo", "foco", "titulo", "proximo"].includes(t)) configurarCena(c, true);
+        else {
+          roteiro.cenas.push(c);
+          desenharRoteiro();
+        }
+      }),
+    );
+  };
+
+  const configurarCena = async (c, nova = false) => {
+    const d = CENAS[c.tipo];
+    const g = c.cfg || {};
+    let corpo = "";
+    if (c.tipo === "votacao") {
+      corpo = avisos.length
+        ? `<div class="rt-opcoes">${avisos.map((a, i) => `<label class="ed-check"><input type="radio" name="escolha" value="${esc(a.id)}" ${g.id === a.id || (!g.id && i === 0) ? "checked" : ""}> <b>${esc(a.etiqueta)}:</b> ${esc(a.titulo)}</label>`).join("")}</div>`
+        : `<p class="muted">Não há nenhuma votação aberta. Cria uma em <a href="#/votacoes">Votações</a>.</p>`;
+    } else if (c.tipo === "exclusivo") {
+      exclusivosLista ??= ((await api("admin/exclusivos").catch(() => ({}))).exclusivos || []).filter((x) => x.visivel);
+      corpo = exclusivosLista.length
+        ? `<div class="rt-opcoes">${exclusivosLista.map((x, i) => `<label class="ed-check"><input type="radio" name="escolha" value="${esc(x.id)}" ${g.id === x.id || (!g.id && i === 0) ? "checked" : ""}> <b>${esc(x.titulo)}</b> <small class="muted">${esc(x.nomeEsp || "")}</small></label>`).join("")}</div>`
+        : `<p class="muted">Ainda não há exclusivos visíveis. Corre um espetáculo e, no fim, escolhe "Exclusivo no site".</p>`;
+    } else if (c.tipo === "foco") {
+      corpo = `<div class="campo"><span>Youtuber</span><div class="vc-pessoas" id="rt-pessoa">${g.pessoa && pessoa(g.pessoa) ? `<span class="vt-chip">${avatar(pessoa(g.pessoa), 24)}${esc(pessoa(g.pessoa).name)}</span>` : `<span class="muted">Ninguém escolhido.</span>`}</div>
+        <div style="position:relative"><input class="input" id="rt-q" placeholder="Procurar Youtuber" autocomplete="off"><div class="pesquisa-lista" id="rt-lista" style="left:0;right:auto;width:100%"></div></div></div>`;
+    } else if (c.tipo === "titulo") {
+      corpo = `<label class="campo"><span>Etiqueta (opcional)</span><input class="input" name="etiqueta" maxlength="40" value="${esc(g.etiqueta || "")}" placeholder="Por exemplo: Especial 100 mil"></label>
+        <label class="campo"><span>Título</span><input class="input" name="titulo" maxlength="70" value="${esc(g.titulo || "")}"></label>
+        <label class="campo"><span>Frase (opcional)</span><input class="input" name="texto" maxlength="140" value="${esc(g.texto || "")}"></label>`;
+    } else if (c.tipo === "proximo") {
+      corpo = `<label class="campo"><span>O que vem no próximo vídeo</span><input class="input" name="texto" maxlength="90" value="${esc(g.texto || "")}" placeholder="Por exemplo: o torneio dos Gamers"></label>`;
+    }
+    const { el, fechar } = janela(`<h2>${d.icone} ${esc(d.nome)}</h2><p class="muted">${esc(d.texto)}</p><form class="vc-form" id="rt-form">${corpo}</form>
+      <div class="janela-acoes"><button class="btn" data-fechar>Cancelar</button><button class="btn btn-primario" data-ok>${nova ? "Juntar" : "Guardar"}</button></div>`, { larga: true });
+    let escolhida = g.pessoa || "";
+    if (c.tipo === "foco") {
+      const q = $("#rt-q", el);
+      const lista = $("#rt-lista", el);
+      q.addEventListener("input", () => {
+        const r = procurar(q.value, 8);
+        lista.innerHTML = r.map((p) => `<button type="button" class="pesquisa-item" style="width:100%;border:0;background:none;text-align:left" data-id="${esc(p.id)}">${avatar(p, 28)}<span><b>${esc(p.name)}</b><small>${esc(p.category || "")}</small></span></button>`).join("");
+        lista.classList.toggle("aberta", r.length > 0);
+      });
+      lista.addEventListener("click", (e) => {
+        const b = e.target.closest("[data-id]");
+        if (!b) return;
+        escolhida = b.dataset.id;
+        $("#rt-pessoa", el).innerHTML = `<span class="vt-chip">${avatar(pessoa(escolhida), 24)}${esc(pessoa(escolhida).name)}</span>`;
+        q.value = "";
+        lista.classList.remove("aberta");
+      });
+    }
+    $("[data-ok]", el).addEventListener("click", () => {
+      const f = $("#rt-form", el);
+      const v = f.querySelector("input[name=escolha]:checked")?.value;
+      if (c.tipo === "votacao") {
+        const a = avisos.find((x) => x.id === v);
+        if (!a) return toast("Escolhe uma votação.", { erro: true });
+        c.cfg = cfgVotacao(a);
+      } else if (c.tipo === "exclusivo") {
+        const x = exclusivosLista.find((y) => y.id === v);
+        if (!x) return toast("Escolhe um exclusivo.", { erro: true });
+        c.cfg = cfgExclusivo(x);
+      } else if (c.tipo === "foco") {
+        if (!escolhida) return toast("Escolhe o Youtuber.", { erro: true });
+        // Só pode haver um Youtuber em foco
+        roteiro.cenas = roteiro.cenas.filter((x) => x.tipo !== "foco" || x === c);
+        c.cfg = { pessoa: escolhida };
+      } else if (c.tipo === "titulo") {
+        if (!f.titulo.value.trim()) return toast("Escreve o título.", { erro: true });
+        c.cfg = { etiqueta: f.etiqueta.value.trim(), titulo: f.titulo.value.trim(), texto: f.texto.value.trim() };
+      } else if (c.tipo === "proximo") {
+        if (!f.texto.value.trim()) return toast("Escreve a frase.", { erro: true });
+        c.cfg = { texto: f.texto.value.trim() };
+      }
+      if (nova) roteiro.cenas.push(c);
+      fechar();
+      desenharRoteiro();
+    });
+  };
+
+  // Votações abertas (para a cena "Votação a decorrer") e as ligações escolhidas na Página pública
+  Promise.all([api("votacoes"), api("admin/vitrine").catch(() => null), query.get("excl") ? api("admin/exclusivos").catch(() => null) : null])
+    .then(([r, vit, ex]) => {
       if (vit?.config?.ligacoes) ligacoes = vit.config.ligacoes;
       avisos = avisosDeVotacao(r.votacoes || []);
-      const caixa = $("#pl-aviso", main);
-      if (!caixa || !avisos.length) return;
-      const sel = $("#pl-aviso-v", main);
-      for (const a of avisos) sel.insertAdjacentHTML("beforeend", `<option value="${esc(a.id)}">${esc(a.etiqueta)}: ${esc(a.titulo)}</option>`);
-      if (ligacoes.avisoVideos) sel.value = avisos[0].id;
-      $("#pl-aviso-nota", main).textContent = `Aparece antes do "Subscreve": "${ligacoes.textoBio}", o endereço e um código QR. Liga ou desliga por defeito em Página pública, Dados e ligações.`;
-      caixa.hidden = false;
-      $("#pl-sem-extras", main).hidden = true;
-      sel.addEventListener("change", resumo);
-      resumo();
+      const doExcl = ex?.exclusivos?.find((x) => x.id === query.get("excl"));
+      if (doExcl?.roteiro) roteiro = JSON.parse(JSON.stringify(doExcl.roteiro));
+      else if (avisos.length && ligacoes.avisoVideos && modo === "video" && !roteiro.cenas.some((c) => c.tipo === "votacao")) roteiro.cenas.push(novaCena("votacao", cfgVotacao(avisos[0])));
+      desenharRoteiro();
     })
-    .catch(() => {});
-  const avisoEscolhido = () => {
-    const a = avisos.find((x) => x.id === $("#pl-aviso-v", main)?.value);
-    if (!a || modo !== "video") return null;
-    const link = ligacoes.linkVotar || `${location.origin}/#/votar`;
-    return { ...a, link, linkCurto: link.replace(/^https?:\/\//, "").replace(/\/$/, ""), textoBio: ligacoes.textoBio || "Link na bio" };
-  };
+    .catch(() => desenharRoteiro());
+  desenharRoteiro();
+
   // Tema da categoria: ao escolher uma categoria ou um Youtuber, o tema acompanha (se não foi escolhido à mão)
   const sugerirTema = (categoria) => {
     const t = TEMA_DA_CATEGORIA[categoria];
@@ -405,7 +552,7 @@ function opcoes(main, esp, query) {
   form.elements.namedItem("cat")?.addEventListener("change", (e) => sugerirTema(e.target.value));
   $$("input[data-pessoa]", main).forEach((inp) =>
     ligarEscolhaPessoa(inp, (p) => {
-      if (inp.name !== "foco") sugerirTema(p.category);
+      sugerirTema(p.category);
     }),
   );
 
@@ -420,63 +567,6 @@ function opcoes(main, esp, query) {
   if (["rapido", "normal", "lento"].includes(query.get("vel"))) $(`[data-vel="${query.get("vel")}"]`, main)?.click();
   if (["completo", "cores"].includes(query.get("efeitos"))) $(`[data-efeitos="${query.get("efeitos")}"]`, main)?.click();
 
-  // Exclusivo: os visitantes veem este espetáculo a correr no site, com estas opções, este tema e este formato
-  $("#pl-exclusivo", main).addEventListener("click", async () => {
-    const exclId = query.get("excl");
-    let atual = null;
-    if (exclId) atual = ((await api("admin/exclusivos").catch(() => ({}))).exclusivos || []).find((x) => x.id === exclId) || null;
-    const t = textoPublicar(esp, lerOpcoes(), { formato, temaId });
-    const local = (iso) => (iso ? new Date(Date.parse(iso) - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 16) : "");
-    const { el, fechar } = janela(
-      `<h2>${atual ? "Guardar o exclusivo" : "Publicar como exclusivo"}</h2>
-      <p class="muted">Os visitantes carregam em play e veem este espetáculo a correr no site, com as opções, o tema e o formato que escolheste aqui. Não é um vídeo: corre na hora, com os números do site.</p>
-      <form class="vc-form" id="ex-form">
-        <label class="campo"><span>Título</span><input class="input" name="titulo" maxlength="100" value="${esc(atual?.titulo || t.titulo.replace(/\s*[\p{Extended_Pictographic}]+$/u, ""))}"></label>
-        <label class="campo"><span>Texto (opcional)</span><textarea class="input" name="texto" rows="2" maxlength="400">${esc(atual?.texto || "")}</textarea></label>
-        <div class="ed-grelha">
-          <label class="campo"><span>Disponível a partir de (opcional)</span><input class="input" type="datetime-local" name="desde" value="${local(atual?.desde)}"></label>
-          <label class="campo"><span>Até (opcional)</span><input class="input" type="datetime-local" name="ate" value="${local(atual?.ate)}"></label>
-        </div>
-        <label class="vc-interruptor"><input type="checkbox" name="visivel" ${atual?.visivel === false ? "" : "checked"}><span class="vc-bola"></span><span><b>Visível no site</b><small>Podes esconder e mostrar quando quiseres em Página pública, Exclusivos.</small></span></label>
-      </form>
-      <div class="janela-acoes"><button class="btn" data-fechar>Cancelar</button><button class="btn btn-primario" data-ok data-a-esperar="A guardar">${atual ? "Guardar" : "Publicar"}</button></div>`,
-      { larga: true },
-    );
-    const f = $("#ex-form", el);
-    $("[data-ok]", el).addEventListener("click", async (e) => {
-      const tema = TEMAS.find((x) => x.id === temaId);
-      const exclusivo = {
-        ...(atual ? { id: atual.id } : {}),
-        titulo: f.titulo.value,
-        texto: f.texto.value,
-        desde: f.desde.value ? new Date(f.desde.value).toISOString() : null,
-        ate: f.ate.value ? new Date(f.ate.value).toISOString() : null,
-        visivel: f.visivel.checked,
-        esp: esp.id,
-        opts: lerOpcoes(),
-        tema: temaId,
-        cores: tema?.amostra || [],
-        formato,
-        efeitos,
-        velocidade,
-      };
-      const b = e.currentTarget;
-      b.disabled = true;
-      try {
-        const r = await api("admin/exclusivo", { corpo: { exclusivo } });
-        fechar();
-        toast(atual ? "Exclusivo guardado." : "Publicado como exclusivo.");
-        if (!r.abaVisivel) toast("Para os visitantes o verem, liga a aba Exclusivos (Página pública, Abas) e carrega em Publicar.", { tempo: 9000 });
-        if (!atual) history.replaceState(null, "", `${location.hash.split("?")[0]}?${new URLSearchParams({ ...Object.fromEntries(query), excl: r.exclusivo.id })}`);
-        query.set("excl", r.exclusivo.id);
-        $("#pl-exclusivo", main).textContent = "☆ Guardar o exclusivo";
-      } catch (err) {
-        toast(err.message, { erro: true });
-        b.disabled = false;
-      }
-    });
-  });
-
   const iniciar = async (gravarVideo) => {
     const opts = lerOpcoes();
     const repetir = modo === "direto" && form.elements.namedItem("repetir").checked;
@@ -488,12 +578,21 @@ function opcoes(main, esp, query) {
       if (!gravacao) return;
     }
     const [mod] = await Promise.all([import(esp.mod), carregarHistorico()]);
-    const palco = new Palco({ formato, manual: ritmo === "manual", tema: temaId, velocidade, foco: opts.foco, focoQuando: opts.focoQuando || "fim", modo, completo: efeitos === "completo", votacao: avisoEscolhido() });
+    // Tudo o que decide o resultado fica guardado, para um exclusivo repetir exatamente igual
+    const dsUsado = estado.ds;
+    const historicoUsado = historicoEmCache();
+    const roteiroUsado = JSON.parse(JSON.stringify(roteiro));
+    const semente = novaSemente();
+    semear(semente);
+    const palco = new Palco({ formato, manual: ritmo === "manual", tema: temaId, velocidade, modo, completo: efeitos === "completo", roteiro: roteiroUsado, historico: historicoUsado });
     if (gravacao) gravacao.comecar(palco);
     let erro = false;
+    let voltas = 0;
     try {
       do {
-        await mod.correr(palco, opts);
+        await palco.correr(mod, opts);
+        voltas++;
+        palco.cenasFeitas.clear();
         palco.focoMostrado = false;
         palco.lembreteFeito = false;
       } while (repetir && !palco.terminado);
@@ -505,27 +604,20 @@ function opcoes(main, esp, query) {
         palco.cena.innerHTML = `<div class="palco-erro"><h2>Não foi possível continuar</h2><p>${esc(err.message)}</p></div>`;
         await palco.esperar(4000).catch(() => {});
       }
+    } finally {
+      largar();
     }
     const video = gravacao ? await gravacao.parar() : null;
     palco.sair();
-    // O histórico (rivais, clássicos, estrelas) só conta os espetáculos gravados em vídeo
-    let historico = null;
-    // e cada vídeo gravado aparece na página pública (com o resumo do que mostrou)
-    if (!erro && video) {
-      if (!temSessao()) historico = { erro: "A sessão expirou: este vídeo não foi guardado no histórico nem na página pública." };
-      else {
-        try {
-          const t = textoPublicar(esp, opts, { formato, temaId, aviso: palco.votacaoAviso });
-          const publicacao = { titulo: t.titulo, legenda: t.legenda, resumo: palco.resumo || { tipo: "jogo" } };
-          const r = await api("admin/palco/resultados", { corpo: { espetaculo: esp.id, tema: temaId, formato, resultados: palco.resultados, publicacao } });
-          historico = { n: r.guardados, publicacao: r.publicacao };
-          carregarHistorico({ forcar: true });
-        } catch (e) {
-          historico = { erro: `Não foi possível guardar no histórico: ${e.message}` };
-        }
-      }
-    }
-    if (!erro) mostrarPublicar($("#pl-publicar", main), esp, opts, { formato, temaId, video, historico, aviso: palco.votacaoAviso });
+    if (erro && !video) return;
+    menuFinal($("#pl-publicar", main), {
+      esp, opts, formato, temaId, efeitos, velocidade, video, voltas: erro ? 0 : voltas, repetir,
+      palco, semente, roteiro: roteiroUsado, ds: dsUsado, historico: historicoUsado, cores: TEMAS.find((x) => x.id === temaId)?.amostra || [], exclId: query.get("excl"),
+      aoGuardarExclusivo: (id) => {
+        query.set("excl", id);
+        history.replaceState(null, "", `${location.hash.split("?")[0]}?${new URLSearchParams(Object.fromEntries(query))}`);
+      },
+    });
   };
   form.addEventListener("submit", (e) => {
     e.preventDefault();
@@ -533,7 +625,7 @@ function opcoes(main, esp, query) {
   });
   $("#pl-gravar", main)?.addEventListener("click", () => iniciar(true));
   $("#pl-legenda", main).addEventListener("click", () => {
-    mostrarPublicar($("#pl-publicar", main), esp, lerOpcoes(), { formato, temaId, aviso: avisoEscolhido() });
+    mostrarPublicar($("#pl-publicar", main), esp, lerOpcoes(), { formato, temaId, aviso: roteiro.cenas.find((c) => c.tipo === "votacao" && c.ligada)?.cfg });
     $("#pl-publicar", main).scrollIntoView({ behavior: "smooth", block: "start" });
   });
 }
@@ -554,7 +646,7 @@ function avisosDeVotacao(lista) {
         tipo: "torneio",
         etiqueta: jogos.length === 1 && (v.extra?.rondas || 0) === (v.ronda || 1) ? "A final está a decorrer" : "Torneio a decorrer",
         titulo: jogos.length === 1 ? `${v.extra?.nomeGrupo || "Torneio"}: ${v.titulo}` : v.extra?.nomeGrupo || "Torneio do Placar",
-        opcoes: opcoes.slice(0, 4).map((o) => ({ nome: o.nome, p: o.pessoa ? pessoa(o.pessoa) : null })),
+        opcoes: opcoes.slice(0, 4).map((o) => ({ nome: o.nome, id: o.pessoa || null })),
         mais: Math.max(0, opcoes.length - 4),
         criado: v.criado,
       });
@@ -567,12 +659,142 @@ function avisosDeVotacao(lista) {
       tipo: v.tipo,
       etiqueta,
       titulo: v.titulo,
-      opcoes: (v.tipo === "favorito" ? [] : comPessoa.slice(0, 4)).map((o) => ({ nome: o.nome, p: pessoa(o.pessoa) })),
+      opcoes: (v.tipo === "favorito" ? [] : comPessoa.slice(0, 4)).map((o) => ({ nome: o.nome, id: o.pessoa })),
       mais: v.tipo === "favorito" ? 0 : Math.max(0, comPessoa.length - 4),
       criado: v.criado,
     });
   }
   return out.sort((a, b) => (Date.parse(b.criado) || 0) - (Date.parse(a.criado) || 0));
+}
+
+/** Depois de cada espetáculo: foi um teste, um vídeo para os canais ou um exclusivo para o site? */
+function menuFinal(alvo, x) {
+  const { esp, video, voltas, repetir } = x;
+  const podeContar = voltas > 0;
+  const podeExclusivo = voltas === 1 && !repetir;
+  const aviso = x.roteiro.cenas.find((c) => c.tipo === "votacao" && c.ligada)?.cfg;
+  const nomeFicheiro = `placar-${esp.id}-${x.temaId}-${x.formato}-${new Date().toISOString().slice(0, 10)}.${video?.ext || "mp4"}`;
+  const op = (k, icone, titulo, texto, desligado = false) =>
+    `<button type="button" class="pl-fim-op" data-fim="${k}" ${desligado ? "disabled" : ""}><span class="pl-fim-icone">${icone}</span><b>${titulo}</b><small>${texto}</small></button>`;
+  alvo.innerHTML = `<section class="pl-fim">
+    <div class="pl-fim-cabeca"><h2>O que foi isto?</h2><p>${
+      podeContar
+        ? "Escolhe para onde vai. O teste não conta para nada. O vídeo para os canais e o exclusivo contam nas estatísticas (rivais, estrelas, coroas e hall da fama)."
+        : "O espetáculo parou antes do fim: fica como teste e não conta."
+    }</p></div>
+    <div class="pl-fim-opcoes">
+      ${op("teste", "🧪", "Teste", "Não conta para nada.")}
+      ${op("canais", "📺", "Vídeo para os canais", "Conta nas estatísticas e aparece em Vídeos no site.", !podeContar)}
+      ${op("exclusivo", "☆", x.exclId ? "Exclusivo (substitui o atual)" : "Exclusivo no site", podeExclusivo ? "Fica no site tal e qual: os mesmos números, a mesma sorte e as mesmas cenas. Conta nas estatísticas." : "Só dá para um espetáculo que correu uma vez até ao fim.", !podeExclusivo)}
+    </div>
+    ${
+      video
+        ? `<div class="painel pl-video"><video src="${video.url}" controls playsinline class="${x.formato === "9x16" ? "vertical" : ""}"></video>
+      <div class="ed-acoes" style="justify-content:flex-start"><a class="btn btn-ouro" href="${video.url}" download="${esc(nomeFicheiro)}">Descarregar vídeo (${video.ext.toUpperCase()}, ${(video.blob.size / 1048576).toFixed(1)} MB)</a></div></div>`
+        : ""
+    }
+    <div id="pl-fim-res"></div></section>`;
+  alvo.scrollIntoView({ behavior: "smooth", block: "start" });
+  const res = $("#pl-fim-res", alvo);
+  const botoes = $$("[data-fim]", alvo);
+  const travar = (k) => botoes.forEach((b) => ((b.disabled = true), b.classList.toggle("escolhido", b.dataset.fim === k)));
+  const soltar = () => {
+    botoes.forEach((b) => b.classList.remove("escolhido"));
+    botoes[0].disabled = false;
+    botoes[1].disabled = !podeContar;
+    botoes[2].disabled = !podeExclusivo;
+  };
+  const contar = (publicacao) =>
+    api("admin/palco/resultados", { corpo: { espetaculo: esp.id, tema: x.temaId, formato: x.formato, resultados: x.palco.resultados, ...(publicacao ? { publicacao } : {}) } });
+
+  $('[data-fim="teste"]', alvo).addEventListener("click", () => {
+    travar("teste");
+    res.innerHTML = `<div class="aviso info"><p>Ficou como teste: não contou para nada.${video ? " O vídeo continua aqui para o descarregares, se quiseres." : ""}</p></div>`;
+  });
+
+  $('[data-fim="canais"]', alvo).addEventListener("click", async () => {
+    if (!temSessao()) return toast("A sessão expirou: entra outra vez para guardar.", { erro: true });
+    travar("canais");
+    res.innerHTML = `<div class="a-carregar" style="min-height:10vh"><div class="roda"></div></div>`;
+    try {
+      const t = textoPublicar(esp, x.opts, { formato: x.formato, temaId: x.temaId, aviso });
+      const r = await contar({ titulo: t.titulo, legenda: t.legenda, resumo: x.palco.resumo || { tipo: "jogo" } });
+      carregarHistorico({ forcar: true });
+      mostrarPublicar(res, esp, x.opts, { formato: x.formato, temaId: x.temaId, historico: { n: r.guardados, publicacao: r.publicacao }, aviso });
+    } catch (e) {
+      res.innerHTML = `<div class="aviso"><p>Não foi possível guardar: ${esc(e.message)}</p></div>`;
+      soltar();
+    }
+  });
+
+  $('[data-fim="exclusivo"]', alvo).addEventListener("click", async () => {
+    if (!temSessao()) return toast("A sessão expirou: entra outra vez para guardar.", { erro: true });
+    const [lista, vit] = await Promise.all([x.exclId ? api("admin/exclusivos").catch(() => ({})) : {}, api("admin/vitrine").catch(() => null)]);
+    const atual = (lista.exclusivos || []).find((e) => e.id === x.exclId) || null;
+    // Quem não aparece no site (Quem aparece) não entra no exclusivo: avisa se isso o pode mudar
+    let nota = "";
+    if (vit?.config) {
+      const indices = new Map([...estado.indices].map(([id, v]) => [id, v?.total ?? null]));
+      const q = quemAparece(x.ds, vit.config.dados, vit.config.perfis, { ref: estado.ref, indices });
+      const todos = x.ds.people.filter((p) => !p.hidden).length;
+      if (q.aparece.size < todos) nota = `<div class="aviso"><p>No site só aparecem ${q.aparece.size} de ${todos} Youtubers (Página pública, Quem aparece). O exclusivo usa só esses: se entrou aqui alguém que não aparece no site, lá pode ficar diferente. Os Youtubers escolhidos nas opções entram sempre.</p></div>`;
+    }
+    const t = textoPublicar(esp, x.opts, { formato: x.formato, temaId: x.temaId });
+    const local = (iso) => (iso ? new Date(Date.parse(iso) - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 16) : "");
+    const { el, fechar } = janela(
+      `<h2>☆ ${atual ? "Substituir o exclusivo" : "Exclusivo no site"}</h2>
+      <p class="muted">Os visitantes carregam em play e veem exatamente o que acabaste de ver: os mesmos números, a mesma sorte e as mesmas cenas, com a data de hoje no início.</p>
+      ${nota}
+      <form class="vc-form" id="ex-form">
+        <label class="campo"><span>Título</span><input class="input" name="titulo" maxlength="100" value="${esc(atual?.titulo || t.titulo.replace(/\s*[\p{Extended_Pictographic}]+$/u, ""))}"></label>
+        <label class="campo"><span>Texto (opcional)</span><textarea class="input" name="texto" rows="2" maxlength="400">${esc(atual?.texto || "")}</textarea></label>
+        <div class="ed-grelha">
+          <label class="campo"><span>Disponível a partir de (opcional)</span><input class="input" type="datetime-local" name="desde" value="${local(atual?.desde)}"></label>
+          <label class="campo"><span>Até (opcional)</span><input class="input" type="datetime-local" name="ate" value="${local(atual?.ate)}"></label>
+        </div>
+        <label class="vc-interruptor"><input type="checkbox" name="visivel" ${atual?.visivel === false ? "" : "checked"}><span class="vc-bola"></span><span><b>Visível no site</b><small>Mostras e escondes quando quiseres em Página pública, Exclusivos.</small></span></label>
+      </form>
+      <div class="janela-acoes"><button class="btn" data-fechar>Cancelar</button><button class="btn btn-primario" data-ok>${atual ? "Substituir" : "Publicar"}</button></div>`,
+      { larga: true },
+    );
+    const f = $("#ex-form", el);
+    $("[data-ok]", el).addEventListener("click", async (e) => {
+      const b = e.currentTarget;
+      b.disabled = true;
+      b.innerHTML = `<span class="mini-roda"></span> A guardar`;
+      try {
+        const exclusivo = {
+          ...(atual ? { id: atual.id } : {}),
+          titulo: f.titulo.value,
+          texto: f.texto.value,
+          desde: f.desde.value ? new Date(f.desde.value).toISOString() : null,
+          ate: f.ate.value ? new Date(f.ate.value).toISOString() : null,
+          visivel: f.visivel.checked,
+          esp: esp.id,
+          opts: x.opts,
+          tema: x.temaId,
+          cores: x.cores,
+          formato: x.formato,
+          efeitos: x.efeitos,
+          velocidade: x.velocidade,
+          roteiro: x.roteiro,
+        };
+        const retrato = { ds: x.ds, historico: x.historico, capturas: x.palco.capturas, semente: x.semente, roteiro: x.roteiro };
+        const r = await api("admin/exclusivo", { corpo: { exclusivo, retrato } });
+        const c = await contar(null).catch(() => null);
+        carregarHistorico({ forcar: true });
+        fechar();
+        travar("exclusivo");
+        x.aoGuardarExclusivo?.(r.exclusivo.id);
+        res.innerHTML = `<div class="aviso info"><p>${atual ? "Exclusivo substituído." : "Publicado como exclusivo."} Os visitantes veem-no exatamente assim${c?.guardados ? `, e contou nas estatísticas (${c.guardados} ${c.guardados === 1 ? "resultado" : "resultados"})` : ""}.
+          ${r.abaVisivel ? "" : " Para aparecer no site, liga a aba Exclusivos e carrega em Publicar."} <a href="#/publica/exclusivos">Ver os exclusivos</a></p></div>`;
+      } catch (err) {
+        toast(err.message, { erro: true, tempo: 7000 });
+        b.disabled = false;
+        b.textContent = atual ? "Substituir" : "Publicar";
+      }
+    });
+  });
 }
 
 /** Painel com o vídeo gravado (se houver) e a legenda pronta a copiar. */

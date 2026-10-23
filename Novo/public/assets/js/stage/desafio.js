@@ -6,6 +6,7 @@ import { esc, curto, mesNome } from "../format.js";
 import { avatarPalco, baralhar, comFoco } from "./stage.js";
 import { melhores, rankingPor } from "./metricas.js";
 import { animate, stagger, spring } from "../../vendor/anime.esm.min.js";
+import { aleatorio } from "./sorte.js";
 
 const LETRAS = ["A", "B", "C", "D"];
 const ORDEM_TIPOS = ["numero", "intruso", "vf", "ordena", "numero", "vf", "intruso", "ordena", "numero", "vf", "intruso", "ordena"];
@@ -68,7 +69,7 @@ function criarPerguntas(palco, opts) {
         explica = `${a.name}: ${curto(views(a, m))} · ${b.name}: ${curto(views(b, m))}`;
       } else if (variante === 1 && a.totals?.subs) {
         const real = a.totals.subs;
-        const limite = redondo(real * (Math.random() < 0.5 ? 0.7 : 1.4));
+        const limite = redondo(real * (aleatorio() < 0.5 ? 0.7 : 1.4));
         frase = `${a.name} tem mais de ${curto(limite)} subscritores.`;
         verdade = real > limite;
         explica = `Tem ${curto(real)} subscritores.`;

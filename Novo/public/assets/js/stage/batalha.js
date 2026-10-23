@@ -7,10 +7,11 @@ import { avatarPalco, baralhar } from "./stage.js";
 import { METRICAS } from "./metricas.js";
 import { linhaConfronto, momentoDoDuelo, estrelasHtml } from "./historico.js";
 import { cenaDoTema } from "./cenas.js";
+import { aleatorio } from "./sorte.js";
 
 function escolherAoAcaso(excluir) {
   const top = [...estado.posIndice.entries()].filter(([id, pos]) => pos <= 60 && id !== excluir).map(([id]) => id);
-  return pessoa(top[Math.floor(Math.random() * top.length)]);
+  return pessoa(top[Math.floor(aleatorio() * top.length)]);
 }
 
 export async function correr(palco, opts) {

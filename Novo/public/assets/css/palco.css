@@ -7197,3 +7197,82 @@ body.modo-palco {
 .vo-jogo.a-decorrer .vo-jvs {
   color: var(--rubi);
 }
+
+/* Cenas do roteiro (por cima do espetáculo) */
+.rc-camada {
+  position: absolute;
+  inset: 0;
+  z-index: 8;
+  background: color-mix(in srgb, var(--pt-anel) 92%, transparent);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+}
+.rc-cena {
+  gap: 30px;
+}
+.vertical .rc-cena {
+  gap: 44px;
+  padding: 110px 70px;
+}
+.rc-titulo {
+  font-size: 92px;
+  max-width: 1500px;
+  line-height: 1.02;
+}
+.vertical .rc-titulo {
+  font-size: 90px;
+  max-width: 940px;
+}
+.rc-cena .p-sub {
+  max-width: 1300px;
+}
+.rc-capa {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 560px;
+  aspect-ratio: 16 / 9;
+  border-radius: 36px;
+  background: radial-gradient(55% 70% at 85% 10%, color-mix(in srgb, var(--c) 55%, transparent), transparent 70%), linear-gradient(150deg, var(--a), var(--b));
+  box-shadow: 0 30px 80px rgba(0, 0, 0, 0.5), inset 0 0 0 2px rgba(255, 255, 255, 0.18);
+}
+.vertical .rc-capa {
+  width: 760px;
+}
+.rc-play {
+  display: grid;
+  place-items: center;
+  width: 150px;
+  height: 150px;
+  border-radius: 50%;
+  font-size: 64px;
+  color: #fff;
+  background: rgba(255, 255, 255, 0.2);
+  box-shadow: inset 0 0 0 3px rgba(255, 255, 255, 0.4);
+  padding-left: 10px;
+}
+.rc-capa small {
+  position: absolute;
+  left: 26px;
+  bottom: 22px;
+  font-size: 28px;
+  font-weight: 800;
+  padding: 6px 18px;
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.45);
+  color: #fff;
+}
+.rc-contagem {
+  background: color-mix(in srgb, var(--pt-anel) 55%, transparent);
+}
+.rc-numero {
+  font-family: var(--f-display);
+  font-weight: 900;
+  font-size: 420px;
+  line-height: 1;
+  background: var(--pt-titulo);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  filter: drop-shadow(0 20px 60px rgba(0, 0, 0, 0.5));
+}

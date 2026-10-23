@@ -6,6 +6,7 @@ import { avatarPalco, baralhar, letras, comFoco } from "./stage.js";
 import { METRICAS, melhores } from "./metricas.js";
 import { linhaConfronto, estrelasHtml, dadosPessoa } from "./historico.js";
 import { animate, stagger, spring } from "../../vendor/anime.esm.min.js";
+import { aleatorio } from "./sorte.js";
 
 const CRITERIOS = ["views", "indice", "subs", "total", "media3", "subsMes", "videos30", "crescimento"];
 const NOMES_RONDA = { 16: "Oitavos de final", 8: "Quartos de final", 4: "Meias-finais", 2: "Final" };
@@ -159,7 +160,7 @@ export async function correr(palco, opts) {
       return va !== null && vb !== null && va !== undefined && vb !== undefined && va !== vb;
     });
     const sem = disponiveis.filter((k) => k !== ultimoCriterio);
-    const k = (sem.length ? sem : disponiveis)[Math.floor(Math.random() * (sem.length || disponiveis.length))] || "indice";
+    const k = (sem.length ? sem : disponiveis)[Math.floor(aleatorio() * (sem.length || disponiveis.length))] || "indice";
     ultimoCriterio = k;
     return k;
   };

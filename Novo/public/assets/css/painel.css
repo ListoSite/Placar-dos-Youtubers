@@ -1146,3 +1146,209 @@ body.sem-sessao .pn-marca-movel {
   flex: none;
   padding: 0 13px;
 }
+
+/* ---------- Palco: cenas do vídeo (roteiro) ---------- */
+.rt {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 8px;
+}
+.rt > *,
+.rt-grupo > * {
+  min-width: 0;
+}
+.rt-grupo {
+  grid-template-columns: minmax(0, 1fr);
+}
+.rt-grupo {
+  border: 1px dashed var(--linha-forte);
+  border-radius: 16px;
+  padding: 10px;
+  display: grid;
+  gap: 6px;
+}
+.rt-grupo-nome {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: var(--texto-3);
+  padding: 0 4px 2px;
+}
+.rt-vazio {
+  font-size: var(--t-xs);
+  color: var(--texto-3);
+  padding: 2px 4px 4px;
+}
+.rt-cena,
+.rt-fixa {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.035);
+  border: 1px solid var(--linha);
+}
+.rt-fixa {
+  background: var(--rubi-fundo);
+  border-color: color-mix(in srgb, var(--rubi) 40%, transparent);
+}
+.rt-cena.desligada,
+.rt-fixa.desligada {
+  opacity: 0.55;
+}
+.rt-cena.falta {
+  border-color: color-mix(in srgb, var(--ouro) 55%, transparent);
+}
+.rt-cena.falta small {
+  color: var(--ouro);
+}
+.rt-icone {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.06);
+  font-weight: 800;
+  font-size: 16px;
+}
+.rt-icone-esp svg {
+  width: 22px;
+  height: 22px;
+  color: var(--ouro);
+}
+.rt-texto {
+  flex: 1;
+  min-width: 0;
+}
+.rt-texto b {
+  display: block;
+  font-size: var(--t-sm);
+}
+.rt-texto small {
+  display: block;
+  color: var(--texto-3);
+  font-size: var(--t-xs);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.rt-botoes {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex: none;
+}
+.rt-botoes .botao-icone {
+  width: 30px;
+  height: 30px;
+}
+.rt-botoes .btn {
+  height: 30px;
+  padding: 0 10px;
+}
+.rt-juntar {
+  justify-self: start;
+  margin-top: 4px;
+}
+.rt-opcoes {
+  display: grid;
+  gap: 8px;
+}
+@media (max-width: 560px) {
+  .rt-cena {
+    flex-wrap: wrap;
+  }
+  .rt-botoes {
+    width: 100%;
+    justify-content: flex-end;
+  }
+}
+
+/* ---------- Palco: o que foi isto? (depois de cada espetáculo) ---------- */
+.pl-fim {
+  margin-top: 28px;
+  padding: 22px;
+  border-radius: var(--r-lg);
+  border: 1px solid var(--vidro-borda);
+  background: var(--vidro), var(--vidro-solido);
+  box-shadow: var(--vidro-brilho);
+  display: grid;
+  gap: 16px;
+  scroll-margin-top: 80px;
+}
+.pl-fim-cabeca h2 {
+  font-size: var(--t-lg);
+}
+.pl-fim-cabeca p {
+  color: var(--texto-2);
+  font-size: var(--t-sm);
+  margin-top: 4px;
+}
+.pl-fim-opcoes {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+.pl-fim-op {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+  text-align: left;
+  padding: 16px;
+  border-radius: 18px;
+  border: 1px solid var(--linha-forte);
+  background: rgba(255, 255, 255, 0.03);
+  color: var(--texto);
+  cursor: pointer;
+  transition: border-color 0.2s, transform 0.35s var(--mola), background 0.2s;
+}
+.pl-fim-op:hover:not(:disabled) {
+  transform: translateY(-2px);
+  border-color: var(--rubi);
+}
+.pl-fim-op:disabled {
+  cursor: default;
+  opacity: 0.45;
+}
+.pl-fim-op.escolhido {
+  opacity: 1;
+  border-color: var(--rubi);
+  background: var(--rubi-fundo);
+  box-shadow: 0 0 0 1px var(--rubi);
+}
+.pl-fim-icone {
+  font-size: 24px;
+}
+.pl-fim-op b {
+  font-size: var(--t-md);
+}
+.pl-fim-op small {
+  color: var(--texto-3);
+  font-size: var(--t-xs);
+  line-height: 1.45;
+}
+.pl-fim .pl-video video {
+  max-height: 60vh;
+}
+@media (max-width: 760px) {
+  .pl-fim-opcoes {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+.vx-item .vc-mover {
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+@media (max-width: 640px) {
+  .vx-item .vc-mover {
+    width: 100%;
+  }
+  .vx-item .vc-item-texto {
+    min-width: 0;
+  }
+}
