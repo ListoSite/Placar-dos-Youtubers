@@ -11,6 +11,7 @@ const ROTAS = [
   { re: /^$/, mod: "./admin/vitrine.js", nav: "#/" },
   { re: /^publica(?:\/([a-z]+))?$/, mod: "./admin/vitrine.js", nav: "#/" },
   { re: /^votacoes$/, mod: "./admin/votacoes.js", nav: "#/votacoes" },
+  { re: /^sugestoes$/, mod: "./admin/sugestoes.js", nav: "#/sugestoes" },
   { re: /^palco(?:\/([a-z-]+))?$/, mod: "./stage/stage.js", nav: "#/palco" },
   { re: /^editar(?:\/([a-z-]+))?$/, mod: "./admin/admin.js", nav: "#/editar" },
 ];
@@ -95,6 +96,7 @@ async function navegar() {
     document.title = (main.dataset.titulo ? main.dataset.titulo + " · " : "") + "Painel do Placar";
     const titulo = $("#pn-barra-titulo");
     if (titulo) titulo.textContent = main.dataset.titulo || "";
+    atualizarPorDecidir();
   } catch (e) {
     if (e.status === 401) {
       document.body.classList.add("sem-sessao");
@@ -120,6 +122,23 @@ function marcarNavegacao(caminho) {
   }
   for (const a of document.querySelectorAll(".pn-nav a[aria-current]")) a.setAttribute("aria-current", "page");
   pilulaNav($("#abas"), ".abas-pilula");
+}
+
+/** O número ao lado de "Sugestões": quantas acabaram e esperam pela tua decisão. */
+let ultimaContagem = 0;
+export async function atualizarPorDecidir({ forcar = false } = {}) {
+  if (!forcar && Date.now() - ultimaContagem < 60000) return;
+  ultimaContagem = Date.now();
+  try {
+    const { porDecidir } = await api("admin/sugestoes/contagem");
+    for (const el of document.querySelectorAll("[data-por-decidir]")) {
+      el.hidden = !porDecidir;
+      el.textContent = porDecidir > 99 ? "99+" : String(porDecidir);
+      el.title = `${porDecidir} ${porDecidir === 1 ? "sugestão acabou" : "sugestões acabaram"} e ${porDecidir === 1 ? "espera" : "esperam"} pela tua decisão`;
+    }
+  } catch {
+    /* sem Supabase ou sem sessão: sem número */
+  }
 }
 
 function atualizarRodape() {

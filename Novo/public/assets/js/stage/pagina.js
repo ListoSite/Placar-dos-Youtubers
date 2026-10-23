@@ -121,7 +121,7 @@ function opcoes(main, esp, query) {
   const numero = (lista, def) => `<label class="campo"><span>Youtubers</span><select class="input" name="n">${lista.map((n) => `<option ${n === def ? "selected" : ""}>${n}</option>`).join("")}</select></label>`;
   const quem = () => `<label class="campo"><span>Quem entra</span><select class="input" name="quem"><option value="acaso">Ao acaso entre os 60 melhores</option><option value="top">Os melhores pelo Índice</option></select></label>`;
   const tamanho = (soDados = false, rotulo = "Tamanho por") => `<label class="campo"><span>${soDados ? "Números que contam" : rotulo}</span><select class="input" name="tamanho"><option value="views">Views do mês</option><option value="subs">Subscritores</option><option value="indice">Índice de Influência</option>${soDados ? "" : `<option value="igual">Ao acaso (sem números)</option>`}</select></label>`;
-  const campos = {
+  const camposBase = {
     revelacao: `${metricas()}${mes}
       <label class="campo"><span>Quantos</span><select class="input" name="n"><option>5</option><option selected>10</option><option>15</option><option>20</option></select></label>${cat}`,
     corrida: `
@@ -166,6 +166,14 @@ function opcoes(main, esp, query) {
     cartao: campoPessoa("id", "Youtuber", query, "Procurar"),
     historia: campoPessoa("id", "Youtuber", query, "Procurar"),
   }[esp.id];
+  // Uma lista de Youtubers escolhida (por exemplo numa sugestão do público): só entram esses
+  const ESCOLHA_LISTA = ["revelacao", "torneio", "comilonas", "cavalos", "berlindes", "escapa", "ringue"];
+  const listaEscolhida = ESCOLHA_LISTA.includes(esp.id) ? String(query.get("pessoas") || "").split(",").filter((id) => pessoa(id)) : [];
+  const campos = camposBase + (listaEscolhida.length
+    ? `<div class="pl-lista-escolhida campo cresce" data-lista><span>Só entram estes Youtubers</span><input type="hidden" name="pessoas" value="${esc(listaEscolhida.join(","))}">
+        <p>${listaEscolhida.map((id) => `<b>${esc(pessoa(id).name)}</b>`).join(", ")}</p>
+        <button type="button" class="btn btn-pequeno" data-tirar-lista>Usar as opções normais</button></div>`
+    : "");
 
   const voltar = `#/palco${query.get("para") ? `?para=${esc(query.get("para"))}` : ""}`;
   const passo = (n, titulo, texto, corpo, extra = "") => `<section class="pl-passo ${extra}"><header class="pl-passo-cabeca"><i>${n}</i><div><h2>${titulo}</h2>${texto ? `<p>${texto}</p>` : ""}</div></header><div class="pl-passo-corpo">${corpo}</div></section>`;
@@ -564,6 +572,8 @@ function opcoes(main, esp, query) {
       sugerirTema(p.category);
     }),
   );
+
+  $("[data-tirar-lista]", main)?.addEventListener("click", () => $("[data-lista]", main).remove());
 
   const lerOpcoes = () => {
     const opts = {};

@@ -17,6 +17,7 @@ export const ABAS = [
   { id: "categorias", nome: "Categorias", icone: "bolo" },
   { id: "projetos", nome: "Projetos", icone: "serie" },
   { id: "exclusivos", nome: "Exclusivos", icone: "estrela" },
+  { id: "sugestoes", nome: "Sugerir", icone: "ideia" },
 ];
 
 /** Os blocos que se podem pôr no Início (e o que cada um aceita). */

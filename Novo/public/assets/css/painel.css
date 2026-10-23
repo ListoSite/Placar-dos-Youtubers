@@ -122,7 +122,33 @@
   max-width: 1280px;
 }
 .pn-abas {
-  grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+  grid-template-columns: repeat(5, minmax(0, 1fr)) !important;
+}
+/* Número de sugestões à espera de decisão */
+.pn-conta {
+  margin-left: auto;
+  min-width: 22px;
+  height: 22px;
+  padding: 0 7px;
+  border-radius: 99px;
+  display: grid;
+  place-items: center;
+  font-size: 12px;
+  font-weight: 800;
+  color: #12060b;
+  background: var(--ouro);
+}
+.pn-abas a {
+  position: relative;
+}
+.pn-abas .pn-conta {
+  position: absolute;
+  top: 2px;
+  left: calc(50% + 6px);
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  font-size: 10.5px;
 }
 
 /* Sem sessão: só o ecrã de entrada, sem barra lateral */
@@ -1350,5 +1376,155 @@ body.sem-sessao .pn-marca-movel {
   }
   .vx-item .vc-item-texto {
     min-width: 0;
+  }
+}
+
+/* Palco: lista de Youtubers escolhida (vinda de uma sugestão do público) */
+.pl-lista-escolhida { grid-column: 1 / -1; padding: 12px 14px; border: 1px dashed var(--acento, #7c5cff); border-radius: 12px; background: color-mix(in srgb, var(--acento, #7c5cff) 8%, transparent); }
+.pl-lista-escolhida p { margin: 4px 0 10px; line-height: 1.5; }
+
+/* ---------- Sugestões do público (painel) ---------- */
+.sgp-resumo {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+  margin-bottom: 14px;
+}
+.sgp-num {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  padding: 14px 16px;
+  border-radius: 18px;
+  color: var(--texto);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: transform 0.2s, border-color 0.2s;
+}
+.sgp-num:hover {
+  transform: translateY(-2px);
+}
+.sgp-num b {
+  font-family: var(--f-display);
+  font-size: var(--t-xl);
+  line-height: 1;
+}
+.sgp-num b small {
+  font-family: var(--f-corpo);
+  font-size: var(--t-sm);
+  color: var(--texto-3);
+}
+.sgp-num span {
+  font-size: var(--t-xs);
+  color: var(--texto-3);
+  font-weight: 700;
+}
+.sgp-num.destaque {
+  box-shadow: inset 0 0 0 1.5px var(--ouro);
+  background: radial-gradient(90% 120% at 100% 0%, var(--ouro-fundo), transparent 70%), var(--vidro);
+}
+.sgp-num.destaque b {
+  color: var(--ouro);
+}
+.sgp-lista {
+  display: grid;
+  gap: 4px;
+}
+.sgp-cartao h3 {
+  margin: 4px 0;
+  overflow-wrap: anywhere;
+}
+.sgp-cartao.decidir {
+  box-shadow: inset 3px 0 0 var(--ouro);
+}
+.vt-selo.decidir {
+  color: var(--ouro);
+  border-color: color-mix(in srgb, var(--ouro) 50%, transparent);
+}
+.vt-selo.aceite {
+  color: var(--sobe);
+  border-color: color-mix(in srgb, var(--sobe) 40%, transparent);
+}
+.sgp-gente {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  margin: 10px 0;
+}
+.sgp-pessoa {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 2px 10px 2px 2px;
+  border-radius: 99px;
+  background: rgba(255, 255, 255, 0.05);
+  font-size: var(--t-xs);
+  font-weight: 700;
+}
+.sgp-votos {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 10px 0;
+  font-size: var(--t-sm);
+  color: var(--texto-2);
+}
+.sgp-votos .sg-barra {
+  display: flex;
+  height: 8px;
+  max-width: 420px;
+  border-radius: 99px;
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.06);
+}
+.sgp-votos .sg-barra .q {
+  background: var(--sobe);
+}
+.sgp-votos .sg-barra .n {
+  background: var(--rubi);
+}
+.sgp-votos b.q {
+  color: var(--sobe);
+}
+.sgp-votos b.n {
+  color: var(--rubi-claro, #ff8199);
+}
+.sgp-motivo {
+  margin: 4px 0 10px;
+  font-size: var(--t-sm);
+  color: var(--texto-3);
+}
+.sgp-acoes {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+.sgp-acoes .botao-icone {
+  margin-left: auto;
+}
+.sgp-regras-txt {
+  margin-top: 14px;
+  font-size: var(--t-xs);
+}
+.sgp-checks {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 16px;
+}
+.sgp-form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.sgp-form .campo small {
+  font-size: var(--t-xs);
+}
+@media (max-width: 700px) {
+  .sgp-resumo {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }

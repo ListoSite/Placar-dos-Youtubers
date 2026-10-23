@@ -1,5 +1,6 @@
 // API do Placar dos Youtubers.
-// Público (página pública): GET /api/publico, /api/votacoes, /api/status, POST /api/login
+// Público (página pública): GET /api/publico, /api/votacoes, /api/sugestoes, /api/status, POST /api/login,
+//   POST /api/sugestao, /api/sugestao/voto, /api/sugestoes/eu (com a sessão Google do visitante)
 // Painel (precisa do token obtido no login): GET /api/dataset, /api/videos, /api/daily, /api/sb,
 //   /api/palco/historico e tudo em /api/admin/...
 
@@ -9,6 +10,7 @@ import { dadosPublicos, guardarPublicacao, listarPublicacoes, mudarPublicacao, a
 import { listarVotacoes, guardarVotacao, apagarVotacao, configPublica, mudarEstado, resolverVotacao, criarTorneio, avancarTorneio, apagarTorneio } from "../lib/votacoes.mjs";
 import { lerConfig, guardarConfig, datasetPublico, configPublicaVitrine, canalPublico, BLOCOS, ABAS } from "../lib/vitrine.mjs";
 import { lerExclusivos, guardarExclusivo, apagarExclusivo, ordenarExclusivos, exclusivosPublicos, prepararRetrato, guardarRetrato, lerRetrato, ESPETACULOS as NOMES_ESP } from "../lib/exclusivos.mjs";
+import { estadoPublico, criarSugestao, votarSugestao, contaDoToken, listarParaPainel, porDecidir, mudarSugestao, guardarRegras as guardarRegrasSugestoes } from "../lib/sugestoes.mjs";
 import { guardarResultados, resumoHistorico, COLECAO as COLECAO_PALCO } from "../lib/historico.mjs";
 import { adminEnabled, checkPassword, createToken, verifyToken, tokenFromRequest, googleLigado, googleClientId, verificarGoogle } from "../lib/auth.mjs";
 import { loadDB, saveDB, newPerson, attachChannel, detachChannel, mergePeople, deletePerson, PERSON_FIELDS, DEFAULT_SETTINGS } from "../lib/db.mjs";
@@ -26,6 +28,14 @@ export const config = { path: "/api/*" };
 async function abaExclusivos() {
   const cfg = await lerConfig();
   return cfg.abas.some((a) => a.id === "exclusivos" && a.visivel) || cfg.inicio.blocos.some((b) => b.tipo === "exclusivos" && b.visivel);
+}
+
+/** Sugestões do público: só com a aba ligada. Devolve os Youtubers que podem ser escolhidos (os da página pública). */
+async function contextoSugestoes(req) {
+  const [ds, cfg] = await Promise.all([getDataset(req), lerConfig()]);
+  const aba = cfg.abas.find((a) => a.id === "sugestoes");
+  if (!aba?.visivel) throw new HttpError(404, "As sugestões não estão abertas.");
+  return new Map(datasetPublico(ds, cfg).people.map((p) => [p.id, p]));
 }
 
 class HttpError extends Error {
@@ -138,6 +148,27 @@ const publicRoutes = {
     );
   },
   "GET palco/historico": async () => json(await resumoHistorico(), 200, { "cache-control": "public, max-age=60" }),
+  // Sugestões do público (anónimas). Ler: toda a gente. Sugerir e votar: com a sessão Google (o token vai no corpo).
+  "GET sugestoes": async (req) => json({ ...(await estadoPublico({ pessoas: await contextoSugestoes(req) })), supabase: configPublica() }, 200, { "cache-control": "public, max-age=10" }),
+  "POST sugestoes/eu": async (req) => {
+    const pessoas = await contextoSugestoes(req);
+    const conta = await contaDoToken((await body(req)).token);
+    return json({ ...(await estadoPublico({ conta, pessoas })), supabase: configPublica() }, 200, { "cache-control": "private, no-store" });
+  },
+  "POST sugestao": async (req) => {
+    const pessoas = await contextoSugestoes(req);
+    const b = await body(req);
+    const conta = await contaDoToken(b.token);
+    const nova = await criarSugestao({ conta, sugestao: b.sugestao, pessoas });
+    return json({ id: nova.id, ...(await estadoPublico({ conta, pessoas })), supabase: configPublica() }, 200, { "cache-control": "private, no-store" });
+  },
+  "POST sugestao/voto": async (req) => {
+    const pessoas = await contextoSugestoes(req);
+    const b = await body(req);
+    const conta = await contaDoToken(b.token);
+    const r = await votarSugestao({ conta, id: b.id, quer: b.quer === true || b.quer === false ? b.quer : null });
+    return json({ ...r, ...(await estadoPublico({ conta, pessoas })), supabase: configPublica() }, 200, { "cache-control": "private, no-store" });
+  },
   "POST login": async (req) => {
     if (!adminEnabled()) throw new HttpError(503, "A edição está desligada: define ADMIN_PASSWORD nas variáveis do Netlify.");
     // Travão contra quem tenta adivinhar a palavra-passe: 8 erros por endereço em 15 minutos, 40 no total
@@ -600,6 +631,16 @@ const adminRoutes = {
 
   // ---------- Votações ----------
   "GET votacoes": async () => listarVotacoes({ todas: true }),
+
+  // ---------- Sugestões do público ----------
+  "GET sugestoes": async () => {
+    const cfg = await lerConfig();
+    const aba = cfg.abas.find((a) => a.id === "sugestoes");
+    return { ...(await listarParaPainel()), aba: aba ? { nome: aba.nome, visivel: aba.visivel } : null };
+  },
+  "GET sugestoes/contagem": async () => ({ porDecidir: await porDecidir() }),
+  "POST sugestao/estado": async ({ b }) => mudarSugestao(b.id, b.estado),
+  "POST sugestoes/regras": async ({ b }) => ({ regras: await guardarRegrasSugestoes(b.regras || {}) }),
   "POST votacao": async ({ db, b }) => ({ ok: true, id: await guardarVotacao(b.votacao || {}, db) }),
   "POST votacao/apagar": async ({ b }) => {
     await apagarVotacao(b.id);

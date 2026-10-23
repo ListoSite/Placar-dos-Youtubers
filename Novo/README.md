@@ -173,7 +173,7 @@ Teclas: espaço avança, P pausa, M som, F ecrã inteiro, H esconde os controlos
 Os dados podem viver no Netlify Blobs (como no início) ou no Supabase, uma base de dados Postgres grátis onde se vê e mexe em tudo por tabelas. Passo a passo:
 
 1. Em supabase.com cria um projeto (região West EU ou Frankfurt).
-2. No Supabase, **SQL Editor → New query**: cola o ficheiro `supabase/schema.sql` e carrega em **Run**. Cria as tabelas `pessoas`, `canais`, `projetos`, `documentos`, `palco_resultados`, `votacoes` e `votos`, com as regras de segurança (ninguém de fora lê os dados diretamente; cada conta vota uma vez por votação).
+2. No Supabase, **SQL Editor → New query**: cola o ficheiro `supabase/schema.sql` e carrega em **Run**. Cria as tabelas `pessoas`, `canais`, `projetos`, `documentos`, `palco_resultados`, `votacoes`, `votos`, `sugestoes` e `sugestao_votos`, com as regras de segurança (ninguém de fora lê os dados diretamente; cada conta vota uma vez por votação).
 3. No Netlify, **Site configuration → Environment variables**: `SUPABASE_URL` (o Project URL, `https://xxxx.supabase.co`), `SUPABASE_ANON_KEY` (a chave pública: **Publishable key** `sb_publishable_…`, ou a antiga `anon`) e `SUPABASE_SERVICE_ROLE_KEY` (a chave secreta: **Secret key** `sb_secret_…`, ou a antiga `service_role`; nunca no código nem no chat). Estão no Supabase em **Project Settings → API Keys** (o URL em **Data API**). Em cada variável, escolhe **Same value for all deploy contexts**. Faz um novo deploy.
 4. No site, **Editar → Definições → Base de dados → Copiar dados para o Supabase**. A cópia vai por partes e não apaga nada do Netlify. Só depois da cópia é que o site passa a usar o Supabase (até lá continua no Netlify, por isso nunca abre vazio).
 
@@ -189,6 +189,18 @@ Se já tinhas corrido o `schema.sql` antes, corre-o outra vez: pode correr vári
 **Importante (votações novas):** os tipos novos de votação e os torneios precisam de colunas novas na tabela `votacoes`. No Supabase, **SQL Editor**, corre outra vez o ficheiro `supabase/schema.sql` (não apaga nada). Sem isso, o painel avisa ao criar uma votação.
 
 As votações criam-se no painel, em **Votações**. Os visitantes votam na aba **Votar** do site com a conta Google, uma vez por votação. Os resultados vão para um vídeo com o espetáculo **O público escolheu**: lista do último ao primeiro, confronto frente a frente, a resposta certa de uma previsão (com a percentagem de quem acertou) ou a chave de um torneio ronda a ronda até ao campeão.
+
+### Sugestões do público
+
+Na aba **Sugerir** do site, quem entra com a conta Google sugere um vídeo e escolhe os Youtubers: um **top** (por views, subscritores, Índice…, de todos, de uma categoria ou só dos escolhidos), uma **batalha** (2), um **torneio** (8), uma **simulação** (um dos jogos, com 2 a 12) ou a **história** de um Youtuber. Não há texto livre: o título faz-se sozinho a partir das escolhas.
+
+- Tudo anónimo: no site nunca aparece quem sugeriu nem quem votou. Na base de dados guarda-se só um código da conta (não dá para saber o email nem o nome), para os limites.
+- No máximo 3 sugestões no site ao mesmo tempo, uma por conta (e uma por dia), sem repetidas.
+- Toda a gente com conta Google vota **Quero ver** ou **Não quero** (e pode mudar ou tirar o voto). Com 60% de "não quero" (a partir de 10 votos), a sugestão sai do ar e abre o lugar.
+- Cada sugestão fica 14 dias. No fim vai para o painel, em **Sugestões → Por decidir** (com um número ao lado na barra), e tu **aceitas** ou **recusas**. As aceites aparecem no site em "O canal aceitou".
+- No painel também podes **acabar já**, **tirar do ar**, **apagar** e **abrir no Palco** com os Youtubers da sugestão já escolhidos. Em **Regras** mudas os números (máximo, dias, percentagem, votos mínimos, horas entre sugestões), os tipos e os jogos, ou fechas as sugestões novas.
+
+Para ligar: corre outra vez o `supabase/schema.sql` (cria as tabelas `sugestoes` e `sugestao_votos`, fechadas a quem é de fora) e liga a aba **Sugerir** (no painel, em Sugestões, ou em Página pública → Abas).
 
 ## Sons e música
 

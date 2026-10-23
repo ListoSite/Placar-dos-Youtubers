@@ -20,7 +20,14 @@ function movimento(x) {
 export async function correr(palco, opts) {
   const chave = METRICAS[opts.metric] ? opts.metric : "views";
   const met = METRICAS[chave];
-  const top = rankingPor(chave, opts.m, { cat: opts.cat, n: Number(opts.n) || 10 });
+  // Com uma lista de Youtubers (por exemplo de uma sugestão do público), o top é só entre eles
+  const so = opts.pessoas ? new Set(String(opts.pessoas).split(",").filter(Boolean)) : null;
+  const top = so
+    ? rankingPor(chave, opts.m, { cat: opts.cat, n: 9999 })
+        .filter((x) => so.has(x.p.id))
+        .slice(0, 20)
+        .map((x, i) => ({ ...x, pos: i + 1, ant: undefined }))
+    : rankingPor(chave, opts.m, { cat: opts.cat, n: Number(opts.n) || 10 });
   palco.contexto = { metrica: chave, m: opts.m, cat: opts.cat };
   if (top.length < 3) throw new Error("Há poucos Youtubers com dados para este ranking.");
   const vertical = palco.vertical;

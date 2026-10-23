@@ -168,3 +168,40 @@ create table if not exists public.palco_publicacoes (
   dados jsonb not null default '{}'::jsonb
 );
 alter table public.palco_publicacoes enable row level security;
+
+-- ---------------------------------------------------------------------------
+-- Sugestões do público (anónimas): um top, uma batalha, um torneio, uma simulação ou uma história.
+-- Tudo passa pela API do site (com a chave service_role): ninguém de fora lê nem escreve aqui.
+-- "autor" é um código anónimo da conta Google (não dá para saber quem é), só para os limites
+-- (uma sugestão no ar por pessoa, uma por dia, um voto por pessoa).
+-- ---------------------------------------------------------------------------
+create table if not exists public.sugestoes (
+  id uuid primary key default gen_random_uuid(),
+  criado timestamptz not null default now(),
+  fecha timestamptz not null,
+  autor text not null,
+  tipo text not null,
+  titulo text not null default '',
+  dados jsonb not null default '{}'::jsonb,
+  estado text not null default 'ativa' check (estado in ('ativa', 'acabou', 'removida', 'aceite', 'recusada')),
+  motivo text not null default '',
+  decidido timestamptz,
+  votos_final jsonb
+);
+create index if not exists sugestoes_estado on public.sugestoes (estado, criado desc);
+create index if not exists sugestoes_autor on public.sugestoes (autor, criado desc);
+
+create table if not exists public.sugestao_votos (
+  chave text primary key,
+  sugestao_id uuid not null references public.sugestoes (id) on delete cascade,
+  autor text not null,
+  quer boolean not null,
+  criado timestamptz not null default now()
+);
+create index if not exists sugestao_votos_sugestao on public.sugestao_votos (sugestao_id);
+
+alter table public.sugestoes enable row level security;
+alter table public.sugestao_votos enable row level security;
+revoke all on public.sugestoes from anon, authenticated;
+revoke all on public.sugestao_votos from anon, authenticated;
+-- Sem políticas: só o servidor (service_role) mexe nestas tabelas.

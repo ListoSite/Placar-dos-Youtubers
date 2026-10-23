@@ -51,9 +51,9 @@ export function temConta() {
   return Boolean(ler()?.access_token);
 }
 
-export function entrarComGoogle(cfg) {
+export function entrarComGoogle(cfg, destino = "#/votar") {
   try {
-    sessionStorage.setItem(VOLTAR, "#/votar");
+    sessionStorage.setItem(VOLTAR, destino);
   } catch {
     /* nada */
   }
@@ -105,6 +105,9 @@ export async function sairDaConta(cfg) {
 }
 
 /** Token válido (renova-o se estiver a acabar). */
+export async function tokenConta(cfg) {
+  return token(cfg);
+}
 async function token(cfg) {
   const s = ler();
   if (!s?.access_token) return null;

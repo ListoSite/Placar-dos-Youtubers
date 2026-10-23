@@ -1,6 +1,7 @@
 // Torneio: 8 ou 16 Youtubers em eliminatórias, com o quadro e duelos até à final.
 
 import { esc } from "../format.js";
+import { pessoa, indice } from "../data.js";
 import { contar } from "../ui.js";
 import { avatarPalco, baralhar, letras, comFoco } from "./stage.js";
 import { METRICAS, melhores } from "./metricas.js";
@@ -22,9 +23,11 @@ function semear(n) {
 }
 
 export async function correr(palco, opts) {
-  const n = Number(opts.n) === 16 ? 16 : 8;
+  // Com uma lista de Youtubers (de uma sugestão do público): entram esses, pela ordem do Índice
+  const escolhidos = opts.pessoas ? String(opts.pessoas).split(",").map((id) => pessoa(id)).filter(Boolean) : [];
+  const n = escolhidos.length === 16 || (!escolhidos.length && Number(opts.n) === 16) ? 16 : 8;
   const m = opts.m;
-  let lista = opts.quem === "acaso" ? baralhar(melhores(60, { cat: opts.cat })).slice(0, n) : melhores(n, { cat: opts.cat });
+  let lista = escolhidos.length >= 8 ? [...escolhidos].sort((a, b) => (indice(b.id).total ?? -1) - (indice(a.id).total ?? -1)).slice(0, n) : opts.quem === "acaso" ? baralhar(melhores(60, { cat: opts.cat })).slice(0, n) : melhores(n, { cat: opts.cat });
   if (lista.length < n) throw new Error(`São precisos ${n} Youtubers com Índice${opts.cat ? " nesta categoria" : ""}.`);
   lista = comFoco(lista, palco);
   if (opts.quem !== "acaso") lista = semear(n).map((i) => lista[i]);

@@ -17,6 +17,9 @@ const limitar = (x, a, b) => Math.max(a, Math.min(b, x));
 /** Quem entra no jogo: os melhores pelo Índice ou ao acaso entre os 60 melhores (e o Youtuber em foco). */
 export function jogadores(palco, opts, { min = 4, max = 20, padrao = 10 } = {}) {
   const n = limitar(Number(opts.n) || padrao, min, max);
+  // Uma lista escolhida (por exemplo numa sugestão do público): entram esses
+  const escolhidos = opts.pessoas ? String(opts.pessoas).split(",").map((id) => estado.pessoas.get(id)).filter(Boolean).slice(0, max) : [];
+  if (escolhidos.length >= min) return baralhar(comFoco(escolhidos, palco));
   const base = melhores(opts.quem === "top" ? n : Number(opts.top) || 60, { cat: opts.cat });
   const lista = opts.quem === "top" ? base.slice(0, n) : baralhar(base).slice(0, n);
   if (lista.length < min) throw new Error(`São precisos pelo menos ${min} Youtubers com dados${opts.cat ? ` na categoria ${opts.cat}` : ""}.`);

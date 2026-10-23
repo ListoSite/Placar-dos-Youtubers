@@ -18,6 +18,7 @@ const PAGINAS = {
   categorias: "../pages/categories.js",
   projetos: "../pages/projects.js",
   exclusivos: "./exclusivos.js",
+  sugestoes: "./sugestoes.js",
 };
 // Endereços antigos (e o regresso do login) continuam a funcionar
 const ANTIGOS = { votacoes: "votar", hall: "videos", "": "" };
