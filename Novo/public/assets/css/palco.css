@@ -7276,3 +7276,350 @@ body.modo-palco {
   color: transparent;
   filter: drop-shadow(0 20px 60px rgba(0, 0, 0, 0.5));
 }
+
+/* ---------- Simulações (jogos de sorte) ---------- */
+.jg-mundo {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 3;
+}
+.jg-bola {
+  position: absolute;
+  left: 0;
+  top: 0;
+  border-radius: 50%;
+  box-shadow: 0 0 0 5px var(--cor), 0 10px 26px rgba(0, 0, 0, 0.45);
+  will-change: transform;
+  background: var(--cor);
+}
+.jg-bola .jg-cara {
+  width: 100% !important;
+  height: 100% !important;
+  font-size: calc(var(--tam) * 0.36) !important;
+}
+.jg-bola.jg-ganha {
+  box-shadow: 0 0 0 6px var(--ouro), 0 0 60px var(--ouro), 0 10px 26px rgba(0, 0, 0, 0.45);
+  z-index: 2;
+}
+.jg-nome {
+  position: absolute;
+  left: 0;
+  top: 0;
+  font-weight: 800;
+  color: #fff;
+  white-space: nowrap;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.8);
+  will-change: transform;
+}
+.jg-coroa {
+  position: absolute;
+  left: 0;
+  top: 0;
+  font-size: 44px;
+  filter: drop-shadow(0 4px 10px rgba(0, 0, 0, 0.6));
+  will-change: transform;
+}
+.jg-arena {
+  position: absolute;
+  border: 4px solid color-mix(in srgb, var(--texto) 28%, transparent);
+  border-radius: 28px;
+  background: color-mix(in srgb, var(--texto) 4%, transparent);
+  box-shadow: inset 0 0 60px rgba(0, 0, 0, 0.35);
+}
+.jg-labirinto {
+  border-radius: 14px;
+}
+.jg-bloco {
+  position: absolute;
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--texto) 22%, transparent);
+  box-shadow: inset 0 0 0 2px color-mix(in srgb, var(--texto) 30%, transparent);
+}
+.jg-bloco.parede {
+  background: var(--rubi);
+  box-shadow: 0 0 22px color-mix(in srgb, var(--rubi) 60%, transparent);
+}
+.jg-cenoura {
+  position: absolute;
+  font-size: 88px;
+  line-height: 1;
+  transform: translate(-50%, -50%);
+  filter: drop-shadow(0 0 24px rgba(255, 150, 40, 0.8));
+  animation: jg-boia 1.4s ease-in-out infinite;
+  z-index: 2;
+}
+@keyframes jg-boia {
+  50% {
+    translate: 0 -10px;
+  }
+}
+.jg-cavalo {
+  position: absolute;
+  right: -18px;
+  bottom: -12px;
+  font-size: 36px;
+  line-height: 1;
+  filter: drop-shadow(0 3px 6px rgba(0, 0, 0, 0.6));
+}
+.jg-faixa {
+  position: absolute;
+  left: 90px;
+  top: 236px;
+  width: 440px;
+  display: grid;
+  gap: 8px;
+  z-index: 5;
+  pointer-events: none;
+}
+.vertical .jg-faixa {
+  left: 60px;
+  right: 60px;
+  width: auto;
+  top: 306px;
+}
+/* No vertical só cabe a notícia mais recente, entre o título e o jogo */
+.vertical .jg-faixa-linha:not(:first-child) {
+  display: none;
+}
+.jg-faixa-linha {
+  padding: 10px 16px;
+  border-radius: 14px;
+  border-left: 6px solid var(--cor, var(--rubi));
+  background: color-mix(in srgb, var(--pt-anel) 82%, transparent);
+  font-size: 24px;
+  color: #fff;
+  animation: jg-entra 0.35s cubic-bezier(0.2, 1.3, 0.4, 1);
+  transition: opacity 0.6s;
+}
+.vertical .jg-faixa-linha {
+  font-size: 28px;
+}
+.jg-faixa-linha.velha {
+  opacity: 0.55;
+}
+@keyframes jg-entra {
+  from {
+    transform: translateX(-40px);
+    opacity: 0;
+  }
+}
+.jg-partida {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  z-index: 6;
+  pointer-events: none;
+}
+.jg-partida b {
+  font-family: var(--f-display);
+  font-weight: 900;
+  font-size: 260px;
+  line-height: 1;
+  color: #fff;
+  text-shadow: 0 10px 50px rgba(0, 0, 0, 0.6), 0 0 40px var(--rubi);
+}
+.jg-vencedor {
+  position: absolute;
+  inset: 0;
+  z-index: 9;
+  background: color-mix(in srgb, var(--pt-anel) 86%, transparent);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  opacity: 0;
+}
+.jg-vencedor .p-centro {
+  gap: 26px;
+}
+.jg-vencedor .p-titulo {
+  font-size: 110px;
+}
+
+/* Corrida de berlindes */
+.jg-janela {
+  position: absolute;
+  overflow: hidden;
+  border-radius: 26px;
+  border: 3px solid color-mix(in srgb, var(--texto) 25%, transparent);
+  background: color-mix(in srgb, var(--pt-anel) 55%, transparent);
+  box-shadow: inset 0 0 50px rgba(0, 0, 0, 0.45);
+  z-index: 2;
+}
+.jg-pista {
+  position: absolute;
+  left: 0;
+  top: 0;
+  will-change: transform;
+}
+.jg-pista .jg-bola {
+  box-shadow: 0 0 0 4px var(--cor), 0 6px 14px rgba(0, 0, 0, 0.5);
+}
+.jg-pista-svg {
+  position: absolute;
+  left: 0;
+  top: 0;
+}
+.jg-pino {
+  fill: color-mix(in srgb, var(--texto) 75%, transparent);
+}
+.jg-rampa {
+  stroke: var(--ouro);
+  stroke-linecap: round;
+}
+.jg-meta {
+  fill: #fff;
+  opacity: 0.9;
+}
+.jg-meta-texto {
+  position: absolute;
+  left: 0;
+  right: 0;
+  text-align: center;
+  font-family: var(--f-display);
+  font-weight: 900;
+  font-size: 44px;
+  letter-spacing: 0.2em;
+  color: #fff;
+  opacity: 0.7;
+}
+.jg-pa {
+  position: absolute;
+  left: 0;
+  top: 0;
+  border-radius: 999px;
+  background: var(--rubi);
+  box-shadow: 0 0 18px color-mix(in srgb, var(--rubi) 70%, transparent);
+  will-change: transform;
+}
+.jg-mapa {
+  position: absolute;
+  right: 10px;
+  top: 14px;
+  bottom: 14px;
+  width: 10px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.12);
+  z-index: 4;
+}
+.jg-mapa i {
+  position: absolute;
+  left: -3px;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  margin-top: -8px;
+  box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.5);
+}
+
+/* Tabela ao lado (berlindes, escapa) */
+.jg-tabela {
+  position: absolute;
+  right: 90px;
+  top: 236px;
+  width: 440px;
+  display: grid;
+  gap: 8px;
+  z-index: 5;
+}
+.jg-tabela.baixo {
+  left: 60px;
+  right: 60px;
+  top: auto;
+  bottom: 150px;
+  width: auto;
+  grid-template-columns: 1fr 1fr;
+}
+.jg-linha {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 14px;
+  border-radius: 16px;
+  background: color-mix(in srgb, var(--pt-anel) 70%, transparent);
+  border-left: 6px solid var(--cor);
+  font-size: 24px;
+}
+.jg-linha > b {
+  font-family: var(--f-display);
+  font-weight: 900;
+  min-width: 28px;
+}
+.jg-linha > span:not(.avatar) {
+  flex: 1;
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-weight: 700;
+}
+.jg-linha i {
+  font-style: normal;
+  font-family: var(--f-display);
+  font-weight: 900;
+  color: var(--ouro);
+}
+.jg-linha.chegou {
+  background: color-mix(in srgb, var(--ouro) 18%, var(--pt-anel));
+}
+
+/* Escapa do círculo */
+.jg-aneis {
+  position: absolute;
+  overflow: visible;
+  z-index: 2;
+}
+.jg-aneis circle {
+  fill: none;
+  stroke: var(--cor);
+  stroke-width: 8px;
+  stroke-linecap: round;
+  filter: drop-shadow(0 0 10px var(--cor));
+}
+
+/* Batalha no ringue */
+.jg-ringue {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  border: 7px solid var(--rubi);
+  box-shadow: 0 0 40px color-mix(in srgb, var(--rubi) 60%, transparent), inset 0 0 70px rgba(0, 0, 0, 0.45);
+  background: color-mix(in srgb, var(--texto) 4%, transparent);
+  z-index: 2;
+}
+.jg-vida {
+  position: absolute;
+  inset: -12px;
+  border-radius: 50%;
+  background: conic-gradient(#4ade80 calc(var(--v) * 360deg), rgba(255, 255, 255, 0.15) 0);
+  -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 7px), #000 calc(100% - 6px));
+  mask: radial-gradient(farthest-side, transparent calc(100% - 7px), #000 calc(100% - 6px));
+  transition: background 0.2s;
+}
+.jg-vida-n {
+  position: absolute;
+  left: 50%;
+  bottom: -40px;
+  transform: translateX(-50%);
+  font-family: var(--f-display);
+  font-size: 24px;
+  font-weight: 900;
+  color: #fff;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.8);
+}
+.jg-dano {
+  position: absolute;
+  left: 0;
+  top: 0;
+  font-family: var(--f-display);
+  font-weight: 900;
+  font-size: 32px;
+  color: #fff;
+  text-shadow: 0 3px 10px rgba(0, 0, 0, 0.8);
+  white-space: nowrap;
+  margin-left: -20px;
+}
+.jg-dano.critico {
+  color: var(--ouro);
+  font-size: 46px;
+}

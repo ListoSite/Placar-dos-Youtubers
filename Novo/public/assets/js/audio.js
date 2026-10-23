@@ -706,6 +706,10 @@ const EFEITOS = {
   powerup(t) {
     [60, 64, 67, 72, 76, 79, 84, 88].forEach((n, i) => pluck(t + i * 0.045, n, { vol: 0.09, bus: busEfeitos, tipo: "square", dur: 0.08, eco: 0.1 }));
   },
+  // Uma nota (para os ressaltos dos jogos; n em MIDI)
+  nota(t, { n = 72, vol = 0.11 } = {}) {
+    pluck(t, n, { vol, bus: busEfeitos, tipo: "triangle", dur: 0.28, eco: 0.25 });
+  },
   bip(t) {
     pluck(t, 91, { vol: 0.1, bus: busEfeitos, tipo: "sine", dur: 0.09, eco: 0.2 });
     pluck(t + 0.11, 96, { vol: 0.1, bus: busEfeitos, tipo: "sine", dur: 0.12, eco: 0.3 });

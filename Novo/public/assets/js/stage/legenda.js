@@ -58,6 +58,11 @@ export function textoPublicar(esp, opts, { formato, aviso }) {
     roda: [`A roda da sorte dos Youtubers portugueses 🎡`, `Para onde vai parar? E os números de quem saiu?`],
     batalha: [`${nome(opts.a) || "Youtuber"} vs ${nome(opts.b) || "Youtuber"}: quem ganha? 🥊`, `Ronda a ronda, número a número, até ao K.O. Quem achas que vence?`],
     torneio: [`O grande torneio dos Youtubers portugueses${cat} 🏆`, `${opts.n || 8} Youtubers, eliminatórias e uma final. Quem levou a taça?`],
+    comilonas: [`Bolas comilonas: qual Youtuber come todos? 🫧`, `Cada bola tem o tamanho dos números do Youtuber. A maior come a mais pequena e a arena fecha. Em quem apostas?`],
+    cavalos: [`Corrida de cavalos dos Youtubers: quem chega à cenoura? 🐎🥕`, `Todos à mesma velocidade, a ressaltar num labirinto. Escolhe o teu cavalo antes de ver!`],
+    berlindes: [`Corrida de berlindes dos Youtubers 🔮`, `Pinos, rampas e pás a rodar até à meta. Escolhe o teu berlinde e vê até ao fim!`],
+    escapa: [`Qual Youtuber escapa do círculo? ⭕`, `Cada ressalto toca uma nota. Quem passa pela abertura parte o anel. Quem parte o último?`],
+    ringue: [`Batalha no ringue: quem fica de pé? 🥊`, `Bolas com vida, golpes críticos e um ringue que fecha. Comenta em quem apostaste!`],
     cartao: [`${nome(opts.id) || "Youtuber"} em números 📊`, `O Índice de Influência e os números mais importantes.`],
     historia: [`A história de ${nome(opts.id) || "um Youtuber"} no YouTube 📈`, `Do início até hoje, mês a mês, com os momentos marcantes.`],
   }[esp.id] || [esp.nome, ""];

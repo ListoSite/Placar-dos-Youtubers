@@ -30,6 +30,11 @@ export const ESPETACULOS = {
   torneio: "Torneio",
   cartao: "Cartão de Youtuber",
   historia: "A história de…",
+  comilonas: "Bolas comilonas",
+  cavalos: "Corrida de cavalos",
+  berlindes: "Corrida de berlindes",
+  escapa: "Escapa do círculo",
+  ringue: "Batalha no ringue",
 };
 
 const txt = (x, max) => String(x ?? "").trim().slice(0, max);

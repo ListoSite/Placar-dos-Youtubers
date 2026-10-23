@@ -117,6 +117,10 @@ function opcoes(main, esp, query) {
   const metricas = () => `<label class="campo"><span>Ranking por</span><select class="input" name="metric">
       <option value="views">Views do mês</option><option value="indice">Índice de Influência</option>${temSubs ? `<option value="subsMes">Subscritores ganhos no mês</option>` : ""}
       <option value="crescimento">Crescimento face ao mês anterior</option><option value="subs">Subscritores (total)</option><option value="total">Views totais</option>${temTT ? `<option value="tiktok">Seguidores no TikTok</option>` : ""}${temTTMes ? `<option value="tiktokMes">Seguidores ganhos no TikTok no mês</option>` : ""}</select></label>`;
+  // Peças das simulações: quantos, quem entra e o que dá o tamanho (ou a vida)
+  const numero = (lista, def) => `<label class="campo"><span>Youtubers</span><select class="input" name="n">${lista.map((n) => `<option ${n === def ? "selected" : ""}>${n}</option>`).join("")}</select></label>`;
+  const quem = () => `<label class="campo"><span>Quem entra</span><select class="input" name="quem"><option value="acaso">Ao acaso entre os 60 melhores</option><option value="top">Os melhores pelo Índice</option></select></label>`;
+  const tamanho = (soDados = false, rotulo = "Tamanho por") => `<label class="campo"><span>${soDados ? "Números que contam" : rotulo}</span><select class="input" name="tamanho"><option value="views">Views do mês</option><option value="subs">Subscritores</option><option value="indice">Índice de Influência</option>${soDados ? "" : `<option value="igual">Ao acaso (sem números)</option>`}</select></label>`;
   const campos = {
     revelacao: `${metricas()}${mes}
       <label class="campo"><span>Quantos</span><select class="input" name="n"><option>5</option><option selected>10</option><option>15</option><option>20</option></select></label>${cat}`,
@@ -154,6 +158,11 @@ function opcoes(main, esp, query) {
     torneio: `<label class="campo"><span>Participantes</span><select class="input" name="n"><option value="8" selected>8</option><option value="16">16</option></select></label>
       <label class="campo"><span>Quem entra</span><select class="input" name="quem"><option value="top">Os melhores pelo Índice</option><option value="acaso">Ao acaso entre os 60 melhores</option></select></label>
       <label class="campo"><span>Cada duelo decide-se por</span><select class="input" name="criterio"><option value="misto">Um critério ao acaso</option><option value="views">Views do mês</option><option value="indice">Índice de Influência</option><option value="subs">Subscritores</option></select></label>${mes}${cat}`,
+    comilonas: `${numero([6, 8, 10, 12, 16, 20], 12)}${tamanho()}${quem()}${mes}${cat}`,
+    cavalos: `${numero([4, 6, 8, 10, 12], 8)}<label class="campo"><span>Velocidade</span><select class="input" name="vantagem"><option value="">Todos iguais (pura sorte)</option><option value="dados">Os números dão um pouco mais</option></select></label>${tamanho(true)}${quem()}${cat}`,
+    berlindes: `${numero([4, 6, 8, 10, 12, 16], 10)}${quem()}${cat}`,
+    escapa: `${numero([2, 3, 4, 6, 8, 10], 6)}<label class="campo"><span>Anéis</span><select class="input" name="aneis"><option>5</option><option selected>8</option><option>12</option></select></label>${quem()}${cat}`,
+    ringue: `${numero([4, 6, 8, 10, 12, 16], 8)}${tamanho(false, "Vida por")}${quem()}${mes}${cat}`,
     cartao: campoPessoa("id", "Youtuber", query, "Procurar"),
     historia: campoPessoa("id", "Youtuber", query, "Procurar"),
   }[esp.id];
