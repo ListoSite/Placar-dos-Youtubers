@@ -1,6 +1,7 @@
 // Página do Palco: lista de espetáculos (para vídeos e para direto) e opções de cada um.
 
-import { estado, pessoa, mesesComDados, procurar, api, temSessao } from "../data.js";
+import { estado, pessoa, mesesComDados, procurar, api, temSessao, usarDataset } from "../data.js";
+import { temVariosCanais, dividirCanais, resultadosDosDonos } from "./canais.js";
 import { TEMAS as TEMAS_CASO, retratoNoticia } from "./caso.js";
 import { CENAS, ONDES, novaCena, roteiroPadrao, resumoCena, cenaPronta } from "./roteiro.js";
 import { semear, largar, novaSemente } from "./sorte.js";
@@ -175,7 +176,10 @@ function opcoes(main, esp, query) {
   // Uma lista de Youtubers escolhida (por exemplo numa sugestão do público): só entram esses
   const ESCOLHA_LISTA = ["revelacao", "torneio", "comilonas", "cavalos", "berlindes", "escapa", "ringue"];
   const listaEscolhida = ESCOLHA_LISTA.includes(esp.id) ? String(query.get("pessoas") || "").split(",").filter((id) => pessoa(id)) : [];
-  const campos = camposBase + (listaEscolhida.length
+  // Quem tem vários canais: juntos (o Youtuber) ou cada canal a contar sozinho
+  const COM_CANAIS = ["revelacao", "corrida", "tier", "altos", "barras", "bolhas", "linhas", "numeros", "desafio", "quiz", "maismenos", "adivinha", "roda", "torneio", "comilonas", "cavalos", "berlindes", "escapa", "ringue"];
+  const campoCanais = COM_CANAIS.includes(esp.id) && temVariosCanais(ds) ? `<label class="campo"><span>Quem tem vários canais</span><select class="input" name="canais"><option value="juntos">Entra uma vez (canais juntos)</option><option value="separados">Cada canal entra sozinho</option></select></label>` : "";
+  const campos = camposBase + campoCanais + (listaEscolhida.length
     ? `<div class="pl-lista-escolhida campo cresce" data-lista><span>Só entram estes Youtubers</span><input type="hidden" name="pessoas" value="${esc(listaEscolhida.join(","))}">
         <p>${listaEscolhida.map((id) => `<b>${esc(pessoa(id).name)}</b>`).join(", ")}</p>
         <button type="button" class="btn btn-pequeno" data-tirar-lista>Usar as opções normais</button></div>`
@@ -623,6 +627,15 @@ function opcoes(main, esp, query) {
       if (!gravacao) return;
     }
     const [mod] = await Promise.all([import(esp.mod), carregarHistorico()]);
+    // Cada canal sozinho: durante o espetáculo, quem tem vários canais passa a ser um "Youtuber" por canal
+    const dsAntes = estado.ds;
+    if (opts.canais === "separados") {
+      usarDataset(dividirCanais(dsAntes));
+      if (opts.pessoas) opts.pessoas = [...new Set(String(opts.pessoas).split(",").flatMap((id) => {
+        const deles = estado.ds.people.filter((p) => p.dono === id).map((p) => p.id);
+        return deles.length ? deles : [id];
+      }))].join(",");
+    }
     // Tudo o que decide o resultado fica guardado, para um exclusivo repetir exatamente igual
     const dsUsado = estado.ds;
     const historicoUsado = historicoEmCache();
@@ -651,6 +664,11 @@ function opcoes(main, esp, query) {
       }
     } finally {
       largar();
+      if (estado.ds !== dsAntes) {
+        // O histórico (estrelas, coroas) é dos Youtubers: os resultados de cada canal vão para o dono
+        palco.resultados = resultadosDosDonos(palco.resultados, estado.ds);
+        usarDataset(dsAntes);
+      }
     }
     const video = gravacao ? await gravacao.parar() : null;
     palco.sair();

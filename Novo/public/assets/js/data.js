@@ -1,6 +1,6 @@
 // Carrega o dataset da API e faz as contas usadas por todas as páginas.
 
-import { calcularIndice, pontuacaoClassica, valorMes } from "./score.js";
+import { calcularIndice, pontuacaoClassica, valorMes, comBonusCanais } from "./score.js";
 import { norm } from "./format.js";
 
 export const estado = {
@@ -97,7 +97,7 @@ function preparar(ds) {
   estado.janela = ds.months.slice(Math.max(0, iRef - 11), iRef + 1);
 
   const ctx = { janela: estado.janela, pesos: ds.settings.weights, topo: ds.settings.alcanceTopo || 1e7 };
-  estado.indices = new Map(ds.people.map((p) => [p.id, calcularIndice(p, ctx)]));
+  estado.indices = new Map(ds.people.map((p) => [p.id, comBonusCanais(calcularIndice(p, ctx), p, ds.settings.bonusCanais)]));
   // O Caso: o karma fica à parte. Calcula-se sempre o "Índice + karma"; só substitui o Índice
   // se o dono o ligou no painel (O Caso, "Juntar ao Índice").
   estado.karma = new Map(Object.entries(ds.karma?.pessoas || {}));

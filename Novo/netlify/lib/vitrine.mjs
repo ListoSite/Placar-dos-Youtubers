@@ -225,7 +225,7 @@ export function datasetPublico(ds, cfg) {
     today: ds.today,
     currentMonth: ds.currentMonth,
     months: months.length ? months : ds.months.slice(-1),
-    settings: { weights: ds.settings.weights, alcanceTopo: ds.settings.alcanceTopo, canal: ds.settings.canal },
+    settings: { weights: ds.settings.weights, alcanceTopo: ds.settings.alcanceTopo, bonusCanais: ds.settings.bonusCanais, canal: ds.settings.canal },
     categories: [...new Set(people.map((p) => p.category).filter(Boolean))].sort((a, b) => a.localeCompare(b, "pt")),
     people,
     channels: ds.channels.filter((c) => vivos.has(c.personId)),
@@ -243,7 +243,7 @@ export function retratoPublico(ds, cfg, incluir = []) {
     if (!p || tem.has(id)) continue;
     const { hidden, legacy, updatedAt, ...resto } = p;
     pub.people.push({ ...resto, semPerfil: true });
-    pub.channels.push(...ds.channels.filter((c) => c.personId === id));
+    pub.channels.push(...ds.channels.filter((c) => c.personId === id || (p.dono && c.id === id)));
     tem.add(id);
   }
   // O karma do Caso desse momento (para o exclusivo repetir igual se usar o Índice com karma)

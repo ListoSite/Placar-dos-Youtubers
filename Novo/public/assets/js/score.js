@@ -95,6 +95,19 @@ export function calcularIndice(p, ctx) {
 }
 
 /**
+ * Bónus de quem tem vários canais: os números juntam-se como se fosse um canal só (sem vantagem
+ * direta) e depois o Índice ganha uma percentagem por cada canal a mais que conta (até 3).
+ */
+export const MAX_CANAIS_BONUS = 3;
+export function comBonusCanais(i, p, pct = 0) {
+  // Sem a definição (por exemplo num exclusivo gravado antes do bónus existir) não há bónus
+  const extra = Math.min(MAX_CANAIS_BONUS, (p.medida?.canais || 1) - 1);
+  if (!i || i.total === null || extra <= 0 || !(pct > 0)) return i;
+  const bonus = Math.round(i.total * (pct / 100) * extra);
+  return { ...i, total: Math.min(1000, i.total + bonus), semBonus: i.total, bonusCanais: { canais: extra + 1, pct: pct * extra } };
+}
+
+/**
  * A fórmula da folha antiga:
  * ROUND( LOG10(média dos meses com views + 10) / LOG10(7 000 000) × 700 × (0,5 + meses com views / 14) )
  * usada nos últimos 8 meses.

@@ -10,6 +10,8 @@ const sugestoes = (p) => (adm.db.suggestions?.[p.id]?.list || []).filter((c) => 
 const lerNoYouTube = (id, texto = "Ler no YouTube") => `<a href="https://www.youtube.com/channel/${esc(id)}/about" target="_blank" rel="noopener" title="Abre o Acerca de. Carrega lá no marcador Placar ⇄ YouTube">${esc(texto)} ↗</a>`;
 // Ir para o Youtuber seguinte da lista (definido pela lista aberta)
 let irSeguinte = null;
+// Separador aberto nas views por mês (o Youtuber ou um canal), para não saltar ao guardar
+let abaMeses = { id: "", aba: "" };
 
 const PAPEIS = ["principal", "secundário", "clips", "gaming", "podcast", "shorts", "música", "outro"];
 const ESTADOS = [
@@ -226,7 +228,8 @@ function editor(alvo, id, aoMudar, abrir) {
 
     <div class="painel ed-bloco">
       <h3>Views por mês</h3>
-      <p class="muted">Os números a cinzento são os que o site usa agora (do YouTube, Social Blade ou folha). Se escreveres um valor, passa à frente de todos os outros. Apaga o número para voltar ao automático.</p>
+      ${canais.length > 1 ? `<div class="segmentos ed-meses-abas" id="ed-meses-abas" role="group" aria-label="De quem são os meses"><button type="button" data-aba="" aria-pressed="true">${esc(p.name)} <small>todos</small></button>${canais.map(({ link, pub: c }) => `<button type="button" data-aba="${esc(link.id)}" aria-pressed="false">${esc(c?.title || link.title || link.id)}${link.count === false ? " <small>não conta</small>" : ""}</button>`).join("")}</div>` : ""}
+      <p class="muted" id="ed-meses-explica"></p>
       <div id="ed-meses"></div>
       ${p.estimativa && !p.estimativa.falhou ? `<p class="muted" style="font-size:var(--t-sm);margin-top:12px">Estimativa feita com ${p.estimativa.videos} vídeos${p.estimativa.erro !== null && p.estimativa.erro !== undefined ? `, erro típico de ±${p.estimativa.erro}% nos ${p.estimativa.calibracao} meses conhecidos` : ", sem meses conhecidos para afinar"}.</p>` : ""}
       <div class="ed-acoes">${p.channels.length ? `<button class="btn" id="ed-estimar" data-a-esperar="A estimar">${p.estimativa ? "Refazer estimativa" : "Estimar meses em falta"}</button>` : ""}<button class="btn btn-primario" id="ed-guardar-meses" data-a-esperar="A guardar">Guardar meses</button></div>
@@ -414,7 +417,35 @@ function editor(alvo, id, aoMudar, abrir) {
   );
 
   // Meses
-  grelhaMeses($("#ed-meses", alvo), p, pub);
+  // Meses: do Youtuber (a soma dos canais que contam) ou de um canal só
+  let aba = abaMeses.id === id && adm.db.channels[abaMeses.aba]?.personId === id ? abaMeses.aba : "";
+  const EXPLICA = {
+    pessoa: canais.length > 1
+      ? "A soma dos canais que contam. Os números a cinzento são os que o site usa agora. Um valor escrito aqui passa à frente da soma (útil para a folha antiga); para corrigir um canal, abre o separador dele."
+      : "Os números a cinzento são os que o site usa agora (do YouTube, Social Blade ou folha). Se escreveres um valor, passa à frente de todos os outros. Apaga o número para voltar ao automático.",
+    canal: (link) => `Só o canal ${link.title || link.id}. Um valor escrito aqui passa à frente do YouTube e do Social Blade neste canal${link.count === false ? ". Este canal não conta nas somas do Youtuber (é de clips ou está desligado)" : " e muda a soma do Youtuber"}.${p.mainChannelId === link.id ? " É o canal principal: os meses da folha antiga, guardados no Youtuber, contam como dele quando ele não tem números." : ""}`,
+  };
+  const mostrarMeses = () => {
+    if (aba) {
+      const link = adm.db.channels[aba];
+      $("#ed-meses-explica", alvo).textContent = EXPLICA.canal(link);
+      grelhaMeses($("#ed-meses", alvo), link.monthly || {}, estado.canais.get(aba)?.monthly || {});
+    } else {
+      $("#ed-meses-explica", alvo).textContent = EXPLICA.pessoa;
+      grelhaMeses($("#ed-meses", alvo), p.monthly || {}, pub?.monthly || {});
+    }
+    $("#ed-estimar", alvo)?.toggleAttribute("hidden", Boolean(aba));
+  };
+  $$("#ed-meses-abas [data-aba]", alvo).forEach((b) =>
+    b.addEventListener("click", () => {
+      aba = b.dataset.aba;
+      abaMeses = { id, aba };
+      $$("#ed-meses-abas [data-aba]", alvo).forEach((x) => x.setAttribute("aria-pressed", String(x === b)));
+      mostrarMeses();
+    }),
+  );
+  $$("#ed-meses-abas [data-aba]", alvo).forEach((x) => x.setAttribute("aria-pressed", String(x.dataset.aba === aba)));
+  mostrarMeses();
   $("#ed-estimar", alvo)?.addEventListener("click", async (e) => {
     const r = await chamar("estimate", { personId: id, refresh: true }, { botao: e.currentTarget }).catch(() => null);
     if (r) toast(`${r.result.meses} meses estimados${r.result.erro !== null ? `, erro típico ±${r.result.erro}%` : ""}.`);
@@ -422,15 +453,18 @@ function editor(alvo, id, aoMudar, abrir) {
   });
   $("#ed-guardar-meses", alvo).addEventListener("click", async (e) => {
     const entries = [];
+    const proprios = aba ? adm.db.channels[aba].monthly || {} : p.monthly || {};
     $$("#ed-meses input[data-m]", alvo).forEach((inp) => {
       const m = inp.dataset.m;
-      const antes = p.monthly?.[m]?.lock ? String(p.monthly[m].v) : "";
+      const antes = proprios[m]?.lock ? String(proprios[m].v) : "";
       const agora = inp.value.replace(/[\s.]/g, "");
       if (agora === antes) return;
       entries.push(agora === "" ? { month: m, v: null } : { month: m, v: Number(agora), src: "manual", lock: 1 });
     });
     if (!entries.length) return toast("Nada para guardar.");
-    await chamar("person/monthly", { personId: id, entries }, { botao: e.currentTarget, sucesso: `${entries.length} ${entries.length === 1 ? "mês guardado" : "meses guardados"}.` }).catch(() => {});
+    const sucesso = `${entries.length} ${entries.length === 1 ? "mês guardado" : "meses guardados"}${aba ? ` no canal ${adm.db.channels[aba].title || ""}` : ""}.`;
+    await (aba ? chamar("channel/monthly", { channelId: aba, entries }, { botao: e.currentTarget, sucesso }) : chamar("person/monthly", { personId: id, entries }, { botao: e.currentTarget, sucesso })).catch(() => {});
+    abaMeses = { id, aba };
     editor(alvo, id, aoMudar, abrir);
   });
 
@@ -466,11 +500,11 @@ function blocoSugestoes(p) {
     ${lista.map((c) => cartaoCanal(c, acoes(c)).replace('class="candidato"', `class="candidato" data-sug="${esc(c.id)}"`)).join("")}</div>`;
 }
 
-function grelhaMeses(alvo, p, pub) {
+function grelhaMeses(alvo, proprios, efetivos) {
   const ds = estado.ds;
   const anos = new Set();
   for (const m of ds.months) anos.add(m.slice(0, 4));
-  for (const m of Object.keys(p.monthly || {})) anos.add(m.slice(0, 4));
+  for (const m of Object.keys(proprios)) anos.add(m.slice(0, 4));
   const lista = [...anos].sort().reverse();
   const nomesMes = ["jan", "fev", "mar", "abr", "mai", "jun", "jul", "ago", "set", "out", "nov", "dez"];
   alvo.innerHTML = `<div class="tabela-caixa"><table class="tabela ed-meses"><thead><tr><th>Ano</th>${nomesMes.map((n) => `<th>${n}</th>`).join("")}</tr></thead><tbody>
@@ -480,8 +514,8 @@ function grelhaMeses(alvo, p, pub) {
           .map((_, i) => {
             const m = `${a}-${String(i + 1).padStart(2, "0")}`;
             if (m > ds.currentMonth) return `<td></td>`;
-            const proprio = p.monthly?.[m];
-            const efetivo = pub?.monthly?.[m];
+            const proprio = proprios[m];
+            const efetivo = efetivos[m];
             const valor = proprio?.lock ? proprio.v : "";
             const dica = efetivo ? `${inteiro(efetivo.v)} (${efetivo.src})${efetivo.p ? ", incompleto" : ""}` : "sem dados";
             return `<td title="${esc(mesNome(m))}: ${esc(dica)}"><input class="input ed-mes${proprio?.lock ? " fixo" : ""}" data-m="${m}" value="${esc(valor)}" placeholder="${efetivo ? esc(curto(efetivo.est ?? efetivo.v)) : ""}" inputmode="numeric">${efetivo && !proprio?.lock ? fonteEtiqueta(efetivo.src) : ""}</td>`;

@@ -3,7 +3,7 @@
 import { estado, api } from "../data.js";
 import { esc, inteiro, ha, curto, mesNome } from "../format.js";
 import { $, $$, avatar, toast, confirmar } from "../ui.js";
-import { PARTES, calcularIndice } from "../score.js";
+import { PARTES, calcularIndice, comBonusCanais } from "../score.js";
 import { adm, chamar, quotaTexto } from "./common.js";
 import { sair } from "./admin.js";
 
@@ -47,9 +47,10 @@ export async function render(alvo) {
       <h3>O que se mede</h3>
       <p class="muted">Quem tem vários canais: medimos o Youtuber (todos os canais juntos) ou os canais de facto (só o principal)? Vale para os rankings, o Índice e o Palco. Em cada Youtuber podes escolher outra coisa (em Youtubers, Canais do YouTube).</p>
       <div class="ed-medir-opcoes" id="st-medir">
-        <label class="ed-check"><input type="radio" name="medir" value="youtuber" ${s.medir !== "principal" ? "checked" : ""}> <span><b>O Youtuber</b><small>Todos os canais que contam, juntos, como se fosse um canal só. As views somam-se; os subscritores repetidos e os vídeos dos outros canais contam só em parte, por isso ter mais canais não é uma vantagem por si.</small></span></label>
+        <label class="ed-check"><input type="radio" name="medir" value="youtuber" ${s.medir !== "principal" ? "checked" : ""}> <span><b>O Youtuber</b><small>Todos os canais que contam, juntos, como se fosse um canal só. As views somam-se; os subscritores repetidos e os vídeos dos outros canais contam só em parte. Ter mais canais dá só o bónus de baixo.</small></span></label>
         <label class="ed-check"><input type="radio" name="medir" value="principal" ${s.medir === "principal" ? "checked" : ""}> <span><b>Só o canal principal</b><small>Mede o canal, não a pessoa: os outros canais não entram nas contas.</small></span></label>
       </div>
+      <label class="campo" style="margin-top:14px;max-width:420px"><span>Bónus no Índice por cada canal a mais</span><select class="input" id="st-bonus">${[0, 2, 3, 5, 8, 10, 15].map((v) => `<option value="${v}" ${(s.bonusCanais ?? 5) === v ? "selected" : ""}>${v ? `+${v}% por canal (até +${v * 3}%)` : "Sem bónus"}</option>`).join("")}</select><small>Conta só os canais que contam (os de clips não), até 3 canais a mais. Por exemplo, com +5%: 2 canais dão +5% e 3 canais dão +10% ao Índice.</small></label>
       <div class="ed-acoes"><button class="btn btn-primario" id="st-guardar-medir" data-a-esperar="A guardar">Guardar</button></div>
     </div>
 
@@ -89,7 +90,7 @@ export async function render(alvo) {
   const desenharTop = () => {
     const ctx = { janela: estado.janela, pesos, topo };
     const top = estado.ds.people
-      .map((p) => ({ p, t: calcularIndice(p, ctx).total, antes: estado.posIndice.get(p.id) }))
+      .map((p) => ({ p, t: comBonusCanais(calcularIndice(p, ctx), p, estado.ds.settings.bonusCanais).total, antes: estado.posIndice.get(p.id) }))
       .filter((x) => x.t !== null)
       .sort((a, b) => b.t - a.t)
       .slice(0, 10);
@@ -121,7 +122,7 @@ export async function render(alvo) {
   });
   $("#st-guardar-medir", alvo).addEventListener("click", (e) => {
     const medir = $("#st-medir input:checked", alvo)?.value || "youtuber";
-    chamar("settings", { settings: { medir } }, { botao: e.currentTarget, sucesso: medir === "principal" ? "Agora mede-se só o canal principal." : "Agora mede-se o Youtuber, com todos os canais." }).catch(() => {});
+    chamar("settings", { settings: { medir, bonusCanais: Number($("#st-bonus", alvo).value) } }, { botao: e.currentTarget, sucesso: medir === "principal" ? "Agora mede-se só o canal principal." : "Agora mede-se o Youtuber, com todos os canais." }).catch(() => {});
   });
   $("#st-guardar-canal", alvo).addEventListener("click", (e) => {
     const c = {};

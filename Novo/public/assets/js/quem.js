@@ -2,7 +2,7 @@
 // O mesmo código corre no painel (para mostrar o resultado enquanto se escolhe) e no servidor
 // (que só manda para a página pública os Youtubers que passam a regra).
 
-import { calcularIndice, valorMes } from "./score.js";
+import { calcularIndice, valorMes, comBonusCanais } from "./score.js";
 
 export const MEDIDAS_QUEM = {
   views: "Views do último mês",
@@ -26,7 +26,7 @@ export function mesReferencia(ds) {
 export function contextoQuem(ds) {
   const { ref, janela } = mesReferencia(ds);
   const ctx = { janela, pesos: ds.settings?.weights, topo: ds.settings?.alcanceTopo || 1e7 };
-  const indices = new Map(ds.people.map((p) => [p.id, calcularIndice(p, ctx)?.total ?? null]));
+  const indices = new Map(ds.people.map((p) => [p.id, comBonusCanais(calcularIndice(p, ctx), p, ds.settings?.bonusCanais)?.total ?? null]));
   return { ref, indices };
 }
 

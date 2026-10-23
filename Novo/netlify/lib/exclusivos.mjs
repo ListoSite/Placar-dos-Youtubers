@@ -84,6 +84,9 @@ export function prepararRetrato(r, exclusivo, cfg) {
   const roteiro = limparRoteiro(r.roteiro);
   const incluir = new Set();
   for (const v of Object.values(exclusivo.opts || {})) if (ids.has(v)) incluir.add(v);
+  // "Cada canal sozinho": os canais dos Youtubers com vários canais entram sempre (as regras de
+  // "Quem aparece" são de Youtubers, não de canais)
+  for (const p of r.ds.people) if (p?.dono && !p.hidden && typeof p.id === "string") incluir.add(p.id);
   for (const c of roteiro.cenas) {
     if (c.cfg?.pessoa && ids.has(c.cfg.pessoa)) incluir.add(c.cfg.pessoa);
     for (const o of Array.isArray(c.cfg?.opcoes) ? c.cfg.opcoes : []) if (o?.id && ids.has(o.id)) incluir.add(o.id);

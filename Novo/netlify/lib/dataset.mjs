@@ -284,7 +284,11 @@ export async function buildDataset(db) {
         monthly[M] = own;
         continue;
       }
-      const fromCh = combine(counted.map((c) => chMonthly[c]?.[M]));
+      // Os números da folha (e os escritos à mão) da pessoa são do canal principal: entram no lugar
+      // dele quando ele não tem dados nesse mês, para um número escrito noutro canal não os apagar.
+      const principal = counted.includes(chIds[0]) ? chIds[0] : counted[0];
+      const deFora = own && own.src !== "estimativa" ? own : null;
+      const fromCh = combine(counted.map((c) => chMonthly[c]?.[M] || (c === principal ? deFora : null)));
       const val = fromCh || own;
       if (val) monthly[M] = val;
     }
@@ -348,7 +352,7 @@ export async function buildDataset(db) {
     today,
     currentMonth: curM,
     months: monthRange(firstMonth, curM),
-    settings: { weights: db.settings.weights, medir: db.settings.medir || "youtuber", alcanceTopo: db.settings.alcanceTopo, siteTitle: db.settings.siteTitle, canal: { ...DEFAULT_CANAL, ...(db.settings.canal || {}) } },
+    settings: { weights: db.settings.weights, medir: db.settings.medir || "youtuber", bonusCanais: db.settings.bonusCanais ?? DEFAULT_SETTINGS.bonusCanais, alcanceTopo: db.settings.alcanceTopo, siteTitle: db.settings.siteTitle, canal: { ...DEFAULT_CANAL, ...(db.settings.canal || {}) } },
     categories,
     people,
     channels,

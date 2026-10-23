@@ -90,6 +90,16 @@ function markCandidates(db, chans) {
   }));
 }
 
+/**
+ * Um mês escrito à mão. O número que lá estava (folha, Social Blade…) fica guardado por baixo:
+ * apagar o número escrito volta a ele, em vez de deixar o mês vazio.
+ */
+function mesEscrito(antes, e) {
+  const debaixo = antes?.lock ? antes.antes : antes ? { v: antes.v, src: antes.src } : undefined;
+  if (e.v === null || e.v === "" || e.v === undefined) return debaixo || null;
+  return { v: Math.max(0, Math.round(Number(e.v) || 0)), src: e.src || "manual", ...(e.lock ? { lock: 1 } : {}), ...(e.lock && debaixo ? { antes: debaixo } : {}) };
+}
+
 function sanitizePerson(input, existing) {
   const out = {};
   for (const k of PERSON_FIELDS) if (k in input) out[k] = input[k];
@@ -289,8 +299,8 @@ const adminRoutes = {
     if (!p) throw new HttpError(404, "Pessoa não encontrada.");
     for (const e of b.entries || []) {
       if (!/^\d{4}-\d{2}$/.test(e.month)) continue;
-      if (e.v === null || e.v === "" || e.v === undefined) delete p.monthly[e.month];
-      else p.monthly[e.month] = { v: Math.max(0, Math.round(Number(e.v) || 0)), src: e.src || "manual", ...(e.lock ? { lock: 1 } : {}) };
+      p.monthly[e.month] = mesEscrito(p.monthly[e.month], e);
+      if (!p.monthly[e.month]) delete p.monthly[e.month];
     }
     p.updatedAt = new Date().toISOString();
     return { ok: true, monthly: p.monthly, save: true };
@@ -360,8 +370,8 @@ const adminRoutes = {
     link.monthly ||= {};
     for (const e of b.entries || []) {
       if (!/^\d{4}-\d{2}$/.test(e.month)) continue;
-      if (e.v === null || e.v === "" || e.v === undefined) delete link.monthly[e.month];
-      else link.monthly[e.month] = { v: Math.max(0, Math.round(Number(e.v) || 0)), src: e.src || "manual", ...(e.lock ? { lock: 1 } : {}) };
+      link.monthly[e.month] = mesEscrito(link.monthly[e.month], e);
+      if (!link.monthly[e.month]) delete link.monthly[e.month];
     }
     return { ok: true, monthly: link.monthly, save: true };
   },
@@ -666,6 +676,7 @@ const adminRoutes = {
       db.settings.weights = w;
     }
     if (s.medir === "youtuber" || s.medir === "principal") db.settings.medir = s.medir;
+    if (s.bonusCanais !== undefined && Number.isFinite(Number(s.bonusCanais))) db.settings.bonusCanais = Math.max(0, Math.min(20, Math.round(Number(s.bonusCanais))));
     if (s.alcanceTopo) db.settings.alcanceTopo = Math.max(10000, Number(s.alcanceTopo) || DEFAULT_SETTINGS.alcanceTopo);
     if (typeof s.siteTitle === "string" && s.siteTitle.trim()) db.settings.siteTitle = s.siteTitle.trim().slice(0, 80);
     if (s.canal && typeof s.canal === "object") {

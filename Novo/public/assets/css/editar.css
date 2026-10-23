@@ -1148,3 +1148,20 @@ details > summary {
     bottom: calc(92px + env(safe-area-inset-bottom));
   }
 }
+/* Separadores das views por mês (Youtuber e cada canal) */
+.ed-meses-abas {
+  display: flex;
+  border-radius: 18px;
+  max-width: 100%;
+  margin: 4px 0 10px;
+}
+.ed-meses-abas button {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.ed-meses-abas small {
+  font-weight: 500;
+  opacity: 0.75;
+}

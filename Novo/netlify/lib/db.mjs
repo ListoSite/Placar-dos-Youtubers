@@ -19,6 +19,8 @@ export const DEFAULT_SETTINGS = {
   alcanceTopo: 10000000,
   // O que se mede: "youtuber" (todos os canais juntos) ou "principal" (só o canal principal)
   medir: "youtuber",
+  // Bónus no Índice por cada canal a mais que conta (em %), até 3 canais a mais
+  bonusCanais: 5,
   roles: ["principal", "secundário", "clips", "gaming", "podcast", "shorts", "música", "outro"],
   // Divulgação do canal no fim dos espetáculos do Palco
   canal: { nome: "Placar dos Youtubers", youtube: "@placardosyoutubers", tiktok: "", instagram: "", hashtags: "#placardosyoutubers #youtubersportugueses #youtubeportugal" },

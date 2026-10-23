@@ -109,6 +109,7 @@ export async function render(main, { params }) {
             const v = ind.partes[pt.id];
             return `<div class="parte"><span>${pt.nome}</span><div class="trilho${v ? "" : " sem"}"><i style="width:${v ? (v.s * 100).toFixed(0) : 0}%"></i></div><b class="num" style="text-align:right">${v ? Math.round(v.s * 100) : "–"}</b><small>${esc(explicacao(pt.id, v))}</small></div>`;
           }).join("")}</div>
+          ${ind.bonusCanais ? `<p class="muted" style="margin:18px 0 0;font-size:var(--t-sm)">Bónus por ter ${ind.bonusCanais.canais} canais que contam: <b class="soft">+${ind.bonusCanais.pct}%</b> (${inteiro(ind.semBonus)} sem o bónus). Os números dos canais juntam-se como se fosse um canal só.</p>` : ""}
           ${ind.semKarma !== undefined && ind.semKarma !== ind.total ? `<p class="muted" style="margin:18px 0 0;font-size:var(--t-sm)">O Índice inclui o karma do público (O Caso): <b class="soft">${ind.total > ind.semKarma ? "+" : ""}${inteiro(ind.total - ind.semKarma)}</b>. Só com os números seria ${inteiro(ind.semKarma)}.</p>` : ""}
           ${classica ? `<p class="muted" style="margin:18px 0 0;font-size:var(--t-sm)">Pontuação clássica (fórmula da folha antiga): <b class="soft">${inteiro(classica)}</b>${p.legacy?.pontuacao ? `, na folha estava ${inteiro(p.legacy.pontuacao)}` : ""}.</p>` : ""}
         </div>
