@@ -67,14 +67,15 @@ const local = {
 };
 
 // ---------- Netlify Blobs ----------
-let blobStore = null;
+// O acesso ao Blobs vem com um token que o Netlify dá a cada pedido e que expira. A função fica
+// "acordada" entre pedidos, por isso o store é criado de novo em cada uso (é barato): guardá-lo
+// fazia o site falhar com "Failed to decode token: Token expired" depois de algum tempo.
+let modBlobs = null;
 const blobs = {
   nome: "netlify",
   async store() {
-    if (blobStore) return blobStore;
-    const { getStore } = await import("@netlify/blobs");
-    blobStore = getStore({ name: "placar", consistency: "strong" });
-    return blobStore;
+    modBlobs ||= await import("@netlify/blobs");
+    return modBlobs.getStore({ name: "placar", consistency: "strong" });
   },
   async get(key) {
     return (await (await this.store()).get(key, { type: "json" })) ?? null;
