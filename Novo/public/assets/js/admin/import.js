@@ -5,12 +5,31 @@ import { esc, curto, inteiro, mesNome, norm, plural } from "../format.js";
 import { $, $$, toast } from "../ui.js";
 import { adm, chamar, escolherPessoa, pessoasOrdenadas, lerDb, linkSocialBlade } from "./common.js";
 import { blocoEstimativa } from "./estimate-ui.js";
+import { blocoAbout, escolhas } from "./youtube.js";
 
 const MESES_PT = { jan: 1, janeiro: 1, fev: 2, fevereiro: 2, favereiro: 2, mar: 3, marco: 3, março: 3, abr: 4, abril: 4, mai: 5, maio: 5, may: 5, jun: 6, junho: 6, juno: 6, jul: 7, julho: 7, ago: 8, agosto: 8, set: 9, setembro: 9, out: 10, outubro: 10, octobro: 10, nov: 11, novembro: 11, dez: 12, dezembro: 12 };
 
 export async function render(alvo, query) {
-  const marcador = await codigoMarcador();
+  const [marcador, marcadorYT] = await Promise.all([codigoMarcador("sb"), codigoMarcador("yt")]);
   alvo.innerHTML = `
+    <div class="painel ed-bloco" id="yt">
+      <h3>YouTube: o "Acerca de" de cada canal</h3>
+      <p class="soft">Outro marcador, para o YouTube. Lê a janela "Acerca de" do canal (a que abre em "…mais"): descrição, links do Instagram, TikTok e outros sites, email escrito na descrição, país, data de entrada, subscritores, views e vídeos. Depois escolhes o que passa para o perfil de cada Youtuber.</p>
+      <ol class="ed-passos">
+        <li>Arrasta este botão para a barra de marcadores: <a class="btn btn-ouro btn-pequeno" id="yt-link" href="${esc(marcadorYT)}" onclick="event.preventDefault();alert('Arrasta este botão para a barra de marcadores. Depois usa-o numa página do YouTube.')">Placar ⇄ YouTube</a></li>
+        <li><b>Um canal:</b> abre o canal no YouTube (ou um vídeo dele) e carrega no marcador. Na ficha de cada Youtuber, o link "Ler no YouTube" abre a página certa.</li>
+        <li><b>Todos de uma vez:</b> <button class="btn btn-pequeno" id="ytl-copiar">Copiar lista para o YouTube</button>
+          <label class="ed-check" style="margin-top:8px"><input type="checkbox" id="ytl-faltam" checked> Só canais que ainda não foram lidos</label>
+          <label class="ed-check" style="margin-top:4px"><input type="checkbox" id="ytl-sug"> Incluir os canais sugeridos que ainda estão por confirmar (ajuda a ver se é a pessoa certa)</label>
+          <small class="muted" id="ytl-n"></small><br>
+          Abre uma página qualquer do YouTube, carrega no marcador, cola a lista em "Todos os canais da lista" e carrega em <b>Começar</b>. No fim, <b>Enviar resultados para o Placar</b>.</li>
+      </ol>
+      <p class="muted" style="font-size:var(--t-sm)">Conta com 2 a 4 segundos por canal e não gasta quota da API. O email para empresas que o YouTube esconde atrás de "Ver endereço de email" não vem: só o que estiver escrito na descrição.</p>
+      <label class="campo" style="margin-top:10px"><span>Ou cola aqui o que o marcador copiou</span><textarea class="input" id="yt-colar" rows="2" placeholder='{"kind":"placar-yt",...}'></textarea></label>
+      <div class="ed-acoes" style="justify-content:flex-start"><button class="btn" id="yt-ler">Ler dados colados</button></div>
+      <div id="yt-resultado"></div>
+    </div>
+
     <div class="painel ed-bloco" id="sb">
       <h3>Social Blade: todos os canais de uma vez</h3>
       <p class="soft">Um marcador do browser percorre o Social Blade canal a canal e traz os meses que lá aparecem (views ganhas em cada mês). Corre no teu computador, com pausas entre canais, e vai guardando o que já fez.</p>
@@ -66,17 +85,44 @@ export async function render(alvo, query) {
   });
   $("#fl-ler", alvo).addEventListener("click", () => mostrarFolha($("#fl-resultado", alvo), $("#fl-texto", alvo).value));
 
-  for (const [param, mostrar] of [
-    ["sb", mostrarSocialBlade],
-    ["sbl", mostrarLote],
+  // YouTube
+  const contarYT = () => {
+    const n = listaYouTube($("#ytl-faltam", alvo).checked, $("#ytl-sug", alvo).checked).length;
+    $("#ytl-n", alvo).textContent = `${plural(n, "canal", "canais")} na lista.`;
+  };
+  contarYT();
+  $("#ytl-faltam", alvo).addEventListener("change", contarYT);
+  $("#ytl-sug", alvo).addEventListener("change", contarYT);
+  $("#ytl-copiar", alvo).addEventListener("click", async (e) => {
+    const botao = e.currentTarget;
+    const canais = listaYouTube($("#ytl-faltam", alvo).checked, $("#ytl-sug", alvo).checked);
+    if (!canais.length) return toast("Não há canais para pôr na lista.", { erro: true });
+    await copiarTexto(JSON.stringify({ kind: "placar-yt-lista", v: 1, canais }));
+    botao.textContent = "Lista copiada ✓";
+    toast(`${plural(canais.length, "canal copiado", "canais copiados")}. Agora cola no marcador, no YouTube.`);
+  });
+  $("#yt-ler", alvo).addEventListener("click", () => {
+    let raw;
+    try {
+      raw = JSON.parse($("#yt-colar", alvo).value);
+    } catch {
+      return toast("Isso não parece vir do marcador do YouTube.", { erro: true });
+    }
+    mostrarYouTube($("#yt-resultado", alvo), raw);
+  });
+
+  for (const [param, mostrar, onde] of [
+    ["sb", mostrarSocialBlade, "#sb-resultado"],
+    ["sbl", mostrarLote, "#sb-resultado"],
+    ["yt", mostrarYouTube, "#yt-resultado"],
   ]) {
     const v = query.get(param);
     if (!v) continue;
     try {
       const raw = JSON.parse(decodeURIComponent(escape(atob(v))));
       history.replaceState(null, "", "#/editar/importar");
-      mostrar($("#sb-resultado", alvo), raw);
-      $("#sb-resultado", alvo).scrollIntoView({ block: "start" });
+      mostrar($(onde, alvo), raw);
+      $(onde, alvo).scrollIntoView({ block: "start" });
     } catch {
       toast("Não consegui ler os dados do marcador.", { erro: true });
     }
@@ -111,8 +157,8 @@ function listaCanais(soFaltam) {
     });
 }
 
-async function codigoMarcador() {
-  const src = await fetch("/assets/js/admin/sb-marcador.txt").then((r) => r.text());
+async function codigoMarcador(nome) {
+  const src = await fetch(`/assets/js/admin/${nome}-marcador.txt`).then((r) => r.text());
   const min = src.replace("__ORIGEM__", location.origin).replace(/\n/g, "");
   return "javascript:" + encodeURIComponent(min);
 }
@@ -416,6 +462,156 @@ function mostrarLote(alvo, lote) {
     });
   };
   desenhar();
+}
+
+// ---------- YouTube ("Acerca de") ----------
+
+const PAPEIS_YT = ["principal", "secundário", "clips", "gaming", "podcast", "shorts", "música", "outro"];
+
+/** Canais para o marcador do YouTube ler: os ligados e, se pedido, os sugeridos por confirmar. */
+function listaYouTube(soFaltam, comSugestoes) {
+  const out = Object.values(adm.db.channels)
+    .filter((c) => c.personId && adm.db.people[c.personId])
+    .filter((c) => !soFaltam || !c.about)
+    .map((c) => {
+      const p = adm.db.people[c.personId];
+      return { id: c.id, n: p.name + (c.role === "principal" ? "" : ` (${c.title || c.role})`), p: c.personId };
+    });
+  if (comSugestoes)
+    for (const [pid, s] of Object.entries(adm.db.suggestions || {})) {
+      const p = adm.db.people[pid];
+      if (!p || p.channels.length) continue;
+      for (const c of s.list || []) if (!c.linkedTo && !adm.db.channels[c.id] && !out.some((x) => x.id === c.id)) out.push({ id: c.id, n: `${p.name}? (${c.title})`, p: pid, sug: 1 });
+    }
+  return out.sort((a, b) => a.n.localeCompare(b.n, "pt"));
+}
+
+/** De quem é este canal: ligado, sugerido, vindo da lista ou com o mesmo nome. */
+function donoProvavel(c) {
+  const link = adm.db.channels[c.id];
+  if (link && adm.db.people[link.personId]) return { pessoa: adm.db.people[link.personId], como: "ligado" };
+  const sug = Object.keys(adm.db.suggestions || {}).find((pid) => adm.db.suggestions[pid].list?.some((x) => x.id === c.id));
+  if (sug && adm.db.people[sug]) return { pessoa: adm.db.people[sug], como: "sugestão" };
+  if (c.p && adm.db.people[c.p]) return { pessoa: adm.db.people[c.p], como: "lista" };
+  const t = norm(c.titulo).replace(/\s/g, "");
+  const h = norm(String(c.handle || "").replace(/^@/, ""));
+  const p = pessoasOrdenadas().find((x) => {
+    const n = norm(x.name).replace(/\s/g, "");
+    return n && (n === t || n === h);
+  });
+  return p ? { pessoa: p, como: "nome" } : { pessoa: null, como: "" };
+}
+
+export function mostrarYouTube(alvo, raw) {
+  const canais = raw?.kind === "placar-yt" && Array.isArray(raw.canais) ? raw.canais.filter((c) => /^UC[\w-]{22}$/.test(c?.id || "")) : [];
+  if (!canais.length) {
+    alvo.innerHTML = `<div class="aviso" style="margin-top:14px"><p>Não vieram canais do marcador do YouTube.</p></div>`;
+    return;
+  }
+  const itens = canais.map((c, i) => {
+    const { pessoa, como } = donoProvavel(c);
+    const link = adm.db.channels[c.id];
+    return { i, c: { emails: [], links: [], ...c }, pessoa, como, link, incluir: true, ligar: !link && Boolean(pessoa) && (como !== "nome" || !pessoa.channels.length), papel: pessoa?.channels.length ? "secundário" : "principal" };
+  });
+  const COMO = { ligado: "", "sugestão": "Era uma das sugestões para esta pessoa.", lista: "Veio da lista para esta pessoa.", nome: "Tem o mesmo nome. Confirma se é a pessoa certa." };
+
+  const dono = (it) => {
+    if (it.link) return `<p class="soft yt-dono">Ligado a <a href="#/editar/youtubers?id=${encodeURIComponent(it.pessoa.id)}"><b>${esc(it.pessoa.name)}</b></a>.</p>`;
+    return `<div class="yt-dono">
+      <div class="ed-grelha" style="align-items:end">
+        <label class="campo"><span>Youtuber</span><span style="position:relative"><input class="input" data-pessoa placeholder="Escolher Youtuber" value="${esc(it.pessoa?.name || "")}"></span>${it.como && COMO[it.como] ? `<small>${esc(COMO[it.como])}</small>` : ""}</label>
+        <label class="campo"><span>Papel do canal</span><select class="input" data-papel>${PAPEIS_YT.map((r) => `<option ${it.papel === r ? "selected" : ""}>${r}</option>`).join("")}</select></label>
+      </div>
+      <label class="ed-check"><input type="checkbox" data-ligar ${it.ligar ? "checked" : ""} ${it.pessoa ? "" : "disabled"}> Ligar este canal ${it.pessoa ? `a ${esc(it.pessoa.name)}` : "(escolhe primeiro o Youtuber)"}</label>
+      <div class="ed-acoes" style="justify-content:flex-start;margin-top:8px"><button class="btn btn-pequeno" data-criar data-a-esperar="A criar">Criar Youtuber novo com este canal</button></div>
+    </div>`;
+  };
+
+  const item = (it) => `<div class="painel ed-bloco yt-item" data-i="${it.i}">
+      <label class="ed-check yt-incluir"><input type="checkbox" data-incluir ${it.incluir ? "checked" : ""}> Guardar</label>
+      ${blocoAbout(it.c, it.pessoa, { id: "yt" + it.i })}
+      ${dono(it)}
+    </div>`;
+
+  const ligarItem = (el, it) => {
+    $("[data-incluir]", el).addEventListener("change", (e) => {
+      it.incluir = e.target.checked;
+      el.classList.toggle("yt-fora", !it.incluir);
+      contar();
+    });
+    const input = $("[data-pessoa]", el);
+    if (input)
+      escolherPessoa(input, (p) => {
+        it.pessoa = p;
+        it.como = "";
+        it.ligar = true;
+        it.papel = p.channels.length ? "secundário" : "principal";
+        redesenhar(it);
+      });
+    $("[data-ligar]", el)?.addEventListener("change", (e) => {
+      it.ligar = e.target.checked;
+      contar();
+    });
+    $("[data-papel]", el)?.addEventListener("change", (e) => (it.papel = e.target.value));
+    $("[data-criar]", el)?.addEventListener("click", async (e) => {
+      const r = await chamar("person/from-channel", { channel: { id: it.c.id }, name: it.c.titulo }, { botao: e.currentTarget, sucesso: (x) => `${x.person.name} criado.` }).catch(() => null);
+      if (!r) return;
+      it.pessoa = adm.db.people[r.person.id];
+      it.link = adm.db.channels[it.c.id];
+      it.como = "ligado";
+      redesenhar(it);
+    });
+  };
+  const redesenhar = (it) => {
+    const el = $(`.yt-item[data-i="${it.i}"]`, alvo);
+    el.outerHTML = item(it);
+    ligarItem($(`.yt-item[data-i="${it.i}"]`, alvo), it);
+    contar();
+  };
+  const prontos = () => itens.filter((it) => it.incluir && it.pessoa && (it.link || it.ligar));
+  const contar = () => {
+    const n = prontos().length;
+    const faltam = itens.filter((it) => it.incluir && !(it.pessoa && (it.link || it.ligar))).length;
+    $("#yt-gravar", alvo).disabled = !n;
+    $("#yt-gravar", alvo).textContent = `Gravar ${plural(n, "canal", "canais")}`;
+    $("#yt-falta", alvo).textContent = faltam ? `${plural(faltam, "canal fica", "canais ficam")} de fora: falta escolher o Youtuber ou ligar o canal.` : "";
+  };
+
+  alvo.innerHTML = `<hr class="ed-linha">
+    <h3>${canais.length === 1 ? "Canal lido no YouTube" : `${plural(canais.length, "canal lido", "canais lidos")} no YouTube`}</h3>
+    <p class="soft">Escolhe para onde vai cada link. As redes que já têm link ficam como estão, a não ser que escolhas outra coisa. Os emails e os outros links vão para as notas privadas (só aparecem no painel). Os dados lidos ficam também guardados no canal.</p>
+    <div id="yt-itens">${itens.map(item).join("")}</div>
+    <div class="ed-acoes yt-gravar-barra" style="justify-content:flex-start"><button class="btn btn-primario" id="yt-gravar" data-a-esperar="A gravar"></button><span class="muted" id="yt-falta"></span></div>`;
+  itens.forEach((it) => ligarItem($(`.yt-item[data-i="${it.i}"]`, alvo), it));
+  contar();
+
+  $("#yt-gravar", alvo).addEventListener("click", async (e) => {
+    const botao = e.currentTarget;
+    const lote = prontos().map((it) => {
+      const el = $(`.yt-item[data-i="${it.i}"]`, alvo);
+      return { channelId: it.c.id, personId: it.pessoa.id, ligar: !it.link && it.ligar, papel: it.papel, about: it.c, ...escolhas(el, it.c) };
+    });
+    const total = { canais: 0, ligados: 0, redes: 0, bios: 0, notas: 0, erros: [] };
+    botao.disabled = true;
+    try {
+      for (let i = 0; i < lote.length; i += 25) {
+        $("#yt-falta", alvo).textContent = `A gravar ${Math.min(i + 25, lote.length)} de ${lote.length}…`;
+        const r = await chamar("import/youtube", { itens: lote.slice(i, i + 25) }, { recarregar: false });
+        for (const k of ["canais", "ligados", "redes", "bios", "notas"]) total[k] += r[k] || 0;
+        total.erros.push(...(r.erros || []));
+      }
+    } catch {
+      botao.disabled = false;
+      return;
+    }
+    await lerDb();
+    await carregar({ forcar: true });
+    toast(`${plural(total.canais, "canal guardado", "canais guardados")}.`);
+    const pessoas = [...new Map(lote.map((l) => [l.personId, adm.db.people[l.personId]])).values()].filter(Boolean);
+    alvo.innerHTML = `<div class="aviso info" style="margin-top:14px"><p>Feito: ${plural(total.canais, "canal atualizado", "canais atualizados")}${total.ligados ? `, ${plural(total.ligados, "canal novo ligado", "canais novos ligados")}` : ""}${total.redes ? `, ${plural(total.redes, "link de rede social", "links de redes sociais")}` : ""}${total.bios ? `, ${plural(total.bios, "descrição", "descrições")}` : ""}${total.notas ? `, ${plural(total.notas, "linha nova", "linhas novas")} nas notas` : ""}.</p>
+      ${total.erros.length ? `<p>${esc(total.erros.join(" "))}</p>` : ""}
+      ${pessoas.length <= 12 ? `<p>${pessoas.map((p) => `<a href="#/editar/youtubers?id=${encodeURIComponent(p.id)}">${esc(p.name)}</a>`).join(" · ")}</p>` : ""}</div>`;
+  });
 }
 
 // ---------- Colar da folha ----------

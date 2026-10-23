@@ -23,6 +23,7 @@ import {
   handleGuesses, parseProjectSource, playlistInfo,
 } from "../lib/youtube.mjs";
 import { cleanPayload, findChannel, applyImport, applyMonths, applyDaily, cleanExtra, dailyFromExtra, saveExtras, fillSocials, cleanTikTok, applyTikTok, saveTikToks } from "../lib/socialblade.mjs";
+import { limparAbout, canalDoAbout, aplicarAbout } from "../lib/ytabout.mjs";
 import { estimarPessoa, apagarEstimativas, unidadesUsadas } from "../lib/estimate.mjs";
 
 export const config = { path: "/api/*" };
@@ -385,6 +386,21 @@ const adminRoutes = {
     const remaining = Object.values(db.people).filter((p) => !p.channels.length && !db.suggestions[p.id] && !p.noMatch).length;
     return { tried: pending.length, found, remaining, save: true };
   },
+  // Um Youtuber só: experimenta os @handles prováveis do nome (ou o que for escrito). Junta às sugestões que já havia.
+  "POST match/guess-one": async ({ db, b }) => {
+    const p = db.people[b.personId];
+    if (!p) throw new HttpError(404, "Pessoa não encontrada.");
+    const tentativas = b.q ? [String(b.q).trim().replace(/^@/, "")] : handleGuesses(p.name).slice(0, 4);
+    const achados = [];
+    for (const h of tentativas.filter(Boolean)) {
+      const ch = await resolveChannel(/^UC[\w-]{22}$/.test(h) || /youtube\.com|youtu\.be/.test(h) ? h : "@" + h, { allowSearch: false }).catch(() => null);
+      if (ch && !achados.some((c) => c.id === ch.id)) achados.push(ch);
+    }
+    const antes = db.suggestions[p.id]?.list || [];
+    const lista = [...achados, ...antes.filter((c) => !achados.some((a) => a.id === c.id))].slice(0, 12);
+    db.suggestions[p.id] = { at: new Date().toISOString(), method: achados.length ? "handle" : db.suggestions[p.id]?.method || "handle", list: markCandidates(db, lista) };
+    return { suggestion: db.suggestions[p.id], found: achados.length, tried: tentativas, save: true };
+  },
   "POST match/search": async ({ db, b }) => {
     const p = db.people[b.personId];
     if (!p) throw new HttpError(404, "Pessoa não encontrada.");
@@ -393,6 +409,12 @@ const adminRoutes = {
     return { suggestion: db.suggestions[p.id], save: true };
   },
   "POST match/clear": async ({ db, b }) => {
+    // Só um candidato ("Não é este"): sai da lista e o resto fica
+    if (b.channelId) {
+      const sug = db.suggestions[b.personId];
+      if (sug) sug.list = (sug.list || []).filter((c) => c.id !== b.channelId);
+      return { ok: true, save: true };
+    }
     delete db.suggestions[b.personId];
     if (b.noMatch && db.people[b.personId]) db.people[b.personId].noMatch = true;
     return { ok: true, save: true };
@@ -569,6 +591,46 @@ const adminRoutes = {
     await saveTikToks(tiktoks);
     const dias = await applyDaily(diarios);
     return { canais, meses, dias, redes, extras: Object.keys(extras).length, tiktok: Object.keys(tiktoks).length, ignorados, save: canais > 0 };
+  },
+
+  // ---------- YouTube ("Acerca de" lido pelo marcador) ----------
+  "POST import/youtube": async ({ db, b }) => {
+    const itens = Array.isArray(b.itens) ? b.itens.slice(0, 200) : [];
+    const res = { canais: 0, ligados: 0, redes: 0, bios: 0, notas: 0, erros: [] };
+    // Canais por ligar: os números vêm da API do YouTube (1 unidade por 50 canais); sem chave, ficam os do "Acerca de"
+    const porLigar = itens.filter((it) => it?.ligar && /^UC[\w-]{22}$/.test(it.channelId || "") && !db.channels[it.channelId] && db.people[it.personId]);
+    const daApi = new Map();
+    if (porLigar.length && hasApiKey()) for (const ch of await channelsByIds(porLigar.map((it) => it.channelId)).catch(() => [])) daApi.set(ch.id, ch);
+    const novos = [];
+    for (const it of itens) {
+      const about = limparAbout(it?.about);
+      if (!about || it.about.id !== it.channelId) continue;
+      const id = it.channelId;
+      if (!db.channels[id]) {
+        if (!porLigar.includes(it)) continue;
+        const ch = daApi.get(id) || canalDoAbout(id, about);
+        try {
+          attachChannel(db, it.personId, ch, it.papel || (db.people[it.personId].channels.length ? "secundário" : "principal"));
+        } catch (e) {
+          res.erros.push(`${about.titulo}: ${e.message}`);
+          continue;
+        }
+        if (daApi.has(id)) novos.push(ch);
+        res.ligados++;
+      }
+      if (it.personId && db.channels[id].personId !== it.personId) {
+        res.erros.push(`${about.titulo}: este canal está ligado a ${db.people[db.channels[id].personId]?.name || "outra pessoa"}.`);
+        continue;
+      }
+      const feito = aplicarAbout(db, id, about, it);
+      if (!feito) continue;
+      res.canais++;
+      res.redes += feito.redes;
+      res.bios += feito.bio ? 1 : 0;
+      res.notas += feito.notas;
+    }
+    if (novos.length) await storeChannelNumbers(novos);
+    return { ...res, save: res.canais > 0, ...(novos.length ? { videosFor: novos.map((c) => c.id).slice(0, 10) } : {}) };
   },
 
   // ---------- Estimativa dos meses em falta ----------

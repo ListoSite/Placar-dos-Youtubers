@@ -4,6 +4,12 @@ import { estado } from "../data.js";
 import { esc, curto, inteiro, norm, mesNome, data } from "../format.js";
 import { $, $$, avatar, janela, confirmar, toast, REDES, ICONES } from "../ui.js";
 import { adm, chamar, pessoasOrdenadas, categorias, cartaoCanal, escolherPessoa, fonteEtiqueta, linkSocialBlade } from "./common.js";
+import { blocoAbout, escolhas, resumoAbout } from "./youtube.js";
+
+const sugestoes = (p) => (adm.db.suggestions?.[p.id]?.list || []).filter((c) => !c.linkedTo && !adm.db.channels[c.id]);
+const lerNoYouTube = (id, texto = "Ler no YouTube") => `<a href="https://www.youtube.com/channel/${esc(id)}/about" target="_blank" rel="noopener" title="Abre o Acerca de. Carrega lá no marcador Placar ⇄ YouTube">${esc(texto)} ↗</a>`;
+// Ir para o Youtuber seguinte da lista (definido pela lista aberta)
+let irSeguinte = null;
 
 const PAPEIS = ["principal", "secundário", "clips", "gaming", "podcast", "shorts", "música", "outro"];
 const ESTADOS = [
@@ -21,24 +27,42 @@ export async function render(alvo, query) {
     <aside class="ed-lista">
       <div style="display:flex;gap:8px"><input class="input" id="pp-q" type="search" placeholder="Procurar"><button class="btn btn-primario" id="pp-novo" title="Novo Youtuber">Novo</button></div>
       <div class="segmentos" id="pp-filtro" style="margin:10px 0">
-        <button data-f="todos" aria-pressed="true">Todos</button><button data-f="semcanal">Sem canal</button><button data-f="escondidos">Escondidos</button>
+        <button data-f="todos" aria-pressed="true">Todos</button><button data-f="semcanal">Sem canal</button><button data-f="confirmar" title="Com canais sugeridos por confirmar">Para confirmar</button><button data-f="escondidos">Escondidos</button>
       </div>
       <div id="pp-lista" class="ed-itens"></div>
     </aside>
     <section id="pp-editor" class="ed-editor"></section></div>`;
 
-  const desenharLista = () => {
+  const listaAtual = () => {
     const t = norm(termo);
-    const lista = pessoasOrdenadas().filter((p) => {
+    return pessoasOrdenadas().filter((p) => {
       if (filtro === "semcanal" && p.channels.length) return false;
+      if (filtro === "confirmar" && !sugestoes(p).length) return false;
       if (filtro === "escondidos" && !p.hidden) return false;
       return !t || norm(p.name).includes(t) || norm(p.realName).includes(t);
     });
+  };
+  irSeguinte = (id) => {
+    const l = listaAtual();
+    const i = l.findIndex((p) => p.id === id);
+    const prox = l[i + 1] || l.find((p) => p.id !== id);
+    return prox
+      ? () => {
+          abrir(prox.id);
+          const ed = $("#pp-editor", alvo);
+          if (ed.getBoundingClientRect().top < 0) scrollTo({ top: ed.getBoundingClientRect().top + scrollY - 90, behavior: "smooth" });
+        }
+      : null;
+  };
+  const desenharLista = () => {
+    const lista = listaAtual();
+    const nConf = Object.values(adm.db.people).filter((p) => sugestoes(p).length).length;
+    $('#pp-filtro [data-f="confirmar"]', alvo).textContent = `Para confirmar${nConf ? ` (${nConf})` : ""}`;
     $("#pp-lista", alvo).innerHTML =
       lista
         .slice(0, 400)
         .map(
-          (p) => `<button class="ed-item${p.id === selecionado ? " ativo" : ""}" data-id="${esc(p.id)}">${avatar(estado.pessoas.get(p.id) || { name: p.name }, 30)}<span><b>${esc(p.name)}</b><small>${esc(p.category || "sem categoria")}${p.channels.length ? `, ${p.channels.length} canal${p.channels.length > 1 ? "is" : ""}` : ", sem canal"}${p.hidden ? ", escondido" : ""}</small></span></button>`,
+          (p) => `<button class="ed-item${p.id === selecionado ? " ativo" : ""}" data-id="${esc(p.id)}">${avatar(estado.pessoas.get(p.id) || { name: p.name }, 30)}<span><b>${esc(p.name)}</b><small>${esc(p.category || "sem categoria")}${p.channels.length ? `, ${p.channels.length} canal${p.channels.length > 1 ? "is" : ""}` : ", sem canal"}${p.hidden ? ", escondido" : ""}</small></span>${sugestoes(p).length ? `<span class="ed-item-sug" title="${sugestoes(p).length} canais sugeridos por confirmar">${sugestoes(p).length}</span>` : ""}</button>`,
         )
         .join("") || `<p class="muted" style="padding:12px">Ninguém encontrado.</p>`;
   };
@@ -126,7 +150,7 @@ function editor(alvo, id, aoMudar, abrir) {
   const pub = estado.pessoas.get(id);
   const canais = p.channels.map((c) => ({ link: adm.db.channels[c], pub: estado.canais.get(c) })).filter((x) => x.link);
   alvo.innerHTML = `
-    <div class="ed-cabeca">${avatar(pub || { name: p.name }, 64)}<div><h2>${esc(p.name)}</h2><a href="/#/youtuber/${encodeURIComponent(p.id)}" target="_blank" rel="noopener">Ver no site público</a></div></div>
+    <div class="ed-cabeca">${avatar(pub || { name: p.name }, 64)}<div style="flex:1;min-width:0"><h2>${esc(p.name)}</h2><a href="/#/youtuber/${encodeURIComponent(p.id)}" target="_blank" rel="noopener">Ver no site público</a></div>${irSeguinte?.(id) ? `<button class="btn btn-pequeno" id="ed-seguinte" title="Youtuber seguinte desta lista">Seguinte →</button>` : ""}</div>
 
     <form class="painel ed-bloco" id="ed-dados">
       <h3>Dados</h3>
@@ -156,11 +180,12 @@ function editor(alvo, id, aoMudar, abrir) {
               .map(
                 ({ link, pub: c }) => `<div class="ed-canal" data-ch="${esc(link.id)}">
             ${avatar({ name: c?.title || link.title, photo: c?.thumb || link.thumb }, 40)}
-            <div class="ed-canal-info"><b>${esc(c?.title || link.title)}</b><small class="muted">${esc(c?.handle || link.handle || link.id)}, ${curto(c?.subs)} subs, ${curto(c?.views)} views${c?.country ? ", " + esc(c.country) : ""}</small><small><a href="https://www.youtube.com/channel/${esc(link.id)}" target="_blank" rel="noopener">YouTube ↗</a> · ${linkSocialBlade(link.id)}</small></div>
+            <div class="ed-canal-info"><b>${esc(c?.title || link.title)}</b><small class="muted">${esc(c?.handle || link.handle || link.id)}, ${curto(c?.subs)} subs, ${curto(c?.views)} views${c?.country ? ", " + esc(c.country) : ""}</small><small><a href="https://www.youtube.com/channel/${esc(link.id)}" target="_blank" rel="noopener">YouTube ↗</a> · ${lerNoYouTube(link.id)} · ${linkSocialBlade(link.id)}</small>${link.about ? `<small class="ed-about-linha">Acerca de, lido a ${esc(data(link.about.lido))}: ${esc(resumoAbout(link.about))} · <button class="btn-link" data-ver-about>Ver e usar</button></small>` : ""}</div>
             <select class="input" data-papel style="width:140px">${PAPEIS.map((r) => `<option ${link.role === r ? "selected" : ""}>${r}</option>`).join("")}</select>
             <label class="ed-check" style="margin:0"><input type="checkbox" data-conta ${link.count !== false ? "checked" : ""}> Conta</label>
             ${p.mainChannelId === link.id ? `<span class="etiqueta ouro">Principal</span>` : `<button class="btn btn-pequeno" data-principal>Tornar principal</button>`}
             <button class="btn btn-pequeno btn-perigo" data-tirar aria-label="Tirar canal">Tirar</button>
+            ${link.about ? `<div class="ed-about" hidden>${blocoAbout({ ...link.about, id: link.id }, p, { id: "ab-" + link.id, resumo: false })}<div class="ed-acoes" style="justify-content:flex-start"><button class="btn btn-primario btn-pequeno" data-aplicar-about data-a-esperar="A guardar">Passar para o perfil</button></div></div>` : ""}
           </div>`,
               )
               .join("")
@@ -171,8 +196,17 @@ function editor(alvo, id, aoMudar, abrir) {
         <option value="todos" ${p.medir === "todos" ? "selected" : ""}>O Youtuber: todos os canais que contam, juntos</option>
         ${canais.map(({ link, pub: c }) => `<option value="${esc(link.id)}" ${p.medir === link.id ? "selected" : ""}>Só o canal ${esc(c?.title || link.title)}</option>`).join("")}
       </select><small>Com todos juntos, as views somam-se como se fosse um canal só. Os subscritores repetidos e os vídeos dos outros canais contam só em parte, para ter mais canais não ser uma vantagem por si.</small></label>` : ""}
-      <div style="display:flex;gap:8px;margin-top:14px;flex-wrap:wrap"><input class="input" id="ed-novo-canal" placeholder="Link do canal, @handle ou ID" style="flex:1;min-width:220px"><button class="btn" id="ed-procurar-canal" data-a-esperar="A procurar">Procurar canal</button></div>
+      ${blocoSugestoes(p)}
+      <h4 class="ed-sub">${p.channels.length ? "Juntar outro canal" : "Encontrar o canal"}</h4>
+      <div style="display:flex;gap:8px;flex-wrap:wrap"><input class="input" id="ed-novo-canal" placeholder="Link do canal, @handle ou ID" style="flex:1;min-width:220px"><button class="btn" id="ed-procurar-canal" data-a-esperar="A procurar">Procurar canal</button></div>
       <div id="ed-canal-prev"></div>
+      <div class="mt-acoes">
+        <button class="btn btn-pequeno" id="ed-adivinhar" data-a-esperar="A procurar" title="Experimenta o nome como @handle. Gasta 1 a 4 unidades da quota">Adivinhar o @handle pelo nome</button>
+        <button class="btn btn-pequeno" id="ed-pesquisar" data-a-esperar="A procurar" title="Gasta 100 unidades da quota. Usa o texto da caixa, ou o nome se estiver vazia">Pesquisar no YouTube</button>
+        ${sugestoes(p).length ? `<button class="btn btn-pequeno" id="ed-nenhum">Nenhum destes</button>` : ""}
+        ${p.channels.length ? "" : p.noMatch ? `<button class="btn btn-pequeno" id="ed-voltar">Voltar a procurar</button>` : `<button class="btn btn-pequeno" id="ed-ignorar" title="Não volta a aparecer na procura automática de Ligar canais">Ignorar na procura</button>`}
+      </div>
+      ${p.noMatch && !p.channels.length ? `<p class="muted" style="font-size:var(--t-sm);margin-top:8px">Este Youtuber está a ser ignorado na procura automática.</p>` : ""}
     </div>
 
     <div class="painel ed-bloco">
@@ -203,6 +237,73 @@ function editor(alvo, id, aoMudar, abrir) {
       <p class="muted">Juntar serve para quando a mesma pessoa aparece duas vezes (por exemplo "Arganaça" e "Arganaça 2"). Os canais, meses e projetos passam para a pessoa escolhida.</p>
       <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center"><span style="position:relative;flex:1;min-width:220px"><input class="input" id="ed-juntar" placeholder="Juntar ${esc(p.name)} em…"></span><button class="btn btn-perigo" id="ed-apagar">Apagar ${esc(p.name)}</button></div>
     </div>`;
+
+  const refazer = () => {
+    aoMudar();
+    editor(alvo, id, aoMudar, abrir);
+  };
+  $("#ed-seguinte", alvo)?.addEventListener("click", () => irSeguinte?.(id)?.());
+
+  // Dados do "Acerca de" de cada canal
+  $$("[data-ver-about]", alvo).forEach((b) =>
+    b.addEventListener("click", () => {
+      const caixa = $(".ed-about", b.closest(".ed-canal"));
+      caixa.hidden = !caixa.hidden;
+      b.textContent = caixa.hidden ? "Ver e usar" : "Fechar";
+    }),
+  );
+  $$("[data-aplicar-about]", alvo).forEach((b) =>
+    b.addEventListener("click", async () => {
+      const ch = b.closest(".ed-canal").dataset.ch;
+      const about = { ...adm.db.channels[ch].about, id: ch };
+      const r = await chamar("import/youtube", { itens: [{ channelId: ch, personId: id, about, ...escolhas(b.closest(".ed-about"), about) }] }, { botao: b }).catch(() => null);
+      if (!r) return;
+      toast([r.redes ? `${r.redes} ${r.redes === 1 ? "link" : "links"} de redes` : "", r.bios ? "descrição" : "", r.notas ? `${r.notas} ${r.notas === 1 ? "linha" : "linhas"} nas notas` : ""].filter(Boolean).join(", ") || "Guardado (não havia nada de novo).");
+      refazer();
+    }),
+  );
+
+  // Sugestões de canais (o mesmo que em Ligar canais)
+  $$("[data-sug]", alvo).forEach((card) => {
+    const ch = card.dataset.sug;
+    $$("[data-ligar-como]", card).forEach((b) =>
+      b.addEventListener("click", async () => {
+        const r = await chamar("channel/link", { personId: id, channelId: ch, role: b.dataset.ligarComo }, { botao: b, sucesso: "Canal ligado. Os números e vídeos já foram buscados." }).catch(() => null);
+        if (r) refazer();
+      }),
+    );
+    $("[data-nao-e]", card)?.addEventListener("click", async (e) => {
+      await chamar("match/clear", { personId: id, channelId: ch }, { botao: e.currentTarget }).catch(() => {});
+      refazer();
+    });
+  });
+  $("#ed-adivinhar", alvo).addEventListener("click", async (e) => {
+    const r = await chamar("match/guess-one", { personId: id }, { botao: e.currentTarget }).catch(() => null);
+    if (!r) return;
+    toast(r.found ? `${r.found === 1 ? "Encontrei 1 canal" : `Encontrei ${r.found} canais`} (${r.tried.map((t) => "@" + t).join(", ")}).` : `Nada em ${r.tried.map((t) => "@" + t).join(", ")}.`, { erro: !r.found });
+    refazer();
+  });
+  $("#ed-pesquisar", alvo).addEventListener("click", async (e) => {
+    const q = $("#ed-novo-canal", alvo).value.trim();
+    if (/youtube\.com|youtu\.be|^@|^UC[\w-]{22}$/.test(q)) return toast("Para um link ou @handle usa Procurar canal.", { erro: true });
+    const r = await chamar("match/search", { personId: id, q: q || undefined }, { botao: e.currentTarget }).catch(() => null);
+    if (r) {
+      toast(r.suggestion.list.length ? `${r.suggestion.list.length} canais encontrados.` : "A pesquisa não encontrou nada.", { erro: !r.suggestion.list.length });
+      refazer();
+    }
+  });
+  $("#ed-nenhum", alvo)?.addEventListener("click", async (e) => {
+    await chamar("match/clear", { personId: id }, { botao: e.currentTarget }).catch(() => {});
+    refazer();
+  });
+  $("#ed-ignorar", alvo)?.addEventListener("click", async (e) => {
+    await chamar("match/clear", { personId: id, noMatch: true }, { botao: e.currentTarget, sucesso: "Fica de fora da procura automática." }).catch(() => {});
+    refazer();
+  });
+  $("#ed-voltar", alvo)?.addEventListener("click", async (e) => {
+    await chamar("person", { person: { id, noMatch: false } }, { botao: e.currentTarget }).catch(() => {});
+    refazer();
+  });
 
   $("#ed-medir", alvo)?.addEventListener("change", (e) => chamar("person", { person: { id, medir: e.target.value } }, { sucesso: "Guardado. O Índice e os rankings foram recalculados." }).catch(() => {}));
 
@@ -349,6 +450,20 @@ function editor(alvo, id, aoMudar, abrir) {
     abrir(null);
     alvo.innerHTML = `<div class="vazio"><h3>Apagado</h3><p>Escolhe outro Youtuber na lista.</p></div>`;
   });
+}
+
+/** Canais sugeridos (procura por @handle ou pelo nome) para confirmar aqui mesmo. */
+function blocoSugestoes(p) {
+  const lista = sugestoes(p);
+  const sug = adm.db.suggestions?.[p.id];
+  if (!lista.length) return sug && !p.channels.length ? `<p class="muted" style="font-size:var(--t-sm);margin-top:12px">A última procura (${sug.method === "search" ? "pelo nome" : "por @handle"}) não encontrou nada.</p>` : "";
+  const acoes = (c) =>
+    (p.channels.length
+      ? `<button class="btn btn-primario btn-pequeno" data-ligar-como="secundário" data-a-esperar="A ligar">Juntar como 2.º canal</button><button class="btn btn-pequeno" data-ligar-como="principal" data-a-esperar="A ligar">É o principal</button>`
+      : `<button class="btn btn-primario btn-pequeno" data-ligar-como="principal" data-a-esperar="A ligar">É este</button>`) +
+    `<button class="btn btn-pequeno" data-nao-e data-a-esperar="A tirar">Não é</button><small>${lerNoYouTube(c.id, "Ver Acerca de")}</small>`;
+  return `<div class="ed-sugestoes"><h4 class="ed-sub">${lista.length === 1 ? "Canal sugerido" : `${lista.length} canais sugeridos`} <small class="muted">${sug.method === "search" ? "pela pesquisa do nome" : "pelo @handle"}${sug.at ? `, ${esc(data(sug.at))}` : ""}</small></h4>
+    ${lista.map((c) => cartaoCanal(c, acoes(c)).replace('class="candidato"', `class="candidato" data-sug="${esc(c.id)}"`)).join("")}</div>`;
 }
 
 function grelhaMeses(alvo, p, pub) {

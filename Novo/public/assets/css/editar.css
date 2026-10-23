@@ -991,3 +991,160 @@ details > summary {
   color: var(--texto-3);
   margin-top: 2px;
 }
+
+/* ---------- Ligar canais na ficha e dados do "Acerca de" do YouTube ---------- */
+.ed-item-sug {
+  margin-left: auto;
+  flex: none;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 6px;
+  border-radius: 10px;
+  background: var(--ouro);
+  color: #1b0910;
+  font-size: 11px;
+  font-weight: 800;
+  display: grid;
+  place-items: center;
+}
+.ed-sub {
+  margin: 18px 0 8px;
+  font-size: var(--t-sm);
+  font-weight: 700;
+}
+.ed-sub small {
+  font-weight: 400;
+}
+.ed-sugestoes .candidato-acoes small {
+  font-size: var(--t-xs);
+  text-align: center;
+}
+.btn-link {
+  border: 0;
+  background: none;
+  padding: 0;
+  font: inherit;
+  color: var(--rubi-claro);
+  cursor: pointer;
+}
+.btn-link:hover {
+  text-decoration: underline;
+}
+.ed-about-linha {
+  color: var(--texto-2);
+}
+.ed-about {
+  flex-basis: 100%;
+  padding: 4px 0 6px;
+}
+.ya-topo {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  margin-bottom: 10px;
+}
+.ya-topo b {
+  font-size: var(--t-md);
+}
+.ya-desc {
+  margin: 6px 0 10px;
+  font-size: var(--t-sm);
+  color: var(--texto-2);
+}
+.ya-desc summary {
+  cursor: pointer;
+  color: var(--texto-3);
+  font-size: var(--t-xs);
+}
+.ya-desc p {
+  margin: 8px 0 0;
+  padding: 10px 12px;
+  border-radius: var(--r-sm);
+  background: rgba(255, 255, 255, 0.03);
+  overflow-wrap: anywhere;
+}
+.ya-links {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.ya-link {
+  display: grid;
+  grid-template-columns: 22px minmax(0, 1fr) 170px;
+  gap: 10px;
+  align-items: center;
+  padding: 6px 0;
+  border-bottom: 1px solid var(--linha);
+}
+.ya-ic svg {
+  width: 18px;
+  height: 18px;
+  display: block;
+  color: var(--texto-2);
+}
+.ya-url {
+  min-width: 0;
+}
+.ya-url a {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: var(--t-sm);
+}
+.ya-url small {
+  display: block;
+  color: var(--texto-3);
+  font-size: var(--t-xs);
+  overflow-wrap: anywhere;
+}
+.ya-link select {
+  height: 34px;
+  font-size: var(--t-xs);
+}
+.ya-mais .ed-check {
+  margin-top: 8px;
+}
+@media (max-width: 640px) {
+  .ya-link {
+    grid-template-columns: 22px minmax(0, 1fr);
+  }
+  .ya-link select {
+    grid-column: 2;
+  }
+}
+.yt-item {
+  position: relative;
+}
+.yt-incluir {
+  position: absolute;
+  top: 14px;
+  right: 16px;
+  margin: 0;
+}
+.yt-item .ya-topo {
+  padding-right: 90px;
+}
+.yt-fora > :not(.yt-incluir) {
+  opacity: 0.4;
+}
+.yt-dono {
+  margin-top: 14px;
+  padding-top: 12px;
+  border-top: 1px solid var(--linha);
+}
+.yt-gravar-barra {
+  position: sticky;
+  bottom: 12px;
+  padding: 10px 14px;
+  border-radius: var(--r-md);
+  background: var(--fundo-2);
+  border: 1px solid var(--linha);
+  z-index: 4;
+}
+@media (max-width: 1060px) {
+  /* Por cima da barra de separadores do fundo */
+  .yt-gravar-barra {
+    bottom: calc(92px + env(safe-area-inset-bottom));
+  }
+}
