@@ -182,11 +182,21 @@ function editor(alvo, id, aoMudar, abrir) {
               .map(
                 ({ link, pub: c }) => `<div class="ed-canal" data-ch="${esc(link.id)}">
             ${avatar({ name: c?.title || link.title, photo: c?.thumb || link.thumb }, 40)}
-            <div class="ed-canal-info"><b>${esc(c?.title || link.title)}</b><small class="muted">${esc(c?.handle || link.handle || link.id)}, ${curto(c?.subs)} subs, ${curto(c?.views)} views${c?.country ? ", " + esc(c.country) : ""}</small><small><a href="https://www.youtube.com/channel/${esc(link.id)}" target="_blank" rel="noopener">YouTube ↗</a> · ${lerNoYouTube(link.id)} · ${linkSocialBlade(link.id)}</small>${link.about ? `<small class="ed-about-linha">Acerca de, lido a ${esc(data(link.about.lido))}: ${esc(resumoAbout(link.about))} · <button class="btn-link" data-ver-about>Ver e usar</button></small>` : ""}</div>
+            <div class="ed-canal-info"><b>${esc(link.nome || c?.title || link.title)}${link.category ? ` <span class="etiqueta">${esc(link.category)}</span>` : ""}</b><small class="muted">${esc(c?.handle || link.handle || link.id)}, ${curto(c?.subs)} subs, ${curto(c?.views)} views${c?.country ? ", " + esc(c.country) : ""}</small><small><a href="https://www.youtube.com/channel/${esc(link.id)}" target="_blank" rel="noopener">YouTube ↗</a> · ${lerNoYouTube(link.id)} · ${linkSocialBlade(link.id)} · <a href="/#/canal/${esc(link.id)}" target="_blank" rel="noopener">Ver no site ↗</a></small><small><button class="btn-link" data-ver-info>${link.category || link.bio || link.nome || link.tags?.length ? "Dados do canal" : "Dar categoria e descrição a este canal"}</button></small>${link.about ? `<small class="ed-about-linha">Acerca de, lido a ${esc(data(link.about.lido))}: ${esc(resumoAbout(link.about))} · <button class="btn-link" data-ver-about>Ver e usar</button></small>` : ""}</div>
             <select class="input" data-papel style="width:140px">${PAPEIS.map((r) => `<option ${link.role === r ? "selected" : ""}>${r}</option>`).join("")}</select>
             <label class="ed-check" style="margin:0"><input type="checkbox" data-conta ${link.count !== false ? "checked" : ""}> Conta</label>
             ${p.mainChannelId === link.id ? `<span class="etiqueta ouro">Principal</span>` : `<button class="btn btn-pequeno" data-principal>Tornar principal</button>`}
             <button class="btn btn-pequeno btn-perigo" data-tirar aria-label="Tirar canal">Tirar</button>
+            <form class="ed-canal-dados" hidden>
+              <p class="muted" style="font-size:var(--t-sm);margin:0 0 10px">Este canal tem a sua própria página no site e entra sozinho no Palco ("Cada canal entra sozinho"). Se deixares vazio, o nome é o do YouTube e a categoria é a do Youtuber${p.mainChannelId === link.id ? "; sendo o canal principal, a descrição e as etiquetas também vêm do Youtuber" : ""}.</p>
+              <div class="ed-grelha">
+                <label class="campo"><span>Nome no placar</span><input class="input" name="nome" value="${esc(link.nome || "")}" placeholder="${esc(c?.title || link.title || "Nome do YouTube")}"></label>
+                <label class="campo"><span>Categoria</span><input class="input" name="category" value="${esc(link.category || "")}" list="ed-cats" placeholder="${esc(p.category ? `Igual ao Youtuber: ${p.category}` : "Categoria")}"></label>
+                <label class="campo"><span>Etiquetas</span><input class="input" name="tags" value="${esc((link.tags || []).join(", "))}" placeholder="clips, humor"></label>
+              </div>
+              <label class="campo" style="margin-top:10px"><span>Descrição pública</span><textarea class="input" name="bio" rows="2" placeholder="O que é este canal e que conteúdo tem.">${esc(link.bio || "")}</textarea></label>
+              <div class="ed-acoes" style="justify-content:flex-start;margin-top:10px"><button class="btn btn-primario btn-pequeno" type="submit" data-a-esperar="A guardar">Guardar dados do canal</button></div>
+            </form>
             ${link.about ? `<div class="ed-about" hidden>${blocoAbout({ ...link.about, id: link.id }, p, { id: "ab-" + link.id, resumo: false })}<div class="ed-acoes" style="justify-content:flex-start"><button class="btn btn-primario btn-pequeno" data-aplicar-about data-a-esperar="A guardar">Passar para o perfil</button></div></div>` : ""}
           </div>`,
               )
@@ -246,6 +256,24 @@ function editor(alvo, id, aoMudar, abrir) {
     editor(alvo, id, aoMudar, abrir);
   };
   $("#ed-seguinte", alvo)?.addEventListener("click", () => irSeguinte?.(id)?.());
+
+  // Dados de cada canal (nome, categoria, descrição, etiquetas)
+  $$("[data-ver-info]", alvo).forEach((b) =>
+    b.addEventListener("click", () => {
+      const f = $(".ed-canal-dados", b.closest(".ed-canal"));
+      f.hidden = !f.hidden;
+      if (!f.hidden) $("input", f).focus();
+    }),
+  );
+  $$(".ed-canal-dados", alvo).forEach((f) =>
+    f.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const ch = f.closest(".ed-canal").dataset.ch;
+      const v = (n) => f.elements.namedItem(n).value;
+      const r = await chamar("channel/update", { channelId: ch, info: { nome: v("nome"), category: v("category"), tags: v("tags"), bio: v("bio") } }, { botao: e.submitter, sucesso: "Dados do canal guardados." }).catch(() => null);
+      if (r) refazer();
+    }),
+  );
 
   // Dados do "Acerca de" de cada canal
   $$("[data-ver-about]", alvo).forEach((b) =>

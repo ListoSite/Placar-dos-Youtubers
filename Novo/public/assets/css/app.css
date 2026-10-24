@@ -1553,6 +1553,32 @@ table.tabela {
 .canal b {
   display: block;
 }
+.canal.atual {
+  background: rgba(224, 41, 79, 0.1);
+  box-shadow: inset 3px 0 0 var(--rubi);
+}
+.canal-nome {
+  color: inherit;
+  text-decoration: none;
+}
+.canal-nome:hover b {
+  color: var(--rubi-claro);
+  text-decoration: underline;
+}
+.canal .etiqueta {
+  height: 22px;
+  font-size: 11px;
+  margin: 2px 0 0;
+}
+.perfil-dono {
+  margin: 2px 0 8px;
+  color: var(--texto-2);
+  font-size: var(--t-md);
+}
+.perfil-dono a {
+  color: var(--rubi-claro);
+  font-weight: 700;
+}
 .canal .canal-num {
   margin-left: auto;
   text-align: right;

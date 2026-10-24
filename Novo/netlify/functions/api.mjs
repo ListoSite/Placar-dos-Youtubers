@@ -349,6 +349,16 @@ const adminRoutes = {
     if (!link) throw new HttpError(404, "Canal não encontrado.");
     if (b.role) link.role = b.role;
     if ("count" in b) link.count = Boolean(b.count);
+    // Dados do canal como se fosse um canal à parte (vazio = os do Youtuber / do YouTube)
+    if (b.info && typeof b.info === "object") {
+      const t = (x, n) => String(x ?? "").replace(/[\u0000-\u001f]/g, (c) => (c === "\n" ? c : "")).trim().slice(0, n);
+      if ("nome" in b.info) link.nome = t(b.info.nome, 80);
+      if ("category" in b.info) link.category = t(b.info.category, 60);
+      if ("bio" in b.info) link.bio = t(b.info.bio, 2000);
+      if ("tags" in b.info) link.tags = (Array.isArray(b.info.tags) ? b.info.tags : String(b.info.tags || "").split(",")).map((x) => t(x, 40)).filter(Boolean).slice(0, 12);
+      for (const k of ["nome", "category", "bio"]) if (!link[k]) delete link[k];
+      if (!link.tags?.length) delete link.tags;
+    }
     if (b.main) {
       const p = db.people[link.personId];
       if (p) {

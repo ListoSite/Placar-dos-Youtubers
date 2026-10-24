@@ -2,11 +2,11 @@
 // e os dados, monta as abas e trata da navegação. Não há nenhuma ligação para o painel.
 
 import { api, usarDataset, estado, procurar } from "../data.js";
-import { esc } from "../format.js";
+import { esc, norm } from "../format.js";
 import { $, avatar, toast, esconderDica } from "../ui.js";
 import { modo } from "../modo.js";
 import { lerRegressoDoLogin } from "../conta.js";
-import { ICONES_ABA, ligacaoPessoa } from "./comum.js";
+import { ICONES_ABA, ligacaoPessoa, ligacaoCanal } from "./comum.js";
 
 const PAGINAS = {
   inicio: "./inicio.js",
@@ -50,7 +50,14 @@ async function navegar() {
   let aba = caminho;
   const mPessoa = /^youtuber\/(.+)$/.exec(caminho);
   const mProjeto = /^projeto\/(.+)$/.exec(caminho);
-  if (mPessoa) {
+  const mCanal = /^canal\/(UC[\w-]{22})$/.exec(caminho);
+  if (mCanal) {
+    aba = "youtubers";
+    if (modo.cfg.perfis.ligado && ligacaoCanal(estado.canais.get(mCanal[1]))) {
+      mod = "../pages/channel.js";
+      params = [mCanal[1]];
+    }
+  } else if (mPessoa) {
     aba = "youtubers";
     if (modo.cfg.perfis.ligado && ligacaoPessoa(estado.pessoas.get(decodeURIComponent(mPessoa[1])))) {
       mod = "../pages/person.js";
@@ -68,8 +75,8 @@ async function navegar() {
     if (a.dataset.aba === aba || (a.dataset.mais && !abas.slice(0, 4).some((x) => x.id === aba) && abas.length > 5)) a.setAttribute("aria-current", "page");
     else a.removeAttribute("aria-current");
   }
-  $("#pub-voltar").hidden = !(mPessoa || mProjeto);
-  document.body.classList.toggle("pub-sub-pagina", Boolean(mPessoa || mProjeto));
+  $("#pub-voltar").hidden = !(mPessoa || mProjeto || mCanal);
+  document.body.classList.toggle("pub-sub-pagina", Boolean(mPessoa || mProjeto || mCanal));
   fecharMais();
 
   if (typeof limpar === "function") {
@@ -135,8 +142,14 @@ function montarPesquisa() {
   const lista = $("#pesquisa-lista");
   input.addEventListener("input", () => {
     const r = modo.cfg.perfis.ligado ? procurar(input.value, 20).filter((p) => ligacaoPessoa(p)).slice(0, 8) : [];
-    lista.innerHTML = r.length
-      ? r.map((p) => `<a class="pesquisa-item" href="${ligacaoPessoa(p)}">${avatar(p, 32)}<span><b>${esc(p.name)}</b><small>${esc(p.category || "")}</small></span></a>`).join("")
+    // Os outros canais (segundo canal, clips…) também se encontram pelo nome
+    const t = norm(input.value);
+    const canais = modo.cfg.perfis.ligado && t.length >= 2
+      ? [...estado.canais.values()].filter((c) => estado.pessoas.get(c.personId)?.channelIds?.[0] !== c.id && (norm(c.nome || c.title).includes(t) || norm(c.handle).includes(t)) && ligacaoCanal(c)).slice(0, 4)
+      : [];
+    lista.innerHTML = r.length || canais.length
+      ? r.map((p) => `<a class="pesquisa-item" href="${ligacaoPessoa(p)}">${avatar(p, 32)}<span><b>${esc(p.name)}</b><small>${esc(p.category || "")}</small></span></a>`).join("") +
+        canais.map((c) => `<a class="pesquisa-item" href="${ligacaoCanal(c)}">${avatar({ name: c.title, photo: c.thumb }, 32)}<span><b>${esc(c.nome || c.title)}</b><small>Canal de ${esc(estado.pessoas.get(c.personId)?.name || "")}</small></span></a>`).join("")
       : input.value.trim()
         ? `<div class="pesquisa-item muted">Nenhum Youtuber com esse nome.</div>`
         : "";

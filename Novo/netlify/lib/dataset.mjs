@@ -247,6 +247,11 @@ export async function buildDataset(db) {
       role: link.role,
       count: link.count !== false,
       title: st.title || link.title || "",
+      // Escritos no painel para este canal (quando não há, usa-se o do Youtuber)
+      ...(link.nome ? { nome: link.nome } : {}),
+      ...(link.category ? { category: link.category } : {}),
+      ...(link.bio ? { bio: link.bio } : {}),
+      ...(link.tags?.length ? { tags: link.tags } : {}),
       handle: st.handle || link.handle || "",
       thumb: st.thumb || link.thumb || "",
       banner: st.banner || "",

@@ -217,8 +217,24 @@ export function procurar(q, limite = 12) {
   return out.sort((a, b) => b.s - a.s).slice(0, limite).map((x) => x.p);
 }
 
-/** Melhor mês, melhor posição e meses no top 10 de uma pessoa. */
-export function recordes(p) {
+/** O Índice de um canal visto à parte (pages/channel.js): só com os números dele, sem bónus. */
+export function indiceCanal(c) {
+  return calcularIndice(c, { janela: estado.janela, pesos: estado.ds.settings.weights, topo: estado.ds.settings.alcanceTopo || 1e7 });
+}
+
+/**
+ * Onde ficaria um canal visto à parte entre os Youtubers (sem contar o dono, que já o inclui):
+ * pelas views de um mês, ou pelo Índice (quem = "indice", valor = o Índice do canal).
+ */
+export function posicaoCanal(c, quem, valor) {
+  const outros = estado.ds.people.filter((p) => p.id !== c.dono);
+  if (quem === "indice") return valor === null || valor === undefined ? null : 1 + outros.filter((p) => (indice(p.id).total ?? -1) > valor).length;
+  const v = views(c, quem);
+  return v === null ? null : 1 + outros.filter((p) => (views(p, quem) ?? -1) > v).length;
+}
+
+/** Melhor mês, melhor posição e meses no top 10 de uma pessoa (ou de um canal, com posDe). */
+export function recordes(p, posDe = null) {
   let melhor = null;
   let melhorPos = null;
   let top10 = 0;
@@ -231,10 +247,19 @@ export function recordes(p) {
   const minimo = Math.max(20, cobertura(estado.ref) * 0.5);
   for (const c of estado.cobertura) {
     if (c.m >= estado.ds.currentMonth || c.n < minimo) continue;
-    const r = rankingMes(c.m);
-    const x = r.find((y) => y.p.id === p.id);
+    let x;
+    let de;
+    if (posDe) {
+      const pos = posDe(c.m);
+      x = pos ? { pos } : null;
+      de = c.n;
+    } else {
+      const r = rankingMes(c.m);
+      x = r.find((y) => y.p.id === p.id);
+      de = r.length;
+    }
     if (!x) continue;
-    if (!melhorPos || x.pos < melhorPos.pos) melhorPos = { m: c.m, pos: x.pos, de: r.length };
+    if (!melhorPos || x.pos < melhorPos.pos) melhorPos = { m: c.m, pos: x.pos, de };
     if (x.pos <= 10) top10++;
     if (x.pos <= 50) top50++;
   }

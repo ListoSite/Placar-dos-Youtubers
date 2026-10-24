@@ -1165,3 +1165,17 @@ details > summary {
   font-weight: 500;
   opacity: 0.75;
 }
+/* Dados de cada canal (categoria, descrição…) */
+.ed-canal-dados {
+  flex-basis: 100%;
+  padding: 12px 14px;
+  margin: 4px 0 6px;
+  border-radius: var(--r-md);
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid var(--linha);
+}
+.ed-canal-info b .etiqueta {
+  height: 22px;
+  font-size: 11px;
+  vertical-align: 2px;
+}

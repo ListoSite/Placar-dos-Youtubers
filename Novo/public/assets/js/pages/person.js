@@ -1,35 +1,40 @@
-// Perfil de um Youtuber.
+// Perfil de um Youtuber, ou de um dos seus canais visto à parte (pages/channel.js).
 
-import { estado, pessoa, indice, views, serieMensal, rankingMes, recordes, projetosDe, canaisDe, mediaMeses, api, temSessao } from "../data.js";
+import { estado, pessoa, indice, views, serieMensal, rankingMes, recordes, projetosDe, canaisDe, mediaMeses, api, temSessao, indiceCanal, posicaoCanal } from "../data.js";
 import { esc, curto, inteiro, mesNome, pct, data, ha, decimal, duracao, plural } from "../format.js";
 import { avatar, linkPessoa, etiquetaCategoria, ICONES, REDES, $, vazio, variacao, contar } from "../ui.js";
 import { barrasMensais, barrasDiarias, barrasSimples } from "../charts.js";
-import { PARTES } from "../score.js";
+import { PARTES, pontuacaoClassica } from "../score.js";
+import { ligacaoCanal } from "../publico/comum.js";
 import { cartaoProjeto } from "./projects.js";
 import { encher } from "../motion.js";
 import { carregarHistorico, dadosPessoa, rivaisDe } from "../stage/historico.js";
 import { modo, ligado } from "../modo.js";
 
-export async function render(main, { params }) {
-  const p = pessoa(params[0]);
+export async function render(main, { params, entidade = null }) {
+  const p = entidade || pessoa(params[0]);
   if (!p) {
     main.innerHTML = `<div class="wrap pagina-topo"><h1>Youtuber não encontrado</h1><p>Pode ter sido removido ou mudado de nome. <a href="#/ranking">Ver o ranking</a>.</p></div>`;
     return;
   }
   main.dataset.titulo = p.name;
   const ds = estado.ds;
-  const ind = indice(p.id);
-  const pos = estado.posIndice.get(p.id);
+  // Um canal visto à parte: as posições são "onde ficaria" entre os Youtubers (sem contar o dono)
+  const ehCanal = Boolean(p.dono);
+  const dono = ehCanal ? pessoa(p.dono) : null;
+  const ind = ehCanal ? indiceCanal(p) : indice(p.id);
+  const pos = ehCanal ? posicaoCanal(p, "indice", ind.total) : estado.posIndice.get(p.id);
   const ref = estado.ref;
   const vRef = views(p, ref);
-  const rRef = rankingMes(ref);
-  const posRef = rRef.find((x) => x.p.id === p.id);
+  const posRef = ehCanal ? (vRef === null ? null : { pos: posicaoCanal(p, ref) }) : rankingMes(ref).find((x) => x.p.id === p.id);
   const canais = canaisDe(p);
+  const todosCanais = ehCanal ? (dono ? canaisDe(dono) : []) : canais;
   const main1 = canais[0];
-  const rec = recordes(p);
+  const rec = recordes(p, ehCanal ? (m) => posicaoCanal(p, m) : null);
   const media3 = mediaMeses(p, ref, 3);
-  const projetos = projetosDe(p.id);
-  const classica = estado.classica.get(p.id);
+  const projetos = ehCanal ? [] : projetosDe(p.id);
+  const classica = ehCanal ? pontuacaoClassica(p, estado.janela) : estado.classica.get(p.id);
+  const linkDono = dono ? (modo.publico ? (!modo.cfg?.perfis?.ligado || dono.semPerfil ? null : `#/youtuber/${encodeURIComponent(dono.id)}`) : `#/youtuber/${encodeURIComponent(dono.id)}`) : null;
   const parcial = p.monthly[ds.currentMonth];
 
   const limpeza = [];
@@ -43,6 +48,7 @@ export async function render(main, { params }) {
           ${avatar(p, 128)}
           <div>
             <h1>${esc(p.name)}</h1>
+            ${ehCanal && dono ? `<p class="perfil-dono">${p.canal.principal ? "Canal principal" : `Canal ${esc(p.canal.role && p.canal.role !== "outro" ? p.canal.role : "")}`.replace(/\s+$/, "")} de ${linkDono ? `<a href="${linkDono}">${esc(dono.name)}</a>` : `<b>${esc(dono.name)}</b>`}${p.canal.count ? "" : " · não conta nas somas do Youtuber"}</p>` : ""}
             <div class="perfil-linha">
               ${etiquetaCategoria(p.category)}
               ${p.realName ? `<span class="soft">${esc(p.realName)}</span>` : ""}
@@ -52,13 +58,13 @@ export async function render(main, { params }) {
             </div>
             <div class="perfil-linha">
               ${main1 ? `<a class="btn btn-pequeno" href="https://www.youtube.com/channel/${esc(main1.id)}" target="_blank" rel="noopener">${ICONES.youtube} ${esc(main1.handle || "Canal")}</a>` : ""}
-              ${comparar && ve("comparar") ? `<a class="btn btn-pequeno" href="#/comparar?ids=${encodeURIComponent(p.id)}">Comparar</a>` : ""}
-              ${modo.publico ? "" : `<a class="btn btn-pequeno" href="#/palco/cartao?id=${encodeURIComponent(p.id)}">Mostrar no Palco</a>`}
-              ${!modo.publico && temSessao() ? `<a class="btn btn-pequeno" href="#/editar/youtubers?id=${encodeURIComponent(p.id)}">Editar</a>` : ""}
+              ${comparar && ve("comparar") && !ehCanal ? `<a class="btn btn-pequeno" href="#/comparar?ids=${encodeURIComponent(p.id)}">Comparar</a>` : ""}
+              ${modo.publico || ehCanal ? "" : `<a class="btn btn-pequeno" href="#/palco/cartao?id=${encodeURIComponent(p.id)}">Mostrar no Palco</a>`}
+              ${!modo.publico && temSessao() ? `<a class="btn btn-pequeno" href="#/editar/youtubers?id=${encodeURIComponent(p.dono || p.id)}">Editar</a>` : ""}
             </div>
           </div>
           <div class="perfil-indice" ${ve("indice") ? "" : "hidden"}>
-            ${ind.total !== null ? `<span class="placar" id="ind-num">${inteiro(ind.total)}</span><span>Índice de Influência${pos ? `, ${pos}.º em Portugal` : ""}</span>` : `<span class="muted">Ainda sem dados para o Índice</span>`}
+            ${ind.total !== null ? `<span class="placar" id="ind-num">${inteiro(ind.total)}</span><span>Índice de Influência${ehCanal ? " deste canal" : ""}${pos ? `, ${ehCanal ? "seria o " : ""}${pos}.º em Portugal` : ""}</span>` : `<span class="muted">Ainda sem dados para o Índice</span>`}
           </div>
         </div>
       </div>
@@ -66,21 +72,21 @@ export async function render(main, { params }) {
     <div class="wrap">
       ${p.bio ? `<p class="soft" style="margin-top:24px;font-size:var(--t-md)">${esc(p.bio)}</p>` : ""}
       <div class="numeros" style="margin-top:28px" ${ve("numeros") ? "" : "hidden"}>
-        <div class="numero"><span>Views em ${esc(mesNome(ref))}</span><strong>${curto(vRef)}</strong><small>${posRef ? `${posRef.pos}.º lugar ` : ""}${variacao(vRef, views(p, estado.ds.months[estado.ds.months.indexOf(ref) - 1] || ""))}</small></div>
+        <div class="numero"><span>Views em ${esc(mesNome(ref))}</span><strong>${curto(vRef)}</strong><small>${posRef?.pos ? `${ehCanal ? "seria " : ""}${posRef.pos}.º lugar ` : ""}${variacao(vRef, views(p, estado.ds.months[estado.ds.months.indexOf(ref) - 1] || ""))}</small></div>
         ${parcial ? `<div class="numero"><span>Este mês (até agora)</span><strong>${curto(parcial.v)}</strong><small>projeção ${curto(parcial.est)}</small></div>` : ""}
         <div class="numero"><span>Média de 3 meses</span><strong>${curto(media3)}</strong><small>views por mês</small></div>
-        <div class="numero"><span>Subscritores</span><strong>${curto(p.totals?.subs)}</strong><small>${p.totals?.src === "folha" ? "valor da folha antiga" : canais.filter((c) => c.count).length > 1 ? `em ${canais.filter((c) => c.count).length} canais` : ""}</small></div>
+        <div class="numero"><span>Subscritores</span><strong>${curto(p.totals?.subs)}</strong><small>${p.totals?.src === "folha" ? "valor da folha antiga" : !ehCanal && canais.filter((c) => c.count).length > 1 ? `em ${canais.filter((c) => c.count).length} canais` : ""}</small></div>
         <div class="numero"><span>Views totais</span><strong>${curto(p.totals?.views)}</strong><small>${p.totals?.videos ? plural(p.totals.videos, "vídeo", "vídeos") : ""}</small></div>
         <div class="numero"><span>No YouTube desde</span><strong>${p.since ? new Date(p.since).getFullYear() : "–"}</strong><small>${p.since ? data(p.since) : ""}</small></div>
       </div>
 
       <section class="secao" ${ve("mensal") ? "" : "hidden"}>
-        <div class="secao-cabeca"><div><h2>Views por mês</h2><p>Views ganhas em cada mês, somando os canais principais${canais.some((c) => !c.count) ? " (canais de clips não contam)" : ""}.${notaEstimativa(p)}</p></div></div>
+        <div class="secao-cabeca"><div><h2>Views por mês</h2><p>${ehCanal ? `Views ganhas em cada mês neste canal${p.canal.principal && todosCanais.filter((c) => c.count).length > 1 ? " (os meses da folha antiga do Youtuber contam como deste canal)" : ""}.` : `Views ganhas em cada mês, somando os canais principais${canais.some((c) => !c.count) ? " (canais de clips não contam)" : ""}.`}${notaEstimativa(p)}</p></div></div>
         <div id="g-mensal" class="vidro caixa-grafico"></div>
       </section>
 
       <section class="secao" id="sec-diario" hidden>
-        <div class="secao-cabeca"><div><h2>Últimos dias</h2><p>Views ganhas por dia no canal principal, medidas pela recolha diária e pelo Social Blade.</p></div></div>
+        <div class="secao-cabeca"><div><h2>Últimos dias</h2><p>Views ganhas por dia ${ehCanal ? "neste canal" : "no canal principal"}, medidas pela recolha diária e pelo Social Blade.</p></div></div>
         <div id="g-diario" class="vidro caixa-grafico"></div>
       </section>
 
@@ -131,11 +137,11 @@ export async function render(main, { params }) {
         <div class="videos-grelha" id="videos"></div>
       </section>
 
-      ${ve("canais") && canais.length ? `<section class="secao"><div class="secao-cabeca"><div><h2>Canais</h2><p>Todos os canais desta pessoa. Os canais de clips não somam nas views.</p></div></div>
-        <div class="painel canal-lista">${canais
+      ${ve("canais") && todosCanais.length && (!ehCanal || todosCanais.length > 1) ? `<section class="secao"><div class="secao-cabeca"><div><h2>${ehCanal ? `Os canais de ${esc(dono?.name || "")}` : "Canais"}</h2><p>${ehCanal ? "Carrega num canal para o ver à parte." : `Todos os canais desta pessoa${todosCanais.length > 1 ? ": carrega num para o ver à parte" : ""}. Os canais de clips não somam nas views.`}</p></div></div>
+        <div class="painel canal-lista">${todosCanais
           .map(
-            (c) => `<div class="canal">${avatar({ name: c.title, photo: c.thumb }, 44)}
-            <div><b>${esc(c.title)}</b><small class="muted">${esc([c.handle, "canal " + c.role, c.count ? "" : "não conta nas somas", c.country ? "país " + c.country : "", c.missing ? "canal indisponível" : ""].filter(Boolean).join(", "))}</small></div>
+            (c) => `<div class="canal${ehCanal && c.id === p.id ? " atual" : ""}">${avatar({ name: c.title, photo: c.thumb }, 44)}
+            <div>${ligacaoCanal(c) && !(ehCanal && c.id === p.id) ? `<a class="canal-nome" href="${ligacaoCanal(c)}"><b>${esc(c.nome || c.title)}</b></a>` : `<b>${esc(c.nome || c.title)}</b>`}${c.category ? ` <span class="etiqueta">${esc(c.category)}</span>` : ""}<small class="muted">${esc([c.handle, "canal " + c.role, c.count ? "" : "não conta nas somas", c.country ? "país " + c.country : "", c.missing ? "canal indisponível" : ""].filter(Boolean).join(", "))}</small></div>
             <div class="canal-num"><b>${curto(c.subs)}</b> subs<br><span class="muted">${curto(c.views)} views</span></div>
             <a class="botao-icone" href="https://socialblade.com/youtube/channel/${esc(c.id)}" target="_blank" rel="noopener" aria-label="Ver ${esc(c.title)} no Social Blade" title="Social Blade"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M5 20v-7M11 20V5M17 20v-10M3 20h18"/></svg></a>
             <a class="botao-icone" href="https://www.youtube.com/channel/${esc(c.id)}" target="_blank" rel="noopener" aria-label="Abrir ${esc(c.title)} no YouTube" title="YouTube">${ICONES.youtube}</a></div>`,
@@ -143,7 +149,7 @@ export async function render(main, { params }) {
           .join("")}</div></section>`
         : ""}
 
-      <section class="secao" id="sec-palco" hidden></section>
+      ${ehCanal ? "" : `<section class="secao" id="sec-palco" hidden></section>`}
 
       ${ve("redes") ? redesHtml(p) : ""}
 
@@ -168,8 +174,8 @@ export async function render(main, { params }) {
     if (Object.keys(p.tt.l || {}).length) limpeza.push(barrasSimples($("#g-tt-gostos", main), pontos(p.tt.l, "gostos ganhos"), { rotulo: rot, cor: "#fe2c55", nome: "Gostos ganhos por mês no TikTok" }));
     else $("#g-tt-gostos", main).innerHTML = `<p class="muted">Sem dados.</p>`;
   }
-  if (ve("palco")) carregarPalco(main, p);
-  const contados = canais.filter((c) => c.count);
+  if (ve("palco") && !ehCanal) carregarPalco(main, p);
+  const contados = ehCanal ? canais : canais.filter((c) => c.count);
   if (contados.length && ve("crescimento")) carregarSocialBlade(main, contados, limpeza);
   if (main1) {
     if (ve("diario")) carregarDiario(main, main1, limpeza);

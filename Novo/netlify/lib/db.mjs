@@ -111,6 +111,8 @@ export function attachChannel(db, personId, ch, role = "principal") {
     throw new Error(`Este canal já está ligado a "${owner?.name || existing.personId}".`);
   }
   db.channels[ch.id] = {
+    // Os dados escritos no painel (categoria, descrição, "Acerca de"…) ficam
+    ...(existing || {}),
     id: ch.id,
     personId,
     role,

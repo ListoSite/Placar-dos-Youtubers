@@ -1,12 +1,20 @@
 // Peças comuns da página pública.
 
 import { modo } from "../modo.js";
+import { estado } from "../data.js";
 
 /** Ligação para o perfil público (ou null se os perfis estiverem desligados no painel). */
 export function ligacaoPessoa(p) {
   if (!p) return null;
   if (modo.publico && (!modo.cfg?.perfis?.ligado || p.semPerfil)) return null;
   return `#/youtuber/${encodeURIComponent(p.id)}`;
+}
+
+/** A página de um canal à parte (quando o dono tem perfil aberto). */
+export function ligacaoCanal(c) {
+  if (!c) return null;
+  const dono = estado.pessoas.get(c.personId);
+  return dono && ligacaoPessoa(dono) ? `#/canal/${encodeURIComponent(c.id)}` : null;
 }
 
 /** A aba está ligada no painel? */
