@@ -544,6 +544,115 @@
   }
   const textoTT = (r) => (r.tt ? `, TikTok @${r.tt.info.user} (${r.tt.m ? r.tt.m.f.length : 0} meses)` : "");
 
+  // ---------- Instagram e Twitch ----------
+  // Como no TikTok: <rede>.user aceita o nome e devolve o id; <rede>.monthly (ganhos de cada mês)
+  // e <rede>.history (totais por dia) pedem o id. Todos os números de cada linha são guardados.
+  // No Instagram, o histórico só aparece a quem tem sessão iniciada no Social Blade.
+  const REDES_SB = {
+    instagram: /instagram\.com\/(?!p\/|reel\/|stories\/)([\w.]{1,40})/i,
+    twitch: /twitch\.tv\/([\w]{2,40})/i,
+  };
+  function nomeRede(rede, x) {
+    if (!x) return "";
+    const s = String(x).trim();
+    const m = REDES_SB[rede].exec(s) || (/^https?:/i.test(s) ? null : /^@?([\w.]{1,40})$/.exec(s));
+    return m ? m[1] : "";
+  }
+  function redeDasRedes(rede, sb) {
+    for (const u of (sb && sb.info && sb.info.redes) || []) {
+      const n = REDES_SB[rede].test(u) ? nomeRede(rede, u) : "";
+      if (n) return n;
+    }
+    return "";
+  }
+  async function trpcBruto(procs, inp) {
+    const r = await fetch(`${location.origin}/api/trpc/${procs}?batch=1&input=${encodeURIComponent(JSON.stringify(inp))}`, { credentials: "include", headers: { accept: "application/json" } });
+    const texto = await r.text();
+    if (r.status === 429 || r.status === 503 || /challenge|cf-chl|captcha|just a moment/i.test(texto.slice(0, 3000))) throw new Bloqueado(`O Social Blade respondeu ${r.status}.`);
+    try {
+      const j = JSON.parse(texto);
+      return Array.isArray(j) ? j.map((x) => ({ dados: x && x.result && x.result.data ? x.result.data.json : undefined, erro: x && x.error ? (x.error.json && x.error.json.message) || "erro" : "" })) : [];
+    } catch (e) {
+      return [];
+    }
+  }
+  /** Linhas {date, a, b…} em colunas por campo: { ini, c: { followers: [...], … } }. */
+  function colunasRede(arr, passo) {
+    if (!Array.isArray(arr)) return null;
+    const linhas = arr.map((x) => [dataISO(x && x.date), x]).filter((r) => r[0]).sort((a, b) => a[0].localeCompare(b[0]));
+    if (!linhas.length) return null;
+    const ch = (d) => (passo === "mes" ? d.slice(0, 7) : d);
+    const ini = ch(linhas[0][0]);
+    const pos = (d) => (passo === "mes" ? (Number(d.slice(0, 4)) - Number(ini.slice(0, 4))) * 12 + Number(d.slice(5, 7)) - Number(ini.slice(5, 7)) : Math.round((Date.parse(d) - Date.parse(ini)) / DIA));
+    const n = pos(ch(linhas[linhas.length - 1][0])) + 1;
+    if (n > 200) return null;
+    const c = {};
+    for (const [d, x] of linhas) {
+      const i = pos(ch(d));
+      for (const [k, v] of Object.entries(x)) {
+        if (k === "date" || num(v) === null || !/^[a-z][\w]{0,30}$/i.test(k)) continue;
+        (c[k] ||= new Array(n).fill(null))[i] = num(v);
+      }
+    }
+    return Object.keys(c).length ? { ini, c } : null;
+  }
+  async function porRede(rede, nome) {
+    if (!nome) return null;
+    const a = await trpcBruto(`${rede}.user`, { 0: { json: { id: nome } } });
+    const u = a[0] && a[0].dados;
+    if (!u || !u.id) return null;
+    const id = String(u.id);
+    const st = u.stats || {};
+    const pega = (k) => num(u[k] !== undefined ? u[k] : st[k]);
+    const r = {
+      rede,
+      at: new Date().toISOString(),
+      info: {
+        id,
+        user: String(u.username || nome).slice(0, 40),
+        nome: String(u.displayName || "").slice(0, 120),
+        foto: typeof u.avatar === "string" ? u.avatar.slice(0, 600) : "",
+        seg: pega("followers"),
+        seguindo: pega("following"),
+        posts: pega("mediaCount") !== null ? pega("mediaCount") : pega("videos"),
+        gostos: pega("likes"),
+        eng: pega("engagementRate"),
+        mediaGostos: pega("averageLikes"),
+        mediaComent: pega("averageComments"),
+        site: typeof u.website === "string" ? u.website.slice(0, 300) : "",
+        nota: typeof u.grade === "string" ? u.grade.slice(0, 4) : "",
+        verificado: u.verified === true,
+        criado: dataISO(u.createdAt),
+      },
+    };
+    const b = await trpcBruto(`${rede}.monthly,${rede}.history`, { 0: { json: { id, period: "monthly" } }, 1: { json: { id, limit: 31 } } });
+    const m = colunasRede(b[0] && b[0].dados, "mes");
+    const d = colunasRede(b[1] && b[1].dados, "dia");
+    if (m) r.m = m;
+    if (d) r.d = d;
+    if (!m && !d && b.some((x) => /UNAUTHORIZED/i.test(x.erro))) r.semSessao = true;
+    return r;
+  }
+  /** Instagram e Twitch de quem tem link no Placar (ou nas redes que o Social Blade mostra no canal). */
+  async function juntarRedes(r, alvo, sb) {
+    for (const rede of Object.keys(REDES_SB)) {
+      const nome = nomeRede(rede, alvo && alvo[rede === "instagram" ? "ig" : "tw"]) || redeDasRedes(rede, sb);
+      if (!nome) continue;
+      try {
+        const x = await porRede(rede, nome);
+        if (x) (r.redes ||= {})[rede] = x;
+      } catch (e) {
+        if (e instanceof Bloqueado) throw e;
+      }
+      await esperar(300);
+    }
+  }
+  const NOME_REDE = { instagram: "Instagram", twitch: "Twitch" };
+  const textoRedes = (r) =>
+    Object.values(r.redes || {})
+      .map((x) => `, ${NOME_REDE[x.rede]} @${x.info.user}${x.m ? ` (${x.m.c.followers ? x.m.c.followers.length : 0} meses)` : x.semSessao ? " (só hoje)" : ""}`)
+      .join("");
+
 
   // ---------- Página atual ----------
   function chaveDaPagina() {
@@ -552,6 +661,13 @@
   }
 
   async function lerEstaPagina() {
+    const pRede = location.pathname.match(/\/(instagram|twitch)\/user\/([^/?#]+)/);
+    if (pRede) {
+      const x = await porRede(pRede[1], decodeURIComponent(pRede[2]));
+      const raw = { kind: "placar-sb-raw", v: 3, soRede: pRede[1], url: location.href, title: x ? x.info.nome || x.info.user : "", handle: "", channelId: "", series: [], meses: 0 };
+      if (x) raw.redes = { [pRede[1]]: x };
+      return { rec: novaRecolha(), raw };
+    }
     const pTT = location.pathname.match(/\/tiktok\/user\/([^/?#]+)/);
     if (pTT) {
       const tt = await porTikTok(decodeURIComponent(pTT[1]));
@@ -578,6 +694,7 @@
           raw.meses = contarMeses(sb);
           if (sb.info && sb.info.nome) raw.title = sb.info.nome;
           await juntarTikTok(raw, ttDasRedes(sb));
+          await juntarRedes(raw, null, sb);
         }
       } catch (e) {
         if (e instanceof Bloqueado) throw e;
@@ -793,6 +910,16 @@
     try {
       atual = await lerEstaPagina();
       const r = atual.raw;
+      if (r.soRede) {
+        const x = r.redes && r.redes[r.soRede];
+        if (!x) {
+          s1txt.textContent = `Não encontrei os números deste perfil d${r.soRede === "twitch" ? "a Twitch" : "o Instagram"}.`;
+          return;
+        }
+        s1txt.textContent = `${NOME_REDE[x.rede]} @${x.info.user}: ${x.info.seg !== null ? x.info.seg.toLocaleString("pt-PT") + " seguidores" : "sem seguidores"}${x.info.posts !== null ? `, ${x.info.posts.toLocaleString("pt-PT")} publicações` : ""}${x.m ? `, ${x.m.c.followers ? x.m.c.followers.length : 0} meses` : ""}${x.d ? ` e ${x.d.c.followers ? x.d.c.followers.length : 0} dias` : ""}.${x.semSessao ? " O histórico de meses só aparece com sessão iniciada no Social Blade." : ""}`;
+        bEnviar1.style.display = bCopiar1.style.display = "";
+        return;
+      }
       if (r.soTikTok) {
         if (!r.tt) {
           s1txt.textContent = "Não encontrei os números deste perfil do TikTok.";
@@ -803,10 +930,10 @@
         return;
       }
       if (!r.series.length && !r.sb) {
-        s1txt.textContent = chaveDaPagina() ? "Ainda não encontrei números nesta página. Espera que os gráficos carreguem e carrega outra vez no marcador." : "Abre a página de um canal do YouTube (ou de um perfil do TikTok) no Social Blade.";
+        s1txt.textContent = chaveDaPagina() ? "Ainda não encontrei números nesta página. Espera que os gráficos carreguem e carrega outra vez no marcador." : "Abre a página de um canal do YouTube (ou de um perfil do TikTok, Instagram ou Twitch) no Social Blade.";
         return;
       }
-      s1txt.textContent = r.sb ? `${r.title || r.handle}: ${r.meses} meses, ${r.sb.d ? r.sb.d.v.length : 0} dias e ${r.sb.w ? r.sb.w.v.length : 0} semanas (views, subscritores e vídeos)${r.sb.info && r.sb.info.redes.length ? `, ${r.sb.info.redes.length} redes sociais` : ""}.` : `${r.title || r.handle}: encontrei dados de ${r.meses} meses.`;
+      s1txt.textContent = r.sb ? `${r.title || r.handle}: ${r.meses} meses, ${r.sb.d ? r.sb.d.v.length : 0} dias e ${r.sb.w ? r.sb.w.v.length : 0} semanas (views, subscritores e vídeos)${r.sb.info && r.sb.info.redes.length ? `, ${r.sb.info.redes.length} redes sociais` : ""}${textoTT(r)}${textoRedes(r)}.` : `${r.title || r.handle}: encontrei dados de ${r.meses} meses.`;
       bEnviar1.style.display = bCopiar1.style.display = "";
     } catch (e) {
       s1txt.textContent = e instanceof Bloqueado ? "O Social Blade está a travar os pedidos. Espera um minuto, recarrega a página e carrega outra vez no marcador." : "Não consegui ler esta página: " + e.message;
@@ -849,7 +976,7 @@
   }
 
   let ordem = ["api", "html", "iframe"];
-  const temDados = (x) => Boolean((x.sb && (x.sb.m || x.sb.d || x.sb.info)) || (x.series && x.series.length) || x.tt);
+  const temDados = (x) => Boolean((x.sb && (x.sb.m || x.sb.d || x.sb.info)) || (x.series && x.series.length) || x.tt || x.redes);
   let falhasSB = 0;
   async function umCanal(alvo, modelos) {
     let ultimo = null;
@@ -860,6 +987,7 @@
         falhasSB = 0;
         const r = { kind: "placar-sb-raw", v: 3, channelId: alvo.id, handle: alvo.h || "", title: alvo.n || "", series: [], sb, meses: contarMeses(sb), metodo: "sb" };
         await juntarTikTok(r, ttUser(alvo.tt) || ttDasRedes(sb));
+        await juntarRedes(r, alvo, sb);
         return r;
       } else falhasSB++;
       if (falhasSB < 3) return Object.assign({ channelId: alvo.id, title: alvo.n || "", series: [], meses: 0 }, ultimo || { erro: "O Social Blade não tem este canal." });
@@ -908,7 +1036,7 @@
       estado.itens.push(r);
       estado.i++;
       gravarEstado(estado);
-      log(`${temDados(r) ? "✓" : "–"} ${alvo.n || alvo.id}: ${temDados(r) ? `${r.meses} meses${r.sb && r.sb.info && r.sb.info.redes.length ? `, ${r.sb.info.redes.length} redes` : ""}${textoTT(r)} (${r.metodo})` : r.erro || "sem dados"}`);
+      log(`${temDados(r) ? "✓" : "–"} ${alvo.n || alvo.id}: ${temDados(r) ? `${r.meses} meses${r.sb && r.sb.info && r.sb.info.redes.length ? `, ${r.sb.info.redes.length} redes` : ""}${textoTT(r)}${textoRedes(r)} (${r.metodo})` : r.erro || "sem dados"}`);
       mostrarEstado();
       if (estado.i < estado.lista.length) await esperar(1500 + Math.random() * 1500);
     }

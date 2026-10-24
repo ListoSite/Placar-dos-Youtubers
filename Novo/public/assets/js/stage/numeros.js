@@ -56,6 +56,11 @@ export async function correr(palco, opts) {
   // 6b. TikTok
   const tt = rankingPor("tiktokMes", m, { cat, n: 1 })[0];
   if (tt && tt.v > 0) cartoes.push({ rotulo: `seguidores novos no TikTok para ${tt.p.name}`, v: tt.v, fmt: (x) => `+${curto(x)}`, nota: "O que mais cresceu no TikTok", visual: { tipo: "pessoa", p: tt.p, texto: tt.p.socials?.tiktok?.last?.followers ? `${curto(tt.p.socials.tiktok.last.followers)} seguidores no TikTok` : "" } });
+  // 6c. Instagram e Twitch
+  for (const [chave, rede, nome] of [["instagramMes", "instagram", "no Instagram"], ["twitchMes", "twitch", "na Twitch"]]) {
+    const x = rankingPor(chave, m, { cat, n: 1 })[0];
+    if (x && x.v > 0) cartoes.push({ rotulo: `seguidores novos ${nome} para ${x.p.name}`, v: x.v, fmt: (y) => `+${curto(y)}`, nota: `O que mais cresceu ${nome}`, visual: { tipo: "pessoa", p: x.p, texto: METRICAS[rede].valor(x.p) ? `${curto(METRICAS[rede].valor(x.p))} seguidores ${nome}` : "" } });
+  }
   // 7. O n.º 1
   const top = rankingPor("views", m, { cat, n: 1 })[0];
   cartoes.push({ rotulo: `views: ${top.p.name} é o n.º 1`, v: top.v, fmt: curto, nota: `O mais visto de ${mesNome(m)}`, visual: { tipo: "pessoa", p: top.p, grande: true }, final: true });

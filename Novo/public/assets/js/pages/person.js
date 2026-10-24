@@ -107,6 +107,8 @@ export async function render(main, { params, entidade = null }) {
         </div>
       </section>` : ""}
 
+      ${["instagram", "twitch"].map((r) => (ve(r) && p.rs?.[r] ? redeSBHtml(p, r) : "")).join("")}
+
       <section class="secao grelha-2" ${ve("indice") || ve("recordes") ? "" : "hidden"}>
         <div class="painel" ${ve("indice") ? "" : "hidden"}>
           <h3>Como se calcula o Índice</h3>
@@ -174,6 +176,14 @@ export async function render(main, { params, entidade = null }) {
     if (Object.keys(p.tt.l || {}).length) limpeza.push(barrasSimples($("#g-tt-gostos", main), pontos(p.tt.l, "gostos ganhos"), { rotulo: rot, cor: "#fe2c55", nome: "Gostos ganhos por mês no TikTok" }));
     else $("#g-tt-gostos", main).innerHTML = `<p class="muted">Sem dados.</p>`;
   }
+  for (const r of ["instagram", "twitch"]) {
+    const x = p.rs?.[r];
+    if (!x || !$(`#sec-${r}`, main)) continue;
+    const rot = (m) => mesNome(m, { curto: true });
+    const pontos = (o, unidade) => Object.keys(o || {}).sort().map((m) => ({ k: m, v: Math.max(0, o[m]), dica: `<b>${mesNome(m)}</b><br>${inteiro(o[m])} ${unidade}` }));
+    if (Object.keys(x.f || {}).length) limpeza.push(barrasSimples($(`#g-${r}-seg`, main), pontos(x.f, "seguidores ganhos"), { rotulo: rot, cor: COR_REDE[r], nome: `Seguidores ganhos por mês ${r === "twitch" ? "na Twitch" : "no Instagram"}` }));
+    if (Object.keys(x.n || {}).length && $(`#g-${r}-posts`, main)) limpeza.push(barrasSimples($(`#g-${r}-posts`, main), pontos(x.n, "publicações novas"), { rotulo: rot, cor: "#c98500", nome: "Publicações por mês no Instagram" }));
+  }
   if (ve("palco") && !ehCanal) carregarPalco(main, p);
   const contados = ehCanal ? canais : canais.filter((c) => c.count);
   if (contados.length && ve("crescimento")) carregarSocialBlade(main, contados, limpeza);
@@ -210,6 +220,36 @@ function explicacao(id, v) {
     default:
       return "";
   }
+}
+
+const COR_REDE = { instagram: "#e1306c", twitch: "#9146ff" };
+const NOME_REDE = { instagram: "Instagram", twitch: "Twitch" };
+const URL_REDE = { instagram: (u) => `https://www.instagram.com/${u}/`, twitch: (u) => `https://www.twitch.tv/${u}` };
+
+/** Instagram ou Twitch (Social Blade): o perfil de hoje e os ganhos de cada mês. */
+function redeSBHtml(p, r) {
+  const x = p.rs[r];
+  const i = x.info || {};
+  const temMeses = Object.keys(x.f || {}).length > 0;
+  const temPosts = Object.keys(x.n || {}).length > 0;
+  const fatos = [
+    i.seg !== null && i.seg !== undefined ? ["Seguidores", curto(i.seg)] : null,
+    i.posts ? ["Publicações", inteiro(i.posts)] : null,
+    i.seguindo ? ["A seguir", inteiro(i.seguindo)] : null,
+    i.eng ? ["Envolvimento", `${decimal(i.eng, 2)}%`] : null,
+    i.mediaGostos ? ["Gostos por publicação", curto(i.mediaGostos)] : null,
+    i.mediaComent ? ["Comentários por publicação", curto(i.mediaComent)] : null,
+    i.criado ? ["Na plataforma desde", String(new Date(i.criado).getFullYear())] : null,
+    i.nota ? ["Nota no Social Blade", i.nota] : null,
+  ].filter(Boolean);
+  return `<section class="secao rede-sb" id="sec-${r}" style="--cor-rede:${COR_REDE[r]}">
+    <div class="secao-cabeca"><div><h2>${ICONES[r] || ""} ${NOME_REDE[r]}</h2><p><a href="${esc(URL_REDE[r](i.user))}" target="_blank" rel="noopener">@${esc(i.user)}</a>${i.verificado ? " ✓" : ""}. Números do Social Blade${x.at ? `, atualizados em ${esc(data(x.at))}` : ""}.${!temMeses && x.semSessao ? " O histórico de cada mês ainda não foi lido." : ""}</p></div></div>
+    <div class="numeros rede-sb-numeros">${fatos.map(([k, v]) => `<div class="numero"><span>${esc(k)}</span><strong>${esc(v)}</strong></div>`).join("")}</div>
+    ${temMeses ? `<div class="${temPosts ? "grelha-2" : ""}" style="margin-top:18px">
+      <div class="vidro caixa-grafico"><h3 class="grafico-titulo">Seguidores ganhos por mês</h3><div id="g-${r}-seg"></div></div>
+      ${temPosts ? `<div class="vidro caixa-grafico"><h3 class="grafico-titulo">Publicações por mês</h3><div id="g-${r}-posts"></div></div>` : ""}
+    </div>` : ""}
+  </section>`;
 }
 
 function redesHtml(p) {

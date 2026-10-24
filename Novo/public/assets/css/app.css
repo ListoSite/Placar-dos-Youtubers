@@ -2471,3 +2471,14 @@ body.sem-sessao .menu-movel,
 body.sem-sessao .rodape {
   display: none !important;
 }
+
+/* Instagram e Twitch no perfil (Social Blade) */
+.rede-sb h2 svg {
+  width: 26px;
+  height: 26px;
+  vertical-align: -4px;
+  color: var(--cor-rede);
+}
+.rede-sb-numeros .numero strong {
+  font-size: var(--t-xl);
+}

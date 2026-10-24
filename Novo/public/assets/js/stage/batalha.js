@@ -34,6 +34,8 @@ export async function correr(palco, opts) {
     daMetrica("crescimento"),
     daMetrica("anos"),
     daMetrica("tiktok"),
+    // Instagram e Twitch só com os dados do Social Blade (p.rs), para os exclusivos antigos ficarem iguais
+    ...["instagram", "twitch"].map((r) => ({ ...daMetrica(r), f: (p) => (p.rs?.[r] ? METRICAS[r].valor(p, ref) : null) })),
     { nome: "Melhor mês de sempre", f: (p) => (p === a ? ra : rb).melhor?.v ?? null, fmt: METRICAS.views.fmt },
     { nome: "Meses no top 10", f: (p) => (p === a ? ra : rb).top10 || null, fmt: inteiro },
     { nome: "Envolvimento do público", f: (p) => (p.vid?.eng ? p.vid.eng * 100 : null), fmt: (x) => decimal(x, 1) + "%" },

@@ -1,7 +1,7 @@
 // Períodos (um mês, um ano, um intervalo, os últimos N meses) e as medidas que se podem somar
 // num período. Usado pelos blocos da página pública e pelo ranking.
 
-import { estado, views, indice } from "./data.js";
+import { estado, views, indice, seguidoresRede, seguidoresTotal, ganhosRede } from "./data.js";
 import { curto, inteiro, mesNome } from "./format.js";
 
 /** Meses completos com dados (o mês a decorrer não entra). */
@@ -99,7 +99,18 @@ export const MEDIDAS = {
   indice: { nome: "Índice de Influência", frase: () => "Índice de Influência", fmt: inteiro, unidade: "pontos", valor: (p) => indice(p.id).total, periodo: false },
   subsTotal: { nome: "Subscritores", frase: () => "Subscritores", fmt: curto, unidade: "subscritores", valor: (p) => p.totals?.subs ?? null, periodo: false },
   viewsTotal: { nome: "Views totais", frase: () => "Views totais", fmt: curto, unidade: "views", valor: (p) => p.totals?.views ?? null, periodo: false },
-  tiktok: { nome: "Seguidores no TikTok", frase: () => "Seguidores no TikTok", fmt: curto, unidade: "seguidores", valor: (p) => p.socials?.tiktok?.last?.followers ?? null, periodo: false },
+  tiktok: { nome: "Seguidores no TikTok", frase: () => "Seguidores no TikTok", fmt: curto, unidade: "seguidores", valor: (p) => seguidoresRede(p, "tiktok"), periodo: false },
+  instagram: { nome: "Seguidores no Instagram", frase: () => "Seguidores no Instagram", fmt: curto, unidade: "seguidores", valor: (p) => seguidoresRede(p, "instagram"), periodo: false },
+  twitch: { nome: "Seguidores na Twitch", frase: () => "Seguidores na Twitch", fmt: curto, unidade: "seguidores", valor: (p) => seguidoresRede(p, "twitch"), periodo: false },
+  redes: { nome: "Seguidores em todas as redes", frase: () => "Seguidores em todas as redes (YouTube, TikTok, Instagram e Twitch)", fmt: curto, unidade: "seguidores", valor: (p) => seguidoresTotal(p), periodo: false },
+  ganhosRedes: {
+    nome: "Seguidores ganhos nas redes",
+    frase: (r) => `Seguidores ganhos no TikTok, Instagram e Twitch, ${r}`,
+    fmt: curto,
+    unidade: "seguidores",
+    valor: (p, meses) => somar(meses.flatMap((m) => ["tiktok", "instagram", "twitch"].map((r) => ganhosRede(p, r, m))).filter((v) => Number.isFinite(v))),
+    periodo: true,
+  },
 };
 
 /** Ranking de uma medida num período: [{ p, v, pos, ant }] (ant: posição no período anterior). */

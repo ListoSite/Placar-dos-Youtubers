@@ -118,9 +118,13 @@ function opcoes(main, esp, query) {
   const opcoesKarma = estado.karma?.size ? (estado.karmaNoIndice ? `<option value="indiceNumeros">Índice só com os números (sem karma)</option>` : `<option value="indiceKarma">Índice com o karma do público (O Caso)</option>`) : "";
   const temTT = ds.people.filter((p) => p.socials?.tiktok?.last?.followers).length >= 5;
   const temTTMes = ds.people.filter((p) => p.tt?.f && Object.keys(p.tt.f).length).length >= 5;
+  // Instagram e Twitch (Social Blade): só aparecem quando há números de pelo menos 5 Youtubers
+  const temRede = (r) => ds.people.filter((p) => p.socials?.[r]?.last?.followers || p.rs?.[r]?.info?.seg).length >= 5;
+  const temRedeMes = (r) => ds.people.filter((p) => p.rs?.[r]?.f && Object.keys(p.rs[r].f).length).length >= 5;
+  const opcoesRedes = `${temRede("instagram") ? `<option value="instagram">Seguidores no Instagram</option>` : ""}${temRedeMes("instagram") ? `<option value="instagramMes">Seguidores ganhos no Instagram no mês</option>` : ""}${temRede("twitch") ? `<option value="twitch">Seguidores na Twitch</option>` : ""}${temRedeMes("twitch") ? `<option value="twitchMes">Seguidores ganhos na Twitch no mês</option>` : ""}${[temTT, temRede("instagram"), temRede("twitch")].filter(Boolean).length ? `<option value="redes">Seguidores em todas as redes</option>` : ""}`;
   const metricas = () => `<label class="campo"><span>Ranking por</span><select class="input" name="metric">
       <option value="views">Views do mês</option><option value="indice">Índice de Influência</option>${temSubs ? `<option value="subsMes">Subscritores ganhos no mês</option>` : ""}
-      <option value="crescimento">Crescimento face ao mês anterior</option><option value="subs">Subscritores (total)</option><option value="total">Views totais</option>${temTT ? `<option value="tiktok">Seguidores no TikTok</option>` : ""}${temTTMes ? `<option value="tiktokMes">Seguidores ganhos no TikTok no mês</option>` : ""}${opcoesKarma}</select></label>`;
+      <option value="crescimento">Crescimento face ao mês anterior</option><option value="subs">Subscritores (total)</option><option value="total">Views totais</option>${temTT ? `<option value="tiktok">Seguidores no TikTok</option>` : ""}${temTTMes ? `<option value="tiktokMes">Seguidores ganhos no TikTok no mês</option>` : ""}${opcoesRedes}${opcoesKarma}</select></label>`;
   // Peças das simulações: quantos, quem entra e o que dá o tamanho (ou a vida)
   const numero = (lista, def) => `<label class="campo"><span>Youtubers</span><select class="input" name="n">${lista.map((n) => `<option ${n === def ? "selected" : ""}>${n}</option>`).join("")}</select></label>`;
   const quem = () => `<label class="campo"><span>Quem entra</span><select class="input" name="quem"><option value="acaso">Ao acaso entre os 60 melhores</option><option value="top">Os melhores pelo Índice</option></select></label>`;

@@ -104,6 +104,28 @@ function resumoTT(x) {
   return { user: x.info?.user || "", at: x.at, f: tirar(x.m.f), l: tirar(x.m.l), n: tirar(limparVideos(x.m.n)) };
 }
 
+/**
+ * Instagram e Twitch (Social Blade): o perfil de hoje e, por mês (últimos 13), os seguidores ganhos
+ * (f) e, no Instagram, as publicações novas (n).
+ */
+function resumoRedes(x) {
+  const out = {};
+  for (const [rede, r] of Object.entries(x || {})) {
+    if (!r?.info) continue;
+    const meses = {};
+    if (r.m?.c) {
+      const [y0, m0] = r.m.ini.split("-").map(Number);
+      const mes = (i) => new Date(Date.UTC(y0, m0 - 1 + i, 1)).toISOString().slice(0, 7);
+      const tirar = (arr) => Object.fromEntries((arr || []).map((v, i) => [mes(i), v]).filter(([, v]) => v !== null && v !== undefined).slice(-13));
+      meses.f = tirar(r.m.c.followers);
+      if (r.m.c.mediaCount) meses.n = tirar(r.m.c.mediaCount);
+    }
+    const { id, ...info } = r.info;
+    out[rede] = { at: r.at, info, ...meses, ...(r.semSessao ? { semSessao: true } : {}) };
+  }
+  return Object.keys(out).length ? out : undefined;
+}
+
 /** O Social Blade só começou a contar vídeos a certa altura: os meses antes vêm a 0 e o primeiro traz o total. */
 function limparVideos(arr) {
   const n = [...(arr || [])];
@@ -213,7 +235,7 @@ function projectSummary(p, pv, baselineOf) {
 }
 
 export async function buildDataset(db) {
-  const [stats, ytstart, vsum, projvids, meta, quota, sbextra, ttextra] = await Promise.all([
+  const [stats, ytstart, vsum, projvids, meta, quota, sbextra, ttextra, redessb] = await Promise.all([
     getJSON("stats", {}),
     getJSON("ytstart", {}),
     getJSON("videosummary", {}),
@@ -222,6 +244,7 @@ export async function buildDataset(db) {
     getJSON("quota", null),
     getJSON("sbextra", {}),
     getJSON("ttextra", {}),
+    getJSON("redessb", {}),
   ]);
   const today = todayLisbon();
   const curM = today.slice(0, 7);
@@ -339,6 +362,7 @@ export async function buildDataset(db) {
       vid: personVideoSummary(counted, vsum),
       sb: resumoSB(counted.map((c) => sbextra[c]).filter(Boolean)),
       tt: resumoTT(ttextra[p.id]),
+      ...(redessb[p.id] ? { rs: resumoRedes(redessb[p.id]) } : {}),
       updatedAt: p.updatedAt || "",
     });
   }

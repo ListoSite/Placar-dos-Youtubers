@@ -217,6 +217,21 @@ export function procurar(q, limite = 12) {
   return out.sort((a, b) => b.s - a.s).slice(0, limite).map((x) => x.p);
 }
 
+/** Seguidores numa rede (os últimos números guardados; Instagram e Twitch também do Social Blade). */
+export function seguidoresRede(p, rede) {
+  return p.socials?.[rede]?.last?.followers ?? p.rs?.[rede]?.info?.seg ?? null;
+}
+/** Seguidores em todas as redes juntas: subscritores do YouTube + TikTok + Instagram + Twitch. */
+export function seguidoresTotal(p) {
+  const v = [p.totals?.subs ?? null, ...["tiktok", "instagram", "twitch"].map((r) => seguidoresRede(p, r))].filter((x) => Number.isFinite(x));
+  return v.length >= 2 ? v.reduce((a, b) => a + b, 0) : null;
+}
+/** Seguidores ganhos num mês numa rede (Social Blade): TikTok em p.tt, Instagram e Twitch em p.rs. */
+export function ganhosRede(p, rede, m) {
+  const o = rede === "tiktok" ? p.tt?.f : p.rs?.[rede]?.f;
+  return o?.[m] ?? null;
+}
+
 /** O Índice de um canal visto à parte (pages/channel.js): só com os números dele, sem bónus. */
 export function indiceCanal(c) {
   return calcularIndice(c, { janela: estado.janela, pesos: estado.ds.settings.weights, topo: estado.ds.settings.alcanceTopo || 1e7 });

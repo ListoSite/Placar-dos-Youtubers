@@ -22,7 +22,7 @@ import {
   hasApiKey, takeUnits, resolveChannel, channelsByIds, searchChannels, featuredChannels,
   handleGuesses, parseProjectSource, playlistInfo,
 } from "../lib/youtube.mjs";
-import { cleanPayload, findChannel, applyImport, applyMonths, applyDaily, cleanExtra, dailyFromExtra, saveExtras, fillSocials, cleanTikTok, applyTikTok, saveTikToks } from "../lib/socialblade.mjs";
+import { cleanPayload, findChannel, applyImport, applyMonths, applyDaily, cleanExtra, dailyFromExtra, saveExtras, fillSocials, cleanTikTok, applyTikTok, saveTikToks, cleanRedesSB, applyRedeSB, saveRedesSB, donoDaRede } from "../lib/socialblade.mjs";
 import { limparAbout, canalDoAbout, aplicarAbout } from "../lib/ytabout.mjs";
 import { estimarPessoa, apagarEstimativas, unidadesUsadas } from "../lib/estimate.mjs";
 
@@ -529,6 +529,17 @@ const adminRoutes = {
   // ---------- Social Blade ----------
   "POST import/socialblade": async ({ db, b }) => {
     const tiktok = cleanTikTok(b.payload?.tt);
+    const redes = cleanRedesSB(b.payload?.redes);
+    // Só Instagram ou Twitch (marcador aberto no perfil dessa rede no Social Blade)
+    if (b.payload?.soRede) {
+      const x = redes?.[b.payload.soRede];
+      if (!x) throw new HttpError(400, "Não há dados dessa rede para importar.");
+      const dono = (db.people[b.personId] && b.personId) || donoDaRede(db, x.rede, x.info.user);
+      if (!dono) return { needsTarget: true, rede: x.rede, data: { title: x.info.nome || x.info.user, handle: x.info.user } };
+      const n = applyRedeSB(db, dono, x);
+      await saveRedesSB({ [dono]: { [x.rede]: x } });
+      return { rede: x.rede, user: x.info.user, entradas: n, personId: dono, save: true };
+    }
     // Só TikTok (marcador aberto numa página de TikTok do Social Blade)
     if (b.payload?.soTikTok) {
       if (!tiktok) throw new HttpError(400, "Não há dados do TikTok para importar.");
@@ -564,16 +575,24 @@ const adminRoutes = {
     if (extra && !data.daily.length) data.daily = dailyFromExtra(extra);
     const result = await applyImport(db, data, { channelId, personId });
     const dono = channelId ? db.channels[channelId].personId : personId;
-    let redes = 0;
+    let nLinks = 0;
     if (extra) {
       await saveExtras({ [channelId]: extra });
-      redes = fillSocials(db, dono, extra.info?.redes);
+      nLinks = fillSocials(db, dono, extra.info?.redes);
     }
     if (tiktok && dono) {
       applyTikTok(db, dono, tiktok);
       await saveTikToks({ [dono]: tiktok });
     }
-    return { ...result, redes, extra: Boolean(extra), tiktok: tiktok?.info.user || "", channelId, personId: dono, save: true };
+    const outras = [];
+    if (redes && dono) {
+      for (const x of Object.values(redes)) {
+        applyRedeSB(db, dono, x);
+        outras.push(x.rede);
+      }
+      await saveRedesSB({ [dono]: redes });
+    }
+    return { ...result, outras, redes: nLinks, extra: Boolean(extra), tiktok: tiktok?.info.user || "", channelId, personId: dono, save: true };
   },
 
   "POST import/socialblade-lote": async ({ db, b }) => {
@@ -583,6 +602,8 @@ const adminRoutes = {
     const ignorados = [];
     const extras = {};
     const tiktoks = {};
+    const redesSB = {};
+    const contaRedes = {};
     const diarios = [];
     let redes = 0;
     for (const it of itens) {
@@ -604,13 +625,23 @@ const adminRoutes = {
         applyTikTok(db, dono, tiktok);
         tiktoks[dono] = tiktok;
       }
-      if (n || extra || tiktok) canais++;
+      const outras = cleanRedesSB(it.redes);
+      if (outras) {
+        const dono = db.channels[it.channelId].personId;
+        for (const x of Object.values(outras)) {
+          applyRedeSB(db, dono, x);
+          contaRedes[x.rede] = (contaRedes[x.rede] || 0) + 1;
+        }
+        redesSB[dono] = { ...(redesSB[dono] || {}), ...outras };
+      }
+      if (n || extra || tiktok || outras) canais++;
       meses += n;
     }
     await saveExtras(extras);
     await saveTikToks(tiktoks);
+    await saveRedesSB(redesSB);
     const dias = await applyDaily(diarios);
-    return { canais, meses, dias, redes, extras: Object.keys(extras).length, tiktok: Object.keys(tiktoks).length, ignorados, save: canais > 0 };
+    return { canais, meses, dias, redes, extras: Object.keys(extras).length, tiktok: Object.keys(tiktoks).length, instagram: contaRedes.instagram || 0, twitch: contaRedes.twitch || 0, ignorados, save: canais > 0 };
   },
 
   // ---------- YouTube ("Acerca de" lido pelo marcador) ----------

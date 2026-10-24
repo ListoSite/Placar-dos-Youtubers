@@ -16,6 +16,10 @@ const NOMES_MEDIDA = {
   subsTotal: "Subscritores (total)",
   viewsTotal: "Views totais",
   tiktok: "Seguidores no TikTok",
+  instagram: "Seguidores no Instagram",
+  twitch: "Seguidores na Twitch",
+  redes: "Seguidores em todas as redes",
+  ganhosRedes: "Seguidores ganhos nas redes (TikTok, Instagram, Twitch)",
 };
 const NOMES_ANIMACAO = {
   subir: "Subir (um a um)",
@@ -33,6 +37,8 @@ const SECOES = [
   ["crescimento", "Crescimento (Social Blade)"],
   ["diario", "Últimos dias (views por dia)"],
   ["tiktok", "TikTok"],
+  ["instagram", "Instagram"],
+  ["twitch", "Twitch"],
   ["recordes", "Recordes"],
   ["videos", "Vídeos recentes"],
   ["canais", "Canais"],
@@ -505,7 +511,7 @@ async function editarBloco(b, aoGuardar) {
 // ---------- Páginas ----------
 function seccaoPaginas(alvo) {
   const c = estadoV.cfg;
-  const medidas = ["views", "media", "crescimento", "subs", "indice", "subsTotal", "viewsTotal", "tiktok"];
+  const medidas = ["views", "media", "crescimento", "subs", "indice", "subsTotal", "viewsTotal", "tiktok", "instagram", "twitch", "redes", "ganhosRedes"];
   alvo.innerHTML = `<div class="painel ed-bloco">
       <h3>Ranking</h3>
       <p class="muted">As medidas que os visitantes podem escolher (a primeira marcada é a que abre).</p>

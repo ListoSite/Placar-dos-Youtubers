@@ -40,12 +40,12 @@ export const BLOCOS = {
   texto: { nome: "Texto ou aviso", campos: ["titulo", "texto", "link", "rotuloLink", "estilo", "animacao"] },
 };
 
-export const METRICAS = ["views", "media", "crescimento", "subs", "indice", "subsTotal", "viewsTotal", "tiktok"];
+export const METRICAS = ["views", "media", "crescimento", "subs", "indice", "subsTotal", "viewsTotal", "tiktok", "instagram", "twitch", "redes", "ganhosRedes"];
 export const PERIODOS = ["ultimo", "mes", "ano", "intervalo", "ultimos"];
 export const ANIMACOES = ["subir", "revelar", "contar", "crescer", "deslizar", "nenhuma"];
 const ESTILOS = ["lista", "cartoes", "destaque", "aviso", "normal"];
 
-const SECOES_PERFIL = ["numeros", "mensal", "diario", "crescimento", "tiktok", "indice", "recordes", "videos", "canais", "palco", "redes", "projetos", "comparar"];
+const SECOES_PERFIL = ["numeros", "mensal", "diario", "crescimento", "tiktok", "instagram", "twitch", "indice", "recordes", "videos", "canais", "palco", "redes", "projetos", "comparar"];
 
 let seq = 0;
 const novoId = () => `b${Date.now().toString(36)}${(seq++).toString(36)}`;
@@ -217,6 +217,7 @@ export function datasetPublico(ds, cfg) {
         monthly: filtrarMeses(p.monthly),
         sb: p.sb ? { ...p.sb, s: filtrarMeses(p.sb.s), n: filtrarMeses(p.sb.n) } : p.sb,
         tt: p.tt ? { ...p.tt, f: filtrarMeses(p.tt.f), l: filtrarMeses(p.tt.l) } : p.tt,
+        ...(p.rs ? { rs: Object.fromEntries(Object.entries(p.rs).map(([k, r]) => [k, { ...r, f: filtrarMeses(r.f), n: filtrarMeses(r.n) }])) } : {}),
       };
     });
   const vivos = new Set(people.map((p) => p.id));

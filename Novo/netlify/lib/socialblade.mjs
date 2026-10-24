@@ -278,3 +278,120 @@ export async function saveTikToks(mapa) {
   Object.assign(todos, mapa);
   await setJSON("ttextra", todos);
 }
+
+// ---------- Instagram e Twitch (pelo Social Blade) ----------
+// O marcador lê o perfil (seguidores, publicações, envolvimento…), os ganhos de cada mês e os totais
+// por dia. No Instagram, o Social Blade só dá o histórico a quem tem sessão iniciada.
+
+export const REDES_SB = ["instagram", "twitch"];
+const URL_REDE = { instagram: (u) => `https://www.instagram.com/${u}/`, twitch: (u) => `https://www.twitch.tv/${u}` };
+
+function colunasRede(c, re, max) {
+  if (!c || typeof c.ini !== "string" || !re.test(c.ini) || !c.c || typeof c.c !== "object") return null;
+  const out = {};
+  for (const [k, v] of Object.entries(c.c).slice(0, 12)) if (/^[a-z]\w{0,30}$/i.test(k) && Array.isArray(v)) out[k] = numeros(v, max);
+  return Object.keys(out).length ? { ini: c.ini, c: out } : null;
+}
+const decimalOuNull = (x) => (x === null || x === undefined || x === "" || !Number.isFinite(Number(x)) ? null : Math.round(Number(x) * 100) / 100);
+
+/** Valida uma rede (Instagram ou Twitch) que vem do marcador. */
+export function cleanRedeSB(rede, x) {
+  if (!REDES_SB.includes(rede) || !x || typeof x !== "object" || !x.info || typeof x.info !== "object") return null;
+  const i = x.info;
+  const user = String(i.user || "").replace(/^@/, "").trim();
+  if (!/^[\w.]{1,40}$/.test(user)) return null;
+  const https = (u) => (/^https:\/\/[^\s"'<>]+$/.test(String(u || "")) ? String(u).slice(0, 600) : "");
+  return {
+    rede,
+    at: /^\d{4}-\d{2}-\d{2}T/.test(x.at || "") ? x.at : new Date().toISOString(),
+    info: {
+      id: /^\d{1,30}$/.test(String(i.id || "")) ? String(i.id) : "",
+      user,
+      nome: String(i.nome || "").slice(0, 120),
+      foto: https(i.foto),
+      seg: numOuNull(i.seg),
+      seguindo: numOuNull(i.seguindo),
+      posts: numOuNull(i.posts),
+      gostos: numOuNull(i.gostos),
+      eng: decimalOuNull(i.eng),
+      mediaGostos: numOuNull(i.mediaGostos),
+      mediaComent: numOuNull(i.mediaComent),
+      site: /^https?:\/\/[^\s"'<>]+$/.test(String(i.site || "")) ? String(i.site).slice(0, 300) : "",
+      nota: /^[A-F][+-]?$/.test(String(i.nota || "")) ? i.nota : "",
+      verificado: i.verificado === true,
+      criado: /^\d{4}-\d{2}-\d{2}$/.test(i.criado || "") ? i.criado : "",
+    },
+    m: colunasRede(x.m, /^\d{4}-\d{2}$/, 120),
+    d: colunasRede(x.d, /^\d{4}-\d{2}-\d{2}$/, 120),
+    ...(x.semSessao ? { semSessao: true } : {}),
+  };
+}
+
+/** Todas as redes válidas de um resultado do marcador: { instagram: {...}, twitch: {...} }. */
+export function cleanRedesSB(redes) {
+  const out = {};
+  if (redes && typeof redes === "object") for (const rede of REDES_SB) {
+    const x = cleanRedeSB(rede, redes[rede]);
+    if (x) out[rede] = x;
+  }
+  return Object.keys(out).length ? out : null;
+}
+
+/**
+ * Liga a rede à pessoa: link (se estiver vazio) e, no histórico de números, os seguidores (e as
+ * publicações no Instagram) de hoje e do fim de cada um dos últimos 12 meses. Os escritos à mão ficam.
+ */
+export function applyRedeSB(db, personId, x) {
+  const p = db.people[personId];
+  if (!p || !x) return 0;
+  p.socials ||= {};
+  const s = (p.socials[x.rede] ||= { url: "", entries: [] });
+  s.entries ||= [];
+  if (!s.url) s.url = URL_REDE[x.rede](x.info.user);
+  if (!s.handle) s.handle = x.info.user;
+  const hoje = x.at.slice(0, 10);
+  const comPosts = x.rede === "instagram";
+  const novos = [];
+  if (x.info.seg !== null) novos.push({ date: hoje, followers: x.info.seg, ...(comPosts && x.info.posts !== null ? { posts: x.info.posts } : {}), src: "socialblade" });
+  const ganhos = x.m?.c?.followers;
+  if (ganhos && x.info.seg !== null) {
+    const postsMes = comPosts ? x.m.c.mediaCount : null;
+    let f = x.info.seg;
+    let n = comPosts ? x.info.posts : null;
+    for (let i = ganhos.length - 1; i >= 0 && novos.length < 13; i--) {
+      const m = mesMais(x.m.ini, i);
+      if (fimDoMes(m) < hoje) novos.push({ date: fimDoMes(m), followers: Math.max(0, f), ...(n !== null && n !== undefined ? { posts: Math.max(0, n) } : {}), src: "socialblade" });
+      f -= ganhos[i] || 0;
+      if (n !== null && n !== undefined) n -= postsMes?.[i] || 0;
+    }
+  }
+  let mudou = 0;
+  for (const e of novos) {
+    const i = s.entries.findIndex((y) => y.date === e.date);
+    if (i >= 0 && s.entries[i].src !== "socialblade") continue;
+    if (i >= 0) s.entries[i] = e;
+    else s.entries.push(e);
+    mudou++;
+  }
+  s.entries.sort((a, b) => a.date.localeCompare(b.date));
+  if (mudou) p.updatedAt = new Date().toISOString();
+  return mudou;
+}
+
+/** Guarda os dados completos das redes: { personId: { instagram, twitch } }. */
+export async function saveRedesSB(mapa) {
+  if (!Object.keys(mapa).length) return;
+  const todos = await getJSON("redessb", {});
+  for (const [pid, redes] of Object.entries(mapa)) todos[pid] = { ...(todos[pid] || {}), ...redes };
+  await setJSON("redessb", todos);
+}
+
+/** De quem é este perfil (pelo link ou nome guardado nas redes da pessoa)? */
+export function donoDaRede(db, rede, user) {
+  const u = String(user || "").toLowerCase();
+  const re = rede === "instagram" ? /instagram\.com\/([\w.]+)/i : /twitch\.tv\/(\w+)/i;
+  return Object.values(db.people).find((p) => {
+    const s = p.socials?.[rede];
+    return (s?.handle || "").replace(/^@/, "").toLowerCase() === u || re.exec(s?.url || "")?.[1]?.toLowerCase() === u;
+  })?.id;
+}
