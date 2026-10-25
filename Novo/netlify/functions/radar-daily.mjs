@@ -1,25 +1,23 @@
-// Radar do Caso (automático, uma vez por dia às 07:41 UTC): lê os vídeos novos dos Youtubers
-// escolhidos à mão no painel (O Caso, Radar) e dos canais extra a vigiar. Os outros só quando se
-// carrega no botão "Procurar agora" na aba "Todos".
+// Radar do Caso (automático): duas rondas por dia (a partir das 7h e das 19h, hora de Lisboa) por
+// TODOS os Youtubers do Placar e os canais extra. Os vídeos vêm do feed RSS de cada canal, que não
+// gasta quota; da API só os detalhes dos vídeos recentes (1 unidade por 50), alguns comentários, as
+// tendências de Portugal e, uma vez por dia, a procura "fora da bolha" do caso mais forte.
+// A função corre de hora a hora e continua de onde ficou (cada vez tem cerca de 20 segundos).
 
 import { loadDB } from "../lib/db.mjs";
-import { procurarRadar } from "../lib/collect.mjs";
-import { lerRadar, canaisDoGrupo } from "../lib/radar.mjs";
+import { rondaDoRadar } from "../lib/collect.mjs";
 import { hasApiKey } from "../lib/youtube.mjs";
 
-export const config = { schedule: "41 7 * * *" };
+export const config = { schedule: "23 * * * *" };
 
 export default async () => {
   if (!hasApiKey()) return new Response("sem chave");
-  const db = await loadDB(process.env.URL);
-  const radar = await lerRadar();
-  const canais = canaisDoGrupo(db, radar.regras, "escolhidos").slice(0, 40);
-  if (!canais.length) return new Response("sem escolhidos");
   try {
-    const r = await procurarRadar(db, canais, { radar });
-    console.log("Radar diário:", JSON.stringify({ novos: r.novos, canais: r.canais, erros: r.errors.length }));
+    const db = await loadDB(process.env.URL);
+    const r = await rondaDoRadar(db);
+    if (!r.feito && !r.cedo) console.log("Radar:", JSON.stringify(r));
   } catch (e) {
-    console.error("Radar diário falhou:", e.message);
+    console.error("Radar falhou:", e.message);
   }
   return new Response("ok");
 };

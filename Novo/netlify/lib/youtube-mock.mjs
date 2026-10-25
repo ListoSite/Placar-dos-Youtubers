@@ -91,6 +91,10 @@ export async function mockCall(endpoint, p) {
     if (h && hash(h) % 3 === 0) return { items: [] };
     return { items: [makeChannel(h, h.replace(/^@/, ""))] };
   }
+  if (endpoint === "search" && p.type === "video") {
+    // Vídeos de canais de fora que falam do assunto procurado
+    return { items: Array.from({ length: 6 }, (_, i) => ({ id: { videoId: ("fora" + hash(p.q + i).toString(36)).slice(0, 11).padEnd(11, "x") } })) };
+  }
   if (endpoint === "search") {
     const items = [];
     for (let i = 0; i < Math.min(10, p.maxResults || 10); i++) {
@@ -107,8 +111,31 @@ export async function mockCall(endpoint, p) {
     const base = p.playlistId.replace(/^UUSH|^UU/, "");
     return { items: Array.from({ length: n }, (_, i) => ({ contentDetails: { videoId: (base + "v" + i).slice(-11).padStart(11, "x") } })) };
   }
+  if (endpoint === "videos" && p.chart) {
+    // Tendências: alguns vídeos dos canais de teste e alguns de canais de fora
+    const items = [];
+    for (let i = 0; i < 12; i++) {
+      const v = makeVideo(("tend" + i).padEnd(11, "x"), idFrom("tend-canal-" + (i % 4)), i);
+      v.snippet.title = i === 2 ? "Reagi ao drama do Wuant e da Inês Rochina" : `Tendência de teste ${i + 1}`;
+      v.snippet.channelTitle = "Canal de fora " + (i % 4);
+      items.push(v);
+    }
+    return { items };
+  }
   if (endpoint === "videos") {
-    return { items: p.id.split(",").map((id, i) => makeVideo(id, "UC" + id, i)) };
+    return {
+      items: p.id.split(",").map((id, i) => {
+        if (id.startsWith("fora")) {
+          const v = makeVideo(id, idFrom("fora-" + id), i);
+          v.snippet.title = `Youtuber português Wuant em polémica (${id.slice(4, 8)})`;
+          v.snippet.defaultAudioLanguage = i % 2 ? "es" : "pt-BR";
+          v.snippet.channelTitle = "Canal estrangeiro " + i;
+          return v;
+        }
+        const n = /v(\d+)$/.exec(id);
+        return makeVideo(id, "UC" + id, n ? Number(n[1]) : i);
+      }),
+    };
   }
   if (endpoint === "commentThreads") {
     const textos = ["Isto vai dar polémica 🍿", "O Wuant vai responder de certeza", "Que treta", "Grande vídeo!"];
@@ -118,4 +145,25 @@ export async function mockCall(endpoint, p) {
     return { items: [{ id: p.id, snippet: { title: "Série de teste " + p.id.slice(-4), channelId: "", thumbnails: {} }, contentDetails: { itemCount: 12 } }] };
   }
   return { items: [] };
+}
+
+/** Feed RSS falso de um canal (os mesmos vídeos que a API falsa dá para os uploads). */
+export function mockFeed(channelId) {
+  if (hash(channelId) % 17 === 0) return null; // às vezes o feed falha
+  const base = channelId.slice(2);
+  return Array.from({ length: 15 }, (_, i) => {
+    const id = (base + "v" + i).slice(-11).padStart(11, "x");
+    const v = makeVideo(id, channelId, i);
+    return {
+      id,
+      t: v.snippet.title,
+      p: v.snippet.publishedAt,
+      v: Number(v.statistics.viewCount),
+      l: Number(v.statistics.likeCount),
+      desc: v.snippet.description,
+      th: v.snippet.thumbnails.high.url,
+      s: /^PT\d+S$/.test(v.contentDetails.duration),
+      rss: true,
+    };
+  });
 }

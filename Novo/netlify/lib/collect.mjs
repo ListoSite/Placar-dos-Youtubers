@@ -4,8 +4,11 @@
 //  - refreshProjects(): vídeos dos projetos (playlists ou listas de vídeos)
 
 import { getJSON, setJSON } from "./storage.mjs";
-import { channelsByIds, recentUploads, playlistVideoIds, videosByIds, playlistInfo, takeUnits, comentariosDe } from "./youtube.mjs";
-import { lerRadar, radarCanal, guardarRadar } from "./radar.mjs";
+import { channelsByIds, recentUploads, playlistVideoIds, videosByIds, playlistInfo, takeUnits, comentariosDe, lerFeed, tendenciasPT, procurarVideos } from "./youtube.mjs";
+import {
+  lerRadar, guardarRadar, lerIndice, guardarIndice, juntarNoRadar, contextoRadar, analisarCanal, eCandidato, itemDoVideo, linhaDoIndice,
+  detetarCasos, canaisDoGrupo, nomesDosYoutubers, norm, DIAS_INDICE,
+} from "./radar.mjs";
 import { todayLisbon, todayPacific, median, pool } from "./util.mjs";
 
 const DAY = 86400000;
@@ -140,30 +143,222 @@ export async function runVideos(db, { limit = 20, only } = {}) {
 }
 
 /**
- * Radar do Caso: lê os últimos 15 vídeos de cada canal (cerca de 3 unidades da quota por canal,
- * mais 1 por cada vídeo com comentários lidos) e junta ao radar os que podem dar notícia.
+ * Radar do Caso: lê os últimos 15 vídeos de cada canal pelo feed RSS do YouTube (não gasta quota).
+ * Da API só se usa:
+ *   - os detalhes dos vídeos dos últimos 14 dias (comentários e etiquetas): 1 unidade por cada 50 vídeos;
+ *   - os comentários dos que já parecem notícia: 1 unidade cada, com um máximo por procura;
+ *   - as tendências de Portugal: 1 unidade, no máximo de 6 em 6 horas;
+ *   - a lista de uploads quando o feed falha (cerca de 3 unidades), só se permitirApi.
+ * No fim recalcula os casos a crescer e junta tudo ao radar sem estragar o que se mudou no painel.
  */
-export async function procurarRadar(db, canais, { radar = null, guardar = true } = {}) {
+export async function procurarRadar(db, canais, { radar = null, permitirApi = true, maxApi = 10, comentariosMax = 20, prioridade = new Set(), tendencias = true, campos = {} } = {}) {
   const r = radar || (await lerRadar());
-  const vsum = await getJSON("videosummary", {});
-  const antes = r.itens.length;
+  const agora = Date.now();
+  const [vsum, ind] = await Promise.all([getJSON("videosummary", {}), lerIndice()]);
   const errors = [];
   let quotaError = null;
-  await pool(canais, 4, async (canal) => {
-    if (quotaError) return;
+  let viaApi = 0;
+  let feeds = 0;
+
+  // 0. Tendências de Portugal (1 unidade, de 6 em 6 horas)
+  let tendNovas = [];
+  if (tendencias && agora - Date.parse(r.tendencias?.at || 0) > 6 * 3600e3) {
     try {
-      const items = await recentUploads(canal.id, 15);
-      await radarCanal(db, r, canal, items, { mediana: vsum[canal.id]?.med || 0, buscarComentarios: (v) => comentariosDe(v) });
+      tendNovas = await tendenciasPT();
+      r.tendencias = { at: new Date().toISOString(), pos: Object.fromEntries(tendNovas.map((v, i) => [v.id, i + 1])) };
     } catch (e) {
-      errors.push(`${canal.id}: ${e.message}`);
+      errors.push("tendências: " + e.message);
       if (/quota/i.test(e.message)) quotaError = e;
     }
+  }
+  const ctx = contextoRadar(db, r, { agora });
+
+  // 1. Feeds (e a API só quando o feed falha)
+  const lidos = [];
+  await pool(canais, 8, async (canal) => {
+    let vids = await lerFeed(canal.id);
+    if (vids) feeds++;
+    else if (permitirApi && viaApi < maxApi && !quotaError) {
+      viaApi++;
+      vids = await recentUploads(canal.id, 15).catch((e) => {
+        errors.push(`${canal.id}: ${e.message}`);
+        if (/quota/i.test(e.message)) quotaError = e;
+        return null;
+      });
+    } else errors.push(`${canal.id}: o feed não respondeu`);
+    if (vids) lidos.push({ canal, vids });
   });
-  r.ultima = new Date().toISOString();
-  if (guardar) await guardarRadar(r);
+
+  // Vídeos em tendência de canais que não estão no Placar, quando falam de Youtubers do Placar
+  const noPlacar = new Set(Object.keys(db.channels));
+  const nomes = ctx.nomes;
+  for (const v of tendNovas) {
+    if (noPlacar.has(v.ch) || canais.some((c) => c.id === v.ch)) continue;
+    const t = norm(v.t);
+    if (!nomes.some((y) => y.nomes.some((n) => ` ${t} `.includes(` ${n} `)))) continue;
+    lidos.push({ canal: { id: v.ch, personId: null, titulo: v.chT || "Canal em tendência", tendencia: true }, vids: [v] });
+  }
+
+  // 2. Detalhes dos vídeos recentes que vieram do feed (comentários, etiquetas): 1 unidade por 50
+  const recente = agora - DIAS_INDICE * 864e5;
+  const pedir = lidos.flatMap(({ vids }) => vids.filter((v) => v.rss && Date.parse(v.p || 0) >= recente && !ctx.removidos.has(v.id)).map((v) => v.id));
+  if (pedir.length && !quotaError) {
+    try {
+      const det = new Map((await videosByIds(pedir)).map((v) => [v.id, v]));
+      for (const { vids } of lidos)
+        for (const v of vids) {
+          const d = det.get(v.id);
+          if (d) Object.assign(v, { c: d.c, l: d.l || v.l, v: Math.max(v.v || 0, d.v || 0), tags: d.tags, desc: d.desc || v.desc, d: d.d });
+        }
+    } catch (e) {
+      errors.push("detalhes: " + e.message);
+      if (/quota/i.test(e.message)) quotaError = e;
+    }
+  }
+
+  // 3. Analisar
+  const medianaDe = (canal, vids) => {
+    const s = vsum[canal.id];
+    if (s?.medLong || s?.medShort) return { l: s.medLong || s.med, s: s.medShort || s.med };
+    const assentes = vids.filter((v) => agora - Date.parse(v.p || 0) >= 7 * 864e5);
+    return { l: median(assentes.filter((v) => !v.s).map((v) => v.v)), s: median(assentes.filter((v) => v.s).map((v) => v.v)) };
+  };
+  let analisados = lidos.map(({ canal, vids }) => ({ canal, vids, med: medianaDe(canal, vids), lista: analisarCanal(ctx, canal, vids, { mediana: medianaDe(canal, vids) }) }));
+
+  // 4. Comentários dos que já parecem notícia (os escolhidos primeiro), até ao máximo
+  let comentarios = 0;
+  if (r.regras.comentarios && comentariosMax > 0 && !quotaError) {
+    const cand = analisados
+      .flatMap((x) => x.lista.map((y) => ({ x, ...y })))
+      .filter(({ v, a }) => a.pontos >= r.regras.minimo - 1 && v.c >= 20 && !ctx.antes.get(v.id)?.comLidos)
+      .sort((a, b) => (prioridade.has(b.x.canal.id) ? 1 : 0) - (prioridade.has(a.x.canal.id) ? 1 : 0) || b.a.pontos - a.a.pontos)
+      .slice(0, comentariosMax);
+    const textos = {};
+    await pool(cand, 4, async ({ v }) => {
+      textos[v.id] = await comentariosDe(v.id).catch(() => []);
+    });
+    comentarios = cand.length;
+    if (cand.length)
+      analisados = analisados.map((x) => (x.lista.some(({ v }) => textos[v.id]) ? { ...x, lista: analisarCanal(ctx, x.canal, x.vids, { mediana: x.med, comentarios: textos }) } : x));
+  }
+
+  // 5. Itens e índice
+  const itens = [];
+  for (const { canal, lista } of analisados) {
+    const chNome = canal.titulo || db.channels[canal.id]?.title || "";
+    for (const va of lista) {
+      if (Date.parse(va.v.p || 0) >= recente) {
+        ind.v[va.v.id] = linhaDoIndice(canal, chNome, va);
+        Object.assign(ind.disp, Object.fromEntries(Object.entries(va.a.nomesAssuntos).filter(([k]) => !ind.disp[k])));
+      }
+      if (eCandidato(ctx, va)) itens.push(itemDoVideo(ctx, canal, va));
+    }
+  }
+  const nomeDe = (id) => db.people[id]?.name || id;
+  const casos = detetarCasos(ind, { agora, mudos: r.casosMudos, nomeDe });
+
+  // 6. Guardar (o radar é lido outra vez: pode ter mudado no painel enquanto isto corria)
+  await guardarIndice(ind, agora);
+  const fresh = juntarNoRadar(await lerRadar(), { itens, campos: { ultima: new Date().toISOString(), casos, tendencias: r.tendencias, ...campos } });
+  await guardarRadar(fresh);
   await addQuota(takeUnits());
   if (quotaError) throw quotaError;
-  return { novos: r.itens.length - antes, canais: canais.length, errors };
+  const antesIds = ctx.antes;
+  return { novos: itens.filter((x) => !antesIds.has(x.id)).length, canais: canais.length, feeds, viaApi, comentarios, errors, radar: fresh };
+}
+
+/**
+ * Fora da bolha: procura vídeos recentes sobre um caso português em canais que não estão no Placar
+ * e vê quais são de fora de Portugal (país do canal ou língua do vídeo). 100 unidades + 2.
+ * Só conta um vídeo que fala mesmo do Youtuber do caso (no título ou na descrição).
+ */
+export async function procurarForaDaBolha(db, casoId, { radar = null } = {}) {
+  const r = radar || (await lerRadar());
+  const caso = (r.casos || []).find((c) => c.id === casoId);
+  if (!caso) throw new Error("Esse caso já não está a crescer.");
+  const pessoas = caso.chaves.filter((k) => k.startsWith("p:")).map((k) => db.people[k.slice(2)]).filter(Boolean);
+  if (!pessoas.length) throw new Error("Só dá para ver fora da bolha nos casos com Youtubers do Placar.");
+  const ind = await lerIndice();
+  const assunto = caso.chaves.find((k) => k.startsWith("e:"));
+  const q = [pessoas[0].name, assunto ? ind.disp[assunto] || assunto.slice(2) : ""].filter(Boolean).join(" ");
+  const depois = new Date(Date.parse(caso.desde || Date.now()) - 2 * 864e5).toISOString();
+  const ids = await procurarVideos(q, { depois, max: 25 });
+  const vids = ids.length ? await videosByIds(ids) : [];
+  const meus = new Set([...Object.keys(db.channels), ...(r.regras.extras || []).map((e) => e.id)]);
+  const nomes = nomesDosYoutubers(db).filter((y) => pessoas.some((p) => p.id === y.id));
+  const fala = (texto, n) => (n.startsWith("@") ? texto.includes(n) : ` ${texto} `.includes(` ${n} `));
+  const falam = vids.filter((v) => !meus.has(v.ch) && nomes.some((y) => y.nomes.some((n) => fala(norm(v.t + " " + v.desc), n))));
+  const chans = falam.length ? new Map((await channelsByIds(falam.map((v) => v.ch))).map((c) => [c.id, c])) : new Map();
+  const videos = falam.map((v) => {
+    const c = chans.get(v.ch);
+    const pais = c?.country || "";
+    const lingua = v.lang || "";
+    const fora = (pais && pais !== "PT") || (lingua && !/^pt(-PT)?$/i.test(lingua));
+    const onde = pais && pais !== "PT" ? pais : lingua && !/^pt(-PT)?$/i.test(lingua) ? lingua : pais || lingua;
+    return { id: v.id, t: v.t.slice(0, 160), ch: v.ch, n: c?.title || v.chT || "", pais, lingua, onde, fora, v: v.v, p: v.p, th: v.th };
+  });
+  videos.sort((a, b) => (b.fora ? 1 : 0) - (a.fora ? 1 : 0));
+  const res = { at: new Date().toISOString(), q, fora: videos.filter((v) => v.fora).length, paises: [...new Set(videos.filter((v) => v.fora).map((v) => v.onde))].slice(0, 8), videos: videos.slice(0, 15) };
+  const fresh = await lerRadar();
+  fresh.bolha = { ...Object.fromEntries(Object.entries(fresh.bolha || {}).filter(([, b]) => Date.now() - Date.parse(b.at) < 10 * 864e5)), [casoId]: res };
+  await guardarRadar(fresh);
+  await addQuota(takeUnits());
+  return { bolha: res, radar: fresh };
+}
+
+/**
+ * A ronda diária do radar: todos os Youtubers do Placar e os canais extra, aos bocados (a função corre
+ * de hora a hora e continua de onde ficou). Os escolhidos vão primeiro e têm os comentários primeiro.
+ * No fim, se estiver ligado, vê se o caso português mais forte saiu da bolha (100 unidades, 1 por dia).
+ */
+export async function rondaDoRadar(db, { tempo = 15000, parte = 40 } = {}) {
+  const inicio = Date.now();
+  let radar = await lerRadar();
+  // Duas rondas por dia: de manhã (a partir das 7h) e ao fim do dia (a partir das 19h), hora de Lisboa
+  const hora = Number(new Intl.DateTimeFormat("en-GB", { timeZone: "Europe/Lisbon", hour: "2-digit", hour12: false }).format(new Date()));
+  if (hora < 7 && radar.ronda?.dia !== `${todayLisbon(new Date(Date.now() - 864e5))}-2`) return { cedo: true };
+  const id = hora < 7 ? `${todayLisbon(new Date(Date.now() - 864e5))}-2` : `${todayLisbon()}-${hora >= 19 ? 2 : 1}`;
+  let ronda = radar.ronda?.dia === id ? radar.ronda : { dia: id, desde: 0, com: 0, inicio: new Date().toISOString() };
+  if (ronda.fim) return { feito: true, ronda };
+  const regras = radar.regras;
+  const prioridade = new Set(canaisDoGrupo(db, regras, "escolhidos").map((c) => c.id));
+  const todos = canaisDoGrupo(db, regras, "todos").sort((a, b) => (prioridade.has(b.id) ? 1 : 0) - (prioridade.has(a.id) ? 1 : 0));
+  ronda.total = todos.length;
+  const resumo = { canais: 0, novos: 0, feeds: 0, erros: 0 };
+  while (ronda.desde < todos.length && Date.now() - inicio < tempo) {
+    const bocado = todos.slice(ronda.desde, ronda.desde + parte);
+    const res = await procurarRadar(db, bocado, {
+      radar,
+      // A API (quando o feed falha) só para os escolhidos
+      permitirApi: bocado.some((c) => prioridade.has(c.id)),
+      maxApi: 10,
+      // Os comentários do dia ficam metade para cada ronda
+      comentariosMax: Math.max(0, Math.min(20, Math.round((regras.comentariosDia ?? 60) / 2) - ronda.com)),
+      prioridade,
+      tendencias: true,
+      campos: { ronda: { ...ronda, desde: ronda.desde + bocado.length } },
+    });
+    ronda = { ...ronda, desde: ronda.desde + bocado.length, com: ronda.com + res.comentarios };
+    radar = res.radar;
+    Object.assign(resumo, { canais: resumo.canais + bocado.length, novos: resumo.novos + res.novos, feeds: resumo.feeds + res.feeds, erros: resumo.erros + res.errors.length });
+  }
+  if (ronda.desde >= todos.length) {
+    ronda.fim = new Date().toISOString();
+    // Fora da bolha: o caso português mais forte que ainda não foi visto nos últimos 3 dias
+    const caso = regras.bolhaAuto && (radar.casos || []).find((c) => c.nat === "pt" && c.chaves.some((k) => k.startsWith("p:")) && c.canais >= 3 && !(Date.now() - Date.parse(radar.bolha?.[c.id]?.at || 0) < 3 * 864e5));
+    if (caso) {
+      try {
+        radar = (await procurarForaDaBolha(db, caso.id, { radar })).radar;
+        resumo.bolha = caso.titulo;
+      } catch (e) {
+        resumo.bolhaErro = e.message;
+      }
+    }
+    const fresh = await lerRadar();
+    fresh.ronda = ronda;
+    await guardarRadar(fresh);
+  }
+  return { ...resumo, ronda };
 }
 
 /** Vai buscar os vídeos de um projeto (playlist e/ou lista de vídeos). */

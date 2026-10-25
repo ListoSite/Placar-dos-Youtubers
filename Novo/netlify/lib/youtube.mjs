@@ -2,7 +2,7 @@
 // Custos usados aqui: channels/videos/playlistItems/playlists/channelSections = 1 unidade,
 // search = 100 unidades (só usado na descoberta e na procura por nome).
 
-import { mockCall } from "./youtube-mock.mjs";
+import { mockCall, mockFeed } from "./youtube-mock.mjs";
 
 const API = "https://www.googleapis.com/youtube/v3/";
 let unitsThisRequest = 0;
@@ -92,6 +92,8 @@ export function normalizeVideo(item) {
     // Para o Radar do Caso (não ficam guardados com os vídeos)
     desc: String(s.description || "").slice(0, 1500),
     tags: (s.tags || []).slice(0, 20),
+    chT: s.channelTitle || "",
+    lang: s.defaultAudioLanguage || s.defaultLanguage || "",
   };
 }
 
@@ -257,6 +259,66 @@ export async function recentUploads(channelId, max = 50) {
   for (const v of vids) v.s = knownShorts ? shorts.has(v.id) : v.d > 0 && v.d <= 180;
   vids.sort((a, b) => (b.p || "").localeCompare(a.p || ""));
   return vids;
+}
+
+// ---------- Feed RSS do canal (não gasta quota) ----------
+
+const ENT = { amp: "&", lt: "<", gt: ">", quot: '"', apos: "'" };
+const xmlTexto = (s) =>
+  String(s || "")
+    .replace(/<!\[CDATA\[([\s\S]*?)\]\]>/g, "$1")
+    .replace(/&(#x[0-9a-f]+|#\d+|\w+);/gi, (m, e) => (e[0] === "#" ? String.fromCodePoint(e[1] === "x" || e[1] === "X" ? parseInt(e.slice(2), 16) : Number(e.slice(1))) : ENT[e] ?? m));
+
+/** Lê o feed RSS de um canal: { id, t, p, v, l, desc, th, s }. */
+export function lerFeedXML(xml) {
+  const out = [];
+  for (const m of String(xml).matchAll(/<entry>([\s\S]*?)<\/entry>/g)) {
+    const e = m[1];
+    const tag = (re) => (re.exec(e) || [])[1];
+    const id = tag(/<yt:videoId>([\w-]{11})<\/yt:videoId>/);
+    if (!id) continue;
+    out.push({
+      id,
+      t: xmlTexto(tag(/<title>([\s\S]*?)<\/title>/)).slice(0, 300),
+      p: tag(/<published>([^<]+)<\/published>/) || "",
+      v: Number(tag(/<media:statistics views="(\d+)"/) || 0),
+      l: Number(tag(/<media:starRating count="(\d+)"/) || 0),
+      desc: xmlTexto(tag(/<media:description>([\s\S]*?)<\/media:description>/)).slice(0, 1500),
+      th: tag(/<media:thumbnail url="([^"]+)"/) || "",
+      s: /href="[^"]*\/shorts\//.test(e),
+      rss: true,
+    });
+  }
+  return out;
+}
+
+/** Os últimos 15 vídeos de um canal pelo feed RSS do YouTube (0 unidades). Dá null se falhar. */
+export async function lerFeed(channelId) {
+  if (process.env.YT_MOCK === "1") return mockFeed(channelId);
+  const ctl = new AbortController();
+  const t = setTimeout(() => ctl.abort(), 6000);
+  try {
+    const r = await fetch(`https://www.youtube.com/feeds/videos.xml?channel_id=${encodeURIComponent(channelId)}`, { signal: ctl.signal, headers: { "user-agent": "Mozilla/5.0 (PlacarDosYoutubers radar)" } });
+    if (!r.ok) return null;
+    const xml = await r.text();
+    return /<feed/.test(xml) ? lerFeedXML(xml) : null;
+  } catch {
+    return null;
+  } finally {
+    clearTimeout(t);
+  }
+}
+
+/** Os 50 vídeos em tendência em Portugal (1 unidade). */
+export async function tendenciasPT(regiao = "PT") {
+  const data = await call("videos", { part: "snippet,contentDetails,statistics", chart: "mostPopular", regionCode: regiao, maxResults: 50 });
+  return (data.items || []).map(normalizeVideo);
+}
+
+/** Procura vídeos (100 unidades). Para ver se um caso saiu da bolha. */
+export async function procurarVideos(q, { depois, max = 25 } = {}) {
+  const data = await call("search", { part: "snippet", type: "video", q, maxResults: Math.min(50, max), order: "date", publishedAfter: depois }, 100);
+  return (data.items || []).map((i) => i.id?.videoId).filter(Boolean);
 }
 
 /** Extrai o ID de uma playlist ou de vídeos a partir de links colados. */

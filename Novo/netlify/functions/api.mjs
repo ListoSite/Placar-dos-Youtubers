@@ -17,14 +17,14 @@ import { guardarResultados, resumoHistorico, COLECAO as COLECAO_PALCO } from "..
 import { adminEnabled, checkPassword, createToken, verifyToken, tokenFromRequest, googleLigado, googleClientId, verificarGoogle } from "../lib/auth.mjs";
 import { loadDB, saveDB, newPerson, attachChannel, detachChannel, mergePeople, deletePerson, PERSON_FIELDS, DEFAULT_SETTINGS } from "../lib/db.mjs";
 import { rebuild, publicDataset } from "../lib/dataset.mjs";
-import { runDaily, runVideos, refreshProjects, fetchProjectVideos, storeChannelNumbers, addQuota, procurarRadar } from "../lib/collect.mjs";
+import { runDaily, runVideos, refreshProjects, fetchProjectVideos, storeChannelNumbers, addQuota, procurarRadar, procurarForaDaBolha } from "../lib/collect.mjs";
 import {
   hasApiKey, takeUnits, resolveChannel, channelsByIds, searchChannels, featuredChannels,
   handleGuesses, parseProjectSource, playlistInfo,
 } from "../lib/youtube.mjs";
 import { cleanPayload, findChannel, applyImport, applyMonths, applyDaily, cleanExtra, dailyFromExtra, saveExtras, fillSocials, cleanTikTok, applyTikTok, saveTikToks, cleanRedesSB, applyRedeSB, saveRedesSB, donoDaRede } from "../lib/socialblade.mjs";
 import { limparAbout, canalDoAbout, aplicarAbout } from "../lib/ytabout.mjs";
-import { lerRadar, guardarRadar, canaisDoGrupo, mudarEstado as mudarEstadoRadar } from "../lib/radar.mjs";
+import { lerRadar, guardarRadar, canaisDoGrupo, mudarEstado as mudarEstadoRadar, marcarUtil, pontuar as pontuarRadar, resumoGosto, ETIQUETAS, SINAIS_NOME } from "../lib/radar.mjs";
 import { estimarPessoa, apagarEstimativas, unidadesUsadas } from "../lib/estimate.mjs";
 
 export const config = { path: "/api/*" };
@@ -825,10 +825,37 @@ const adminRoutes = {
   // ---------- Radar do Caso (vídeos que podem dar notícia) ----------
   "GET caso/radar": async ({ db }) => {
     const r = await lerRadar();
+    const pont = pontuarRadar(r);
+    // Só vão os que se veem: os candidatos abaixo do mínimo ficam guardados (podem subir com um caso ou com o que o radar aprende)
+    const itens = r.itens
+      .filter((it) => pont.get(it.id).visivel)
+      .map((it) => {
+        const p = pont.get(it.id);
+        const { dado, tagsDadas, ...resto } = it;
+        return { ...resto, final: p.final, bCaso: p.bCaso, caso: p.caso ? { id: p.caso.id, titulo: p.caso.titulo, nat: p.caso.nat, canais: p.caso.canais } : null, aprendido: p.ap };
+      });
     const ordem = { novo: 0, visto: 1, noticia: 2 };
-    r.itens.sort((a, b) => ordem[a.estado] - ordem[b.estado] || (b.p || "").localeCompare(a.p || "") || b.pontos - a.pontos);
-    const { removidos, ...resto } = r;
-    return { ...resto, nRemovidos: removidos.length, temas: TEMAS_NOTICIA, nomes: Object.fromEntries(Object.values(db.people).map((p) => [p.id, p.name])), canais: { escolhidos: canaisDoGrupo(db, r.regras, "escolhidos").length, todos: canaisDoGrupo(db, r.regras, "todos").length } };
+    itens.sort((a, b) => ordem[a.estado] - ordem[b.estado] || (b.p || "").localeCompare(a.p || "") || b.final - a.final);
+    const nomesCanais = Object.fromEntries([...Object.values(db.channels).map((c) => [c.id, c.title]), ...(r.regras.extras || []).map((e) => [e.id, e.title]), ...r.itens.map((x) => [x.ch, x.chNome])].filter(([, n]) => n));
+    return {
+      itens,
+      regras: r.regras,
+      casos: r.casos,
+      casosMudos: r.casosMudos,
+      bolha: r.bolha,
+      tendencias: { at: r.tendencias?.at || "" },
+      ronda: r.ronda,
+      ultima: r.ultima,
+      nRemovidos: r.removidos.length,
+      nEscondidos: r.itens.length - itens.length,
+      gosto: { resumo: resumoGosto(r.gosto), tags: r.gosto.tags, n: Object.keys(r.gosto.f).length },
+      etiquetas: ETIQUETAS,
+      sinaisNome: SINAIS_NOME,
+      temas: TEMAS_NOTICIA,
+      nomes: Object.fromEntries(Object.values(db.people).map((p) => [p.id, p.name])),
+      nomesCanais,
+      canais: { escolhidos: canaisDoGrupo(db, r.regras, "escolhidos").length, todos: canaisDoGrupo(db, r.regras, "todos").length },
+    };
   },
   // Um vídeo (id) ou vários (ids): novo, visto, noticia ou remover
   "POST caso/radar/estado": async ({ b }) => {
@@ -840,24 +867,72 @@ const adminRoutes = {
     await guardarRadar(r);
     return { ok: true, mudados: n };
   },
+  // Útil (ou não), com etiquetas: o radar aprende com isto
+  "POST caso/radar/util": async ({ b }) => {
+    const r = await lerRadar();
+    const it = marcarUtil(r, String(b.id || ""), Boolean(b.util), Array.isArray(b.tags) ? b.tags.map(String) : []);
+    if (!it) throw new HttpError(404, "Esse vídeo já não está no radar.");
+    await guardarRadar(r);
+    return { ok: true, util: it.util, tags: it.tags, estado: it.estado, aprendido: pontuarRadar(r).get(it.id).ap };
+  },
+  // Ignorar um caso (os assuntos dele deixam de formar casos) ou voltar a ouvi-lo
+  "POST caso/radar/caso": async ({ b }) => {
+    const r = await lerRadar();
+    const caso = (r.casos || []).find((c) => c.id === b.id);
+    const chaves = caso ? caso.chaves : [String(b.id || "")];
+    if (b.ignorar === false) r.casosMudos = r.casosMudos.filter((k) => !chaves.includes(k));
+    else {
+      r.casosMudos = [...new Set([...r.casosMudos, ...chaves])].slice(-200);
+      r.casos = (r.casos || []).filter((c) => c.id !== b.id);
+    }
+    await guardarRadar(r);
+    return { ok: true, casosMudos: r.casosMudos };
+  },
+  // Esquecer o que o radar aprendeu (tudo, ou uma característica)
+  "POST caso/radar/aprender": async ({ b }) => {
+    const r = await lerRadar();
+    if (b.esquecer) delete r.gosto.f[String(b.esquecer)];
+    else if (b.repor) {
+      r.gosto = { f: {}, tags: {} };
+      for (const it of r.itens) {
+        delete it.dado;
+        delete it.tagsDadas;
+      }
+    }
+    await guardarRadar(r);
+    return { ok: true, resumo: resumoGosto(r.gosto) };
+  },
+  // Fora da bolha: vídeos sobre um caso em canais de fora do Placar e de fora de Portugal (100 unidades)
+  "POST caso/radar/bolha": async ({ db, b }) => {
+    if (!hasApiKey()) throw new HttpError(400, "Falta a chave da API do YouTube nas variáveis do Netlify.");
+    try {
+      return { bolha: (await procurarForaDaBolha(db, String(b.caso || ""))).bolha };
+    } catch (e) {
+      throw new HttpError(/quota/i.test(e.message) ? 429 : 400, e.message);
+    }
+  },
   "POST caso/radar/regras": async ({ db, b }) => {
     const r = await lerRadar();
     if (Number.isFinite(Number(b.minimo))) r.regras.minimo = Math.max(2, Math.min(15, Number(b.minimo)));
     if (b.palavras !== undefined) r.regras.palavras = (Array.isArray(b.palavras) ? b.palavras : String(b.palavras).split("\n")).map((x) => String(x).trim().slice(0, 60)).filter(Boolean).slice(0, 80);
     if ("comentarios" in b) r.regras.comentarios = Boolean(b.comentarios);
+    if (Number.isFinite(Number(b.comentariosDia))) r.regras.comentariosDia = Math.max(0, Math.min(300, Math.round(Number(b.comentariosDia))));
+    if ("bolhaAuto" in b) r.regras.bolhaAuto = Boolean(b.bolhaAuto);
     if (Array.isArray(b.escolhidos)) r.regras.escolhidos = [...new Set(b.escolhidos.filter((id) => db.people[id]))].slice(0, 60);
     await guardarRadar(r);
     return { regras: r.regras };
   },
-  // Procurar agora num grupo ("escolhidos" ou "todos"), aos bocados de 10 canais (o painel vai pedindo)
+  // Procurar agora num grupo ("escolhidos" ou "todos"), aos bocados de 25 canais (o painel vai pedindo).
+  // Os vídeos vêm do feed (não gasta quota); da API só os detalhes, alguns comentários e as tendências.
   "POST caso/radar/procurar": async ({ db, b }) => {
     if (!hasApiKey()) throw new HttpError(400, "Falta a chave da API do YouTube nas variáveis do Netlify.");
     const radar = await lerRadar();
     const canais = canaisDoGrupo(db, radar.regras, b.grupo === "todos" ? "todos" : "escolhidos");
+    const prioridade = new Set(canaisDoGrupo(db, radar.regras, "escolhidos").map((c) => c.id));
     const desde = Math.max(0, Number(b.desde) || 0);
-    const parte = canais.slice(desde, desde + 10);
-    const r = parte.length ? await procurarRadar(db, parte, { radar }) : { novos: 0, errors: [] };
-    return { novos: r.novos, feitos: desde + parte.length, total: canais.length, proximo: desde + parte.length < canais.length ? desde + parte.length : null, erros: r.errors.slice(0, 3) };
+    const parte = canais.slice(desde, desde + 25);
+    const r = parte.length ? await procurarRadar(db, parte, { radar, permitirApi: true, maxApi: 5, comentariosMax: 8, prioridade, tendencias: desde === 0 }) : { novos: 0, errors: [], feeds: 0, viaApi: 0 };
+    return { novos: r.novos, feeds: r.feeds, viaApi: r.viaApi, feitos: desde + parte.length, total: canais.length, proximo: desde + parte.length < canais.length ? desde + parte.length : null, erros: r.errors.slice(0, 3) };
   },
   // Canal extra a vigiar (por exemplo um canal de clips ou de notícias que não está no Placar)
   "POST caso/radar/extra": async ({ db, b }) => {

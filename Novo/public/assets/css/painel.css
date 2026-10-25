@@ -2233,3 +2233,322 @@ body.sem-sessao .pn-marca-movel {
     flex: 1;
   }
 }
+
+/* Casos a crescer */
+.rdr-casos-bloco {
+  margin: 4px 0 18px;
+}
+.rdr-sec-titulo {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 12px;
+  margin-bottom: 10px;
+}
+.rdr-sec-titulo h3 {
+  margin: 0;
+  font-size: var(--t-lg);
+}
+.rdr-sec-titulo .muted {
+  font-size: var(--t-xs);
+  flex: 1;
+  min-width: 220px;
+}
+.rdr-casos {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(270px, 1fr));
+  gap: 12px;
+}
+.rdr-caso {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 14px;
+  border-radius: var(--r-lg);
+  border: 1px solid rgba(255, 120, 80, 0.4);
+  background: radial-gradient(120% 90% at 0% 0%, rgba(255, 120, 80, 0.16), transparent 60%), rgba(255, 255, 255, 0.03);
+}
+.rdr-caso-topo {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 11px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.rdr-caso-tipo {
+  color: #ff9a5a;
+}
+.rdr-caso-nat {
+  color: var(--texto-3);
+}
+.rdr-caso h3 {
+  margin: 0;
+  font-family: var(--f-display);
+  font-size: var(--t-xl);
+  line-height: 1.1;
+}
+.rdr-caso-num {
+  margin: 0;
+  font-size: var(--t-xs);
+  color: var(--texto-3);
+}
+.rdr-caso-num b {
+  color: var(--texto);
+}
+.rdr-caso-minis {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 4px;
+}
+.rdr-caso-minis a {
+  aspect-ratio: 16 / 9;
+  border-radius: 6px;
+  overflow: hidden;
+  background: var(--fundo-3);
+}
+.rdr-caso-minis img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.rdr-bolha {
+  text-align: left;
+  padding: 7px 10px;
+  border-radius: var(--r-sm);
+  border: 1px dashed var(--linha);
+  background: transparent;
+  color: var(--texto-2);
+  font-size: var(--t-xs);
+  cursor: pointer;
+}
+.rdr-bolha:hover {
+  border-color: var(--texto-3);
+  color: var(--texto);
+}
+.rdr-bolha.fora {
+  border-style: solid;
+  border-color: rgba(90, 170, 255, 0.55);
+  background: rgba(90, 170, 255, 0.1);
+  color: var(--texto);
+}
+.rdr-bolha small {
+  color: var(--texto-3);
+}
+.rdr-caso-acoes {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  margin-top: auto;
+}
+.rdr-caso-acoes .btn {
+  flex: 1 1 auto;
+}
+.rdr-caso-acoes .botao-icone {
+  flex: 0 0 auto;
+}
+.rdr-mundo {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 8px;
+  margin-top: 10px;
+  font-size: var(--t-xs);
+  color: var(--texto-3);
+}
+.rdr-mundo-c {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 2px 4px 2px 10px;
+  border-radius: 99px;
+  border: 1px solid var(--linha);
+  color: var(--texto-2);
+}
+.rdr-mundo-c button {
+  border: 0;
+  background: none;
+  color: var(--texto-3);
+  cursor: pointer;
+}
+
+/* Filtros por sinal */
+.rdr-sinais {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 0 0 12px;
+}
+.rdr-sinal {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 6px 5px 11px;
+  border-radius: 99px;
+  border: 1px solid var(--linha);
+  background: rgba(255, 255, 255, 0.03);
+  color: var(--texto-2);
+  font-size: var(--t-xs);
+  font-weight: 700;
+  cursor: pointer;
+}
+.rdr-sinal b {
+  min-width: 20px;
+  padding: 1px 6px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.1);
+  color: var(--texto);
+  text-align: center;
+}
+.rdr-sinal[aria-pressed="true"] {
+  border-color: var(--rubi);
+  background: var(--rubi-fundo);
+  color: var(--texto);
+}
+
+/* Motivos novos no cartão */
+.rdr-motivo.caso {
+  border-color: rgba(255, 120, 80, 0.5);
+  background: rgba(255, 120, 80, 0.12);
+}
+.rdr-motivo.aprendeu {
+  border-color: rgba(79, 227, 160, 0.45);
+  background: rgba(79, 227, 160, 0.1);
+}
+.rdr-motivo.aprendeu-mal {
+  border-color: rgba(255, 255, 255, 0.15);
+  color: var(--texto-3);
+}
+.rdr-ganho {
+  color: #4fe3a0;
+  font-weight: 700;
+}
+.rdr-cartao.util {
+  border-color: rgba(79, 227, 160, 0.45);
+}
+.rdr-util[aria-pressed="true"] {
+  border-color: #4fe3a0;
+  background: rgba(79, 227, 160, 0.16);
+  color: var(--texto);
+}
+.rdr-tags {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  margin-top: 10px;
+}
+.rdr-tags::before {
+  content: "Porquê?";
+  font-size: 11px;
+  color: var(--texto-3);
+  margin-right: 2px;
+}
+.rdr-tag {
+  padding: 3px 10px;
+  border-radius: 99px;
+  border: 1px solid var(--linha);
+  background: transparent;
+  color: var(--texto-2);
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.rdr-tag[aria-pressed="true"] {
+  border-color: #4fe3a0;
+  background: rgba(79, 227, 160, 0.16);
+  color: var(--texto);
+}
+
+/* Outros vídeos do caso e fora da bolha */
+.rdr-outros {
+  margin-top: 12px;
+}
+.rdr-outro {
+  display: grid;
+  grid-template-columns: 96px minmax(0, 1fr);
+  gap: 10px;
+  align-items: center;
+  padding: 6px;
+  border-radius: var(--r-sm);
+  color: inherit;
+  text-decoration: none;
+}
+.rdr-outro:hover {
+  background: rgba(255, 255, 255, 0.05);
+}
+.rdr-outro img,
+.rdr-outro > span:first-child {
+  width: 96px;
+  aspect-ratio: 16 / 9;
+  object-fit: cover;
+  border-radius: 6px;
+  background: var(--fundo-3);
+}
+.rdr-outro b {
+  display: block;
+  font-size: var(--t-sm);
+  line-height: 1.3;
+}
+.rdr-outro small {
+  color: var(--texto-3);
+  font-size: 11px;
+}
+.rdr-outro.fora {
+  box-shadow: inset 3px 0 0 rgba(90, 170, 255, 0.8);
+}
+.rdr-bolha-lista {
+  max-height: 55vh;
+  overflow: auto;
+  margin: 10px 0;
+}
+
+/* O que o radar aprendeu (nas regras) */
+.rdr-ap {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 14px;
+  margin: 8px 0 12px;
+}
+.rdr-ap h4 {
+  margin: 0 0 6px;
+  font-size: var(--t-sm);
+}
+.rdr-ap ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.rdr-ap-linha {
+  display: grid;
+  grid-template-columns: 44px minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 0;
+  border-bottom: 1px solid var(--linha);
+  font-size: var(--t-sm);
+}
+.rdr-ap-peso {
+  font-weight: 800;
+  text-align: center;
+  border-radius: 8px;
+  padding: 1px 0;
+}
+.rdr-ap-peso.mais {
+  color: #4fe3a0;
+  background: rgba(79, 227, 160, 0.1);
+}
+.rdr-ap-peso.menos {
+  color: var(--rubi-claro);
+  background: var(--rubi-fundo);
+}
+@media (max-width: 560px) {
+  .rdr-casos {
+    grid-template-columns: 1fr;
+  }
+  .rdr-caso h3 {
+    font-size: var(--t-lg);
+  }
+}

@@ -13,7 +13,7 @@ export async function render(main, { params = [] } = {}) {
   main.dataset.titulo = "O Caso";
   main.innerHTML = `<div class="wrap csp">${subnav("caso")}<div class="vc-topo"><div><h1>O Caso</h1><p class="muted">${
     vista === "radar"
-      ? "Os vídeos recentes que podem dar notícia: falam de outros Youtubers, têm palavras como resposta, reage, indireta, polémica, ganhei ou estreia, ou têm muito mais views e comentários do que o normal. Os Youtubers escolhidos são lidos sozinhos uma vez por dia; todos os outros só quando carregas no botão. Fazer notícia abre o editor já preenchido."
+      ? "Os vídeos recentes que podem dar notícia: falam de outros Youtubers, têm palavras como resposta, reage ou polémica, estão a ganhar views mais depressa do que o normal, estão nas tendências ou fazem parte de um caso de que muitos canais estão a falar. O radar lê sozinho todos os Youtubers duas vezes por dia e aprende com o que marcas como útil ou removes."
       : vista === "karma"
       ? 'O público dá karma aos Youtubers (apoiar 👍 ou "estou farto" 👎) e uma reação, com a conta Google e sempre anónimo. Fica à parte do Índice de Influência: só entra se o ligares aqui.'
       : "Publica o que anda a acontecer, com um tema (polémica, coisas boas…). O público reage, responde à tua pergunta e dá karma aos Youtubers envolvidos. Tudo anónimo."

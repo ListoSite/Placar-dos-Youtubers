@@ -88,12 +88,19 @@ Há três formas de os preencher, por esta ordem de facilidade:
 
 ### Radar do Caso
 
-Em O Caso, Radar, aparecem os vídeos recentes (últimos 45 dias) que podem dar notícia. Há duas abas:
+Em O Caso, Radar, aparecem os vídeos recentes (últimos 45 dias) que podem dar notícia.
 
-- **⭐ Escolhidos:** os Youtubers que escolhes à mão (com os canais de clips de cada um) e os **canais extra a vigiar** (canais de clips ou de notícias que não estão no Placar, juntados pelo link). O radar lê-os sozinho **uma vez por dia** (função `radar-daily`, às 07:41 UTC).
-- **Todos os Youtubers:** só são lidos quando carregas no botão.
+**Leitura.** O radar lê sozinho **todos os Youtubers do Placar e os canais extra duas vezes por dia** (a partir das 7h e das 19h, hora de Lisboa; função `radar-daily`, que corre de hora a hora e continua de onde ficou). Os vídeos vêm do **feed RSS de cada canal** (os últimos 15, com views, gostos, descrição e se é Short), que **não gasta quota**. Da API só se usa:
 
-O botão "Procurar" lê o grupo da aba aberta, aos bocados de 10 canais (podes parar a meio). Cada canal custa cerca de 3 unidades da quota da API (os últimos 15 vídeos), mais 1 por cada vídeo cujos comentários são lidos.
+- os detalhes dos vídeos dos últimos 14 dias (comentários e etiquetas): 1 unidade por cada 50 vídeos;
+- os comentários dos que já parecem notícia: 1 unidade cada, até ao máximo por dia que escolhes nas regras (60 por defeito);
+- as tendências de Portugal: 1 unidade, no máximo de 6 em 6 horas;
+- a lista de uploads quando o feed de um canal falha (cerca de 3 unidades), só para os escolhidos;
+- "fora da bolha": cerca de 100 unidades por procura (1 por dia sozinho, se estiver ligado).
+
+No total costuma gastar 100 a 250 unidades por dia, das 10 000. O botão "Procurar" lê já o grupo da aba aberta, aos bocados de 25 canais.
+
+**Abas.** "⭐ Escolhidos" mostra só os Youtubers escolhidos à mão (com os canais de clips de cada um) e os **canais extra a vigiar** (canais de clips ou de notícias que não estão no Placar, também de fora de Portugal). Os escolhidos são lidos primeiro em cada ronda e têm os comentários lidos primeiro. "Todos os Youtubers" mostra tudo.
 
 A análise foi afinada com vídeos reais de notícias do YouTube português: quase tudo está no **título** (nomes de outros Youtubers, como "X reage à resposta do Y", "O X tem razão" ou listas de nomes no fim; verbos de conflito como reage, ataca, critica, indireta, exposto, queixas; conquistas como ganhei, prémio, estreia; curiosidades como ex-namorada ou visita). Os títulos em maiúsculas e com "!?" contam como sinal. Das descrições só conta o texto escrito (os links, redes, patrocínios e códigos de desconto são ignorados), e das etiquetas só os nomes de outros Youtubers. Também contam os sinais nos números (muito mais views do que o normal, muitos comentários para as views) e, nos que já parecem notícia, os comentários mais relevantes (outros Youtubers e palavras quentes). Cada vídeo mostra porquê entrou e "Fazer notícia" abre o editor já preenchido, como rascunho. Nas regras escolhes os pontos mínimos (5 por defeito), juntas palavras tuas (com o tema depois de `=`) e ligas ou desligas a leitura dos comentários.
 
@@ -103,7 +110,22 @@ Para não teres de decorar o que já viste:
 - **🗑 Remover:** o vídeo sai do radar e não volta, mesmo quando o radar volta a procurar.
 - Quem vira notícia fica marcado com "📰 Notícia".
 
-Em cima há contadores que servem de filtro (Por ver, Vistos, Viraram notícia, Todos) e "🔥 Em alta esta semana", com os Youtubers de quem mais se fala nos vídeos dos últimos 7 dias (carregar num filtra por ele). Também dá para filtrar por tema e ordenar por mais recentes ou mais quentes. Cada miniatura mostra quão quente está o vídeo (morno, quente, a ferver) e se é um Short.
+Em cima há contadores que servem de filtro (Por ver, Vistos, Viraram notícia, Todos) e "⭐ Mais falados esta semana", com os Youtubers de quem mais se fala nos vídeos dos últimos 7 dias (carregar num filtra por ele). Também dá para filtrar por sinal, por tema e ordenar por "🧠 Para ti" (o que o radar acha que mais te interessa, com os recentes primeiro), mais quentes ou mais recentes. Cada miniatura mostra quão quente está o vídeo (morno, quente, a ferver) e se é um Short.
+
+**Sinais além das palavras:**
+
+- **⚡ A disparar:** as views que o vídeo tem para a idade, comparadas com o normal do canal (um vídeo costuma fazer metade das views no primeiro dia). Um vídeo de 3 horas com muitas views conta muito mais do que um de 10 dias com as mesmas. Os vídeos que o público já esperava aparecem aqui depressa.
+- **💥 Explodiu:** passou dos 10 mil views num canal onde o normal é bem menos.
+- **🔙 Regresso:** o primeiro vídeo depois de 45 dias ou mais sem publicar.
+- **📈 Tendências:** está nas tendências do YouTube em Portugal. Os vídeos em tendência de canais que não estão no Placar também entram quando falam de Youtubers do Placar.
+- **🇵🇹 Youtubers portugueses:** o título fala dos "Youtubers portugueses", "youtuber tuga", "portuguese youtuber"…
+- Cada vídeo mostra também as views ganhas desde a leitura anterior.
+
+**🔥 Casos a crescer.** O radar guarda os títulos de todos os vídeos lidos nos últimos 14 dias e procura assuntos (Youtubers mencionados ou palavras do título, como o nome de um jogo) de que pelo menos 3 canais diferentes começaram a falar nos últimos 4 dias, muito mais do que nos 10 dias antes. Os assuntos que andam sempre na boca de todos não contam: só as subidas. Os assuntos que aparecem nos mesmos vídeos juntam-se (por exemplo "Wuant · LoL"), e os vídeos do próprio Youtuber sobre o mesmo assunto também entram. Os vídeos de um caso sobem até 5 pontos (mais quantos mais canais), e o radar fica mais atento a esses assuntos nas leituras seguintes. Para ser rigoroso, só sobem os casos com Youtubers do Placar (ou que falam de Portugal); os outros aparecem em "🌍 Assuntos gerais" e não contam, porque podem ser mundiais (por exemplo o trailer de um jogo). Em cada caso dá para ver todos os vídeos (também os que não chegaram aos pontos), fazer uma notícia do caso inteiro ou ignorá-lo (os assuntos ignorados ficam nas regras para voltar atrás).
+
+**🌍 Fora da bolha.** Num caso com Youtubers do Placar, "Ver se saiu da bolha" procura vídeos recentes sobre o assunto em canais que não estão no Placar e conta os de fora de Portugal (país do canal ou língua do vídeo, incluindo português do Brasil). Só conta um vídeo que fala mesmo do Youtuber do caso. Quando há 2 ou mais lá fora, o caso sobe mais 2 pontos. Uma vez por dia o radar faz isto sozinho para o caso português mais forte (dá para desligar nas regras).
+
+**🧠 Aprender contigo.** Cada vídeo tem "👍 Útil" e, depois, as etiquetas Interessante, Assunto bom e Polémico. O radar aprende com o que marcas como útil (vale 1), o que vira notícia (vale 2) e o que removes (vale 1 contra): quem publicou, de quem fala, as palavras, o tema e os sinais. Os vídeos parecidos sobem ou descem até 5 pontos, e o cartão diz porquê (por exemplo "🧠 +2: gostas dos vídeos do Wuant"). Os vídeos abaixo do mínimo ficam guardados e aparecem quando sobem com um caso ou com o que o radar aprendeu. Nas regras vês o que aprendeu (com as etiquetas por Youtuber), podes esquecer uma coisa ou tudo.
 
 ### Bocas no Palco
 
