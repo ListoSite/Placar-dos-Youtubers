@@ -1925,3 +1925,50 @@ body.sem-sessao .pn-marca-movel {
     grid-template-columns: 1fr;
   }
 }
+.rdr-grupos {
+  margin-bottom: 4px;
+}
+.rdr-nota {
+  margin: 4px 0 14px;
+  font-size: var(--t-sm);
+}
+.rdr-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 10px 0;
+}
+.rdr-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 6px 4px 4px;
+  border-radius: 99px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid var(--linha);
+  font-size: var(--t-sm);
+}
+.rdr-chip img {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+}
+.rdr-chip button {
+  border: 0;
+  background: none;
+  color: var(--texto-3);
+  cursor: pointer;
+  padding: 0 4px;
+}
+.rdr-chip button:hover {
+  color: var(--rubi-claro);
+}
+.rdr-juntar {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.rdr-juntar > span {
+  display: flex;
+  flex-direction: column;
+}

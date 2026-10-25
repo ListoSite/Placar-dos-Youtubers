@@ -88,7 +88,14 @@ Há três formas de os preencher, por esta ordem de facilidade:
 
 ### Radar do Caso
 
-Em O Caso, Radar, aparecem os vídeos recentes (últimos 45 dias) que podem dar notícia. O radar lê os vídeos novos de hora a hora, com a recolha automática (ou já, com "Procurar agora"): título, descrição e etiquetas. Dá pontos a outros Youtubers do Placar mencionados (nome, nome verdadeiro, nome do canal ou @handle; nomes com menos de 4 letras não contam), a palavras que costumam dar notícia (resposta, polémica, drama, exposed, desculpas, pausa, despedida, voltei, colab, parceria, 1 milhão, recorde, evento, caridade, novo canal, rumores…), cada uma ligada a um tema das notícias, e a sinais nos números (muito mais views do que é normal no canal, muitos comentários para as views). Nos que já parecem notícia, lê os comentários mais relevantes (1 unidade da quota por vídeo, no máximo 3 por canal de cada vez) à procura de outros Youtubers e de palavras quentes. Cada vídeo mostra porquê entrou, com as palavras destacadas, e o botão **Fazer notícia** abre o editor já preenchido (título, texto, tema, Youtubers, link do vídeo, imagem e, nas polémicas entre dois, a pergunta "Quem tem razão?"), como rascunho. Nas regras escolhes os pontos mínimos, juntas palavras tuas (com o tema depois de `=`) e ligas ou desligas a leitura dos comentários.
+Em O Caso, Radar, aparecem os vídeos recentes (últimos 45 dias) que podem dar notícia. Há duas abas:
+
+- **⭐ Escolhidos:** os Youtubers que escolhes à mão (com os canais de clips de cada um) e os **canais extra a vigiar** (canais de clips ou de notícias que não estão no Placar, juntados pelo link). O radar lê-os sozinho **uma vez por dia** (função `radar-daily`, às 07:41 UTC).
+- **Todos os Youtubers:** só são lidos quando carregas no botão.
+
+O botão "Procurar" lê o grupo da aba aberta, aos bocados de 10 canais (podes parar a meio). Cada canal custa cerca de 3 unidades da quota da API (os últimos 15 vídeos), mais 1 por cada vídeo cujos comentários são lidos.
+
+A análise foi afinada com vídeos reais de notícias do YouTube português: quase tudo está no **título** (nomes de outros Youtubers, como "X reage à resposta do Y", "O X tem razão" ou listas de nomes no fim; verbos de conflito como reage, ataca, critica, indireta, exposto, queixas; conquistas como ganhei, prémio, estreia; curiosidades como ex-namorada ou visita). Os títulos em maiúsculas e com "!?" contam como sinal. Das descrições só conta o texto escrito (os links, redes, patrocínios e códigos de desconto são ignorados), e das etiquetas só os nomes de outros Youtubers. Também contam os sinais nos números (muito mais views do que o normal, muitos comentários para as views) e, nos que já parecem notícia, os comentários mais relevantes (outros Youtubers e palavras quentes). Cada vídeo mostra porquê entrou e "Fazer notícia" abre o editor já preenchido, como rascunho. Nas regras escolhes os pontos mínimos (5 por defeito), juntas palavras tuas (com o tema depois de `=`) e ligas ou desligas a leitura dos comentários.
 
 ### Bocas no Palco
 

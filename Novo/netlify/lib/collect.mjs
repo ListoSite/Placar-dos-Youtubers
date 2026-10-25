@@ -112,7 +112,6 @@ export async function runVideos(db, { limit = 20, only } = {}) {
   ids = ids.slice(0, limit);
   if (!ids.length) return { channels: 0 };
   const vsum = await getJSON("videosummary", {});
-  const radar = await lerRadar();
   const errors = [];
   let quotaError = null;
   await pool(ids, 4, async (id) => {
@@ -123,14 +122,12 @@ export async function runVideos(db, { limit = 20, only } = {}) {
       await setJSON("videos/" + id, { at: new Date().toISOString(), items: slim });
       vsum[id] = summarizeVideos(slim);
       vstate[id] = new Date().toISOString();
-      // Radar do Caso: os vídeos que podem dar notícia (títulos, descrições, etiquetas, comentários)
-      await radarCanal(db, radar, id, items, { mediana: vsum[id]?.med || 0, buscarComentarios: (v) => comentariosDe(v) }).catch((e) => errors.push(`radar ${id}: ${e.message}`));
     } catch (e) {
       errors.push(`${id}: ${e.message}`);
       if (/quota/i.test(e.message)) quotaError = e;
     }
   });
-  await Promise.all([setJSON("videosummary", vsum), setJSON("vstate", vstate), guardarRadar(radar)]);
+  await Promise.all([setJSON("videosummary", vsum), setJSON("vstate", vstate)]);
   if (quotaError) {
     await addQuota(takeUnits());
     throw quotaError;
@@ -140,6 +137,33 @@ export async function runVideos(db, { limit = 20, only } = {}) {
   await setJSON("meta", meta);
   await addQuota(takeUnits());
   return { channels: ids.length, errors };
+}
+
+/**
+ * Radar do Caso: lê os últimos 15 vídeos de cada canal (cerca de 3 unidades da quota por canal,
+ * mais 1 por cada vídeo com comentários lidos) e junta ao radar os que podem dar notícia.
+ */
+export async function procurarRadar(db, canais, { radar = null, guardar = true } = {}) {
+  const r = radar || (await lerRadar());
+  const vsum = await getJSON("videosummary", {});
+  const antes = r.itens.length;
+  const errors = [];
+  let quotaError = null;
+  await pool(canais, 4, async (canal) => {
+    if (quotaError) return;
+    try {
+      const items = await recentUploads(canal.id, 15);
+      await radarCanal(db, r, canal, items, { mediana: vsum[canal.id]?.med || 0, buscarComentarios: (v) => comentariosDe(v) });
+    } catch (e) {
+      errors.push(`${canal.id}: ${e.message}`);
+      if (/quota/i.test(e.message)) quotaError = e;
+    }
+  });
+  r.ultima = new Date().toISOString();
+  if (guardar) await guardarRadar(r);
+  await addQuota(takeUnits());
+  if (quotaError) throw quotaError;
+  return { novos: r.itens.length - antes, canais: canais.length, errors };
 }
 
 /** Vai buscar os vídeos de um projeto (playlist e/ou lista de vídeos). */
