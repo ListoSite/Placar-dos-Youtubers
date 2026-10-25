@@ -110,7 +110,7 @@ export async function render(alvo) {
     desenharTop();
   });
   $("#st-repor", alvo).addEventListener("click", () => {
-    const iniciais = { alcance: 35, constancia: 20, atividade: 15, momento: 10, historico: 15, envolvimento: 5 };
+    const iniciais = { alcance: 35, constancia: 20, atividade: 15, momento: 10, historico: 15, envolvimento: 5, redes: 25 };
     Object.assign(pesos, iniciais);
     topo = 1e7;
     $("#st-topo", alvo).value = topo;

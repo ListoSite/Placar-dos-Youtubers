@@ -8,7 +8,41 @@ export const PARTES = [
   { id: "momento", nome: "Momento", explica: "Últimos 3 meses comparados com os 3 anteriores: está a subir ou a cair?" },
   { id: "historico", nome: "Peso histórico", explica: "Subscritores e views totais acumulados ao longo da carreira." },
   { id: "envolvimento", nome: "Envolvimento", explica: "Gostos e comentários por cada view nos vídeos recentes." },
+  { id: "redes", nome: "Outras redes", explica: "Seguidores no Instagram e na Twitch (valem mais) e no TikTok (vale menos), e se estão a crescer. Só entra quando ajuda: nunca tira pontos." },
 ];
+
+// Outras redes: quantos seguidores valem nota máxima, quanto vale cada rede e a partir de quantos conta.
+// O TikTok é fácil de crescer (vale 60%); no Instagram estão os seguidores "a sério" e a Twitch é difícil.
+export const REDES_INDICE = {
+  instagram: { nome: "Instagram", topo: 5e6, vale: 1 },
+  twitch: { nome: "Twitch", topo: 2e6, vale: 1 },
+  tiktok: { nome: "TikTok", topo: 2e7, vale: 0.6 },
+};
+const MINIMO_SEGUIDORES = 1000;
+const seguidores = (p, r) => p.socials?.[r]?.last?.followers ?? p.rs?.[r]?.info?.seg ?? null;
+const ganhos = (p, r) => (r === "tiktok" ? p.tt?.f : p.rs?.[r]?.f) || null;
+
+/** A parte "Outras redes" (0 a 1): a melhor rede conta inteira, a 2.ª 35% e a 3.ª 15%, mais um extra por crescer. */
+export function parteRedes(p, janela) {
+  const redes = [];
+  for (const [r, cfg] of Object.entries(REDES_INDICE)) {
+    const f = seguidores(p, r);
+    if (!Number.isFinite(f) || f < MINIMO_SEGUIDORES) continue;
+    const s = clamp((Math.log10(f) - Math.log10(MINIMO_SEGUIDORES)) / (Math.log10(cfg.topo) - Math.log10(MINIMO_SEGUIDORES)));
+    // Crescimento: seguidores ganhos nos últimos 3 meses com dados, face aos seguidores de hoje
+    const g = ganhos(p, r);
+    const ult = g ? janela.map((m) => g[m]).filter((v) => Number.isFinite(v)).slice(-3) : [];
+    const cresc = ult.length ? ult.reduce((a, b) => a + b, 0) / f : null;
+    redes.push({ r, f, s, v: s * cfg.vale, cresc });
+  }
+  if (!redes.length) return null;
+  redes.sort((a, b) => b.v - a.v);
+  const base = redes.reduce((a, x, i) => a + x.v * ([1, 0.35, 0.15][i] || 0), 0);
+  // Quem está a crescer depressa noutra rede ganha até +0,15 (crescer 15% em 3 meses dá o máximo)
+  const cresc = Math.max(0, ...redes.map((x) => (x.cresc === null ? 0 : x.cresc * REDES_INDICE[x.r].vale)));
+  const extra = 0.15 * clamp(cresc / 0.15);
+  return { s: clamp(base + extra), info: { redes: redes.map(({ r, f, s: sr, cresc: c }) => ({ r, f, s: sr, cresc: c })), extra } };
+}
 
 const clamp = (x, a = 0, b = 1) => Math.max(a, Math.min(b, x));
 const mean = (a) => a.reduce((s, x) => s + x, 0) / a.length;
@@ -81,17 +115,38 @@ export function calcularIndice(p, ctx) {
   // Envolvimento
   if (p.vid && p.vid.eng > 0) partes.envolvimento = { s: clamp(p.vid.eng / 0.06), info: { eng: p.vid.eng } };
 
+  // Outras redes (só se o peso existir: os dados de exclusivos antigos não o têm e ficam iguais)
+  if (pesos.redes) {
+    const pr = parteRedes(p, janela);
+    if (pr) partes.redes = pr;
+  }
+
   if (!partes.alcance) return { total: null, partes };
-  let soma = 0;
-  let pesoTotal = 0;
-  for (const { id } of PARTES) {
-    if (partes[id]) {
+  const media = (comRedes) => {
+    let soma = 0;
+    let peso = 0;
+    for (const { id } of PARTES) {
+      if (!partes[id] || (id === "redes" && !comRedes)) continue;
       soma += (pesos[id] || 0) * partes[id].s;
-      pesoTotal += pesos[id] || 0;
+      peso += pesos[id] || 0;
+    }
+    return { soma, peso };
+  };
+  const sem = media(false);
+  const totalSem = sem.peso ? Math.round((sem.soma / sem.peso) * 1000) : null;
+  let total = totalSem;
+  let peso = sem.peso;
+  // As outras redes só somam: se a nota delas for mais baixa do que a do YouTube, ficam de fora
+  if (partes.redes && totalSem !== null) {
+    const com = media(true);
+    const totalCom = Math.round((com.soma / com.peso) * 1000);
+    partes.redes.ajudou = totalCom > totalSem;
+    if (partes.redes.ajudou) {
+      total = totalCom;
+      peso = com.peso;
     }
   }
-  const total = pesoTotal ? Math.round((soma / pesoTotal) * 1000) : null;
-  return { total, partes, cobertura: pesoTotal / Object.values(pesos).reduce((a, b) => a + b, 0) };
+  return { total, partes, cobertura: peso / Object.values(pesos).reduce((a, b) => a + b, 0), ...(partes.redes?.ajudou ? { semRedes: totalSem, ganhoRedes: total - totalSem } : {}) };
 }
 
 /**

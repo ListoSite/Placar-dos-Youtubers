@@ -14,7 +14,8 @@ import { slugify, uniqueId } from "./util.mjs";
 export const DEFAULT_SETTINGS = {
   siteTitle: "Placar dos Youtubers",
   // Pesos do Índice de Influência (somam 100)
-  weights: { alcance: 35, constancia: 20, atividade: 15, momento: 10, historico: 15, envolvimento: 5 },
+  // "redes" (Outras redes: Instagram, Twitch e TikTok) só entra quando ajuda; com 25 vale 20% do total
+  weights: { alcance: 35, constancia: 20, atividade: 15, momento: 10, historico: 15, envolvimento: 5, redes: 25 },
   // Escala do alcance: views por mês que valem a nota máxima
   alcanceTopo: 10000000,
   // O que se mede: "youtuber" (todos os canais juntos) ou "principal" (só o canal principal)
