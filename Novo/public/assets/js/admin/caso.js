@@ -8,18 +8,38 @@ import { chamar } from "./common.js";
 
 const sinal = (n) => (n > 0 ? `+${n}` : String(n));
 
+const IC = {
+  site: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 4h6v6M20 4l-9 9M18 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5"/></svg>`,
+  regras: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 6h10M18 6h2M4 12h4M12 12h8M4 18h12M20 18h0"/><circle cx="16" cy="6" r="2"/><circle cx="10" cy="12" r="2"/><circle cx="18" cy="18" r="2"/></svg>`,
+  procurar: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4.9 19.1a10 10 0 0 1 0-14.2M19.1 4.9a10 10 0 0 1 0 14.2M7.8 16.2a6 6 0 0 1 0-8.4M16.2 7.8a6 6 0 0 1 0 8.4"/><circle cx="12" cy="12" r="2" fill="currentColor"/></svg>`,
+  mais: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>`,
+};
+
+const ABAS = [
+  ["noticias", "#/caso", "📰", "Notícias", "O que publicas no site"],
+  ["radar", "#/caso/radar", "📡", "Radar", "Vídeos que podem dar notícia"],
+  ["karma", "#/caso/karma", "⚖️", "Karma", "O que o público acha"],
+];
+
 export async function render(main, { params = [] } = {}) {
   const vista = ["karma", "radar"].includes(params[0]) ? params[0] : "noticias";
   main.dataset.titulo = "O Caso";
-  main.innerHTML = `<div class="wrap csp">${subnav("caso")}<div class="vc-topo"><div><h1>O Caso</h1><p class="muted">${
+  const site = `<a class="btn csp-b csp-b-site" href="/#/caso${vista === "karma" ? "?ver=karma" : ""}" target="_blank" rel="noopener" title="Ver no site público" aria-label="Ver no site público">${IC.site}<span>Ver no site</span></a>`;
+  const acoes =
+    vista === "karma"
+      ? `${site}<button class="btn csp-b" id="csp-regras">${IC.regras}<span>Regras</span></button>`
+      : vista === "radar"
+        ? `${site}<button class="btn csp-b" id="csp-regras">${IC.regras}<span>Regras</span></button><button class="btn btn-primario csp-b csp-b-principal" id="csp-procurar" data-a-esperar="A procurar">${IC.procurar}<span>Procurar agora</span></button>`
+        : `${site}<button class="btn btn-primario csp-b csp-b-principal" id="csp-nova">${IC.mais}<span>Nova notícia</span></button>`;
+  main.innerHTML = `<div class="wrap csp">${subnav("caso")}<div class="vc-topo csp-topo"><div><h1>O Caso</h1><p class="muted">${
     vista === "radar"
-      ? "Os vídeos recentes que podem dar notícia: falam de outros Youtubers, têm palavras como resposta, reage ou polémica, estão a ganhar views mais depressa do que o normal, estão nas tendências ou fazem parte de um caso de que muitos canais estão a falar. O radar lê sozinho todos os Youtubers duas vezes por dia e aprende com o que marcas como útil ou removes."
+      ? "Os vídeos recentes que podem dar notícia. O radar lê sozinho todos os Youtubers duas vezes por dia, junta os casos de que muitos canais estão a falar e aprende com o que marcas como útil ou removes."
       : vista === "karma"
       ? 'O público dá karma aos Youtubers (apoiar 👍 ou "estou farto" 👎) e uma reação, com a conta Google e sempre anónimo. Fica à parte do Índice de Influência: só entra se o ligares aqui.'
       : "Publica o que anda a acontecer, com um tema (polémica, coisas boas…). O público reage, responde à tua pergunta e dá karma aos Youtubers envolvidos. Tudo anónimo."
-  }</p></div>
-    <div class="vc-acoes"><a class="btn" href="/#/caso${vista === "karma" ? "?ver=karma" : ""}" target="_blank" rel="noopener">Ver no site</a>${vista === "karma" ? `<button class="btn" id="csp-regras">Regras</button>` : vista === "radar" ? `<button class="btn" id="csp-regras">Regras do radar</button><button class="btn btn-primario" id="csp-procurar" data-a-esperar="A procurar">Procurar agora</button>` : `<button class="btn btn-primario" id="csp-nova">+ Nova notícia</button>`}</div></div>
-    <div class="filtros"><div class="segmentos" role="group" aria-label="O Caso"><a class="btn-seg" href="#/caso" aria-pressed="${vista === "noticias"}">📰 Notícias</a><a class="btn-seg" href="#/caso/radar" aria-pressed="${vista === "radar"}">📡 Radar</a><a class="btn-seg" href="#/caso/karma" aria-pressed="${vista === "karma"}">⚖️ Karma</a></div></div>
+  }</p></div></div>
+    <nav class="csp-abas" aria-label="O Caso">${ABAS.map(([k, href, ic, n, sub]) => `<a href="${href}" ${vista === k ? 'aria-current="page"' : ""}><span class="csp-aba-ic" aria-hidden="true">${ic}</span><span class="csp-aba-txt"><b>${n}</b><small>${sub}</small></span></a>`).join("")}</nav>
+    <div class="csp-barra"><div class="csp-barra-esq" id="csp-esq">${vista === "radar" ? "" : `<span class="csp-dica">${vista === "karma" ? "⚖️ Votos anónimos do público, à parte do Índice." : "📰 Escreve, publica e fixa as notícias do site."}</span>`}</div><div class="csp-barra-dir">${acoes}</div></div>
     <div id="csp-corpo"><div class="a-carregar"><div class="roda"></div></div></div></div>`;
   if (vista === "karma") await desenhar(main);
   else if (vista === "radar") {

@@ -74,8 +74,12 @@ export async function desenharRadar(main) {
   // ---------- Botão de procurar (só no grupo da aba aberta) ----------
   const nCanais = r.canais?.[vista.grupo] || 0;
   const botao = $("#csp-procurar", main);
-  botao.textContent = vista.grupo === "todos" ? `Procurar em todos (${nCanais} canais)` : `Procurar nos escolhidos (${nCanais})`;
-  botao.title = "Lê o feed de cada canal, que não gasta quota. Da API só os detalhes dos vídeos recentes (1 unidade por cada 50 vídeos), alguns comentários e as tendências.";
+  const rotulo = botao.querySelector("span");
+  rotulo.innerHTML = `Procurar agora <em class="csp-conta" title="${nCanais} canais">${nCanais}</em>`;
+  botao.title = `Lê já ${vista.grupo === "todos" ? "todos os canais" : "os canais dos escolhidos"} (${nCanais}) pelo feed, que não gasta quota. Da API só os detalhes dos vídeos recentes (1 unidade por cada 50 vídeos), alguns comentários e as tendências.`;
+  // Escolhidos ou todos: na barra do topo, ao lado das ações
+  $("#csp-esq", main).innerHTML = `<div class="segmentos csp-grupos" role="group" aria-label="Que Youtubers">${[["escolhidos", "⭐", "Escolhidos"], ["todos", "👥", 'Todos<span class="csp-longo"> os Youtubers</span>']].map(([k, ic, n]) => `<button data-grupo="${k}" aria-pressed="${vista.grupo === k}"><span aria-hidden="true">${ic}</span> ${n}<em>${r.canais?.[k] || 0}</em></button>`).join("")}</div>`;
+  $$("[data-grupo]", main).forEach((b) => b.addEventListener("click", () => ((vista.grupo = b.dataset.grupo), (vista.tema = ""), (vista.pessoa = ""), (vista.sinal = ""), (vista.caso = ""), recarregar())));
   botao.onclick = async () => {
     if (!nCanais) return toast(vista.grupo === "todos" ? "Ainda não há canais ligados." : "Escolhe primeiro os Youtubers (ou canais extra) a vigiar.", { erro: true });
     aParar = false;
@@ -226,9 +230,8 @@ export async function desenharRadar(main) {
 
     corpo.innerHTML = `
       <div class="rdr-cabeca">
-        <div class="segmentos rdr-grupos" role="group" aria-label="Que Youtubers">${[["escolhidos", `⭐ Escolhidos`], ["todos", "Todos os Youtubers"]].map(([k, n]) => `<button data-grupo="${k}" aria-pressed="${vista.grupo === k}">${n}</button>`).join("")}</div>
         <div class="rdr-resumo">
-          ${[["novo", "Por ver", conta.novo], ["visto", "Vistos", conta.visto], ["noticia", "Viraram notícia", conta.noticia], ["todos", "Todos", doGrupoTodos.length]].map(([k, n, v]) => `<button class="rdr-num ${k === "novo" && v ? "destaque" : ""}" data-filtro="${k}" aria-pressed="${vista.filtro === k}"><b>${inteiro(v)}</b><span>${n}</span></button>`).join("")}
+          ${[["novo", "👀", "Por ver", conta.novo], ["visto", "✓", "Vistos", conta.visto], ["noticia", "📰", "Viraram notícia", conta.noticia], ["todos", "🗂️", "Todos", doGrupoTodos.length]].map(([k, ic, n, v]) => `<button class="rdr-num k-${k} ${k === "novo" && v ? "destaque" : ""}" data-filtro="${k}" aria-pressed="${vista.filtro === k}"><span class="rdr-num-ic" aria-hidden="true">${ic}</span><b>${inteiro(v)}</b><span class="rdr-num-n">${n}</span></button>`).join("")}
         </div>
       </div>
       ${vista.grupo === "escolhidos" ? blocoEscolhidos(r) : `<p class="muted rdr-nota">Aqui estão os vídeos de todos os Youtubers do Placar, incluindo os escolhidos.</p>`}
@@ -251,11 +254,10 @@ export async function desenharRadar(main) {
         ${casoAberto ? `<button class="btn btn-pequeno" data-fechar-caso>✕ Caso: ${esc(casoAberto.titulo)}</button>` : ""}
         <span class="rdr-barra-fim">${novosNaLista.length > 1 ? `<button class="btn btn-pequeno" id="rdr-todos-vistos">✓ Marcar ${novosNaLista.length} como vistos</button>` : ""}</span>
       </div>
-      <div class="rdr-lista">${lista.map(cartao).join("") || (outrosDoCaso.length ? "" : `<div class="painel ed-bloco rdr-vazio"><h3>${r.itens.length ? "Nada aqui" : "O radar ainda está vazio"}</h3><p class="muted">${r.itens.length ? (vista.filtro === "novo" && !vista.sinal && !vista.caso ? "Já viste tudo. 🎉" : "Experimenta outro filtro.") : `Carrega em "${esc(botao.textContent)}" para ler já os vídeos.`}</p></div>`)}</div>
+      <div class="rdr-lista">${lista.map(cartao).join("") || (outrosDoCaso.length ? "" : `<div class="painel ed-bloco rdr-vazio"><h3>${r.itens.length ? "Nada aqui" : "O radar ainda está vazio"}</h3><p class="muted">${r.itens.length ? (vista.filtro === "novo" && !vista.sinal && !vista.caso ? "Já viste tudo. 🎉" : "Experimenta outro filtro.") : `Carrega em "Procurar agora" para ler já os vídeos.`}</p></div>`)}</div>
       ${outrosDoCaso.length ? `<div class="painel ed-bloco rdr-outros"><h4 class="ed-sub">Outros vídeos do caso</h4><p class="muted">Falam do mesmo, mas não chegaram aos pontos para entrar no radar.</p>${outrosDoCaso.map((v) => `<a class="rdr-outro" href="https://www.youtube.com/${v.s ? "shorts/" : "watch?v="}${esc(v.id)}" target="_blank" rel="noopener">${v.th ? `<img src="${esc(v.th)}" alt="" loading="lazy" referrerpolicy="no-referrer">` : "<span></span>"}<span><b>${esc(v.t)}</b><small>${esc(v.dono ? nome(v.dono) : v.n || "")} · ${esc(ha(v.p))} · 👁 ${curto(v.v || 0)}</small></span></a>`).join("")}</div>` : ""}
       <p class="muted sgp-regras-txt">${rodape(r)}</p>`;
 
-    $$("[data-grupo]", corpo).forEach((b) => b.addEventListener("click", () => ((vista.grupo = b.dataset.grupo), (vista.tema = ""), (vista.pessoa = ""), (vista.sinal = ""), (vista.caso = ""), recarregar())));
     $$("[data-filtro]", corpo).forEach((b) => b.addEventListener("click", () => (aVista.clear(), (vista.filtro = b.dataset.filtro), (vista.tema = ""), desenhar())));
     $$("[data-pessoa]", corpo).forEach((b) => b.addEventListener("click", () => ((vista.pessoa = vista.pessoa === b.dataset.pessoa ? "" : b.dataset.pessoa), desenhar())));
     $$("[data-sinal]", corpo).forEach((b) => b.addEventListener("click", () => ((vista.sinal = vista.sinal === b.dataset.sinal ? "" : b.dataset.sinal), desenhar())));
