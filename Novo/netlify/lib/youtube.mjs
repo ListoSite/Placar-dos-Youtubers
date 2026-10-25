@@ -89,7 +89,16 @@ export function normalizeVideo(item) {
     c: Number(st.commentCount || 0),
     live: Boolean(item.liveStreamingDetails),
     th: bestThumb(s.thumbnails),
+    // Para o Radar do Caso (não ficam guardados com os vídeos)
+    desc: String(s.description || "").slice(0, 1500),
+    tags: (s.tags || []).slice(0, 20),
   };
+}
+
+/** Os comentários mais relevantes de um vídeo (texto), para o Radar do Caso. 1 unidade. */
+export async function comentariosDe(videoId, max = 25) {
+  const data = await call("commentThreads", { part: "snippet", videoId, maxResults: max, order: "relevance", textFormat: "plainText" });
+  return (data.items || []).map((it) => String(it.snippet?.topLevelComment?.snippet?.textDisplay || "").slice(0, 400)).filter(Boolean);
 }
 
 /** Dados completos de até N canais (50 por pedido = 1 unidade). */

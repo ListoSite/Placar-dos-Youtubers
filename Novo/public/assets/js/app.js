@@ -12,7 +12,7 @@ const ROTAS = [
   { re: /^publica(?:\/([a-z]+))?$/, mod: "./admin/vitrine.js", nav: "#/" },
   { re: /^votacoes$/, mod: "./admin/votacoes.js", nav: "#/votacoes" },
   { re: /^sugestoes$/, mod: "./admin/sugestoes.js", nav: "#/sugestoes" },
-  { re: /^caso(?:\/(karma|noticias))?$/, mod: "./admin/caso.js", nav: "#/caso" },
+  { re: /^caso(?:\/(karma|noticias|radar))?$/, mod: "./admin/caso.js", nav: "#/caso" },
   { re: /^palco(?:\/([a-z-]+))?$/, mod: "./stage/stage.js", nav: "#/palco" },
   { re: /^editar(?:\/([a-z-]+))?$/, mod: "./admin/admin.js", nav: "#/editar" },
 ];

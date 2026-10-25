@@ -96,8 +96,15 @@ export async function desenharNoticias(main) {
   });
 }
 
+/** Abre o editor com uma notícia já começada (por exemplo, a partir do Radar). depois(noticia). */
+export async function novaNoticiaCom(pre, depois) {
+  const r = await api("admin/caso/noticias");
+  editor(r, { ...pre, id: undefined }, depois);
+}
+
 /** Escrever ou editar uma notícia. */
 function editor(r, n, depois) {
+  const editar = Boolean(n?.id);
   const d = n || { tema: "noticia", titulo: "", texto: "", pessoas: [], link: "", imagem: "", pergunta: "", opcoes: [], estado: "publicada", fixada: false, votar: true };
   let tema = d.tema;
   let pessoas = [...(d.pessoas || [])];
@@ -107,7 +114,7 @@ function editor(r, n, depois) {
   };
   const opcoes = [...(d.opcoes || []), "", "", "", ""].slice(0, 4);
   const { el, fechar } = janela(
-    `<h2>${n ? "Editar notícia" : "Nova notícia"}</h2>
+    `<h2>${editar ? "Editar notícia" : "Nova notícia"}</h2>
     <form class="vc-form ntp-form">
       <div class="campo"><span>Tema</span><div class="ntp-temas">${Object.entries(r.temas)
         .map(([k, t]) => `<button type="button" data-tema="${k}" aria-pressed="${tema === k}" style="--tc:${t.cor}">${t.icone} ${esc(t.nome)}</button>`)
@@ -131,7 +138,7 @@ function editor(r, n, depois) {
       <label class="ed-check"><input type="checkbox" name="fixada" ${d.fixada ? "checked" : ""}> Fixar no topo</label>
       <label class="ed-check"><input type="checkbox" name="votar" ${d.votar !== false ? "checked" : ""}> Aceitar reações e respostas</label>
     </form>
-    <div class="janela-acoes"><button class="btn" data-fechar>Cancelar</button><button class="btn btn-primario" data-ok>${n ? "Guardar" : "Publicar"}</button></div>`,
+    <div class="janela-acoes"><button class="btn" data-fechar>Cancelar</button><button class="btn btn-primario" data-ok>${editar ? "Guardar" : "Publicar"}</button></div>`,
     { larga: true },
   );
   const f = $("form", el);
@@ -168,7 +175,7 @@ function editor(r, n, depois) {
   $("[data-ok]", el).addEventListener("click", async (e) => {
     const v = (k) => f.elements[k].value;
     const noticia = {
-      ...(n ? { id: n.id } : {}),
+      ...(editar ? { id: n.id } : {}),
       tema,
       titulo: v("titulo"),
       texto: v("texto"),
@@ -185,9 +192,9 @@ function editor(r, n, depois) {
     if (!noticia.titulo.trim()) return toast("Escreve um título.", { erro: true });
     if (noticia.pergunta.trim() && noticia.opcoes.filter((o) => o.trim()).length < 2) return toast("A pergunta precisa de pelo menos 2 respostas.", { erro: true });
     try {
-      await chamar("caso/noticia", { noticia }, { botao: e.currentTarget, recarregar: false, sucesso: noticia.estado === "publicada" ? "Notícia no site." : "Guardada." });
+      const res = await chamar("caso/noticia", { noticia }, { botao: e.currentTarget, recarregar: false, sucesso: noticia.estado === "publicada" ? "Notícia no site." : "Guardada." });
       fechar();
-      depois();
+      depois(res?.noticia);
     } catch {
       /* o erro já apareceu */
     }

@@ -9,18 +9,23 @@ import { chamar } from "./common.js";
 const sinal = (n) => (n > 0 ? `+${n}` : String(n));
 
 export async function render(main, { params = [] } = {}) {
-  const vista = params[0] === "karma" ? "karma" : "noticias";
+  const vista = ["karma", "radar"].includes(params[0]) ? params[0] : "noticias";
   main.dataset.titulo = "O Caso";
   main.innerHTML = `<div class="wrap csp">${subnav("caso")}<div class="vc-topo"><div><h1>O Caso</h1><p class="muted">${
-    vista === "karma"
+    vista === "radar"
+      ? "Os vídeos recentes dos Youtubers que podem dar notícia: falam de outros Youtubers, têm palavras como resposta, polémica, colab, pausa ou 1 milhão, ou têm muito mais views e comentários do que o normal. Carrega em Fazer notícia para a começar já preenchida."
+      : vista === "karma"
       ? 'O público dá karma aos Youtubers (apoiar 👍 ou "estou farto" 👎) e uma reação, com a conta Google e sempre anónimo. Fica à parte do Índice de Influência: só entra se o ligares aqui.'
       : "Publica o que anda a acontecer, com um tema (polémica, coisas boas…). O público reage, responde à tua pergunta e dá karma aos Youtubers envolvidos. Tudo anónimo."
   }</p></div>
-    <div class="vc-acoes"><a class="btn" href="/#/caso${vista === "karma" ? "?ver=karma" : ""}" target="_blank" rel="noopener">Ver no site</a>${vista === "karma" ? `<button class="btn" id="csp-regras">Regras</button>` : `<button class="btn btn-primario" id="csp-nova">+ Nova notícia</button>`}</div></div>
-    <div class="filtros"><div class="segmentos" role="group" aria-label="O Caso"><a class="btn-seg" href="#/caso" aria-pressed="${vista === "noticias"}">📰 Notícias</a><a class="btn-seg" href="#/caso/karma" aria-pressed="${vista === "karma"}">⚖️ Karma</a></div></div>
+    <div class="vc-acoes"><a class="btn" href="/#/caso${vista === "karma" ? "?ver=karma" : ""}" target="_blank" rel="noopener">Ver no site</a>${vista === "karma" ? `<button class="btn" id="csp-regras">Regras</button>` : vista === "radar" ? `<button class="btn" id="csp-regras">Regras do radar</button><button class="btn btn-primario" id="csp-procurar" data-a-esperar="A procurar">Procurar agora</button>` : `<button class="btn btn-primario" id="csp-nova">+ Nova notícia</button>`}</div></div>
+    <div class="filtros"><div class="segmentos" role="group" aria-label="O Caso"><a class="btn-seg" href="#/caso" aria-pressed="${vista === "noticias"}">📰 Notícias</a><a class="btn-seg" href="#/caso/radar" aria-pressed="${vista === "radar"}">📡 Radar</a><a class="btn-seg" href="#/caso/karma" aria-pressed="${vista === "karma"}">⚖️ Karma</a></div></div>
     <div id="csp-corpo"><div class="a-carregar"><div class="roda"></div></div></div></div>`;
   if (vista === "karma") await desenhar(main);
-  else {
+  else if (vista === "radar") {
+    const { desenharRadar } = await import("./radar.js");
+    await desenharRadar(main);
+  } else {
     const { desenharNoticias } = await import("./noticias.js");
     await desenharNoticias(main);
   }

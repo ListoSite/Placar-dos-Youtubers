@@ -24,6 +24,7 @@ import {
 } from "../lib/youtube.mjs";
 import { cleanPayload, findChannel, applyImport, applyMonths, applyDaily, cleanExtra, dailyFromExtra, saveExtras, fillSocials, cleanTikTok, applyTikTok, saveTikToks, cleanRedesSB, applyRedeSB, saveRedesSB, donoDaRede } from "../lib/socialblade.mjs";
 import { limparAbout, canalDoAbout, aplicarAbout } from "../lib/ytabout.mjs";
+import { lerRadar, radarCanal, guardarRadar } from "../lib/radar.mjs";
 import { estimarPessoa, apagarEstimativas, unidadesUsadas } from "../lib/estimate.mjs";
 
 export const config = { path: "/api/*" };
@@ -820,6 +821,45 @@ const adminRoutes = {
   "GET caso/noticias": async () => ({ temas: TEMAS_NOTICIA, reacoes: REACOES_NOTICIA, noticias: await noticiasPainel() }),
   "POST caso/noticia": async ({ db, b }) => ({ noticia: await guardarNoticia(b.noticia || {}, new Set(Object.keys(db.people))) }),
   "POST caso/noticia/apagar": async ({ b }) => apagarNoticia(String(b.id || "")),
+
+  // ---------- Radar do Caso (vídeos que podem dar notícia) ----------
+  "GET caso/radar": async ({ db }) => {
+    const r = await lerRadar();
+    const ordem = { novo: 0, noticia: 1, ignorado: 2 };
+    r.itens.sort((a, b) => ordem[a.estado] - ordem[b.estado] || (b.p || "").localeCompare(a.p || "") || b.pontos - a.pontos);
+    return { ...r, temas: TEMAS_NOTICIA, nomes: Object.fromEntries(Object.values(db.people).map((p) => [p.id, p.name])) };
+  },
+  "POST caso/radar/estado": async ({ b }) => {
+    const r = await lerRadar();
+    const it = r.itens.find((x) => x.id === b.id);
+    if (!it) throw new HttpError(404, "Esse vídeo já não está no radar.");
+    if (["novo", "ignorado", "noticia"].includes(b.estado)) it.estado = b.estado;
+    if (b.noticia) it.noticia = String(b.noticia).slice(0, 40);
+    await guardarRadar(r);
+    return { ok: true };
+  },
+  "POST caso/radar/regras": async ({ b }) => {
+    const r = await lerRadar();
+    if (Number.isFinite(Number(b.minimo))) r.regras.minimo = Math.max(2, Math.min(15, Number(b.minimo)));
+    if (b.palavras !== undefined) r.regras.palavras = (Array.isArray(b.palavras) ? b.palavras : String(b.palavras).split("\n")).map((x) => String(x).trim().slice(0, 60)).filter(Boolean).slice(0, 80);
+    if ("comentarios" in b) r.regras.comentarios = Boolean(b.comentarios);
+    await guardarRadar(r);
+    return { regras: r.regras };
+  },
+  // Volta a ler os vídeos já guardados (só títulos, sem gastar quota) e, se pedido, vai buscar os mais recentes
+  "POST caso/radar/procurar": async ({ db, b }) => {
+    let feito = null;
+    if (b.novos) feito = await runVideos(db, { limit: Math.min(Number(b.limit) || 15, 30) });
+    const r = await lerRadar();
+    const antes = r.itens.length;
+    const vsum = await getJSON("videosummary", {});
+    for (const id of Object.keys(db.channels)) {
+      const v = await getJSON("videos/" + id, null);
+      if (v?.items?.length) await radarCanal(db, r, id, v.items, { mediana: vsum[id]?.med || 0 });
+    }
+    await guardarRadar(r);
+    return { novos: r.itens.length - antes, canais: feito?.channels || 0, total: r.itens.length, save: Boolean(feito) };
+  },
 
   // ---------- Sugestões do público ----------
   "GET sugestoes": async () => {

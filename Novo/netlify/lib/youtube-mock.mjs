@@ -71,7 +71,10 @@ function makeVideo(id, channelId, i) {
   return {
     id,
     snippet: {
-      title: `Vídeo de teste #${i + 1}`,
+      // Alguns títulos e descrições com cara de notícia, para testar o Radar do Caso
+      title: [`RESPOSTA ao drama com o Wuant`, `Fizemos uma COLAB com a Inês Rochina`, `Chegámos a 1 MILHÃO!`, `Vou fazer uma pausa no canal`][i % 13] || `Vídeo de teste #${i + 1}`,
+      description: i % 13 === 0 ? "Tinha de esclarecer tudo. A verdade sobre o que aconteceu." : i % 13 === 1 ? "Obrigado @inesrochina pelo convite!" : "Descrição de teste.",
+      tags: i % 13 === 0 ? ["polémica", "resposta"] : [],
       channelId,
       publishedAt: new Date(Date.now() - ageDays * DAY).toISOString(),
       thumbnails: { high: { url: `https://picsum.photos/seed/v${id}/480/270` } },
@@ -106,6 +109,10 @@ export async function mockCall(endpoint, p) {
   }
   if (endpoint === "videos") {
     return { items: p.id.split(",").map((id, i) => makeVideo(id, "UC" + id, i)) };
+  }
+  if (endpoint === "commentThreads") {
+    const textos = ["Isto vai dar polémica 🍿", "O Wuant vai responder de certeza", "Que treta", "Grande vídeo!"];
+    return { items: textos.map((t) => ({ snippet: { topLevelComment: { snippet: { textDisplay: t } } } })) };
   }
   if (endpoint === "playlists") {
     return { items: [{ id: p.id, snippet: { title: "Série de teste " + p.id.slice(-4), channelId: "", thumbnails: {} }, contentDetails: { itemCount: 12 } }] };

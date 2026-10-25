@@ -4,7 +4,8 @@
 //  - refreshProjects(): vídeos dos projetos (playlists ou listas de vídeos)
 
 import { getJSON, setJSON } from "./storage.mjs";
-import { channelsByIds, recentUploads, playlistVideoIds, videosByIds, playlistInfo, takeUnits } from "./youtube.mjs";
+import { channelsByIds, recentUploads, playlistVideoIds, videosByIds, playlistInfo, takeUnits, comentariosDe } from "./youtube.mjs";
+import { lerRadar, radarCanal, guardarRadar } from "./radar.mjs";
 import { todayLisbon, todayPacific, median, pool } from "./util.mjs";
 
 const DAY = 86400000;
@@ -111,6 +112,7 @@ export async function runVideos(db, { limit = 20, only } = {}) {
   ids = ids.slice(0, limit);
   if (!ids.length) return { channels: 0 };
   const vsum = await getJSON("videosummary", {});
+  const radar = await lerRadar();
   const errors = [];
   let quotaError = null;
   await pool(ids, 4, async (id) => {
@@ -121,12 +123,14 @@ export async function runVideos(db, { limit = 20, only } = {}) {
       await setJSON("videos/" + id, { at: new Date().toISOString(), items: slim });
       vsum[id] = summarizeVideos(slim);
       vstate[id] = new Date().toISOString();
+      // Radar do Caso: os vídeos que podem dar notícia (títulos, descrições, etiquetas, comentários)
+      await radarCanal(db, radar, id, items, { mediana: vsum[id]?.med || 0, buscarComentarios: (v) => comentariosDe(v) }).catch((e) => errors.push(`radar ${id}: ${e.message}`));
     } catch (e) {
       errors.push(`${id}: ${e.message}`);
       if (/quota/i.test(e.message)) quotaError = e;
     }
   });
-  await Promise.all([setJSON("videosummary", vsum), setJSON("vstate", vstate)]);
+  await Promise.all([setJSON("videosummary", vsum), setJSON("vstate", vstate), guardarRadar(radar)]);
   if (quotaError) {
     await addQuota(takeUnits());
     throw quotaError;
