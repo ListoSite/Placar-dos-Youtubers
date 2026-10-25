@@ -24,7 +24,7 @@ import {
 } from "../lib/youtube.mjs";
 import { cleanPayload, findChannel, applyImport, applyMonths, applyDaily, cleanExtra, dailyFromExtra, saveExtras, fillSocials, cleanTikTok, applyTikTok, saveTikToks, cleanRedesSB, applyRedeSB, saveRedesSB, donoDaRede } from "../lib/socialblade.mjs";
 import { limparAbout, canalDoAbout, aplicarAbout } from "../lib/ytabout.mjs";
-import { lerRadar, guardarRadar, canaisDoGrupo } from "../lib/radar.mjs";
+import { lerRadar, guardarRadar, canaisDoGrupo, mudarEstado as mudarEstadoRadar } from "../lib/radar.mjs";
 import { estimarPessoa, apagarEstimativas, unidadesUsadas } from "../lib/estimate.mjs";
 
 export const config = { path: "/api/*" };
@@ -825,18 +825,20 @@ const adminRoutes = {
   // ---------- Radar do Caso (vídeos que podem dar notícia) ----------
   "GET caso/radar": async ({ db }) => {
     const r = await lerRadar();
-    const ordem = { novo: 0, noticia: 1, ignorado: 2 };
+    const ordem = { novo: 0, visto: 1, noticia: 2 };
     r.itens.sort((a, b) => ordem[a.estado] - ordem[b.estado] || (b.p || "").localeCompare(a.p || "") || b.pontos - a.pontos);
-    return { ...r, temas: TEMAS_NOTICIA, nomes: Object.fromEntries(Object.values(db.people).map((p) => [p.id, p.name])), canais: { escolhidos: canaisDoGrupo(db, r.regras, "escolhidos").length, todos: canaisDoGrupo(db, r.regras, "todos").length } };
+    const { removidos, ...resto } = r;
+    return { ...resto, nRemovidos: removidos.length, temas: TEMAS_NOTICIA, nomes: Object.fromEntries(Object.values(db.people).map((p) => [p.id, p.name])), canais: { escolhidos: canaisDoGrupo(db, r.regras, "escolhidos").length, todos: canaisDoGrupo(db, r.regras, "todos").length } };
   },
+  // Um vídeo (id) ou vários (ids): novo, visto, noticia ou remover
   "POST caso/radar/estado": async ({ b }) => {
     const r = await lerRadar();
-    const it = r.itens.find((x) => x.id === b.id);
-    if (!it) throw new HttpError(404, "Esse vídeo já não está no radar.");
-    if (["novo", "ignorado", "noticia"].includes(b.estado)) it.estado = b.estado;
-    if (b.noticia) it.noticia = String(b.noticia).slice(0, 40);
+    const ids = Array.isArray(b.ids) ? b.ids.slice(0, 500) : [b.id];
+    if (!["novo", "visto", "noticia", "remover"].includes(b.estado)) throw new HttpError(400, "Estado inválido.");
+    const n = mudarEstadoRadar(r, ids.map(String), b.estado, { noticia: b.noticia });
+    if (!n) throw new HttpError(404, "Esse vídeo já não está no radar.");
     await guardarRadar(r);
-    return { ok: true };
+    return { ok: true, mudados: n };
   },
   "POST caso/radar/regras": async ({ db, b }) => {
     const r = await lerRadar();

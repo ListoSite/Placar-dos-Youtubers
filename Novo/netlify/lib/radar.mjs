@@ -177,7 +177,31 @@ export function palavrasExtra(linhas) {
 export async function lerRadar() {
   const r = await getJSON(CHAVE, null);
   const base = { minimo: 5, palavras: [], comentarios: true, escolhidos: [], extras: [] };
-  return { itens: [], ...(r || {}), regras: { ...base, ...(r?.regras || {}) } };
+  const radar = { itens: [], removidos: [], ...(r || {}), regras: { ...base, ...(r?.regras || {}) } };
+  // Os "ignorados" de antes passam a removidos (não voltam a aparecer)
+  for (const x of radar.itens) if (x.estado === "ignorado") radar.removidos.push(x.id);
+  radar.itens = radar.itens.filter((x) => x.estado !== "ignorado");
+  return radar;
+}
+
+/** Muda o estado de vídeos do radar: novo, visto, noticia, ou remover (sai e não volta). */
+export function mudarEstado(radar, ids, estado, extra = {}) {
+  let n = 0;
+  for (const id of ids) {
+    const it = radar.itens.find((x) => x.id === id);
+    if (!it) continue;
+    n++;
+    if (estado === "remover") {
+      radar.itens = radar.itens.filter((x) => x.id !== id);
+      radar.removidos.push(id);
+    } else {
+      it.estado = estado;
+      if (estado === "visto") it.visto = new Date().toISOString();
+      if (extra.noticia) it.noticia = String(extra.noticia).slice(0, 40);
+    }
+  }
+  radar.removidos = [...new Set(radar.removidos)].slice(-3000);
+  return n;
 }
 
 /** Os canais de um grupo: "escolhidos" (Youtubers escolhidos + canais extra) ou "todos". */
@@ -202,6 +226,7 @@ export async function radarCanal(db, radar, canal, videos, { buscarComentarios =
   let pedidos = 0;
   for (const v of videos) {
     if (!v?.id || Date.parse(v.p || 0) < limite) continue;
+    if (radar.removidos?.includes(v.id)) continue;
     const antes = radar.itens.find((x) => x.id === v.id);
     let a = analisarVideo(v, { dono, nomes, extra, mediana });
     if (buscarComentarios && radar.regras.comentarios && !antes?.comLidos && a.pontos >= radar.regras.minimo - 1 && v.c >= 20 && pedidos < maxComentarios) {
@@ -240,6 +265,6 @@ export async function guardarRadar(radar) {
   radar.itens.sort((a, b) => (b.p || "").localeCompare(a.p || ""));
   const limite = Date.now() - (DIAS + 30) * 864e5;
   radar.itens = radar.itens.filter((x) => x.estado === "noticia" || Date.parse(x.p || 0) >= limite);
-  if (radar.itens.length > MAX) radar.itens = radar.itens.filter((x) => x.estado !== "ignorado").slice(0, MAX);
+  if (radar.itens.length > MAX) radar.itens = [...radar.itens.filter((x) => x.estado !== "visto"), ...radar.itens.filter((x) => x.estado === "visto")].slice(0, MAX);
   await setJSON(CHAVE, radar);
 }

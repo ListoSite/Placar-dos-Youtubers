@@ -97,6 +97,14 @@ O botão "Procurar" lê o grupo da aba aberta, aos bocados de 10 canais (podes p
 
 A análise foi afinada com vídeos reais de notícias do YouTube português: quase tudo está no **título** (nomes de outros Youtubers, como "X reage à resposta do Y", "O X tem razão" ou listas de nomes no fim; verbos de conflito como reage, ataca, critica, indireta, exposto, queixas; conquistas como ganhei, prémio, estreia; curiosidades como ex-namorada ou visita). Os títulos em maiúsculas e com "!?" contam como sinal. Das descrições só conta o texto escrito (os links, redes, patrocínios e códigos de desconto são ignorados), e das etiquetas só os nomes de outros Youtubers. Também contam os sinais nos números (muito mais views do que o normal, muitos comentários para as views) e, nos que já parecem notícia, os comentários mais relevantes (outros Youtubers e palavras quentes). Cada vídeo mostra porquê entrou e "Fazer notícia" abre o editor já preenchido, como rascunho. Nas regras escolhes os pontos mínimos (5 por defeito), juntas palavras tuas (com o tema depois de `=`) e ligas ou desligas a leitura dos comentários.
 
+Para não teres de decorar o que já viste:
+
+- **✓ Visto:** o vídeo fica marcado e esbatido (a cinzento). Abrir o vídeo pelo radar marca-o sozinho, e "Marcar N como vistos" marca de uma vez os que estão à vista. "↺ Por ver" desfaz.
+- **🗑 Remover:** o vídeo sai do radar e não volta, mesmo quando o radar volta a procurar.
+- Quem vira notícia fica marcado com "📰 Notícia".
+
+Em cima há contadores que servem de filtro (Por ver, Vistos, Viraram notícia, Todos) e "🔥 Em alta esta semana", com os Youtubers de quem mais se fala nos vídeos dos últimos 7 dias (carregar num filtra por ele). Também dá para filtrar por tema e ordenar por mais recentes ou mais quentes. Cada miniatura mostra quão quente está o vídeo (morno, quente, a ferver) e se é um Short.
+
 ### Bocas no Palco
 
 Comentários com piada que aparecem nos vídeos num balão (no máximo 4 por vídeo, com pelo menos 8 segundos entre eles): quando alguém ganha, sobe ou cai muitos lugares, passa para a frente, aparece no pódio, e no cartão de cada Youtuber. Há bocas automáticas, tiradas dos números (muitos vídeos em 30 dias, último vídeo há muito tempo, no YouTube desde há muitos anos, mais seguidores no Instagram ou no TikTok do que no YouTube, subidas e quedas grandes, a categoria, coroas no Palco) e de momentos (por exemplo "ainda vais parar às notícias do…", que usa o Youtuber de notícias com mais Índice: categoria com "Notícias", "Atualidade", "Comentário"…). Na ficha de cada Youtuber escreves bocas só dele, e em Definições bocas gerais; `{nome}` e `{noticias}` são trocados pelos nomes. Os exclusivos gravados antes das bocas continuam iguais.
