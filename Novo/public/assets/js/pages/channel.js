@@ -12,6 +12,11 @@ export async function render(main, { params }) {
     main.innerHTML = `<div class="wrap pagina-topo"><h1>Canal não encontrado</h1><p>Pode ter sido removido. <a href="#/">Voltar ao início</a>.</p></div>`;
     return;
   }
+  // O canal principal é o perfil do Youtuber
+  if (dono.channelIds?.[0] === c.id) {
+    location.replace(`#/youtuber/${encodeURIComponent(dono.id)}`);
+    return;
+  }
   const contam = canaisQueContam(dono, estado.canais);
   return renderPerfil(main, { params, entidade: perfilDoCanal(dono, c, contam) });
 }

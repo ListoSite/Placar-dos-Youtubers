@@ -4,6 +4,7 @@ import { estado, pessoa, indice, views, mediaMeses, recordes, rankingMes, seguid
 import { esc, curto, inteiro, mesNome } from "../format.js";
 import { contar, ICONES } from "../ui.js";
 import { avatarPalco } from "./stage.js";
+import { bocaPara } from "./bocas.js";
 
 export async function correr(palco, opts) {
   const p = pessoa(opts.id) || pessoa(palco.foco) || pessoa([...estado.posIndice.entries()].find(([, pos]) => pos === 1)?.[0]);
@@ -60,6 +61,12 @@ export async function correr(palco, opts) {
     contar(d.querySelector("b"), n.v, { formato: n.fmt || curto, duracao: 900 });
     palco.tocar("virar");
     await palco.passo(1100);
+  }
+  // Uma boca sobre os números dele (vídeos, antiguidade, crescimento…)
+  const b1 = bocaPara("revelar", p, { historico: palco.historico });
+  if (b1) {
+    palco.boca(b1);
+    await palco.passo(2500);
   }
   const barras = cena.querySelector(".ct-barras");
   const iMax = serie.indexOf(Math.max(...serie));
@@ -201,4 +208,9 @@ async function cenaRedes(palco, p, vertical) {
     await palco.passo(c.duelo ? 6000 : 4500);
   }
   if (!curios.length) await palco.passo(1500);
+  const b2 = bocaPara("cartao", p, { historico: palco.historico });
+  if (b2) {
+    palco.boca(b2);
+    await palco.passo(4200);
+  }
 }

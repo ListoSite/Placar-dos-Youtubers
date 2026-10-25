@@ -44,6 +44,13 @@ export async function render(alvo) {
     </div>
 
     <div class="painel ed-bloco">
+      <h3>Bocas no Palco</h3>
+      <p class="muted">Comentários com piada que aparecem nos vídeos (no máximo 4 por vídeo): quando alguém ganha, sobe, cai, passa para a frente ou aparece no pódio e no cartão. Há bocas automáticas, tiradas dos números de cada um (vídeos a mais, último vídeo há muito tempo, mais seguidores no Instagram do que no YouTube…). Aqui juntas as tuas, para todos; as de cada Youtuber escrevem-se na ficha dele.</p>
+      <label class="campo"><span>Bocas gerais (uma por linha)</span><textarea class="input" id="st-bocas" rows="5" placeholder="{nome} no pódio? O {noticias} já está a gravar!&#10;Alguém ligue ao {nome}: está no top!">${esc((s.bocas || []).join("\n"))}</textarea><small>{nome} é trocado pelo Youtuber e {noticias} pelo Youtuber de notícias com mais Índice (categoria com "Notícias", "Atualidade", "Comentário"…).</small></label>
+      <div class="ed-acoes"><button class="btn btn-primario" id="st-guardar-bocas" data-a-esperar="A guardar">Guardar bocas</button></div>
+    </div>
+
+    <div class="painel ed-bloco">
       <h3>O que se mede</h3>
       <p class="muted">Quem tem vários canais: medimos o Youtuber (todos os canais juntos) ou os canais de facto (só o principal)? Vale para os rankings, o Índice e o Palco. Em cada Youtuber podes escolher outra coisa (em Youtubers, Canais do YouTube).</p>
       <div class="ed-medir-opcoes" id="st-medir">
@@ -124,6 +131,7 @@ export async function render(alvo) {
     const medir = $("#st-medir input:checked", alvo)?.value || "youtuber";
     chamar("settings", { settings: { medir, bonusCanais: Number($("#st-bonus", alvo).value) } }, { botao: e.currentTarget, sucesso: medir === "principal" ? "Agora mede-se só o canal principal." : "Agora mede-se o Youtuber, com todos os canais." }).catch(() => {});
   });
+  $("#st-guardar-bocas", alvo).addEventListener("click", (e) => chamar("settings", { settings: { bocas: $("#st-bocas", alvo).value } }, { botao: e.currentTarget, sucesso: "Bocas guardadas." }).catch(() => {}));
   $("#st-guardar-canal", alvo).addEventListener("click", (e) => {
     const c = {};
     $$("#st-canal input", alvo).forEach((i) => (c[i.name] = i.value));

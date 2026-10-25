@@ -226,7 +226,7 @@ export function datasetPublico(ds, cfg) {
     today: ds.today,
     currentMonth: ds.currentMonth,
     months: months.length ? months : ds.months.slice(-1),
-    settings: { weights: ds.settings.weights, alcanceTopo: ds.settings.alcanceTopo, bonusCanais: ds.settings.bonusCanais, canal: ds.settings.canal },
+    settings: { weights: ds.settings.weights, alcanceTopo: ds.settings.alcanceTopo, bonusCanais: ds.settings.bonusCanais, ...(Array.isArray(ds.settings.bocas) ? { bocas: ds.settings.bocas } : {}), canal: ds.settings.canal },
     categories: [...new Set(people.map((p) => p.category).filter(Boolean))].sort((a, b) => a.localeCompare(b, "pt")),
     people,
     channels: ds.channels.filter((c) => vivos.has(c.personId)),

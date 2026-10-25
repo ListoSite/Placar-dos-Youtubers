@@ -10,6 +10,7 @@ import { TEMAS, tema as temaPorId, cenario, estiloTema } from "./temas.js";
 import { Ambiente } from "./ambiente.js";
 import { criarKit } from "./kits.js";
 import { historicoEmCache } from "./historico.js";
+import { bocaPara } from "./bocas.js";
 import { cenaDoTema } from "./cenas.js";
 import qrcode from "../../vendor/qrcode.esm.js";
 import { limparRoteiro, roteiroPadrao, cenaPronta } from "./roteiro.js";
@@ -263,7 +264,35 @@ export class Palco {
 
   /** Um momento do espetáculo (golpe, acerto, vencedor…). Devolve true se o tema tratou o som. */
   evento(nome, dados) {
+    if (dados?.p && ["vencedor", "subida", "queda", "lider", "revelar"].includes(nome)) this.talvezBoca(nome, dados);
     return this.kit ? this.kit.evento(nome, dados) : false;
+  }
+
+  /**
+   * Uma "boca" (comentário com piada) num momento do espetáculo: no máximo 4 por espetáculo e com
+   * pelo menos 8 segundos entre elas. Ver bocas.js.
+   */
+  talvezBoca(momento, { p, pos, n }) {
+    if (this.terminado || (this.bocas || 0) >= 4 || Date.now() - (this.ultimaBoca || 0) < 8000 / this.fator) return;
+    // Num ranking, só para o pódio (os outros lugares não precisam de comentário)
+    if (momento === "revelar" && pos > 3) return;
+    const t = bocaPara(momento, p, { n, historico: this.historico });
+    if (t) this.boca(t);
+  }
+
+  /** Mostra uma boca: um balão que entra, fica uns segundos e sai. */
+  boca(html, { dur = 4200 } = {}) {
+    if (this.terminado) return;
+    this.bocas = (this.bocas || 0) + 1;
+    this.ultimaBoca = Date.now();
+    this.mundo.querySelector(".bc-boca")?.remove();
+    const el = document.createElement("div");
+    el.className = "bc-boca";
+    el.innerHTML = `<span class="bc-icone">💬</span><span>${html}</span>`;
+    this.mundo.appendChild(el);
+    this.tocar("boing", {}, 0.15);
+    setTimeout(() => el.classList.add("sai"), (dur - 500) / this.fator);
+    setTimeout(() => el.remove(), dur / this.fator);
   }
 
   // ---------- Efeitos ----------

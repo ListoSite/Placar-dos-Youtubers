@@ -48,7 +48,7 @@ export async function render(main, { params, entidade = null }) {
           ${avatar(p, 128)}
           <div>
             <h1>${esc(p.name)}</h1>
-            ${ehCanal && dono ? `<p class="perfil-dono">${p.canal.principal ? "Canal principal" : `Canal ${esc(p.canal.role && p.canal.role !== "outro" ? p.canal.role : "")}`.replace(/\s+$/, "")} de ${linkDono ? `<a href="${linkDono}">${esc(dono.name)}</a>` : `<b>${esc(dono.name)}</b>`}${p.canal.count ? "" : " · não conta nas somas do Youtuber"}</p>` : ""}
+            ${ehCanal && dono ? `<p class="perfil-dono">Canal de ${linkDono ? `<a href="${linkDono}">${esc(dono.name)}</a>` : `<b>${esc(dono.name)}</b>`}${p.canal.count ? "" : " · não conta nas somas do Youtuber"}</p>` : ""}
             <div class="perfil-linha">
               ${etiquetaCategoria(p.category)}
               ${p.realName ? `<span class="soft">${esc(p.realName)}</span>` : ""}
@@ -144,7 +144,14 @@ export async function render(main, { params, entidade = null }) {
         <div class="painel canal-lista">${todosCanais
           .map(
             (c) => `<div class="canal${ehCanal && c.id === p.id ? " atual" : ""}">${avatar({ name: c.title, photo: c.thumb }, 44)}
-            <div>${ligacaoCanal(c) && !(ehCanal && c.id === p.id) ? `<a class="canal-nome" href="${ligacaoCanal(c)}"><b>${esc(c.nome || c.title)}</b></a>` : `<b>${esc(c.nome || c.title)}</b>`}${c.category ? ` <span class="etiqueta">${esc(c.category)}</span>` : ""}<small class="muted">${esc([c.handle, "canal " + c.role, c.count ? "" : "não conta nas somas", c.country ? "país " + c.country : "", c.missing ? "canal indisponível" : ""].filter(Boolean).join(", "))}</small></div>
+            <div>${(() => {
+              const principal = (ehCanal ? dono : p)?.channelIds?.[0] === c.id;
+              const nome = principal ? c.title : c.nome || c.title;
+              const href = ligacaoCanal(c);
+              const atual = ehCanal ? c.id === p.id : principal;
+              const cat = principal ? (ehCanal ? dono : p)?.category : c.category;
+              return `${href && !atual ? `<a class="canal-nome" href="${href}"><b>${esc(nome)}</b></a>` : `<b>${esc(nome)}</b>`}${principal ? ` <span class="etiqueta ouro">Principal</span>` : ""}${cat ? ` <span class="etiqueta">${esc(cat)}</span>` : ""}`;
+            })()}<small class="muted">${esc([c.handle, c.count ? "" : "não conta nas somas", c.country ? "país " + c.country : "", c.missing ? "canal indisponível" : ""].filter(Boolean).join(", "))}</small></div>
             <div class="canal-num"><b>${curto(c.subs)}</b> subs<br><span class="muted">${curto(c.views)} views</span></div>
             <a class="botao-icone" href="https://socialblade.com/youtube/channel/${esc(c.id)}" target="_blank" rel="noopener" aria-label="Ver ${esc(c.title)} no Social Blade" title="Social Blade"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M5 20v-7M11 20V5M17 20v-10M3 20h18"/></svg></a>
             <a class="botao-icone" href="https://www.youtube.com/channel/${esc(c.id)}" target="_blank" rel="noopener" aria-label="Abrir ${esc(c.title)} no YouTube" title="YouTube">${ICONES.youtube}</a></div>`,

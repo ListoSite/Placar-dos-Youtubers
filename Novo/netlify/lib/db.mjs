@@ -22,6 +22,8 @@ export const DEFAULT_SETTINGS = {
   medir: "youtuber",
   // Bónus no Índice por cada canal a mais que conta (em %), até 3 canais a mais
   bonusCanais: 5,
+  // Bocas gerais do Palco (as de cada Youtuber ficam no Youtuber); {nome} e {noticias} são trocados
+  bocas: [],
   roles: ["principal", "secundário", "clips", "gaming", "podcast", "shorts", "música", "outro"],
   // Divulgação do canal no fim dos espetáculos do Palco
   canal: { nome: "Placar dos Youtubers", youtube: "@placardosyoutubers", tiktok: "", instagram: "", hashtags: "#placardosyoutubers #youtubersportugueses #youtubeportugal" },
@@ -197,5 +199,5 @@ export function deletePerson(db, id) {
 /** Campos que podem ser alterados na edição de uma pessoa. */
 export const PERSON_FIELDS = [
   "name", "realName", "bio", "category", "tags", "status", "hidden", "photo", "location",
-  "mainChannelId", "socials", "notes", "birthYear", "startedYear", "languageNote", "noMatch", "medir",
+  "mainChannelId", "socials", "notes", "birthYear", "startedYear", "languageNote", "noMatch", "medir", "bocas",
 ];

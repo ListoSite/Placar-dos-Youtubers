@@ -68,8 +68,8 @@ export async function correr(palco, opts) {
         const alvo = cartao.querySelector(".palco-avatar");
         if (!alvo || palco.terminado) return;
         palco.evento("revelar", { alvo, p: x.p, pos: x.pos });
-        if (x.ant && x.ant - x.pos >= 3) setTimeout(() => palco.evento("subida", { alvo: cartao.querySelector(".rv-mov") || alvo, p: x.p }), 1200);
-        else if (x.ant && x.pos - x.ant >= 3) setTimeout(() => palco.evento("queda", { alvo: cartao.querySelector(".rv-mov") || alvo, p: x.p }), 1200);
+        if (x.ant && x.ant - x.pos >= 3) setTimeout(() => palco.evento("subida", { alvo: cartao.querySelector(".rv-mov") || alvo, p: x.p, n: x.ant - x.pos }), 1200);
+        else if (x.ant && x.pos - x.ant >= 3) setTimeout(() => palco.evento("queda", { alvo: cartao.querySelector(".rv-mov") || alvo, p: x.p, n: x.pos - x.ant }), 1200);
       }, 500);
     const b = cartao.querySelector("[data-v]");
     if (b) {

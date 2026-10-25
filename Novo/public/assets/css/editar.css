@@ -1179,3 +1179,152 @@ details > summary {
   font-size: 11px;
   vertical-align: 2px;
 }
+
+/* ---------- Canais do YouTube (ficha) ---------- */
+.ed-canais {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 6px;
+}
+.ed-canais .ed-canal {
+  display: block;
+  padding: 14px 16px;
+  border: 1px solid var(--linha);
+  border-radius: var(--r-md);
+  background: rgba(255, 255, 255, 0.025);
+}
+.ed-canais .ed-canal.principal {
+  border-color: rgba(244, 185, 66, 0.35);
+  background: linear-gradient(135deg, rgba(244, 185, 66, 0.07), rgba(255, 255, 255, 0.02));
+}
+.ed-canal-linha {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+.ed-canal-linha .ed-canal-info {
+  flex: 1;
+  min-width: 0;
+}
+.ed-canal-linha .ed-canal-info b {
+  font-size: var(--t-md);
+}
+.ed-canal-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 4px 0;
+}
+.ed-canal-chips .etiqueta {
+  height: 22px;
+  font-size: 11px;
+}
+.ed-canal-links {
+  display: flex;
+  gap: 6px;
+  flex: none;
+}
+.ed-canal-links .botao-icone svg,
+.ed-rede-links .botao-icone svg {
+  width: 18px;
+  height: 18px;
+}
+.ed-lk-yt {
+  color: #ff4466;
+}
+.ed-lk-sb {
+  color: #b7a9ff;
+}
+.ed-lk-placar {
+  color: var(--rubi-claro);
+}
+.ed-canal-ctrl {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 10px;
+  margin-top: 12px;
+  padding-top: 10px;
+  border-top: 1px solid var(--linha);
+}
+.ed-canal-ctrl .ed-check {
+  margin: 0 auto 0 0;
+}
+.ed-canal-ctrl small {
+  flex-basis: 100%;
+  order: 9;
+  font-size: var(--t-xs);
+}
+.ed-canal .ed-canal-dados {
+  margin-top: 12px;
+}
+@media (max-width: 640px) {
+  .ed-canal-linha {
+    flex-wrap: wrap;
+  }
+  .ed-canal-links {
+    width: 100%;
+    justify-content: flex-start;
+    padding-left: 66px;
+  }
+}
+
+/* ---------- Outras redes (ficha) ---------- */
+.ed-redes-grelha {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 12px;
+}
+.ed-rede-cartao {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px 14px;
+  border: 1px solid var(--linha);
+  border-radius: var(--r-md);
+  background: rgba(255, 255, 255, 0.025);
+}
+.ed-rede-topo {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 34px;
+}
+.ed-rede-user {
+  font-size: var(--t-xs);
+  color: var(--texto-3);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
+}
+.ed-rede-links {
+  display: flex;
+  gap: 6px;
+  margin-left: auto;
+  flex: none;
+}
+.ed-rede-numeros {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: var(--t-sm);
+}
+.ed-rede-numeros .muted {
+  font-size: var(--t-xs);
+}
+.ed-rede-numeros .btn {
+  margin-left: auto;
+}
+.ed-rede-numeros b {
+  white-space: nowrap;
+  font-size: var(--t-md);
+}
+.ed-rede-numeros .muted {
+  min-width: 0;
+}
+.ed-canal-linha .ed-canal-info b {
+  display: block;
+  overflow-wrap: anywhere;
+}

@@ -25,10 +25,11 @@ export function perfilDoCanal(p, c, contam) {
   return {
     ...p,
     id: c.id,
-    name: c.nome || c.title || p.name,
-    category: c.category || p.category,
-    bio: c.bio || (principal ? p.bio : ""),
-    tags: c.tags || (principal ? p.tags : []),
+    // O canal principal é o próprio Youtuber: usa os dados dele (a categoria, a descrição…)
+    name: principal ? c.title || p.name : c.nome || c.title || p.name,
+    category: principal ? p.category : c.category || p.category,
+    bio: principal ? p.bio : c.bio || "",
+    tags: principal ? p.tags : c.tags || [],
     realName: principal ? p.realName : "",
     dono: p.id,
     donoNome: p.name,

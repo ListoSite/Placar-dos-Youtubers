@@ -100,6 +100,12 @@ function mesEscrito(antes, e) {
   return { v: Math.max(0, Math.round(Number(e.v) || 0)), src: e.src || "manual", ...(e.lock ? { lock: 1 } : {}), ...(e.lock && debaixo ? { antes: debaixo } : {}) };
 }
 
+/** Bocas do Palco: uma por linha, até max, cada uma com até 160 caracteres. */
+function limparBocas(x, max) {
+  const lista = Array.isArray(x) ? x : String(x || "").split("\n");
+  return lista.map((t) => String(t).replace(/[\u0000-\u001f]/g, " ").trim().slice(0, 160)).filter(Boolean).slice(0, max);
+}
+
 function sanitizePerson(input, existing) {
   const out = {};
   for (const k of PERSON_FIELDS) if (k in input) out[k] = input[k];
@@ -107,6 +113,7 @@ function sanitizePerson(input, existing) {
   if ("name" in out) out.name = String(out.name).trim() || existing?.name || "Sem nome";
   if ("mainChannelId" in out && existing && out.mainChannelId && !existing.channels.includes(out.mainChannelId)) delete out.mainChannelId;
   // Medir: "" (segue as Definições), "todos" ou um dos canais da pessoa
+  if ("bocas" in out) out.bocas = limparBocas(out.bocas, 12);
   if ("medir" in out) out.medir = out.medir === "todos" || (existing && existing.channels.includes(out.medir)) ? out.medir : "";
   return out;
 }
@@ -717,6 +724,7 @@ const adminRoutes = {
       db.settings.weights = w;
     }
     if (s.medir === "youtuber" || s.medir === "principal") db.settings.medir = s.medir;
+    if (s.bocas !== undefined) db.settings.bocas = limparBocas(s.bocas, 40);
     if (s.bonusCanais !== undefined && Number.isFinite(Number(s.bonusCanais))) db.settings.bonusCanais = Math.max(0, Math.min(20, Math.round(Number(s.bonusCanais))));
     if (s.alcanceTopo) db.settings.alcanceTopo = Math.max(10000, Number(s.alcanceTopo) || DEFAULT_SETTINGS.alcanceTopo);
     if (typeof s.siteTitle === "string" && s.siteTitle.trim()) db.settings.siteTitle = s.siteTitle.trim().slice(0, 80);

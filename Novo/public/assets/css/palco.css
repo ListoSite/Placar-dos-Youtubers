@@ -8396,3 +8396,58 @@ body.modo-palco {
   opacity: 0;
   transition: opacity 0.2s;
 }
+
+/* ---------- Bocas (comentários com piada) ---------- */
+.bc-boca {
+  position: absolute;
+  left: 50%;
+  bottom: 120px;
+  z-index: 30;
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  max-width: 1300px;
+  padding: 22px 34px;
+  border-radius: 34px 34px 34px 8px;
+  background: rgba(255, 255, 255, 0.96);
+  color: #1b0910;
+  font-size: 38px;
+  font-weight: 700;
+  line-height: 1.2;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.45), 0 0 0 6px rgba(244, 185, 66, 0.55);
+  transform: translateX(-50%);
+  animation: bc-entra 0.55s cubic-bezier(0.2, 1.4, 0.4, 1) both;
+}
+.vertical .bc-boca {
+  bottom: 300px;
+  max-width: 940px;
+  width: max-content;
+  font-size: 40px;
+}
+.bc-boca b {
+  color: #c0143c;
+  font-weight: 900;
+}
+.bc-icone {
+  font-size: 50px;
+  flex: none;
+}
+.bc-boca.sai {
+  animation: bc-sai 0.45s ease-in both;
+}
+@keyframes bc-entra {
+  from {
+    opacity: 0;
+    transform: translateX(-50%) translateY(60px) scale(0.6) rotate(-4deg);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0) scale(1) rotate(-1deg);
+  }
+}
+@keyframes bc-sai {
+  to {
+    opacity: 0;
+    transform: translateX(-50%) translateY(40px) scale(0.8);
+  }
+}

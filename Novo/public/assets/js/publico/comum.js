@@ -14,7 +14,9 @@ export function ligacaoPessoa(p) {
 export function ligacaoCanal(c) {
   if (!c) return null;
   const dono = estado.pessoas.get(c.personId);
-  return dono && ligacaoPessoa(dono) ? `#/canal/${encodeURIComponent(c.id)}` : null;
+  if (!dono || !ligacaoPessoa(dono)) return null;
+  // O canal principal é o perfil do Youtuber
+  return dono.channelIds?.[0] === c.id ? ligacaoPessoa(dono) : `#/canal/${encodeURIComponent(c.id)}`;
 }
 
 /** A aba está ligada no painel? */
