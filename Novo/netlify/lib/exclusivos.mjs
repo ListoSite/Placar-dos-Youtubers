@@ -36,6 +36,7 @@ export const ESPETACULOS = {
   berlindes: "Corrida de berlindes",
   escapa: "Escapa do círculo",
   ringue: "Batalha no ringue",
+  curiosidades: "Curiosidades",
 };
 
 const txt = (x, max) => String(x ?? "").trim().slice(0, max);

@@ -26,6 +26,7 @@ export const GRUPOS = [
   { id: "duelos", nome: "Duelos", texto: "Frente a frente, até haver um vencedor." },
   { id: "caso", nome: "O Caso", texto: "Notícias com suspense: aparecem do nada, como uma emissão interrompida." },
   { id: "historias", nome: "Histórias", texto: "Um Youtuber em destaque." },
+  { id: "curiosidades", nome: "Curiosidades", texto: "Episódios com um tema, sempre diferentes: Youtubers desaparecidos, gémeos improváveis, quase nos marcos…" },
 ];
 
 export const ESPETACULOS = [
@@ -54,6 +55,7 @@ export const ESPETACULOS = [
   { id: "caso", usos: ["video", "direto"], dur: "40 s–3 min", grupo: "caso", nome: "Última hora (O Caso)", texto: "As notícias do Caso com suspense: interferência, alarme, o título letra a letra, quem está envolvido e o que o público diz.", mod: "./caso.js", icone: I(`<rect x="5" y="9" width="38" height="28" rx="4"/><path d="M5 30h38"/><path d="M11 16h14M11 22h9"/><circle cx="35" cy="19" r="4" fill="currentColor"/><path d="M17 41h14"/>`) },
   { id: "cartao", usos: ["video"], dur: "30 s", grupo: "historias", nome: "Cartão de Youtuber", texto: "Um Youtuber em destaque, com o Índice e os números mais importantes.", mod: "./cartao.js", icone: I(`<rect x="5" y="9" width="38" height="30" rx="5"/><circle cx="17" cy="21" r="5"/><path d="M10 33c2-4 12-4 14 0M29 19h9M29 26h9"/>`) },
   { id: "historia", usos: ["video"], dur: "1 min", grupo: "historias", nome: "A história de…", texto: "O percurso de um Youtuber mês a mês, com os momentos marcantes.", mod: "./historia.js", icone: I(`<path d="M5 38c6-2 8-14 14-14s7 8 12 8 6-16 12-22"/><circle cx="43" cy="10" r="3" fill="currentColor"/><path d="M5 43h38"/>`) },
+  { id: "curiosidades", usos: ["video", "direto"], dur: "1,5–3 min", grupo: "curiosidades", nome: "Curiosidades", texto: "Um episódio com um tema (Lembras-te deles?, Separados à nascença, Quase lá!…) e factos dos números de todos. Sempre diferente: o tema, os factos e a maneira de mostrar mudam de cada vez.", mod: "./curiosidades.js", icone: I(`<circle cx="24" cy="24" r="19"/><path d="M24 14v2M24 22v13"/><circle cx="24" cy="17" r=".5" fill="currentColor"/><path d="M9 9l4 4M39 9l-4 4"/>`) },
 ];
 
 class Abortado extends Error {}

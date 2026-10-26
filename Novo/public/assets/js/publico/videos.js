@@ -26,6 +26,7 @@ const ESPETACULOS = {
   torneio: { nome: "Torneio", icone: "🏆" },
   cartao: { nome: "Cartão de Youtuber", icone: "🪪" },
   historia: { nome: "A história de…", icone: "📖" },
+  curiosidades: { nome: "Curiosidades", icone: "🎲" },
 };
 
 /** Uma pessoa pelo id (do dataset público ou da lista que veio com os vídeos). */

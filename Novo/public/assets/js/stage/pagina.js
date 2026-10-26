@@ -9,6 +9,7 @@ import { quemAparece } from "../quem.js";
 import { esc, mesNome } from "../format.js";
 import { $, $$, avatar, toast, janela } from "../ui.js";
 import { som } from "../audio.js";
+import { TEMAS_CURIOSIDADES } from "./curiosidades-temas.js";
 import { Palco, ESPETACULOS, GRUPOS, eAbortado } from "./stage.js";
 import { TEMAS, GRUPOS_TEMAS, TEMA_DA_CATEGORIA } from "./temas.js";
 import { NOME_DO_KIT, kitDoTema } from "./kits.js";
@@ -174,6 +175,8 @@ function opcoes(main, esp, query) {
     berlindes: `${numero([4, 6, 8, 10, 12, 16], 10)}${quem()}${cat}`,
     escapa: `${numero([2, 3, 4, 6, 8, 10], 6)}<label class="campo"><span>Anéis</span><select class="input" name="aneis"><option>5</option><option selected>8</option><option>12</option></select></label>${quem()}${cat}`,
     ringue: `${numero([4, 6, 8, 10, 12, 16], 8)}${tamanho(false, "Vida por")}${quem()}${mes}${cat}`,
+    curiosidades: `<label class="campo cresce"><span>Tema do episódio</span><select class="input" name="episodio"><option value="acaso">🎲 Ao acaso (sempre diferente)</option>${TEMAS_CURIOSIDADES.map((t) => `<option value="${t.id}">${t.icone} ${esc(t.nome)}</option>`).join("")}</select></label>
+      <label class="campo"><span>Curiosidades</span><select class="input" name="n"><option>5</option><option selected>7</option><option>10</option></select></label>${mes}${cat}`,
     cartao: campoPessoa("id", "Youtuber", query, "Procurar"),
     historia: campoPessoa("id", "Youtuber", query, "Procurar"),
   }[esp.id];

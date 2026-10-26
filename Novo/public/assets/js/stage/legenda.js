@@ -3,6 +3,7 @@
 import { estado, pessoa } from "../data.js";
 import { mesNome } from "../format.js";
 import { METRICAS } from "./metricas.js";
+import { temaCuriosidades } from "./curiosidades-temas.js";
 
 const HASH_CATEGORIA = {
   Football: "#futebol",
@@ -40,6 +41,8 @@ export function textoPublicar(esp, opts, { formato, aviso }) {
   const cat = opts.cat ? ` (${opts.cat})` : "";
   const nome = (id) => pessoa(id)?.name || "";
   const met = METRICAS[opts.metric]?.nome(opts.m || estado.ref);
+  // Curiosidades: o tema que saiu (ou o escolhido)
+  const tc = temaCuriosidades(opts.temaEscolhido || opts.episodio);
   const t = {
     revelacao: [`Top ${opts.n || 10} dos Youtubers portugueses: ${met || `views em ${mes}`}${cat} 🏆`, `Quem ficou em 1.º lugar? Vê até ao fim 👀`],
     corrida: [`A corrida das views dos Youtubers portugueses${cat} 🏁`, `De ${mesNome(opts.de || estado.ref)} a ${mesNome(opts.ate || estado.ref)}: quem dominou cada mês?`],
@@ -65,6 +68,7 @@ export function textoPublicar(esp, opts, { formato, aviso }) {
     escapa: [`Qual Youtuber escapa do círculo? ⭕`, `Cada ressalto toca uma nota. Quem passa pela abertura parte o anel. Quem parte o último?`],
     ringue: [`Batalha no ringue: quem fica de pé? 🥊`, `Bolas com vida, golpes críticos e um ringue que fecha. Comenta em quem apostaste!`],
     cartao: [`${nome(opts.id) || "Youtuber"} em números 📊`, `O Índice de Influência e os números mais importantes.`],
+    curiosidades: tc ? [`${tc.nome} ${tc.icone}`, tc.legenda] : [`Curiosidades sobre os Youtubers portugueses 🎲`, `Coisas que (quase) ninguém sabe sobre os Youtubers portugueses. Qual te surpreendeu mais?`],
     historia: [`A história de ${nome(opts.id) || "um Youtuber"} no YouTube 📈`, `Do início até hoje, mês a mês, com os momentos marcantes.`],
   }[esp.id] || [esp.nome, ""];
   const extra = [

@@ -196,7 +196,7 @@ Novo/
 
 ## Palco
 
-19 espetáculos em ecrã inteiro, em 16:9 ou 9:16, com 40 temas.
+26 espetáculos em ecrã inteiro, em 16:9 ou 9:16, com 40 temas.
 
 - Temas de ambiente: Clássico, Verão, Inferno, Gelo, Neon, Galáxia, Gala.
 - Temas por categoria: todas as 36 categorias do site têm tema. Os feitos à mão (Futebol, Cozinha, Carros, Gaming, Tech, Comédia, Música) e 25 gerados a partir de cores, um padrão de fundo, ícones e música próprios (YouTube, Clips, Shorts, Vlog, Podcast e Rádio, Negócios, Girly, Escola, Tutorial, Política, Notícias, História, Livros, Cinema, Fitness, Reacts, Casa, Pesca, Animais, Kids, Ciência, Dança, Religião, Motas, Programação). Ao escolher uma categoria (ou um Youtuber), o tema certo é sugerido. Os temas gerados estão em `stage/temas-gerados.js`: para criar outro basta uma linha com cores, padrão e ícones.
@@ -208,6 +208,7 @@ Espetáculos:
 - Jogos: Desafio do Placar (para quem vê o vídeo: escolha múltipla, o intruso, ordenar, verdadeiro ou falso, com pontos), Quem fez mais?, Mais ou menos, Adivinha quem é, Roda da sorte.
 - Duelos: Batalha (barras de vida até ao K.O.; no tema Futebol completo é um jogo com marcador, minutos, golos e penáltis) e Torneio (8 ou 16 Youtubers).
 - Histórias: Cartão de Youtuber e A história de….
+- Curiosidades: episódios com um tema, sempre diferentes (ver abaixo).
 
 Na página do Palco há um filtro **Para vídeos / Para direto (Twitch)**. Em cada espetáculo:
 - **Para**: Vídeo (ritmo automático, lembrete a meio para subscrever) ou Direto (ritmo "Eu avanço", opção Repetir no fim).
@@ -218,6 +219,31 @@ Na página do Palco há um filtro **Para vídeos / Para direto (Twitch)**. Em ca
 **Efeitos do tema: Tema completo ou Só cores.** Em "Tema completo", cada tema tem um kit que desenha os momentos dos espetáculos à sua maneira: Futebol (golos com a bola a voar, cartões amarelo e vermelho, apito, bancada a cantar, taça), Coliseu nos temas Inferno e Fitness (espadas, rugido do público, louros, o polegar do imperador), Arcada em Gaming e Neon (HIT, combos, K.O., GAME OVER, recordes), Reações em Reacts, Comédia, Shorts e Clips (emojis e comentários de direto), Fofo em Girly e Kids (corações, laços, tiara), Viagem em Vlog e Verão (polaroids, pins, carimbos de passaporte, aviões), Natureza em Pesca e Animais, Notícias em Notícias, Política e Negócios (rótulos de televisão, última hora, verificação Verdadeiro/Falso, primeira página do jornal), Pista em Carros e Motas (semáforos, ultrapassagens, nitro, bandeira de xadrez), Espetáculo em Música, Dança, Gala e Cinema (holofotes, aplausos, rosas, estatueta), Laboratório em Tech, Programação, Ciência, Galáxia e Gelo (scanner, lasers, hologramas), Livro em Livros, História, Escola, Tutorial e Religião (caneta vermelha, selos, diploma), Cozinha em Cozinha e Casa (estrelas de chef, picante, chapéu) e Estúdio nos outros (gostos, sininho, placa de ouro). Os espetáculos só dizem o que aconteceu (`palco.evento("golpe", …)`) e o kit decide como aparece e soa: está tudo em `stage/kits.js`.
 
 **Cenas próprias dos 10 temas principais.** Em "Tema completo", os temas Futebol, Carros, Cozinha, Girly, Inferno, YouTube, Gaming, Comédia, Vlog e Tech também têm a abertura, os cartões da Revelação e a arena da Batalha desenhados de raiz: placar luminoso, cartas de jogador e um jogo com golos (Futebol); semáforos de partida, conta-rotações e uma corrida em duas pistas (Carros); quadro de giz, a campânula que levanta e um duelo de jurados (Cozinha); capa de revista e um duelo de corações (Girly); título em chamas, seleção de lutador e combate com cronómetro e K.O. (Inferno); leitor de vídeo, miniaturas e uma batalha de tendências (YouTube); PRESS START, cartas de raridade e um combate de píxeis P1 contra P2 (Gaming); banda desenhada com balões e POW (Comédia); câmara a gravar, stories e dois telemóveis (Vlog); terminal, ficha técnica e um benchmark (Tech). Nas arenas "de progresso" ganha quem chega primeiro aos 100 (metros, corações, gostos…). Está tudo em `stage/cenas.js` e `css/cenas.css`.
+
+**Curiosidades.** Cada episódio tem um tema que serve de título de vídeo, e factos tirados dos números de todos os Youtubers:
+
+| Tema | O que mostra |
+| --- | --- |
+| 👻 Lembras-te deles? | Canais grandes sem vídeos novos há meses ou anos (com "Quem é?" desfocado ou o canal abandonado, com teias e os dias a contar) |
+| 😴 Gigantes adormecidos | Muitos subscritores e poucas views no mês |
+| 🦖 Os dinossauros do YouTube | Os mais antigos, numa linha do tempo com o que veio depois (iPhone, Minecraft, Instagram, TikTok…) |
+| 🚀 Foguetões | Canais com poucos anos que já passaram veteranos |
+| 🏭 Máquinas de fazer vídeos | Quem tem milhares de vídeos, ou quase um por dia |
+| 💎 Poucos vídeos, muitas views | Quem não precisa de publicar muito |
+| 👯 Separados à nascença | Os mesmos subscritores e tudo o resto ao contrário |
+| 🪨 David contra Golias | Canais pequenos que tiveram mais views do que gigantes |
+| 📱 Mais famosos fora do YouTube | Instagram, TikTok e Twitch contra o YouTube |
+| 🎯 Quase lá! | Quem está quase num número redondo, e quando lá chega ao ritmo atual |
+| 🎢 Montanha-russa | Do melhor mês ao pior |
+| ⏱️ Todos os dias vs. de vez em quando | Quem publica sem parar e quem se faz esperar |
+| 📲 Shorts vs. vídeos longos | Onde cada um é mais visto |
+| 💥 O vídeo que rebentou a escala | Um vídeo muito acima do normal do canal |
+| 🧮 Matemática dos Youtubers | Estádios da Luz cheios, views por português, views por minuto |
+| ⏪ Há um ano vs. agora | Quem mais mudou num ano |
+| ❤️ O público mais fiel | Gostos e comentários por cada 100 views |
+| 🎲 Coisas que não sabias | Um pouco de tudo |
+
+Com "Ao acaso", o tema é sorteado entre os que têm factos suficientes, evitando os últimos que saíram. Dentro do tema, os factos são sorteados com peso (os mais impressionantes saem mais vezes), sem repetir a mesma pessoa e evitando os que já saíram nas últimas vezes (a memória fica no browser). As frases e, em alguns temas, a maneira de mostrar também variam. O mais impressionante fica para o fim ("E a mais incrível…") e o episódio acaba com todas as caras e a pergunta para os comentários. O plano inteiro fica guardado com o espetáculo, por isso um exclusivo mostra exatamente o mesmo. Para juntar um tema novo: uma linha em `stage/curiosidades-temas.js` e um gerador em `stage/curiosidades.js`.
 
 **Histórico: clássicos, rivais, estrelas e coroas.** Quando um espetáculo é gravado em vídeo (com sessão iniciada), os resultados ficam guardados para sempre: cada duelo (Batalha e Torneio), cada torneio ganho (uma estrela ★) e cada 1.º lugar de um ranking ou votação (uma coroa 👑). Antes de cada duelo aparece o confronto direto ("5.º confronto · 3–1"), com o selo ⚡ Clássico a partir do 3.º; no fim aparecem as vinganças e as sequências de vitórias. As estrelas aparecem ao lado do nome nos torneios e batalhas, o perfil de cada Youtuber tem a secção "No Palco" (estrelas, coroas, vitórias e maiores rivais) e a página do Palco tem o Hall da fama.
 
