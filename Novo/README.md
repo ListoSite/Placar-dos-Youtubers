@@ -241,12 +241,19 @@ Na página do Palco há um filtro **Para vídeos / Para direto (Twitch)**. Em ca
 | 🧮 Matemática dos Youtubers | Estádios da Luz cheios, views por português, views por minuto |
 | ⏪ Há um ano vs. agora | Quem mais mudou num ano |
 | ❤️ O público mais fiel | Gostos e comentários por cada 100 views |
-| 📏 A escala real dos Youtubers | Os subscritores em sítios reais (Altice Arena, Dragão, Luz, Coimbra, Braga, Porto, Lisboa, Portugal), do mais pequeno ao maior: as barras de antes encolhem quando chega um maior |
-| 🧊 O iceberg do YouTube português | Desce nível a nível, dos gigantes (à superfície) aos canais pequenos (no fundo do mar), e a água escurece |
+| 📏 A escala real dos Youtubers | Os subscritores em sítios reais, do mais pequeno ao maior (da freguesia mais pequena do continente, com 99 pessoas, à MEO Arena, aos estádios de Braga, Dragão, Alvalade e Luz, aos concelhos, aos distritos de Porto e Lisboa e a Portugal): as barras de antes encolhem quando chega um maior, e cada um diz quanto falta para a próxima meta |
+| 🧊 O iceberg do YouTube português | Desce 5 níveis, dos gigantes (à superfície, mais de 1 milhão) até ao abismo (menos de 5 mil), e a água escurece |
 | 👑 Todos os n.º 1 do Placar | O catálogo de todos os n.º 1, mês a mês, e quem foi mais vezes, o reinado mais longo, o mais improvável e o mês mais forte |
 | 📼 2016 vs. 2026 | Quantos dos maiores já cá estavam em 2016, o maior que nem existia e os de 2016 que continuam no top |
+| 🗺️ Que terra é o teu Youtuber? | Os subscritores num concelho com quase a mesma população (Censos 2021), aceso num mapa de Portugal (com Açores e Madeira); às vezes com a pergunta "que concelho é?" |
+| 🇵🇹 1 em cada… portugueses | Se todos os subscritores fossem portugueses: 1 em cada quantos, em 100 bonecos (cada um 1% de Portugal), e o maior distrito ou ilha que cabia lá dentro |
+| 👶 Portugal ao minuto | Nasce um bebé a cada 6 minutos (INE, 2024): quantas views fazem os Youtubers nesse tempo; o recorde do Cristiano (1 milhão em 90 minutos) contra o ritmo de cada um; o Placar inteiro num minuto |
+| ⚽ A Liga dos Youtubers | Os 18 canais com mais subscritores numa liga: cada mês é uma jornada (25, 18, 15… pontos pelo lugar nas views). Tabela com Champions, Europa e descida, os despromovidos, a equipa sensação, o melhor ataque e, no fim, a revelação do campeão (escondido na tabela até lá) |
+| 🧭 Norte vs. Sul | Com a localidade da ficha de cada Youtuber: Lisboa contra Porto, Norte contra Sul, onde há mais Youtubers por habitante e o maior do Algarve, Alentejo, Centro e Ilhas. Só aparece quando pelo menos 6 Youtubers têm a localidade preenchida |
 | 💵 Quanto pode ganhar um Youtuber? | Só quando se escolhe: uma estimativa larga com as views do mês (0,25 a 4 dólares por mil views, a conta do Social Blade), sem patrocínios |
 | 🎲 Coisas que não sabias | Um pouco de tudo |
+
+Os números de Portugal estão em `stage/portugal.js`, todos com fonte: população a 31/12/2024 (10 749 635, INE), nascimentos de 2024 (84 642, INE), concelhos e distritos (Censos 2021), lotações (MEO Arena, estádios) e o recorde do canal do Cristiano Ronaldo.
 
 **🤔 Consegues adivinhar?** Algumas curiosidades (até 3 por episódio) começam com uma pergunta de escolha múltipla, 5 segundos para pensar e a resposta certa a acender, para quem vê comentar o que respondeu. As respostas erradas são feitas à volta da certa e respeitam os limites (por exemplo, nunca "14 de 8 meses").
 

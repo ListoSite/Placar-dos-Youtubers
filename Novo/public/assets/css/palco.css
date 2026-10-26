@@ -9666,7 +9666,7 @@ body.modo-palco {
   opacity: 0.35;
   transform: scale(0.95);
 }
-.cu-relogio {
+.cu-contagem-q {
   margin-top: 30px;
   width: 120px;
   height: 120px;
@@ -9676,11 +9676,11 @@ body.modo-palco {
   border: 8px solid var(--ouro);
   transition: opacity 0.3s;
 }
-.cu-relogio b {
+.cu-contagem-q b {
   font-family: var(--f-display);
   font-size: 64px;
 }
-.cu-relogio.fim {
+.cu-contagem-q.fim {
   opacity: 0;
 }
 
@@ -9888,4 +9888,333 @@ body.modo-palco {
   font-size: 22px;
   color: var(--texto-3);
   max-width: 1100px;
+}
+
+.cu-nivel-faixa {
+  margin-top: 14px;
+  font-size: 30px;
+  font-weight: 800;
+  color: var(--ouro);
+}
+
+/* Mapa de Portugal */
+.cu-ma {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 90px;
+  align-items: center;
+  width: 100%;
+  max-width: 1600px;
+  text-align: left;
+}
+.vertical .cu-ma {
+  grid-template-columns: 1fr;
+  justify-items: center;
+  text-align: center;
+  gap: 20px;
+}
+.cu-ma-svg {
+  height: 780px;
+  width: auto;
+  overflow: visible;
+}
+.vertical .cu-ma-svg {
+  height: 700px;
+}
+.cu-ma-pais {
+  fill: transparent;
+  stroke: color-mix(in srgb, var(--texto) 70%, transparent);
+  stroke-width: 2.5;
+  stroke-linejoin: round;
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
+  transition: fill 0.8s;
+}
+.cu-ma-svg.cheio .cu-ma-pais {
+  fill: color-mix(in srgb, var(--texto) 9%, transparent);
+}
+.cu-ma-ilha rect {
+  fill: color-mix(in srgb, var(--texto) 5%, transparent);
+  stroke: color-mix(in srgb, var(--texto) 35%, transparent);
+  stroke-width: 1.5;
+  stroke-dasharray: 5 4;
+}
+.cu-ma-ilha text {
+  font-size: 15px;
+  fill: var(--texto-3);
+  text-anchor: middle;
+  font-weight: 700;
+}
+.cu-ma-p {
+  fill: color-mix(in srgb, var(--texto) 40%, transparent);
+}
+.cu-ma-alvo {
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+.cu-ma-alvo.ve {
+  opacity: 1;
+}
+.cu-ma-alvo .ponto {
+  fill: var(--ouro);
+  stroke: #2a1700;
+  stroke-width: 3;
+}
+.cu-ma-alvo .onda {
+  fill: none;
+  stroke: var(--ouro);
+  stroke-width: 3;
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: cu-onda 1.8s ease-out infinite;
+}
+.cu-ma-alvo .onda.o2 {
+  animation-delay: 0.9s;
+}
+@keyframes cu-onda {
+  from {
+    transform: scale(1);
+    opacity: 0.9;
+  }
+  to {
+    transform: scale(4.5);
+    opacity: 0;
+  }
+}
+.cu-ma-rot .nome {
+  font-family: var(--f-display);
+  font-size: 28px;
+  font-weight: 900;
+  fill: var(--texto);
+  paint-order: stroke;
+  stroke: var(--pt-anel);
+  stroke-width: 6px;
+}
+.cu-ma-rot .leg {
+  font-size: 18px;
+  font-weight: 700;
+  fill: var(--ouro);
+  paint-order: stroke;
+  stroke: var(--pt-anel);
+  stroke-width: 5px;
+}
+.cu-ma-lado .cu-titulo {
+  margin-top: 16px;
+}
+
+/* 1 em cada…: cem bonecos */
+.cu-pe {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  max-width: 1500px;
+}
+.cu-pe-num {
+  font-size: 46px;
+  font-weight: 800;
+  color: var(--texto-2);
+}
+.cu-pe-num b {
+  font-family: var(--f-display);
+  font-size: 120px;
+  color: var(--ouro);
+  margin-left: 12px;
+  font-variant-numeric: tabular-nums;
+}
+.cu-pe-grelha {
+  display: grid;
+  grid-template-columns: repeat(20, 34px);
+  gap: 8px 10px;
+  margin: 16px 0 8px;
+}
+.vertical .cu-pe-grelha {
+  grid-template-columns: repeat(10, 52px);
+  gap: 12px 18px;
+}
+.cu-pe-grelha i {
+  height: 46px;
+  background: color-mix(in srgb, var(--texto) 18%, transparent);
+  -webkit-mask: radial-gradient(circle at 50% 18%, #000 30%, transparent 32%), radial-gradient(ellipse 48% 42% at 50% 100%, #000 98%, transparent 100%);
+  mask: radial-gradient(circle at 50% 18%, #000 30%, transparent 32%), radial-gradient(ellipse 48% 42% at 50% 100%, #000 98%, transparent 100%);
+  transition: background 0.3s, transform 0.3s;
+}
+.vertical .cu-pe-grelha i {
+  height: 66px;
+}
+.cu-pe-grelha i.ve {
+  background: var(--ouro);
+  transform: scale(1.12);
+}
+.cu-pe-leg {
+  font-size: 22px;
+  color: var(--texto-3);
+}
+
+/* Relógio */
+.cu-re {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  max-width: 1500px;
+}
+.cu-re-corpo {
+  display: flex;
+  align-items: center;
+  gap: 60px;
+  margin: 20px 0;
+}
+.vertical .cu-re-corpo {
+  flex-direction: column;
+  gap: 24px;
+}
+.cu-re-relogio {
+  width: 300px;
+  height: 300px;
+}
+.cu-re-relogio .aro {
+  fill: var(--pt-painel);
+  stroke: var(--ouro);
+  stroke-width: 8;
+}
+.cu-re-relogio line {
+  stroke: color-mix(in srgb, var(--texto) 60%, transparent);
+  stroke-width: 4;
+  stroke-linecap: round;
+}
+.cu-re-relogio .ponteiro {
+  stroke: var(--ouro);
+  stroke-width: 7;
+}
+.cu-re-relogio .eixo {
+  fill: var(--ouro);
+}
+.cu-re-num {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+.vertical .cu-re-num {
+  align-items: center;
+}
+.cu-re-num small {
+  font-size: 34px;
+  font-weight: 800;
+  color: var(--texto-2);
+}
+.cu-re-num b {
+  font-family: var(--f-display);
+  font-size: 170px;
+  line-height: 1;
+  color: var(--ouro);
+  font-variant-numeric: tabular-nums;
+}
+.cu-re-num span {
+  font-size: 36px;
+  color: var(--texto-2);
+}
+
+/* Tabela da Liga */
+.cu-ta-c {
+  width: 100%;
+  max-width: 1600px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.cu-ta {
+  width: 100%;
+  max-width: 820px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 8px;
+}
+.cu-ta.duas {
+  max-width: 1600px;
+  display: grid;
+  grid-template-rows: repeat(9, auto);
+  grid-auto-flow: column;
+  gap: 6px 30px;
+}
+.cu-ta-l {
+  display: grid;
+  grid-template-columns: 54px auto minmax(0, 1fr) 70px 80px;
+  align-items: center;
+  gap: 14px;
+  padding: 6px 14px;
+  border-radius: 14px;
+  background: var(--pt-painel);
+  border-left: 8px solid transparent;
+  text-align: left;
+}
+.cu-ta-l .pos {
+  font-family: var(--f-display);
+  font-size: 30px;
+  text-align: center;
+}
+.cu-ta-l .nome {
+  font-size: 28px;
+  font-weight: 800;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.cu-ta-l small {
+  font-size: 20px;
+  color: var(--texto-3);
+}
+.cu-ta-l .pts {
+  font-family: var(--f-display);
+  font-size: 34px;
+  text-align: right;
+}
+.cu-ta-l.z-campeao {
+  border-left-color: var(--ouro);
+  background: color-mix(in srgb, var(--ouro) 16%, var(--pt-painel));
+}
+.cu-ta-l.z-champions {
+  border-left-color: #4f8bff;
+}
+.cu-ta-l.z-europa {
+  border-left-color: #ff9a3c;
+}
+.cu-ta-l.z-desce {
+  border-left-color: #ff4d4d;
+  background: color-mix(in srgb, #ff4d4d 10%, var(--pt-painel));
+}
+.cu-ta-l.oculto .nome,
+.cu-ta-l.oculto .pts {
+  filter: blur(1px);
+  color: var(--ouro);
+}
+.cu-ta-leg {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 10px 24px;
+  margin-top: 12px;
+  font-size: 22px;
+  color: var(--texto-2);
+}
+.cu-ta-leg span::before {
+  content: "";
+  display: inline-block;
+  width: 16px;
+  height: 16px;
+  border-radius: 4px;
+  margin-right: 8px;
+  vertical-align: -2px;
+  background: var(--c);
+}
+.cu-ta-leg .z-campeao {
+  --c: var(--ouro);
+}
+.cu-ta-leg .z-champions {
+  --c: #4f8bff;
+}
+.cu-ta-leg .z-europa {
+  --c: #ff9a3c;
+}
+.cu-ta-leg .z-desce {
+  --c: #ff4d4d;
 }

@@ -23,6 +23,11 @@ export const TEMAS_CURIOSIDADES = [
   { id: "iceberg", icone: "🧊", nome: "O iceberg do YouTube português", sub: "Do que toda a gente sabe ao que quase ninguém sabe", legenda: "Do topo do iceberg ao fundo do mar: quantas destas sabias?" },
   { id: "reis", icone: "👑", nome: "Todos os n.º 1 do Placar", sub: "Quem mandou em cada mês", legenda: "Todos os n.º 1 das views, mês a mês. Quem reinou mais tempo?" },
   { id: "nostalgia", icone: "📼", nome: "2016 vs. 2026", sub: "Quem já cá estava e quem nem existia", legenda: "2026 é o novo 2016? Os Youtubers que já cá estavam e os que nem existiam." },
+  { id: "terra", icone: "🗺️", nome: "Que terra é o teu Youtuber?", sub: "Os subscritores em concelhos de Portugal", legenda: "Se os subscritores fossem uma terra, que concelho seria? Do Funchal a Sintra, o mapa dos Youtubers portugueses." },
+  { id: "umemcada", icone: "🇵🇹", nome: "1 em cada… portugueses", sub: "Que parte de Portugal cabe nos subscritores", legenda: "Se todos os subscritores fossem portugueses, quantos de nós seguiam cada Youtuber? E que distrito inteiro cabia lá dentro?" },
+  { id: "minuto", icone: "👶", nome: "Portugal ao minuto", sub: "Os vídeos ao ritmo do país", legenda: "Em Portugal nasce um bebé a cada 6 minutos. Quantas views fazem os Youtubers nesse tempo? E o recorde do Cristiano?" },
+  { id: "liga", icone: "⚽", nome: "A Liga dos Youtubers", sub: "Cada mês é uma jornada: quem é campeão?", legenda: "Uma Liga com os maiores Youtubers portugueses: cada mês é uma jornada. Quem é campeão e quem desce de divisão?" },
+  { id: "regioes", icone: "🧭", nome: "Norte vs. Sul", sub: "Lisboa contra Porto, e o maior de cada região", legenda: "Lisboa ou Porto? Norte ou Sul? Onde se faz mais YouTube em Portugal?" },
   { id: "ganhos", icone: "💵", nome: "Quanto pode ganhar um Youtuber?", sub: "Uma estimativa larga com as views do mês", legenda: "Quanto podem dar os anúncios com as views de um mês? Uma estimativa larga, à maneira do Social Blade.", soEscolha: true },
   { id: "mistura", icone: "🎲", nome: "Coisas que não sabias", sub: "Curiosidades sobre os Youtubers portugueses", legenda: "Curiosidades sobre os Youtubers portugueses que (quase) ninguém sabe." },
 ];

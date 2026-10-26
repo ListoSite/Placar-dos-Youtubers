@@ -17,6 +17,7 @@ import { aleatorio } from "./sorte.js";
 import { animar } from "./grafico.js";
 import { curiosidadesRedes } from "./cartao.js";
 import { TEMAS_CURIOSIDADES, temaCuriosidades } from "./curiosidades-temas.js";
+import { PORTUGUESES, MINUTOS_POR_NASCIMENTO, CONCELHOS, DISTRITOS, NORTE, deLugar, emLugar, distritoDe, noMapa, CONTORNO_PATH, CAIXAS_ILHAS } from "./portugal.js";
 
 const DIA = 864e5;
 const MEMORIA = "palco-curiosidades";
@@ -105,9 +106,8 @@ const EVENTOS = [
   { ano: 2022, ic: "🤖", t: "Chega o ChatGPT", antes: "do ChatGPT" },
 ];
 // Para a matemática do dia a dia
-const PORTUGUESES = 10.6e6;
 const ESTADIO_LUZ = 65000;
-const LISBOA = 545000;
+const LISBOA = 544851;
 
 function melhorPior(p, meses) {
   let max = null;
@@ -598,7 +598,7 @@ const GERADORES = {
         texto: `Em ${mes}, os Youtubers do Placar juntaram **${curto(soma)}** views: **${dec(soma / PORTUGUESES)}** por cada pessoa que vive em Portugal.`,
         num: N(soma / PORTUGUESES, "dec"),
         q: { t: `Quantas views por cada português fizeram os Youtubers do Placar em ${mes}?`, v: soma / PORTUGUESES, f: "dec" },
-        dados: { icone: "🧍", n: Math.max(1, Math.min(50, Math.round(soma / PORTUGUESES))), legenda: "views por cada português (10,6 milhões)" },
+        dados: { icone: "🧍", n: Math.max(1, Math.min(50, Math.round(soma / PORTUGUESES))), legenda: "views por cada pessoa que vive em Portugal (10,7 milhões, INE)" },
       });
     const porSubs = [...c.gente].sort((a, b) => subs(b) - subs(a)).slice(0, 5);
     for (const p of porSubs) {
@@ -721,6 +721,208 @@ const GERADORES = {
     return out;
   },
 
+  // Que terra é o teu Youtuber? O concelho com tantos habitantes como ele tem subscritores
+  terra(c) {
+    const out = [];
+    for (const p of c.gente) {
+      const s = subs(p);
+      if (s < CONCELHOS.at(-1).pop * 0.85 || s > CONCELHOS[0].pop * 1.2) continue;
+      const cc = [...CONCELHOS].sort((a, b) => Math.abs(Math.log(s / a.pop)) - Math.abs(Math.log(s / b.pop)))[0];
+      const k = s / cc.pop;
+      if (k < 0.8 || k > 1.25) continue;
+      const quase = Math.abs(k - 1) <= 0.03;
+      const lugar = cc.em || `em ${cc.nome}`;
+      out.push({
+        k: `terra:${p.id}`,
+        grupo: `terra:${cc.nome}`,
+        peso: 2 + (1 - Math.abs(Math.log(k))) * 2 + Math.log10(s) * 0.3,
+        vis: "mapa",
+        p: p.id,
+        pessoas: [snap(p)],
+        titulo: escolher([`Se os subscritores de **${p.name}** fossem uma terra…`, `**${p.name}** em versão concelho`, `Qual é a terra de **${p.name}**?`]),
+        texto: quase
+          ? `**${p.name}** tem **${inteiro(s)}** subscritores: praticamente os mesmos que as **${inteiro(cc.pop)}** pessoas que vivem ${lugar}.`
+          : k > 1
+            ? `**${p.name}** tem **${curto(s)}** subscritores: um pouco mais do que toda a gente que vive ${lugar} (**${inteiro(cc.pop)}**).`
+            : `**${p.name}** tem **${curto(s)}** subscritores: quase tantos como as **${inteiro(cc.pop)}** pessoas que vivem ${lugar}.`,
+        num: N(s),
+        q: { t: `Que concelho tem tantos habitantes como **${p.name}** tem subscritores?`, opcoesTexto: true, certa: cc.nome, outras: CONCELHOS.filter((x) => x !== cc && Math.abs(Math.log(x.pop / cc.pop)) > 0.4).map((x) => x.nome) },
+        dados: { lugar: { nome: cc.nome, lat: cc.lat, lon: cc.lon, ilha: cc.ilha || null, legenda: `${inteiro(cc.pop)} habitantes` }, outros: CONCELHOS.map((x) => noMapa(x)) },
+      });
+    }
+    return out;
+  },
+
+  // 1 em cada… portugueses: a parte de Portugal, e os distritos que cabem nos subscritores
+  umemcada(c) {
+    const out = [];
+    for (const p of c.gente) {
+      const s = subs(p);
+      if (s < PORTUGUESES / 100) continue;
+      const nCada = Math.round(PORTUGUESES / s);
+      out.push({
+        k: `umemcada:${p.id}`,
+        peso: Math.log10(s) * 1.4,
+        vis: "pessoas",
+        p: p.id,
+        pessoas: [snap(p)],
+        titulo: escolher([`1 em cada ${inteiro(nCada)} portugueses?`, `Quantos portugueses seguem **${p.name}**?`]),
+        texto: `Se todos os **${curto(s)}** subscritores de **${p.name}** fossem portugueses, era **1 em cada ${inteiro(nCada)}** pessoas em Portugal: **${dec((s / PORTUGUESES) * 100)}%** do país. (Na verdade, muitos são de fora.)`,
+        num: N(nCada, "inteiro", { pre: "1 em cada " }),
+        q: { t: `Se fossem todos portugueses, os subscritores de **${p.name}** eram 1 em cada quantos?`, v: nCada, f: "inteiro" },
+        dados: { pct: (s / PORTUGUESES) * 100, nCada },
+      });
+      // O maior distrito (ou região) que cabe nos subscritores
+      const dd = DISTRITOS.filter((d) => d.pop <= s).sort((a, b) => b.pop - a.pop)[0];
+      if (dd) {
+        const k = s / dd.pop;
+        out.push({
+          k: `umemcada:distrito:${p.id}`,
+          grupo: `distrito:${dd.nome}`,
+          peso: Math.log10(s) * 1.2 + (dd.regiao ? 0.5 : 0),
+          vis: "mapa",
+          p: p.id,
+          pessoas: [snap(p)],
+          titulo: dd.regiao ? escolher([`Os subscritores de **${p.name}** enchiam ${dd.nome === "Açores" ? "os Açores" : "a Madeira"}`, `Uma ilha inteira para **${p.name}**`]) : escolher([`Um distrito inteiro para **${p.name}**`, `**${p.name}** contra o distrito ${deLugar(dd).replace(/^d[eoa]s? /, (m) => m)}`]),
+          texto: k >= 1.5 ? `**${p.name}** tem **${curto(s)}** subscritores: **${dec(k)}×** a população ${dd.regiao ? deLugar(dd) : `do distrito ${deLugar(dd)}`} (${inteiro(dd.pop)}).` : `**${p.name}** tem **${curto(s)}** subscritores: mais do que toda a gente ${dd.regiao ? deLugar(dd) : `do distrito ${deLugar(dd)}`} (${inteiro(dd.pop)}).`,
+          num: N(s),
+          dados: { lugar: { nome: dd.regiao ? dd.nome : `Distrito ${deLugar(dd)}`, lat: dd.lat, lon: dd.lon, ilha: dd.ilha || null, legenda: `${inteiro(dd.pop)} habitantes` }, outros: DISTRITOS.map((x) => noMapa(x)) },
+        });
+      }
+    }
+    return out;
+  },
+
+  // Portugal ao minuto: os vídeos ao ritmo da vida em Portugal
+  minuto(c) {
+    const out = [];
+    const mes = mesNome(c.ref, { ano: false });
+    const [y, m] = c.ref.split("-").map(Number);
+    const minutos = new Date(Date.UTC(y, m, 0)).getUTCDate() * 24 * 60;
+    for (const x of rankingMes(c.ref, { categoria: c.cat }).slice(0, 10)) {
+      const porBebe = (x.v / minutos) * MINUTOS_POR_NASCIMENTO;
+      if (porBebe < 50) continue;
+      out.push({
+        k: `minuto:bebe:${x.p.id}:${c.ref}`,
+        peso: 2.5 + Math.log10(porBebe) * 0.5,
+        vis: "relogio",
+        p: x.p.id,
+        pessoas: [snap(x.p)],
+        titulo: escolher([`Um bebé, ${inteiro(Math.round(porBebe))} views`, `Enquanto nasce um bebé em Portugal…`]),
+        texto: `Em Portugal nasce um bebé a cada **6 minutos** (84 642 em 2024, diz o INE). Em ${mes}, nesse tempo, os vídeos de **${x.p.name}** faziam **${inteiro(Math.round(porBebe))}** views.`,
+        num: N(porBebe, "inteiro"),
+        q: { t: `Em 6 minutos (o tempo entre dois bebés em Portugal), quantas views faziam os vídeos de **${x.p.name}** em ${mes}?`, v: porBebe, f: "inteiro" },
+        dados: { rotulo: "Em 6 minutos", ic: "👶", v: porBebe },
+      });
+    }
+    // O Cristiano chegou ao milhão em 90 minutos: e ao ritmo de cada um?
+    for (const p of c.gente) {
+      const ganhos = Object.values(p.sb?.s || {}).slice(-3).filter((g) => g > 0);
+      if (!ganhos.length || subs(p) < 50000) continue;
+      const porMes = ganhos.reduce((a, b) => a + b, 0) / ganhos.length;
+      const meses = 1e6 / porMes;
+      if (meses < 2 || meses > 600) continue;
+      const tempoTxt = tempo(meses * 30.44);
+      out.push({
+        k: `minuto:cristiano:${p.id}`,
+        grupo: "cristiano",
+        peso: 2.2 + Math.log10(subs(p)) * 0.4,
+        vis: "contador",
+        p: p.id,
+        pessoas: [snap(p)],
+        titulo: escolher([`O Cristiano fez em 90 minutos…`, `**${p.name}** contra o recorde do Cristiano`]),
+        texto: `O canal do Cristiano Ronaldo chegou a 1 milhão de subscritores em **90 minutos** (agosto de 2024). Ao ritmo dos últimos meses (**+${curto(porMes)}** por mês), **${p.name}** precisava de **${tempoTxt}** para ganhar 1 milhão.`,
+        num: N(meses * 30.44, "tempo"),
+        dados: { icone: "⏳", n: Math.max(1, Math.min(40, Math.round(meses / 12) || 1)), legenda: "cada ⏳ é um ano" },
+      });
+    }
+    // Todo o Placar, num minuto
+    const soma = c.gente.reduce((a, p) => a + (views(p, c.ref) || 0), 0);
+    if (soma / minutos >= 10)
+      out.push({
+        k: `minuto:placar:${c.ref}`,
+        peso: 3,
+        vis: "relogio",
+        pessoas: [],
+        titulo: `Um minuto de YouTube português`,
+        texto: `Em ${mes}, os Youtubers do Placar fizeram juntos **${inteiro(Math.round(soma / minutos))} views por minuto**, de dia e de noite.`,
+        num: N(soma / minutos, "inteiro"),
+        dados: { rotulo: "Num minuto", ic: "🇵🇹", v: soma / minutos },
+      });
+    return out;
+  },
+
+  // Norte vs. Sul: com a localidade escrita na ficha de cada Youtuber
+  regioes(c) {
+    const out = [];
+    const mes = mesNome(c.ref, { ano: false });
+    const loc = c.gente.map((p) => ({ p, d: distritoDe(p.location) })).filter((x) => x.d);
+    if (loc.length < 6) return out;
+    const lado = (nome, lista) => ({ id: `lugar-${nome}`, name: nome, photo: "", category: "", lista });
+    const somar = (lista, f) => lista.reduce((a, x) => a + (f(x.p) || 0), 0);
+    const duelo = (k, titulo, a, b, peso) => {
+      if (!a.lista.length || !b.lista.length) return;
+      const va = somar(a.lista, (p) => views(p, c.ref));
+      const vb = somar(b.lista, (p) => views(p, c.ref));
+      const ganha = va >= vb ? a : b;
+      out.push({
+        k,
+        peso,
+        vis: "duelo",
+        pessoas: [a, b].map(({ lista, ...x }) => x),
+        titulo,
+        texto: `**${a.name}** tem **${a.lista.length}** Youtubers no Placar e **${b.name}** tem **${b.lista.length}**. Em ${mes}, quem fez mais views foi **${ganha.name}** (**${curto(Math.max(va, vb))}** contra **${curto(Math.min(va, vb))}**).`,
+        num: N(Math.max(va, vb)),
+        dados: {
+          a: (({ lista, ...x }) => x)(a),
+          b: (({ lista, ...x }) => x)(b),
+          linhas: [
+            { rot: "Youtubers", ic: "🎬", va: a.lista.length, vb: b.lista.length, f: "inteiro" },
+            { rot: "Subscritores", ic: "👥", va: somar(a.lista, subs), vb: somar(b.lista, subs) },
+            { rot: `Views em ${mes}`, ic: "👁", va, vb, twist: true },
+          ],
+        },
+      });
+    };
+    duelo(`regioes:lisboaporto:${c.ref}`, escolher([`Lisboa contra Porto`, `Lisboa ou Porto: quem manda no YouTube?`]), lado("Lisboa", loc.filter((x) => x.d.nome === "Lisboa")), lado("Porto", loc.filter((x) => x.d.nome === "Porto")), 3.5);
+    duelo(`regioes:nortesul:${c.ref}`, escolher([`Norte contra Sul`, `Norte ou Sul: onde se faz mais YouTube?`]), lado("Norte e Centro", loc.filter((x) => NORTE.has(x.d.r))), lado("Sul e Ilhas", loc.filter((x) => !NORTE.has(x.d.r))), 3.2);
+    // Onde há mais Youtubers por habitante
+    const porD = new Map();
+    for (const x of loc) porD.set(x.d.nome, [...(porD.get(x.d.nome) || []), x.p]);
+    const taxa = [...porD.entries()].filter(([, l]) => l.length >= 2).map(([nome, l]) => ({ d: DISTRITOS.find((x) => x.nome === nome), n: l.length })).map((x) => ({ ...x, t: (x.n / x.d.pop) * 1e5 })).sort((a, b) => b.t - a.t);
+    if (taxa.length >= 2) {
+      const [t1] = taxa;
+      const lis = taxa.find((x) => x.d.nome === "Lisboa" && x !== t1);
+      out.push({
+        k: `regioes:taxa:${t1.d.nome}`,
+        peso: 3,
+        vis: "mapa",
+        pessoas: [],
+        titulo: `Onde há mais Youtubers por habitante?`,
+        texto: `${t1.d.regiao ? `A ${t1.d.nome === "Açores" ? "região dos Açores" : "Madeira"}` : `O distrito ${deLugar(t1.d)}`} tem **${t1.n}** Youtubers no Placar: **${dec(t1.t, 2)}** por cada 100 mil habitantes.${lis ? ` Lisboa tem **${dec(lis.t, 2)}**.` : ""}`,
+        num: N(t1.t, "dec"),
+        dados: { lugar: { nome: t1.d.regiao ? t1.d.nome : `Distrito ${deLugar(t1.d)}`, lat: t1.d.lat, lon: t1.d.lon, ilha: t1.d.ilha || null, legenda: `${t1.n} Youtubers` }, outros: DISTRITOS.map((x) => noMapa(x)) },
+      });
+    }
+    // O maior de cada região longe das grandes cidades
+    for (const r of ["Algarve", "Alentejo", "Ilhas", "Centro"]) {
+      const top = loc.filter((x) => x.d.r === r).sort((a, b) => subs(b.p) - subs(a.p))[0];
+      if (!top || !subs(top.p)) continue;
+      out.push({
+        k: `regioes:maior:${r}:${top.p.id}`,
+        peso: 2.4 + Math.log10(subs(top.p)) * 0.3,
+        vis: "mapa",
+        p: top.p.id,
+        pessoas: [snap(top.p)],
+        titulo: `O maior Youtuber ${r === "Ilhas" ? "das Ilhas" : r === "Algarve" ? "do Algarve" : r === "Alentejo" ? "do Alentejo" : "do Centro"}`,
+        texto: `É **${top.p.name}**, ${top.d.regiao ? deLugar(top.d).replace(/^d/, "d") : `do distrito ${deLugar(top.d)}`}, com **${curto(subs(top.p))}** subscritores.`,
+        num: N(subs(top.p)),
+        dados: { lugar: { nome: top.d.regiao ? top.d.nome : top.d.nome, lat: top.d.lat, lon: top.d.lon, ilha: top.d.ilha || null, legenda: top.p.name }, outros: DISTRITOS.map((x) => noMapa(x)) },
+      });
+    }
+    return out;
+  },
+
   // Quanto pode ganhar (só quando se escolhe: é uma estimativa muito larga)
   ganhos(c) {
     const mes = mesNome(c.ref, { ano: false });
@@ -774,15 +976,28 @@ export const TEMAS_COM_FACTOS = Object.keys(GERADORES).filter((id) => id !== "ga
 // ---------- Episódios com forma própria ----------
 
 // A escala real ("True Scale"): os subscritores em sítios e cidades de verdade, do mais pequeno ao maior
+// Lotações e populações com fonte (ver portugal.js)
 const ANCORAS = [
-  { n: 20000, nome: "Altice Arena", tipo: "lotacao", ic: "🎤", t: "a Altice Arena" },
-  { n: 50000, nome: "Estádio do Dragão", tipo: "lotacao", ic: "🏟️", t: "o Estádio do Dragão" },
+  { n: 99, nome: "Paradela e Granjinha", tipo: "cidade", ic: "🏡", de: "de Paradela e Granjinha, a freguesia mais pequena do continente", em: "em Paradela e Granjinha, a freguesia mais pequena do continente" },
+  { n: 5722, nome: "Vila do Bispo", tipo: "cidade", ic: "🌊", de: "do concelho de Vila do Bispo", em: "no concelho de Vila do Bispo" },
+  { n: 6822, nome: "Torre de Moncorvo", tipo: "cidade", ic: "⛰️", de: "do concelho de Torre de Moncorvo", em: "no concelho de Torre de Moncorvo" },
+  { n: 20100, nome: "MEO Arena", tipo: "lotacao", ic: "🎤", t: "a MEO Arena" },
+  { n: 30286, nome: "Estádio Municipal de Braga", tipo: "lotacao", ic: "🏟️", t: "o Estádio Municipal de Braga" },
+  { n: 50033, nome: "Estádio do Dragão", tipo: "lotacao", ic: "🏟️", t: "o Estádio do Dragão" },
+  { n: 52095, nome: "Estádio José Alvalade", tipo: "lotacao", ic: "🏟️", t: "o Estádio José Alvalade" },
   { n: 65000, nome: "Estádio da Luz", tipo: "lotacao", ic: "🏟️", t: "o Estádio da Luz" },
-  { n: 140000, nome: "Coimbra", tipo: "cidade", ic: "🎓", de: "de Coimbra", em: "em Coimbra" },
-  { n: 193000, nome: "Braga", tipo: "cidade", ic: "⛪", de: "de Braga", em: "em Braga" },
-  { n: 232000, nome: "Porto", tipo: "cidade", ic: "🌉", de: "do Porto", em: "no Porto" },
-  { n: 545000, nome: "Lisboa", tipo: "cidade", ic: "🏛️", de: "de Lisboa", em: "em Lisboa" },
-  { n: 10.6e6, nome: "Portugal", tipo: "cidade", ic: "🇵🇹", de: "de Portugal", em: "em Portugal" },
+  { n: 85864, nome: "Viana do Castelo", tipo: "cidade", ic: "⚓", de: "do concelho de Viana do Castelo", em: "no concelho de Viana do Castelo" },
+  { n: 105919, nome: "Funchal", tipo: "cidade", ic: "🌺", de: "do Funchal", em: "no Funchal" },
+  { n: 140796, nome: "Coimbra", tipo: "cidade", ic: "🎓", de: "de Coimbra", em: "em Coimbra" },
+  { n: 156852, nome: "Guimarães", tipo: "cidade", ic: "🏰", de: "de Guimarães", em: "em Guimarães" },
+  { n: 193333, nome: "Braga", tipo: "cidade", ic: "⛪", de: "de Braga", em: "em Braga" },
+  { n: 231962, nome: "Porto", tipo: "cidade", ic: "🌉", de: "do Porto", em: "no Porto" },
+  { n: 304149, nome: "Gaia", tipo: "cidade", ic: "🍷", de: "de Vila Nova de Gaia", em: "em Vila Nova de Gaia" },
+  { n: 385954, nome: "Sintra", tipo: "cidade", ic: "🏯", de: "de Sintra", em: "em Sintra" },
+  { n: 544851, nome: "Lisboa", tipo: "cidade", ic: "🏛️", de: "de Lisboa", em: "em Lisboa" },
+  { n: 1785405, nome: "Distrito do Porto", tipo: "cidade", ic: "🗺️", de: "do distrito do Porto", em: "no distrito do Porto" },
+  { n: 2275385, nome: "Distrito de Lisboa", tipo: "cidade", ic: "🗺️", de: "do distrito de Lisboa", em: "no distrito de Lisboa" },
+  { n: PORTUGUESES, nome: "Portugal", tipo: "cidade", ic: "🇵🇹", de: "de Portugal", em: "em Portugal" },
 ];
 function planoEscala(c, n) {
   const gente = c.gente.filter((p) => subs(p) >= 15000).sort((a, b) => subs(a) - subs(b));
@@ -806,7 +1021,10 @@ function planoEscala(c, n) {
     let texto;
     if (!abaixo) texto = `Os **${curto(s)}** subscritores de **${p.name}** ainda não enchiam ${anc.t}: são **${dec(k * 100, 0)}%** da lotação.`;
     else if (anc.tipo === "lotacao") texto = `Os **${curto(s)}** subscritores de **${p.name}** enchiam ${anc.t} ${k >= 2 ? `**${inteiro(Math.floor(k))} vezes**` : "e ainda sobrava gente"}.`;
-    else texto = k >= 2 ? `Os **${curto(s)}** subscritores de **${p.name}** são **${dec(k)}×** a população ${anc.de}.` : `**${p.name}** tem **${curto(s)}** subscritores: mais do que toda a gente que vive ${anc.em} (cerca de ${curto(anc.n)}).`;
+    else texto = k >= 2 ? `Os **${curto(s)}** subscritores de **${p.name}** são **${dec(k)}×** a população ${anc.de}.` : `**${p.name}** tem **${curto(s)}** subscritores: mais do que toda a gente que vive ${anc.em} (${inteiro(anc.n)} pessoas).`;
+    // A próxima meta, e no maior de todos a parte de Portugal
+    if (abaixo && acima) texto += ` Para chegar ${acima.tipo === "lotacao" ? `a encher ${acima.t}` : `à população ${acima.de}`} faltam **${curto(acima.n - s)}**.`;
+    if (i === lista.length - 1 && s >= PORTUGUESES / 100) texto += ` Se fossem todos portugueses, era **1 em cada ${inteiro(Math.round(PORTUGUESES / s))}** pessoas em Portugal.`;
     return {
       k: `escala:${p.id}`,
       tema: "escala",
@@ -824,10 +1042,11 @@ function planoEscala(c, n) {
 
 // O iceberg: do que toda a gente sabe (os gigantes) ao que quase ninguém sabe (os canais pequenos)
 export const NIVEIS_ICEBERG = [
-  { min: 1e6, nome: "À superfície", sub: "O que toda a gente sabe" },
-  { min: 1e5, nome: "Debaixo de água", sub: "Só quem segue o YouTube português" },
-  { min: 1e4, nome: "Nas profundezas", sub: "Poucos sabem isto" },
-  { min: 0, nome: "O fundo do mar", sub: "Quase ninguém sabe isto" },
+  { min: 1e6, nome: "À superfície", sub: "O que toda a gente sabe", faixa: "Canais com mais de 1 milhão de subscritores" },
+  { min: 1e5, nome: "Debaixo de água", sub: "Só quem segue o YouTube português", faixa: "Entre 100 mil e 1 milhão de subscritores" },
+  { min: 2e4, nome: "Nas profundezas", sub: "Poucos sabem isto", faixa: "Entre 20 mil e 100 mil subscritores" },
+  { min: 5e3, nome: "O fundo do mar", sub: "Quase ninguém sabe isto", faixa: "Entre 5 mil e 20 mil subscritores" },
+  { min: 0, nome: "O abismo", sub: "Só os verdadeiros fãs", faixa: "Menos de 5 mil subscritores" },
 ];
 function planoIceberg(c, n, vistos, factosDe) {
   const subsDe = new Map(c.gente.map((p) => [p.id, subs(p)]));
@@ -940,10 +1159,126 @@ function planoReis(c) {
   return [out[0], ...out.slice(1).sort((a, b) => a.peso - b.peso)];
 }
 
-const ESPECIAIS = { escala: planoEscala, iceberg: planoIceberg, reis: planoReis };
+// A Liga dos Youtubers: cada mês é uma jornada; pontos pelo lugar nas views (25, 18, 15… até ao 10.º)
+const PONTOS_LIGA = [25, 18, 15, 12, 10, 8, 6, 4, 2, 1];
+function planoLiga(c) {
+  const meses = (estado.cobertura || []).filter((x) => x.n >= 20 && x.m < c.ds.currentMonth && x.m <= c.ref).map((x) => x.m).slice(-8);
+  if (meses.length < 3) return [];
+  // As 18 equipas: os canais com mais subscritores que têm números em pelo menos metade das jornadas
+  const equipas = c.gente.filter((p) => subs(p) > 0 && meses.filter((m) => views(p, m) !== null).length >= meses.length / 2).sort((a, b) => subs(b) - subs(a)).slice(0, 18);
+  if (equipas.length < 10) return [];
+  const t = new Map(equipas.map((p) => [p.id, { p, pts: 0, vit: 0, golos: 0, jornadas: [] }]));
+  for (const m of meses) {
+    const r = [...equipas].sort((a, b) => (views(b, m) || 0) - (views(a, m) || 0));
+    r.forEach((p, i) => {
+      const x = t.get(p.id);
+      const pts = PONTOS_LIGA[i] || 0;
+      x.pts += pts;
+      x.golos += views(p, m) || 0;
+      x.jornadas.push(pts);
+      if (i === 0) x.vit++;
+    });
+  }
+  const tabela = [...t.values()].sort((a, b) => b.pts - a.pts || b.golos - a.golos).map((x, i) => ({ ...x, pos: i + 1 }));
+  const zona = (pos, n) => (pos === 1 ? "campeao" : pos <= 3 ? "champions" : pos <= 5 ? "europa" : pos > n - 3 ? "desce" : "");
+  const linha = (x) => ({ pos: x.pos, ...snap(x.p), pts: x.pts, vit: x.vit, zona: zona(x.pos, tabela.length) });
+  const epoca = `${mesNome(meses[0])} a ${mesNome(meses.at(-1))}`;
+  const [campeao, segundo] = tabela;
+  const rankSubs = new Map(equipas.map((p, i) => [p.id, i + 1]));
+  // Sem estragar a surpresa: o campeão só aparece no fim
+  const sensacao = tabela.slice(1).map((x) => ({ ...x, salto: rankSubs.get(x.p.id) - x.pos })).sort((a, b) => b.salto - a.salto)[0];
+  const ataque = [...tabela].sort((a, b) => b.golos - a.golos)[0];
+  const ataqueOk = ataque && ataque !== campeao;
+  const out = [
+    {
+      k: `liga:tabela:${meses.at(-1)}`,
+      tema: "liga",
+      peso: 1,
+      vis: "tabela",
+      pessoas: tabela.slice(0, 3).map((x) => snap(x.p)),
+      titulo: `A classificação final`,
+      texto: `${meses.length} jornadas (${epoca}), entre os ${tabela.length} canais com mais subscritores. Em cada mês: 25 pontos para o 1.º nas views, 18 para o 2.º, 15 para o 3.º… e 1 para o 10.º.`,
+      num: N(campeao.pts, "inteiro", { suf: " pts" }),
+      dados: { linhas: tabela.map(linha), esconderTopo: true },
+    },
+    {
+      k: `liga:desce:${meses.at(-1)}`,
+      tema: "liga",
+      peso: 2,
+      vis: "tabela",
+      pessoas: tabela.slice(-3).map((x) => snap(x.p)),
+      titulo: escolher([`Os despromovidos`, `Descem de divisão…`]),
+      texto: `Mesmo estando entre os ${tabela.length} com mais subscritores, **${tabela.slice(-3).map((x) => x.p.name).join("**, **")}** ficaram nos últimos lugares das views.`,
+      num: N(tabela.at(-1).pts, "inteiro", { suf: " pts" }),
+      dados: { linhas: tabela.slice(-3).map(linha) },
+    },
+  ];
+  if (sensacao && sensacao.salto >= 3)
+    out.push({
+      k: `liga:sensacao:${sensacao.p.id}:${meses.at(-1)}`,
+      tema: "liga",
+      peso: 3,
+      vis: "contador",
+      p: sensacao.p.id,
+      pessoas: [snap(sensacao.p)],
+      titulo: `A equipa sensação`,
+      texto: `**${sensacao.p.name}** era o **${rankSubs.get(sensacao.p.id)}.º** em subscritores e acabou a Liga em **${sensacao.pos}.º**: subiu **${sensacao.salto}** lugares.`,
+      num: N(sensacao.salto, "inteiro", { pre: "+", suf: " lugares" }),
+      dados: { icone: "⬆️", n: sensacao.salto, legenda: "cada ⬆️ é um lugar acima do que os subscritores diziam" },
+    });
+  if (!ataqueOk && segundo)
+    out.push({
+      k: `liga:vice:${segundo.p.id}:${meses.at(-1)}`,
+      tema: "liga",
+      peso: 3.2,
+      vis: "contador",
+      p: segundo.p.id,
+      pessoas: [snap(segundo.p)],
+      titulo: `O vice-campeão`,
+      texto: `**${segundo.p.name}** acabou em 2.º com **${segundo.pts}** pontos e **${segundo.vit}** ${segundo.vit === 1 ? "jornada ganha" : "jornadas ganhas"}. Quem ficou à frente?`,
+      num: N(segundo.pts, "inteiro", { suf: " pts" }),
+      dados: { icone: "🥈", n: Math.max(1, Math.min(30, Math.round(segundo.pts / 10))), legenda: "cada 🥈 são 10 pontos" },
+    });
+  if (ataqueOk)
+    out.push({
+      k: `liga:ataque:${ataque.p.id}:${meses.at(-1)}`,
+      tema: "liga",
+      peso: 3.2,
+      vis: "contador",
+      p: ataque.p.id,
+      pessoas: [snap(ataque.p)],
+      titulo: `O melhor ataque`,
+      texto: `**${ataque.p.name}** "marcou" **${curto(ataque.golos)}** views em ${meses.length} jornadas: ninguém fez tantas.`,
+      num: N(ataque.golos),
+      q: { t: `Quantas views fez **${ataque.p.name}**, o melhor ataque, nas ${meses.length} jornadas?`, v: ataque.golos, f: "curto" },
+      dados: { icone: "⚽", n: Math.max(1, Math.min(40, Math.round(ataque.golos / 1e6))), legenda: "cada ⚽ é um milhão de views" },
+    });
+  out.push({
+    k: `liga:campeao:${campeao.p.id}:${meses.at(-1)}`,
+    tema: "liga",
+    peso: 5,
+    vis: "revela",
+    p: campeao.p.id,
+    pessoas: [snap(campeao.p)],
+    titulo: `**${campeao.p.name}** é campeão!`,
+    texto: `**${campeao.pts}** pontos, **${campeao.vit}** ${campeao.vit === 1 ? "vitória" : "vitórias"} em ${meses.length} jornadas e **${curto(campeao.golos)}** views.${segundo ? ` Ficou à frente de **${segundo.p.name}** (${segundo.pts} pontos).` : ""}`,
+    num: N(campeao.pts, "inteiro", { suf: " pts" }),
+    dados: { pistas: [["🏆", `${campeao.pts} pontos`], ["🥇", `${campeao.vit} ${campeao.vit === 1 ? "jornada ganha" : "jornadas ganhas"}`], ["👁", `${curto(campeao.golos)} views`], ["👥", `${curto(subs(campeao.p))} subscritores`]] },
+  });
+  // A tabela primeiro, o campeão no fim
+  return [out[0], ...out.slice(1, -1).sort((a, b) => a.peso - b.peso), out.at(-1)];
+}
+
+const ESPECIAIS = { escala: planoEscala, iceberg: planoIceberg, reis: planoReis, liga: planoLiga };
 
 /** Uma pergunta de escolha múltipla ("Consegues adivinhar?") com a resposta certa e duas erradas. */
-function criarPergunta({ t, v, f, max = Infinity }, anoAgora) {
+function criarPergunta({ t, v, f, max = Infinity, opcoesTexto, certa: certaTxt, outras }, anoAgora) {
+  if (opcoesTexto) {
+    const erradas = baralharSorte(outras || []).slice(0, 2);
+    if (erradas.length < 2) return null;
+    const opcoes = baralharSorte([certaTxt, ...erradas]);
+    return { t, opcoes, certa: opcoes.indexOf(certaTxt) };
+  }
   const certa = fmt(v, f);
   const ks = baralharSorte(f === "ano" ? [-7, -4, 3, 5] : Number.isFinite(max) ? [0.3, 0.5, 1.5, 2, 0.75, 1.25] : [0.3, 0.45, 2.2, 3.4]);
   const erradas = [];
@@ -1007,6 +1342,7 @@ function escolherFactos(cands, n, vistos, { mistura = false } = {}) {
   const out = [];
   const pessoas = new Map();
   const temas = new Map();
+  const grupos = new Set();
   while (out.length < n && pool.length) {
     const x = sortear(pool, (y) => y.w ** 1.6);
     pool = pool.filter((y) => y !== x);
@@ -1014,6 +1350,8 @@ function escolherFactos(cands, n, vistos, { mistura = false } = {}) {
     const sobram = pool.length + out.length >= n;
     if (sobram && ids.some((id) => pessoas.get(id))) continue;
     if (mistura && (temas.get(x.f.tema) || 0) >= 2 && sobram) continue;
+    if (x.f.grupo && sobram && grupos.has(x.f.grupo)) continue;
+    if (x.f.grupo) grupos.add(x.f.grupo);
     out.push(x.f);
     for (const id of ids) pessoas.set(id, (pessoas.get(id) || 0) + 1);
     temas.set(x.f.tema, (temas.get(x.f.tema) || 0) + 1);
@@ -1108,7 +1446,7 @@ export async function correr(palco, opts) {
     }
     if (f.pergunta) await cenaPergunta(palco, alvo, f);
     const final = i === total - 1 && total >= 3;
-    const etq = final ? (iceberg ? "O mais fundo de todos…" : "E a mais incrível…") : iceberg ? `${NIVEIS_ICEBERG[f.nivel].nome} · ${i + 1} de ${total}` : `Curiosidade ${i + 1} de ${total}`;
+    const etq = final ? ({ iceberg: "O mais fundo de todos…", liga: "E o campeão é…", escala: "E o maior de todos…" }[plano.tema] || "E a mais incrível…") : iceberg ? `${NIVEIS_ICEBERG[f.nivel].nome} · ${i + 1} de ${total}` : `Curiosidade ${i + 1} de ${total}`;
     alvo.innerHTML = `<div class="cu-cartao cu-${f.vis}${final ? " final" : ""}"><div class="cu-num-etq">${esc(etq)}</div>${CENAS[f.vis].html(f, palco)}</div>`;
     const cartao = alvo.firstElementChild;
     cartao.animate([{ opacity: 0, transform: "translateY(70px) scale(.96)" }, { opacity: 1, transform: "none" }], { duration: 650, easing: "cubic-bezier(.2,1.2,.4,1)" });
@@ -1140,7 +1478,7 @@ export async function correr(palco, opts) {
 /** Iceberg: a descida ao próximo nível, com o iceberg e a marca da profundidade. */
 async function cenaNivel(palco, alvo, nivel) {
   const N = NIVEIS_ICEBERG[nivel];
-  const Y = [13, 40, 64, 86];
+  const Y = [13, 34, 52, 70, 88];
   const y = Y[nivel];
   alvo.innerHTML = `<div class="cu-cartao cu-nivel">
     <svg class="cu-ice" viewBox="0 0 400 520" aria-hidden="true">
@@ -1151,7 +1489,7 @@ async function cenaNivel(palco, alvo, nivel) {
       ${NIVEIS_ICEBERG.map((_, k) => `<line x1="20" x2="380" y1="${Y[k] * 5.2}" y2="${Y[k] * 5.2}" class="cu-ice-nivel${k === nivel ? " este" : ""}"/>`).join("")}
       <circle cx="200" cy="${y * 5.2}" r="16" class="cu-ice-marca"/>
     </svg>
-    <div class="cu-nivel-txt"><small>Nível ${nivel + 1} de ${NIVEIS_ICEBERG.length}</small><h2 class="cu-titulo">${esc(N.nome)}</h2><p class="cu-texto">${esc(N.sub)}</p></div>
+    <div class="cu-nivel-txt"><small>Nível ${nivel + 1} de ${NIVEIS_ICEBERG.length}</small><h2 class="cu-titulo">${esc(N.nome)}</h2><p class="cu-texto">${esc(N.sub)}</p><p class="cu-nivel-faixa">${esc(N.faixa)}</p></div>
   </div>`;
   const c = alvo.firstElementChild;
   palco.tocar(nivel ? "whoosh" : "_destaque");
@@ -1171,13 +1509,13 @@ async function cenaPergunta(palco, alvo, f) {
     ${s ? avatarPalco(s, palco.vertical ? 190 : 150) : ""}
     <h2 class="cu-titulo">${rico(q.t)}</h2>
     <div class="cu-opcoes">${q.opcoes.map((o, i) => `<div class="cu-op"><i>${"ABC"[i]}</i><b>${esc(o)}</b></div>`).join("")}</div>
-    <div class="cu-relogio"><b>5</b></div>
+    <div class="cu-contagem-q"><b>5</b></div>
   </div>`;
   const c = alvo.firstElementChild;
   palco.tocar("_abertura", {}, 0.05);
   const ops = [...c.querySelectorAll(".cu-op")];
   ops.forEach((o, k) => o.animate([{ opacity: 0, transform: "translateY(50px) scale(.9)" }, { opacity: 1, transform: "none" }], { duration: 520, delay: (300 + k * 160) * palco.fator, easing: "cubic-bezier(.2,1.5,.4,1)", fill: "backwards" }));
-  const rel = c.querySelector(".cu-relogio b");
+  const rel = c.querySelector(".cu-contagem-q b");
   await palco.esperar(900);
   for (let t = 5; t >= 1; t--) {
     rel.textContent = t;
@@ -1187,7 +1525,7 @@ async function cenaPergunta(palco, alvo, f) {
     palco.tocar("tique");
     await palco.esperar(900);
   }
-  c.querySelector(".cu-relogio").classList.add("fim");
+  c.querySelector(".cu-contagem-q").classList.add("fim");
   ops.forEach((o, k) => o.classList.add(k === q.certa ? "certa" : "errada"));
   palco.tocar("acerto");
   palco.flash(0.25);
@@ -1225,6 +1563,112 @@ const entrar = (el, atraso = 0) => el?.animate([{ opacity: 0, transform: "transl
 const pessoaReal = (f) => (f.p ? pessoa(f.p) : null);
 
 const CENAS = {
+  // O mapa de Portugal: o contorno desenha-se, os pontos aparecem e o lugar certo acende
+  mapa: {
+    html: (f, palco) => {
+      const d = f.dados;
+      const [x, y] = noMapa(d.lugar);
+      const lado = x > 270 ? "end" : "start";
+      return `<div class="cu-ma">
+        <svg class="cu-ma-svg" viewBox="0 0 470 630" aria-hidden="true">
+          ${CAIXAS_ILHAS.map((c) => `<g class="cu-ma-ilha"><rect x="${c.x}" y="${c.y}" width="${c.w}" height="${c.h}" rx="10"/><text x="${c.x + c.w / 2}" y="${c.y + c.h + 18}">${c.nome}</text></g>`).join("")}
+          <path class="cu-ma-pais" d="${CONTORNO_PATH}" pathLength="1"/>
+          ${(d.outros || []).map(([px, py]) => `<circle class="cu-ma-p" cx="${px}" cy="${py}" r="3.2"/>`).join("")}
+          <g class="cu-ma-alvo" transform="translate(${x} ${y})">
+            <circle class="onda" r="10"/><circle class="onda o2" r="10"/><circle class="ponto" r="9"/>
+            <g class="cu-ma-rot" transform="translate(${lado === "end" ? -16 : 16} 0)" text-anchor="${lado}"><text class="nome" y="-4">${esc(d.lugar.nome)}</text><text class="leg" y="20">${esc(d.lugar.legenda || "")}</text></g>
+          </g>
+        </svg>
+        <div class="cu-ma-lado">${f.pessoas[0] ? avatarPalco(f.pessoas[0], palco.vertical ? 150 : 130) : ""}${titulo(f)}${texto(f)}</div>
+      </div>`;
+    },
+    async animar(palco, cartao) {
+      const pais = cartao.querySelector(".cu-ma-pais");
+      palco.tocar("whoosh");
+      await animar(palco, 1400, (_, e) => (pais.style.strokeDashoffset = String(1 - e)));
+      cartao.querySelector(".cu-ma-svg").classList.add("cheio");
+      cartao.querySelectorAll(".cu-ma-p").forEach((c, k) => c.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 300, delay: k * 25 * palco.fator, fill: "backwards" }));
+      await palco.esperar(700);
+      cartao.querySelector(".cu-ma-alvo").classList.add("ve");
+      palco.tocar("impacto");
+      palco.tocar("ding", {}, 0.25);
+      await palco.esperar(600);
+      entrar(cartao.querySelector(".cu-texto"));
+      await palco.passo(6200);
+    },
+  },
+
+  // 1 em cada…: 100 bonecos, cada um é 1% de Portugal
+  pessoas: {
+    html: (f, palco) => {
+      const d = f.dados;
+      const acesos = Math.max(1, Math.min(100, Math.round(d.pct)));
+      return `<div class="cu-pe">${avatarPalco(f.pessoas[0], palco.vertical ? 150 : 120)}${titulo(f)}
+        <div class="cu-pe-num">1 em cada <b>0</b></div>
+        <div class="cu-pe-grelha">${Array.from({ length: 100 }, (_, k) => `<i class="${k < acesos ? "aceso" : ""}"></i>`).join("")}</div>
+        <small class="cu-pe-leg">Cada boneco é 1% das pessoas que vivem em Portugal (10,7 milhões)</small>
+        ${texto(f)}</div>`;
+    },
+    async animar(palco, cartao, f) {
+      contar(cartao.querySelector(".cu-pe-num b"), f.dados.nCada, { formato: (x) => inteiro(Math.max(1, Math.round(x))), duracao: 1500, atraso: 300 });
+      const is = [...cartao.querySelectorAll(".cu-pe-grelha i")];
+      is.forEach((i, k) => i.animate([{ opacity: 0, transform: "scale(.4)" }, { opacity: 1, transform: "none" }], { duration: 300, delay: k * 12 * palco.fator, fill: "backwards" }));
+      await palco.esperar(1500);
+      const acesos = is.filter((i) => i.classList.contains("aceso"));
+      acesos.forEach((i, k) => setTimeout(() => !palco.terminado && i.classList.add("ve"), k * Math.min(120, 1400 / acesos.length) * palco.fator));
+      for (let k = 0; k < Math.min(10, acesos.length); k++) palco.tocar("ponto", {}, k * 0.12);
+      await palco.esperar(1600);
+      entrar(cartao.querySelector(".cu-texto"));
+      await palco.passo(5800);
+    },
+  },
+
+  // Um relógio a dar a volta e as views a contar nesse tempo
+  relogio: {
+    html: (f, palco) => `<div class="cu-re">${titulo(f)}
+      <div class="cu-re-corpo">
+        <svg class="cu-re-relogio" viewBox="0 0 200 200" aria-hidden="true"><circle cx="100" cy="100" r="88" class="aro"/>${Array.from({ length: 12 }, (_, k) => `<line x1="100" y1="20" x2="100" y2="${k % 3 ? 30 : 38}" transform="rotate(${k * 30} 100 100)"/>`).join("")}<line class="ponteiro" x1="100" y1="100" x2="100" y2="28"/><circle cx="100" cy="100" r="7" class="eixo"/></svg>
+        <div class="cu-re-num"><small>${esc(f.dados.ic)} ${esc(f.dados.rotulo)}</small><b>0</b><span>views</span></div>
+      </div>
+      ${f.pessoas[0] ? `<div class="cu-vi-quem">${avatarPalco(f.pessoas[0], palco.vertical ? 80 : 64)}<b>${esc(f.pessoas[0].name)}</b></div>` : ""}
+      ${texto(f)}</div>`,
+    async animar(palco, cartao, f) {
+      const ponteiro = cartao.querySelector(".ponteiro");
+      contar(cartao.querySelector(".cu-re-num b"), f.dados.v, { formato: (x) => inteiro(Math.round(x)), duracao: 3000 });
+      for (let k = 0; k < 12; k++) palco.tocar("tique", {}, k * 0.25);
+      await animar(palco, 3000, (_, e) => ponteiro.setAttribute("transform", `rotate(${e * 360} 100 100)`), { easing: (t) => t });
+      palco.tocar("sino");
+      entrar(cartao.querySelector(".cu-texto"));
+      await palco.passo(5600);
+    },
+  },
+
+  // A tabela da Liga, com as zonas (campeão, Champions, Europa, descida)
+  tabela: {
+    html: (f, palco) => {
+      const ls = f.dados.linhas;
+      const duas = !palco.vertical && ls.length > 9;
+      return `<div class="cu-ta-c">${titulo(f)}
+        <div class="cu-ta${duas ? " duas" : ""}">${ls
+          .map((l) => {
+            const oculto = f.dados.esconderTopo && l.pos === 1;
+            return `<div class="cu-ta-l z-${l.zona || "meio"}${oculto ? " oculto" : ""}"><b class="pos">${l.pos}</b>${oculto ? `<span class="avatar" style="--tam:${palco.vertical ? 50 : 40}px;background:#333">?</span><span class="nome">???</span>` : `${avatarPalco(l, palco.vertical ? 50 : 40)}<span class="nome">${esc(l.name)}</span>`}<small>${l.vit} V</small><b class="pts">${oculto ? "?" : l.pts}</b></div>`;
+          })
+          .join("")}</div>
+        ${ls.length > 3 ? `<div class="cu-ta-leg"><span class="z-campeao">Campeão</span><span class="z-champions">Liga dos Campeões</span><span class="z-europa">Liga Europa</span><span class="z-desce">Descida</span></div>` : ""}
+        ${texto(f)}</div>`;
+    },
+    async animar(palco, cartao) {
+      const ls = [...cartao.querySelectorAll(".cu-ta-l")].reverse();
+      ls.forEach((l, k) => l.animate([{ opacity: 0, transform: "translateY(30px)" }, { opacity: 1, transform: "none" }], { duration: 380, delay: k * 110 * palco.fator, easing: "cubic-bezier(.2,1.3,.4,1)", fill: "backwards" }));
+      for (let k = 0; k < Math.min(18, ls.length); k++) palco.tocar("tique", {}, k * 0.11);
+      await palco.esperar(ls.length * 110 + 600);
+      palco.tocar("apito");
+      entrar(cartao.querySelector(".cu-texto"));
+      await palco.passo(6500);
+    },
+  },
+
   // A escala real: as barras de antes encolhem quando chega um maior (o "zoom out")
   escala: {
     html: (f, palco) => {
