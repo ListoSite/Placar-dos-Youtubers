@@ -9,7 +9,7 @@
 //
 // Os textos levam **negrito** em vez de HTML: no fim tudo é escapado.
 
-import { estado, pessoa, views, seguidoresRede } from "../data.js";
+import { estado, pessoa, views, seguidoresRede, rankingMes } from "../data.js";
 import { esc, curto, inteiro, mesNome } from "../format.js";
 import { contar, ICONES } from "../ui.js";
 import { avatarPalco } from "./stage.js";
@@ -22,7 +22,7 @@ const DIA = 864e5;
 const MEMORIA = "palco-curiosidades";
 
 // ---------- Ajudas ----------
-const snap = (p) => ({ id: p.id, name: p.name, photo: p.photo || "", category: p.category || "" });
+const snap = (p) => ({ id: p.id, name: String(p.name || "").trim(), photo: p.photo || "", category: p.category || "" });
 const subs = (p) => p.totals?.subs || 0;
 const vtot = (p) => p.totals?.views || 0;
 const nvid = (p) => p.totals?.videos || 0;
@@ -69,6 +69,8 @@ function fmt(v, f = "curto") {
   if (f === "anos") return `${Math.round(v)} ${Math.round(v) === 1 ? "ano" : "anos"}`;
   if (f === "dias") return inteiro(Math.round(v));
   if (f === "ano") return String(Math.round(v));
+  if (f === "tempo") return tempo(v);
+  if (f === "dolares") return `${curto(Math.round(v))} $`;
   return curto(v);
 }
 
@@ -147,6 +149,7 @@ const GERADORES = {
         texto:
           escolher([`Tem **${curto(s)}** subscritores, mas o último vídeo foi há **${tempo(dias)}**.`, `**${curto(s)}** subscritores à espera de um vídeo novo há **${tempo(dias)}**.`, `O último vídeo saiu há **${tempo(dias)}**… e os **${curto(s)}** subscritores continuam lá.`]) + extra,
         num: N(Math.round(dias), "dias"),
+        q: { t: `Há quanto tempo não há um vídeo novo de **${p.name}**?`, v: dias, f: "tempo" },
         dados: { pistas, stats: [{ rot: "Subscritores", v: s }, vtot(p) ? { rot: "Views totais", v: vtot(p) } : null, max ? { rot: `Melhor mês (${mesNome(max.m, { curto: true })})`, v: max.v } : null].filter(Boolean) },
       });
     }
@@ -173,6 +176,7 @@ const GERADORES = {
         titulo: escolher([`**${p.name}**: muitos subscritores, poucas views`, `Onde estão os subscritores de **${p.name}**?`, `Gigante adormecido: **${p.name}**`]),
         texto: `Tem **${curto(s)}** subscritores, mas em ${mes} fez **${curto(v)}** views: ${por100 < 1 ? "menos de **1 view** por cada 100 subscritores" : `**${dec(por100)} views** por cada 100 subscritores`}.`,
         num: N(por100, "dec"),
+        q: { t: `Quantas views fez **${p.name}** em ${mes}?`, v, f: "curto" },
         dados: { a: { rot: "Subscritores", v: s, ic: "👥" }, b: { rot: `Views em ${mes}`, v, ic: "👁" } },
       });
     }
@@ -196,9 +200,10 @@ const GERADORES = {
         vis: aleatorio() < 0.3 ? "revela" : "tempo",
         p: p.id,
         pessoas: [snap(p)],
-        titulo: escolher([`**${p.name}** está cá desde **${a}**`, `**${anos} anos** de YouTube`, `**${p.name}** é do tempo em que…`]),
-        texto: escolher([`Criou o canal em **${a}**: antes ${lista3(tres)}.`, `Está no YouTube há **${anos} anos**, desde antes ${lista3(tres)}.`]),
+        titulo: anos >= 18 ? escolher([`O canal de **${p.name}** já é maior de idade`, `**${anos} anos**: o canal de **${p.name}** já podia tirar a carta`]) : escolher([`**${p.name}** está cá desde **${a}**`, `**${anos} anos** de YouTube`, `**${p.name}** é do tempo em que…`]),
+        texto: anos >= 18 ? `O canal nasceu em **${a}** e já tem **${anos} anos**: é mais velho do que muitos dos seus subscritores. Chegou antes ${lista3(tres)}.` : escolher([`Criou o canal em **${a}**: antes ${lista3(tres)}.`, `Está no YouTube há **${anos} anos**, desde antes ${lista3(tres)}.`]),
         num: N(anos, "anos"),
+        q: { t: `Em que ano nasceu o canal de **${p.name}**?`, v: a, f: "ano" },
         dados: {
           pistas: [["📅", `No YouTube desde ${a}`], ["👥", `${curto(subs(p))} subscritores`], categoria(p) ? ["🎬", categoria(p)] : null, nvid(p) ? ["▶️", `${inteiro(nvid(p))} vídeos`] : null].filter(Boolean),
           ano: a,
@@ -250,6 +255,7 @@ const GERADORES = {
           titulo: escolher([`Máquina de vídeos: **${p.name}**`, `**${p.name}** não pára de publicar`, `Quantos vídeos tem **${p.name}**?`]),
           texto: escolher([`Se visses um vídeo por dia, demoravas **${dec(anos)} anos** a ver todos.`, `Um por dia, sem falhar: eram precisos **${dec(anos)} anos** para os ver todos.`]),
           num: N(n, "inteiro"),
+          q: { t: `Quantos vídeos tem **${p.name}**?`, v: n, f: "inteiro" },
           dados: { icone: "🎬", n: Math.max(1, Math.min(60, Math.round(n / 100))), legenda: "cada 🎬 são 100 vídeos" },
         });
       }
@@ -362,6 +368,7 @@ const GERADORES = {
         titulo: escolher([`**${p.name}** contra **${q.name}**`, `O pequeno que bateu o gigante`, `David (**${p.name}**) contra Golias (**${q.name}**)`]),
         texto: `**${q.name}** tem **${vezes(k)}×** mais subscritores do que **${p.name}**… mas em ${mes}, quem teve mais views foi **${p.name}** (**${curto(v)}** contra **${curto(views(q, c.ref))}**).`,
         num: N(v),
+        q: { t: `Quantas vezes mais subscritores tem **${q.name}** do que **${p.name}**?`, v: k, f: "x" },
         dados: { a: snap(q), b: snap(p), linhas: [{ rot: "Subscritores", ic: "👥", va: subs(q), vb: subs(p) }, { rot: `Views em ${mes}`, ic: "👁", va: views(q, c.ref), vb: v, twist: true }] },
       });
     }
@@ -414,6 +421,7 @@ const GERADORES = {
           titulo: escolher([`**${p.name}** está quase nos **${marco(alvo)}**`, `Faltam **${curto(falta)}** para os **${marco(alvo)}**`]),
           texto: `Tem **${curto(s)}** subscritores: faltam só **${inteiro(falta)}** para os **${marco(alvo)}**.${dias ? ` Ao ritmo dos últimos meses, chega lá em cerca de **${tempo(dias)}**.` : ""}`,
           num: N(falta, "inteiro"),
+          q: { t: `Quantos subscritores faltam a **${p.name}** para os ${marco(alvo)}?`, v: falta, f: "inteiro" },
           dados: { atual: s, alvo, base: MARCOS[MARCOS.indexOf(alvo) - 1] || 0, falta, dias, unidade: "subscritores" },
         });
       }
@@ -457,6 +465,7 @@ const GERADORES = {
         titulo: escolher([`A montanha-russa de **${p.name}**`, `Do céu ao chão: **${p.name}**`, `Os altos e baixos de **${p.name}**`]),
         texto: `No melhor mês (**${mesNome(max.m)}**) fez **${curto(max.v)}** views. No pior (**${mesNome(min.m)}**), só **${curto(min.v)}**: **${vezes(r)}×** menos.`,
         num: N(r, "x"),
+        q: { t: `Quantas vezes menos fez **${p.name}** no pior mês, em comparação com o melhor?`, v: r, f: "x" },
         dados: { pontos: janela.map(({ m, v }) => ({ m, v })), marcas: [janela.indexOf(max), janela.indexOf(min)].filter((i) => i >= 0) },
       });
     }
@@ -541,6 +550,7 @@ const GERADORES = {
         titulo: r > 1 ? escolher([`Os Shorts de **${p.name}** rebentam`, `**${p.name}** manda nos Shorts`]) : escolher([`**${p.name}** é dos vídeos longos`, `Shorts? **${p.name}** prefere os longos`]),
         texto: r > 1 ? `Um Short normal de **${p.name}** faz **${curto(ms)}** views. Um vídeo longo, **${curto(ml)}**: os Shorts fazem **${vezes(r)}×** mais.` : `Um vídeo longo normal de **${p.name}** faz **${curto(ml)}** views. Um Short, só **${curto(ms)}**: os longos fazem **${vezes(1 / r)}×** mais.`,
         num: N(r > 1 ? r : 1 / r, "x"),
+        q: { t: `Quantas views faz um Short normal de **${p.name}**?`, v: ms, f: "curto" },
         dados: { a: { rot: "Um Short normal", v: ms, ic: "📲" }, b: { rot: "Um vídeo longo normal", v: ml, ic: "🎬" } },
       });
     }
@@ -565,6 +575,7 @@ const GERADORES = {
         titulo: escolher([`O vídeo que rebentou a escala de **${p.name}**`, `**${vezes(r)}×** mais do que o normal`]),
         texto: `"${semAsteriscos(t.t)}" fez **${curto(t.v)}** views, quando um vídeo normal de **${p.name}** faz **${curto(med)}**.${q ? ` Só esse vídeo tem mais views do que o canal inteiro de **${q.name}**.` : ""}`,
         num: N(t.v),
+        q: { t: `Quantas views fez o vídeo mais forte de **${p.name}**?`, v: t.v, f: "curto" },
         dados: { id: t.id, th: t.th || "", t: String(t.t || "").slice(0, 120), v: t.v, med, s: Boolean(t.s) },
       });
     }
@@ -586,6 +597,7 @@ const GERADORES = {
         titulo: escolher([`Quantas views por português?`, `As views de um mês, divididas por Portugal`]),
         texto: `Em ${mes}, os Youtubers do Placar juntaram **${curto(soma)}** views: **${dec(soma / PORTUGUESES)}** por cada pessoa que vive em Portugal.`,
         num: N(soma / PORTUGUESES, "dec"),
+        q: { t: `Quantas views por cada português fizeram os Youtubers do Placar em ${mes}?`, v: soma / PORTUGUESES, f: "dec" },
         dados: { icone: "🧍", n: Math.max(1, Math.min(50, Math.round(soma / PORTUGUESES))), legenda: "views por cada português (10,6 milhões)" },
       });
     const porSubs = [...c.gente].sort((a, b) => subs(b) - subs(a)).slice(0, 5);
@@ -601,6 +613,7 @@ const GERADORES = {
           titulo: escolher([`Os subscritores de **${p.name}** num estádio`, `Quantos Estádios da Luz enchem os subscritores de **${p.name}**?`]),
           texto: `Os **${curto(s)}** subscritores de **${p.name}** enchiam o Estádio da Luz **${inteiro(Math.round(s / ESTADIO_LUZ))} vezes**.`,
           num: N(Math.round(s / ESTADIO_LUZ), "inteiro", { suf: "×" }),
+          q: { t: `Quantas vezes enchiam o Estádio da Luz os subscritores de **${p.name}**?`, v: Math.round(s / ESTADIO_LUZ), f: "inteiro" },
           dados: { icone: "🏟️", n: Math.max(1, Math.min(40, Math.round(s / ESTADIO_LUZ))), legenda: "cada 🏟️ é um Estádio da Luz cheio (65 mil pessoas)" },
         });
       if (s > LISBOA)
@@ -661,6 +674,76 @@ const GERADORES = {
     return out;
   },
 
+  // 2016 vs. 2026: "2026 é o novo 2016" (a tendência de nostalgia)
+  nostalgia(c) {
+    const out = [];
+    const anoAgora = new Date(c.agora).getFullYear();
+    const mes = mesNome(c.ref, { ano: false });
+    const top = [...c.gente].filter((p) => subs(p) > 0).sort((a, b) => subs(b) - subs(a)).slice(0, 20);
+    const ja = top.filter((p) => anoDe(p) && anoDe(p) <= 2016);
+    if (top.length >= 10 && ja.length)
+      out.push({
+        k: `nostalgia:top:${ja.length}`,
+        peso: 3,
+        vis: "contador",
+        pessoas: ja.slice(0, 1).map(snap),
+        titulo: escolher([`Os maiores de hoje já cá estavam em 2016?`, `2016 vs. 2026: quem já cá estava?`]),
+        texto: `Dos **${top.length}** canais com mais subscritores, **${ja.length}** já existiam em 2016${ja.length >= top.length / 2 ? ": os grandes continuam a ser os de sempre." : ". A maior parte chegou depois."}`,
+        num: N(ja.length, "inteiro", { suf: ` de ${top.length}` }),
+        q: { t: `Quantos dos ${top.length} canais com mais subscritores já existiam em 2016?`, v: ja.length, f: "inteiro", max: top.length },
+        dados: { icone: "📼", n: ja.length, legenda: "cada 📼 é um canal que já existia em 2016" },
+      });
+    const novo = top.filter((p) => anoDe(p) > 2016).sort((a, b) => subs(b) - subs(a))[0];
+    if (novo)
+      out.push({
+        k: `nostalgia:novo:${novo.id}`,
+        peso: 3.5,
+        vis: "revela",
+        p: novo.id,
+        pessoas: [snap(novo)],
+        titulo: `**${novo.name}** nem existia em 2016`,
+        texto: `O canal nasceu em **${anoDe(novo)}** e hoje tem **${curto(subs(novo))}** subscritores: é o maior que ainda não existia em 2016.`,
+        num: N(subs(novo)),
+        dados: { pistas: [["📅", `Criado em ${anoDe(novo)}`], ["👥", `${curto(subs(novo))} subscritores`], categoria(novo) ? ["🎬", categoria(novo)] : null].filter(Boolean) },
+      });
+    for (const x of rankingMes(c.ref, { categoria: c.cat }).slice(0, 10).filter((y) => anoDe(y.p) && anoDe(y.p) <= 2016).slice(0, 4))
+      out.push({
+        k: `nostalgia:resiste:${x.p.id}:${c.ref}`,
+        peso: 2.5 + (2016 - anoDe(x.p)) * 0.2 + (11 - x.pos) * 0.1,
+        vis: "tempo",
+        p: x.p.id,
+        pessoas: [snap(x.p)],
+        titulo: escolher([`**${x.p.name}**: de 2016 até hoje`, `Já cá estava em 2016 e continua lá em cima`]),
+        texto: `**${x.p.name}** já publicava em **${anoDe(x.p)}** e em ${mes} ficou em **${x.pos}.º** nas views.`,
+        num: N(x.pos, "inteiro", { suf: ".º" }),
+        dados: { ano: anoDe(x.p), fim: anoAgora, eventos: EVENTOS.filter((e) => e.ano >= Math.max(2005, anoDe(x.p) - 4) && Math.abs(e.ano - anoDe(x.p)) >= 2).slice(0, 7).map(({ ano, ic: i, t }) => ({ ano, ic: i, t })) },
+      });
+    return out;
+  },
+
+  // Quanto pode ganhar (só quando se escolhe: é uma estimativa muito larga)
+  ganhos(c) {
+    const mes = mesNome(c.ref, { ano: false });
+    return rankingMes(c.ref, { categoria: c.cat })
+      .slice(0, 15)
+      .filter((x) => x.v >= 50000)
+      .map((x) => {
+        const min = (x.v / 1000) * 0.25;
+        const max = (x.v / 1000) * 4;
+        return {
+          k: `ganhos:${x.p.id}:${c.ref}`,
+          peso: Math.log10(x.v),
+          vis: "intervalo",
+          p: x.p.id,
+          pessoas: [snap(x.p)],
+          titulo: escolher([`Quanto pode ter ganho **${x.p.name}** em ${mes}?`, `**${x.p.name}**: as contas de ${mes}`]),
+          texto: `Com **${curto(x.v)}** views em ${mes}, os anúncios podem ter dado entre **${fmt(min, "dolares")}** e **${fmt(max, "dolares")}**. Não conta os patrocínios.`,
+          num: N(max, "dolares"),
+          dados: { min, max, v: x.v },
+        };
+      });
+  },
+
   fieis(c) {
     const out = [];
     const engs = c.gente.map((p) => p.vid?.eng).filter((e) => e > 0);
@@ -685,7 +768,205 @@ const GERADORES = {
   },
 };
 
-export const TEMAS_COM_FACTOS = Object.keys(GERADORES);
+// Os que entram no "Ao acaso" e na mistura (os ganhos só quando se escolhem)
+export const TEMAS_COM_FACTOS = Object.keys(GERADORES).filter((id) => id !== "ganhos");
+
+// ---------- Episódios com forma própria ----------
+
+// A escala real ("True Scale"): os subscritores em sítios e cidades de verdade, do mais pequeno ao maior
+const ANCORAS = [
+  { n: 20000, nome: "Altice Arena", tipo: "lotacao", ic: "🎤", t: "a Altice Arena" },
+  { n: 50000, nome: "Estádio do Dragão", tipo: "lotacao", ic: "🏟️", t: "o Estádio do Dragão" },
+  { n: 65000, nome: "Estádio da Luz", tipo: "lotacao", ic: "🏟️", t: "o Estádio da Luz" },
+  { n: 140000, nome: "Coimbra", tipo: "cidade", ic: "🎓", de: "de Coimbra", em: "em Coimbra" },
+  { n: 193000, nome: "Braga", tipo: "cidade", ic: "⛪", de: "de Braga", em: "em Braga" },
+  { n: 232000, nome: "Porto", tipo: "cidade", ic: "🌉", de: "do Porto", em: "no Porto" },
+  { n: 545000, nome: "Lisboa", tipo: "cidade", ic: "🏛️", de: "de Lisboa", em: "em Lisboa" },
+  { n: 10.6e6, nome: "Portugal", tipo: "cidade", ic: "🇵🇹", de: "de Portugal", em: "em Portugal" },
+];
+function planoEscala(c, n) {
+  const gente = c.gente.filter((p) => subs(p) >= 15000).sort((a, b) => subs(a) - subs(b));
+  if (gente.length < 3) return [];
+  const lo = Math.log10(subs(gente[0]));
+  const hi = Math.log10(subs(gente.at(-1)));
+  const escolhidos = [];
+  for (let i = 0; i < n - 1 && escolhidos.length < gente.length - 1; i++) {
+    const alvo = lo + ((hi - lo) * (i + 0.15 + aleatorio() * 0.7)) / n;
+    const perto = gente.filter((p) => !escolhidos.includes(p) && p !== gente.at(-1)).sort((a, b) => Math.abs(Math.log10(subs(a)) - alvo) - Math.abs(Math.log10(subs(b)) - alvo)).slice(0, 4);
+    if (perto.length) escolhidos.push(escolher(perto));
+  }
+  // O maior fica sempre para o fim
+  const lista = [...new Set(escolhidos)].sort((a, b) => subs(a) - subs(b)).concat(gente.at(-1));
+  return lista.map((p, i) => {
+    const s = subs(p);
+    const abaixo = ANCORAS.filter((a) => a.n <= s).at(-1);
+    const acima = ANCORAS.find((a) => a.n > s);
+    const anc = abaixo || acima;
+    const k = s / anc.n;
+    let texto;
+    if (!abaixo) texto = `Os **${curto(s)}** subscritores de **${p.name}** ainda não enchiam ${anc.t}: são **${dec(k * 100, 0)}%** da lotação.`;
+    else if (anc.tipo === "lotacao") texto = `Os **${curto(s)}** subscritores de **${p.name}** enchiam ${anc.t} ${k >= 2 ? `**${inteiro(Math.floor(k))} vezes**` : "e ainda sobrava gente"}.`;
+    else texto = k >= 2 ? `Os **${curto(s)}** subscritores de **${p.name}** são **${dec(k)}×** a população ${anc.de}.` : `**${p.name}** tem **${curto(s)}** subscritores: mais do que toda a gente que vive ${anc.em} (cerca de ${curto(anc.n)}).`;
+    return {
+      k: `escala:${p.id}`,
+      tema: "escala",
+      peso: i + 1,
+      vis: "escala",
+      p: p.id,
+      pessoas: [snap(p)],
+      titulo: i === lista.length - 1 ? `E o maior de todos: **${p.name}**` : escolher([`**${p.name}** em pessoas de verdade`, `Os subscritores de **${p.name}** num sítio só`]),
+      texto,
+      num: N(s),
+      dados: { v: s, ancora: { nome: anc.nome, ic: anc.ic, n: anc.n }, antes: lista.slice(0, i).map((q) => ({ ...snap(q), v: subs(q) })) },
+    };
+  });
+}
+
+// O iceberg: do que toda a gente sabe (os gigantes) ao que quase ninguém sabe (os canais pequenos)
+export const NIVEIS_ICEBERG = [
+  { min: 1e6, nome: "À superfície", sub: "O que toda a gente sabe" },
+  { min: 1e5, nome: "Debaixo de água", sub: "Só quem segue o YouTube português" },
+  { min: 1e4, nome: "Nas profundezas", sub: "Poucos sabem isto" },
+  { min: 0, nome: "O fundo do mar", sub: "Quase ninguém sabe isto" },
+];
+function planoIceberg(c, n, vistos, factosDe) {
+  const subsDe = new Map(c.gente.map((p) => [p.id, subs(p)]));
+  const pool = TEMAS_COM_FACTOS.filter((id) => id !== "matematica").flatMap(factosDe).filter((f) => f.vis !== "revela" && f.pessoas.length);
+  const nivelDe = (f) => {
+    const s = subsDe.get(f.p || f.pessoas.at(-1).id) || 0;
+    return NIVEIS_ICEBERG.findIndex((x) => s >= x.min);
+  };
+  const porNivel = NIVEIS_ICEBERG.map((_, i) => pool.filter((f) => nivelDe(f) === i));
+  const comFactos = porNivel.filter((l) => l.length).length;
+  if (comFactos < 2) return [];
+  const cada = Math.max(1, Math.ceil(n / comFactos));
+  const out = [];
+  porNivel.forEach((l, i) => {
+    for (const f of escolherFactos(l, cada, vistos)) out.push({ ...f, nivel: i });
+  });
+  return out.slice(0, Math.max(n, comFactos)).sort((a, b) => a.nivel - b.nivel);
+}
+
+// Todos os n.º 1: o catálogo completo, mês a mês, e os recordes de quem lá chegou
+function planoReis(c) {
+  const meses = (estado.cobertura || []).filter((x) => x.n >= 20 && x.m < c.ds.currentMonth && x.m <= c.ref).map((x) => x.m).slice(-24);
+  const lista = meses.map((m) => ({ m, x: rankingMes(m, { categoria: c.cat })[0] })).filter((y) => y.x).map(({ m, x }) => ({ m, p: x.p, v: x.v }));
+  if (lista.length < 3) return [];
+  const conta = new Map();
+  for (const x of lista) conta.set(x.p.id, (conta.get(x.p.id) || 0) + 1);
+  const diferentes = conta.size;
+  const out = [
+    {
+      k: `reis:catalogo:${lista.at(-1).m}`,
+      tema: "reis",
+      peso: 1,
+      vis: "catalogo",
+      pessoas: [...new Map(lista.map((x) => [x.p.id, snap(x.p)])).values()].slice(0, 8),
+      titulo: `Todos os n.º 1, mês a mês`,
+      texto: `De ${mesNome(lista[0].m)} a ${mesNome(lista.at(-1).m)}, **${diferentes}** ${diferentes === 1 ? "Youtuber chegou" : "Youtubers diferentes chegaram"} ao 1.º lugar das views.`,
+      num: N(diferentes, "inteiro"),
+      dados: { meses: lista.map((x) => ({ m: x.m, ...snap(x.p), v: x.v })) },
+    },
+  ];
+  const [idMais, nMais] = [...conta.entries()].sort((a, b) => b[1] - a[1])[0];
+  const pMais = lista.find((x) => x.p.id === idMais).p;
+  if (nMais >= 2)
+    out.push({
+      k: `reis:mais:${idMais}`,
+      tema: "reis",
+      peso: 3,
+      vis: "contador",
+      p: idMais,
+      pessoas: [snap(pMais)],
+      titulo: `Quem foi mais vezes n.º 1?`,
+      texto: `**${pMais.name}** foi o mais visto em **${nMais}** dos ${lista.length} meses.`,
+      num: N(nMais, "inteiro", { suf: ` de ${lista.length}` }),
+      q: { t: `Em quantos dos ${lista.length} meses foi **${pMais.name}** o n.º 1?`, v: nMais, f: "inteiro", max: lista.length },
+      dados: { icone: "👑", n: nMais, legenda: "cada 👑 é um mês em 1.º lugar" },
+    });
+  // O reinado mais longo (meses seguidos)
+  let melhor = null;
+  for (let i = 0; i < lista.length; ) {
+    let j = i;
+    while (j + 1 < lista.length && lista[j + 1].p.id === lista[i].p.id) j++;
+    if (!melhor || j - i + 1 > melhor.n) melhor = { p: lista[i].p, n: j - i + 1, de: lista[i].m, ate: lista[j].m };
+    i = j + 1;
+  }
+  if (melhor && melhor.n >= 2)
+    out.push({
+      k: `reis:reinado:${melhor.p.id}:${melhor.de}`,
+      tema: "reis",
+      peso: 3.5,
+      vis: "contador",
+      p: melhor.p.id,
+      pessoas: [snap(melhor.p)],
+      titulo: `O reinado mais longo`,
+      texto: `**${melhor.p.name}** esteve em 1.º **${melhor.n} meses seguidos**, de ${mesNome(melhor.de)} a ${mesNome(melhor.ate)}.`,
+      num: N(melhor.n, "inteiro", { suf: " meses" }),
+      dados: { icone: "👑", n: melhor.n, legenda: "cada 👑 é um mês seguido em 1.º lugar" },
+    });
+  // O n.º 1 mais improvável: o que tinha menos subscritores
+  const improvavel = lista.filter((x) => subs(x.p) > 0).sort((a, b) => subs(a.p) - subs(b.p))[0];
+  const medSubs = mediana(lista.map((x) => subs(x.p)).filter(Boolean));
+  if (improvavel && subs(improvavel.p) < medSubs / 2)
+    out.push({
+      k: `reis:improvavel:${improvavel.p.id}:${improvavel.m}`,
+      tema: "reis",
+      peso: 3.2,
+      vis: "comparar",
+      p: improvavel.p.id,
+      pessoas: [snap(improvavel.p)],
+      titulo: `O n.º 1 mais improvável`,
+      texto: `Em ${mesNome(improvavel.m)}, o n.º 1 foi **${improvavel.p.name}**, com só **${curto(subs(improvavel.p))}** subscritores, contra os **${curto(medSubs)}** de um n.º 1 normal.`,
+      num: N(subs(improvavel.p)),
+      dados: { a: { rot: "Subscritores", v: subs(improvavel.p), ic: "👥" }, b: { rot: `Views em ${mesNome(improvavel.m, { ano: false })}`, v: improvavel.v, ic: "👁" } },
+    });
+  // O mês mais forte de um n.º 1
+  const forte = [...lista].sort((a, b) => b.v - a.v)[0];
+  out.push({
+    k: `reis:forte:${forte.p.id}:${forte.m}`,
+    tema: "reis",
+    peso: 2.5,
+    vis: "contador",
+    p: forte.p.id,
+    pessoas: [snap(forte.p)],
+    titulo: `O mês mais forte de um n.º 1`,
+    texto: `Em ${mesNome(forte.m)}, **${forte.p.name}** fez **${curto(forte.v)}** views: nenhum n.º 1 fez tanto nestes ${lista.length} meses.`,
+    num: N(forte.v),
+    q: { t: `Quantas views fez **${forte.p.name}** em ${mesNome(forte.m)}?`, v: forte.v, f: "curto" },
+    dados: { icone: "🔥", n: Math.max(1, Math.min(40, Math.round(forte.v / 1e5))), legenda: "cada 🔥 são 100 mil views" },
+  });
+  // O catálogo primeiro; os outros do menos ao mais impressionante
+  return [out[0], ...out.slice(1).sort((a, b) => a.peso - b.peso)];
+}
+
+const ESPECIAIS = { escala: planoEscala, iceberg: planoIceberg, reis: planoReis };
+
+/** Uma pergunta de escolha múltipla ("Consegues adivinhar?") com a resposta certa e duas erradas. */
+function criarPergunta({ t, v, f, max = Infinity }, anoAgora) {
+  const certa = fmt(v, f);
+  const ks = baralharSorte(f === "ano" ? [-7, -4, 3, 5] : Number.isFinite(max) ? [0.3, 0.5, 1.5, 2, 0.75, 1.25] : [0.3, 0.45, 2.2, 3.4]);
+  const erradas = [];
+  for (const k of ks) {
+    const x = f === "ano" ? v + k : v * k;
+    if (f === "ano" && (x < 2005 || x > anoAgora)) continue;
+    if (x > max) continue;
+    const t2 = fmt(f === "inteiro" || f === "ano" ? Math.max(1, Math.round(x)) : x, f);
+    if (t2 !== certa && !erradas.includes(t2)) erradas.push(t2);
+    if (erradas.length === 2) break;
+  }
+  if (erradas.length < 2) return null;
+  const opcoes = baralharSorte([certa, ...erradas]);
+  return { t, opcoes, certa: opcoes.indexOf(certa) };
+}
+function baralharSorte(lista) {
+  const a = [...lista];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(aleatorio() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
 
 // ---------- O plano ----------
 
@@ -751,29 +1032,47 @@ export function planear(opts = {}, memoria = {}) {
     agora: Date.parse(ds.generatedAt) || Date.now(),
     gente: ds.people.filter((p) => !p.hidden && (!opts.cat || p.category === opts.cat)),
     meses: ds.months.filter((m) => m <= ref && m < ds.currentMonth),
+    cat: opts.cat || "",
   };
   const n = Math.max(3, Math.min(12, Number(opts.n) || 7));
   const vistos = new Set((memoria.vistos || []).map((x) => x.k));
   const recentes = (memoria.temas || []).slice(-3);
   const cache = {};
   const factosDe = (id) => (cache[id] ||= (GERADORES[id](c) || []).filter((f) => f && f.peso > 0 && f.k).map((f) => ({ ...f, tema: id })));
-  let tema = opts.episodio && opts.episodio !== "acaso" && (GERADORES[opts.episodio] || opts.episodio === "mistura") ? opts.episodio : "";
+  const especial = {};
+  const planoDe = (id) => (ESPECIAIS[id] ? (especial[id] ||= ESPECIAIS[id](c, n, vistos, factosDe)) : null);
+  let tema = opts.episodio && opts.episodio !== "acaso" && (GERADORES[opts.episodio] || ESPECIAIS[opts.episodio] || opts.episodio === "mistura") ? opts.episodio : "";
   let aviso = "";
-  if (tema && tema !== "mistura" && factosDe(tema).length < 3) {
+  if (tema && ESPECIAIS[tema] && planoDe(tema).length < 3) {
+    aviso = `Há poucos dados para "${temaCuriosidades(tema)?.nome || tema}": fica um pouco de tudo.`;
+    tema = "mistura";
+  } else if (tema && !ESPECIAIS[tema] && tema !== "mistura" && factosDe(tema).length < 3) {
     aviso = `Há poucas curiosidades de "${temaCuriosidades(tema)?.nome || tema}" com estes dados: fica um pouco de tudo.`;
     tema = "mistura";
   }
   if (!tema) {
     // Ao acaso: os temas com factos que chegam, com mais hipóteses para os que têm coisas novas
     const opcoes = TEMAS_COM_FACTOS.map((id) => ({ id, f: factosDe(id) })).filter((x) => x.f.length >= 3);
+    for (const id of Object.keys(ESPECIAIS)) if (planoDe(id).length >= 3) opcoes.push({ id, f: planoDe(id) });
     opcoes.push({ id: "mistura", f: [] });
     const escolhido = sortear(opcoes, (x) => (x.id === "mistura" ? 3 : 1 + Math.min(8, x.f.filter((f) => !vistos.has(f.k)).length)) * (recentes.includes(x.id) ? 0.12 : 1));
     tema = escolhido?.id || "mistura";
   }
   const mistura = tema === "mistura";
-  const cands = mistura ? TEMAS_COM_FACTOS.flatMap(factosDe) : factosDe(tema);
-  const factos = escolherFactos(cands, n, vistos, { mistura });
-  return { tema, ref, n, aviso, factos, final: escolher(["Qual destas não sabias?", "Qual foi a mais surpreendente?", "Sabias todas?", "Qual te espantou mais?"]) };
+  const factos = ESPECIAIS[tema] ? planoDe(tema) : escolherFactos(mistura ? TEMAS_COM_FACTOS.flatMap(factosDe) : factosDe(tema), n, vistos, { mistura });
+  // "Consegues adivinhar?": algumas curiosidades começam com uma pergunta de escolha múltipla
+  // (nunca as de "Quem é?", que mostrariam o nome antes do tempo)
+  const anoAgora = new Date(c.agora).getFullYear();
+  let perguntas = 0;
+  const comPerguntas = factos.map((f) => {
+    const { q, ...resto } = f;
+    if (!q || f.vis === "revela" || perguntas >= 3 || aleatorio() > 0.4) return resto;
+    const pergunta = criarPergunta(q, anoAgora);
+    if (!pergunta) return resto;
+    perguntas++;
+    return { ...resto, pergunta };
+  });
+  return { tema, ref, n, aviso, factos: comPerguntas, final: escolher(["Qual destas não sabias?", "Qual foi a mais surpreendente?", "Sabias todas?", "Qual te espantou mais?"]) };
 }
 
 // ---------- O espetáculo ----------
@@ -793,14 +1092,23 @@ export async function correr(palco, opts) {
 
   const cena = palco.cena;
   const total = plano.factos.length;
-  cena.innerHTML = `<div class="cu"><div class="cu-topo"><span class="cu-etq">${esc(T.icone)} ${esc(T.nome)}</span><div class="cu-pontos">${plano.factos.map(() => "<i></i>").join("")}</div></div><div class="cu-palco"></div></div>`;
+  cena.innerHTML = `<div class="cu${plano.tema === "iceberg" ? " cu-mar" : ""}"><div class="cu-topo"><span class="cu-etq">${esc(T.icone)} ${esc(T.nome)}</span><div class="cu-pontos">${plano.factos.map(() => "<i></i>").join("")}</div></div><div class="cu-palco"></div></div>`;
   const pontos = [...cena.querySelectorAll(".cu-pontos i")];
   const alvo = cena.querySelector(".cu-palco");
+  const iceberg = plano.tema === "iceberg";
+  let nivel = -1;
   for (const [i, f] of plano.factos.entries()) {
     if (palco.terminado) return;
     pontos.forEach((p, k) => p.classList.toggle("feito", k <= i));
+    // Iceberg: a descer de nível, a água escurece
+    if (iceberg && f.nivel !== nivel) {
+      nivel = f.nivel;
+      cena.querySelector(".cu").dataset.nivel = nivel;
+      await cenaNivel(palco, alvo, nivel);
+    }
+    if (f.pergunta) await cenaPergunta(palco, alvo, f);
     const final = i === total - 1 && total >= 3;
-    const etq = final ? "E a mais incrível…" : `Curiosidade ${i + 1} de ${total}`;
+    const etq = final ? (iceberg ? "O mais fundo de todos…" : "E a mais incrível…") : iceberg ? `${NIVEIS_ICEBERG[f.nivel].nome} · ${i + 1} de ${total}` : `Curiosidade ${i + 1} de ${total}`;
     alvo.innerHTML = `<div class="cu-cartao cu-${f.vis}${final ? " final" : ""}"><div class="cu-num-etq">${esc(etq)}</div>${CENAS[f.vis].html(f, palco)}</div>`;
     const cartao = alvo.firstElementChild;
     cartao.animate([{ opacity: 0, transform: "translateY(70px) scale(.96)" }, { opacity: 1, transform: "none" }], { duration: 650, easing: "cubic-bezier(.2,1.2,.4,1)" });
@@ -827,6 +1135,64 @@ export async function correr(palco, opts) {
     ...(plano.factos.at(-1)?.pessoas?.length ? { vencedor: { id: plano.factos.at(-1).pessoas.at(-1).id, nome: plano.factos.at(-1).pessoas.at(-1).name, valor: "", pos: 1 } } : {}),
   });
   await palco.fecho();
+}
+
+/** Iceberg: a descida ao próximo nível, com o iceberg e a marca da profundidade. */
+async function cenaNivel(palco, alvo, nivel) {
+  const N = NIVEIS_ICEBERG[nivel];
+  const Y = [13, 40, 64, 86];
+  const y = Y[nivel];
+  alvo.innerHTML = `<div class="cu-cartao cu-nivel">
+    <svg class="cu-ice" viewBox="0 0 400 520" aria-hidden="true">
+      <rect x="0" y="92" width="400" height="428" class="cu-ice-agua"/>
+      <path class="cu-ice-pedra" d="M170 20 L230 30 L262 92 L330 170 L356 300 L320 420 L240 500 L150 492 L74 410 L48 280 L86 160 L140 92 Z"/>
+      <path class="cu-ice-topo" d="M170 20 L230 30 L262 92 L140 92 Z"/>
+      <line x1="0" y1="92" x2="400" y2="92" class="cu-ice-linha"/>
+      ${NIVEIS_ICEBERG.map((_, k) => `<line x1="20" x2="380" y1="${Y[k] * 5.2}" y2="${Y[k] * 5.2}" class="cu-ice-nivel${k === nivel ? " este" : ""}"/>`).join("")}
+      <circle cx="200" cy="${y * 5.2}" r="16" class="cu-ice-marca"/>
+    </svg>
+    <div class="cu-nivel-txt"><small>Nível ${nivel + 1} de ${NIVEIS_ICEBERG.length}</small><h2 class="cu-titulo">${esc(N.nome)}</h2><p class="cu-texto">${esc(N.sub)}</p></div>
+  </div>`;
+  const c = alvo.firstElementChild;
+  palco.tocar(nivel ? "whoosh" : "_destaque");
+  if (nivel) palco.tocar("bolha", {}, 0.3);
+  c.querySelector(".cu-ice-marca").animate([{ transform: `translateY(${-90}px)`, opacity: 0 }, { transform: "none", opacity: 1 }], { duration: 900, easing: "cubic-bezier(.3,1.4,.5,1)" });
+  entrar(c.querySelector(".cu-nivel-txt"), 200);
+  await palco.passo(2600);
+  await palco.sair_(c);
+}
+
+/** "Consegues adivinhar?": três respostas, uma contagem e a certa a acender. */
+async function cenaPergunta(palco, alvo, f) {
+  const q = f.pergunta;
+  const s = f.pessoas.find((x) => x.id === f.p) || f.pessoas.at(-1);
+  alvo.innerHTML = `<div class="cu-cartao cu-pergunta">
+    <div class="cu-num-etq">🤔 Consegues adivinhar?</div>
+    ${s ? avatarPalco(s, palco.vertical ? 190 : 150) : ""}
+    <h2 class="cu-titulo">${rico(q.t)}</h2>
+    <div class="cu-opcoes">${q.opcoes.map((o, i) => `<div class="cu-op"><i>${"ABC"[i]}</i><b>${esc(o)}</b></div>`).join("")}</div>
+    <div class="cu-relogio"><b>5</b></div>
+  </div>`;
+  const c = alvo.firstElementChild;
+  palco.tocar("_abertura", {}, 0.05);
+  const ops = [...c.querySelectorAll(".cu-op")];
+  ops.forEach((o, k) => o.animate([{ opacity: 0, transform: "translateY(50px) scale(.9)" }, { opacity: 1, transform: "none" }], { duration: 520, delay: (300 + k * 160) * palco.fator, easing: "cubic-bezier(.2,1.5,.4,1)", fill: "backwards" }));
+  const rel = c.querySelector(".cu-relogio b");
+  await palco.esperar(900);
+  for (let t = 5; t >= 1; t--) {
+    rel.textContent = t;
+    rel.classList.remove("p-slam");
+    void rel.offsetWidth;
+    rel.classList.add("p-slam");
+    palco.tocar("tique");
+    await palco.esperar(900);
+  }
+  c.querySelector(".cu-relogio").classList.add("fim");
+  ops.forEach((o, k) => o.classList.add(k === q.certa ? "certa" : "errada"));
+  palco.tocar("acerto");
+  palco.flash(0.25);
+  await palco.passo(1700);
+  await palco.sair_(c);
 }
 
 /** O fim: todas as caras do episódio e a pergunta para os comentários. */
@@ -859,6 +1225,84 @@ const entrar = (el, atraso = 0) => el?.animate([{ opacity: 0, transform: "transl
 const pessoaReal = (f) => (f.p ? pessoa(f.p) : null);
 
 const CENAS = {
+  // A escala real: as barras de antes encolhem quando chega um maior (o "zoom out")
+  escala: {
+    html: (f, palco) => {
+      const d = f.dados;
+      const barra = (x, cls, cabeca) => `<div class="cu-es-b ${cls}" data-v="${x.v}"><div class="cu-es-cabeca">${cabeca}</div><i></i><small>${esc(x.nome)}</small><b>${esc(curto(x.v))}</b></div>`;
+      return `<div class="cu-es">${titulo(f)}
+        <div class="cu-es-graf">
+          ${d.antes.map((x) => barra({ ...x, nome: x.name }, "antes", avatarPalco(x, palco.vertical ? 56 : 64))).join("")}
+          ${barra({ v: d.ancora.n, nome: d.ancora.nome }, "ancora", `<span class="cu-es-ic">${esc(d.ancora.ic)}</span>`)}
+          ${barra({ v: d.v, nome: f.pessoas[0].name }, "agora", avatarPalco(f.pessoas[0], palco.vertical ? 110 : 120))}
+        </div>${texto(f)}</div>`;
+    },
+    async animar(palco, cartao, f) {
+      const bs = [...cartao.querySelectorAll(".cu-es-b")];
+      const altura = (max) => bs.forEach((b) => b.style.setProperty("--h", Math.max(0.6, (Number(b.dataset.v) / max) * 100)));
+      // Primeiro na escala de antes (o novo ainda a zero), depois na nova: tudo o resto encolhe
+      const antes = Math.max(...bs.filter((b) => !b.classList.contains("agora")).map((b) => Number(b.dataset.v)));
+      altura(antes);
+      const novo = cartao.querySelector(".agora");
+      novo.style.setProperty("--h", 0);
+      palco.tocar("whoosh");
+      await palco.esperar(1200);
+      cartao.querySelector(".cu-es-graf").classList.add("zoom");
+      altura(Math.max(antes, f.dados.v));
+      palco.tocar("subida", { dur: 1.6 });
+      if (f.dados.v > antes * 1.5) setTimeout(() => !palco.terminado && palco.tremer(0.4), 900 * palco.fator);
+      await palco.esperar(1900);
+      entrar(cartao.querySelector(".cu-texto"));
+      await palco.passo(5600);
+    },
+  },
+
+  // O catálogo completo: todos os n.º 1, um mês de cada vez
+  catalogo: {
+    html: (f, palco) => {
+      const n = f.dados.meses.length;
+      // Poucos meses: menos colunas e caras maiores
+      const cols = palco.vertical ? (n <= 4 ? 2 : n <= 12 ? 3 : 4) : n <= 6 ? n : n <= 12 ? Math.ceil(n / 2) : 8;
+      const tam = palco.vertical ? (n <= 6 ? 150 : n <= 12 ? 110 : 80) : n <= 6 ? 140 : n <= 12 ? 110 : 72;
+      return `<div class="cu-cat">${titulo(f)}
+      <div class="cu-cat-grelha" style="grid-template-columns:repeat(${cols}, minmax(0, 1fr))">${f.dados.meses
+        .map((x) => `<div class="cu-cat-m"><small>${esc(mesNome(x.m, { curto: true }))}</small>${avatarPalco(x, tam)}<b>${esc(x.name)}</b><span>${esc(curto(x.v))}</span></div>`)
+        .join("")}</div>${texto(f)}</div>`;
+    },
+    async animar(palco, cartao) {
+      const ms = [...cartao.querySelectorAll(".cu-cat-m")];
+      const passo = Math.max(90, Math.min(260, 4200 / ms.length));
+      for (const [k, m] of ms.entries()) {
+        setTimeout(() => !palco.terminado && m.classList.add("ve"), k * passo * palco.fator);
+        palco.tocar("ponto", {}, (k * passo) / 1000);
+      }
+      await palco.esperar(ms.length * passo + 500);
+      entrar(cartao.querySelector(".cu-texto"));
+      await palco.passo(6000);
+    },
+  },
+
+  // Uma estimativa entre dois valores (ganhos): a barra enche entre o mínimo e o máximo
+  intervalo: {
+    html: (f, palco) => {
+      const d = f.dados;
+      return `<div class="cu-in">${avatarPalco(f.pessoas[0], palco.vertical ? 190 : 150)}${titulo(f)}
+        <div class="cu-in-v">👁 ${esc(curto(d.v))} views</div>
+        <div class="cu-in-barra"><i></i><span class="min"><small>No mínimo</small><b>${esc(fmt(d.min, "dolares"))}</b></span><span class="max"><small>No máximo</small><b>${esc(fmt(d.max, "dolares"))}</b></span></div>
+        <small class="cu-in-nota">Estimativa: 0,25 a 4 dólares por mil views (a conta do Social Blade). O valor real pode ser muito diferente.</small>
+        ${texto(f)}</div>`;
+    },
+    async animar(palco, cartao) {
+      palco.tocar("moeda");
+      await palco.esperar(700);
+      cartao.querySelector(".cu-in-barra").classList.add("ve");
+      for (let k = 0; k < 6; k++) palco.tocar("moeda", {}, 0.2 + k * 0.18);
+      await palco.esperar(1600);
+      entrar(cartao.querySelector(".cu-texto"));
+      await palco.passo(6200);
+    },
+  },
+
   // Quem é? Foto desfocada, pistas uma a uma, contagem e a revelação
   revela: {
     html: (f, palco) => `<div class="cu-rv">

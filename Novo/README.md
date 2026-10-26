@@ -241,7 +241,16 @@ Na página do Palco há um filtro **Para vídeos / Para direto (Twitch)**. Em ca
 | 🧮 Matemática dos Youtubers | Estádios da Luz cheios, views por português, views por minuto |
 | ⏪ Há um ano vs. agora | Quem mais mudou num ano |
 | ❤️ O público mais fiel | Gostos e comentários por cada 100 views |
+| 📏 A escala real dos Youtubers | Os subscritores em sítios reais (Altice Arena, Dragão, Luz, Coimbra, Braga, Porto, Lisboa, Portugal), do mais pequeno ao maior: as barras de antes encolhem quando chega um maior |
+| 🧊 O iceberg do YouTube português | Desce nível a nível, dos gigantes (à superfície) aos canais pequenos (no fundo do mar), e a água escurece |
+| 👑 Todos os n.º 1 do Placar | O catálogo de todos os n.º 1, mês a mês, e quem foi mais vezes, o reinado mais longo, o mais improvável e o mês mais forte |
+| 📼 2016 vs. 2026 | Quantos dos maiores já cá estavam em 2016, o maior que nem existia e os de 2016 que continuam no top |
+| 💵 Quanto pode ganhar um Youtuber? | Só quando se escolhe: uma estimativa larga com as views do mês (0,25 a 4 dólares por mil views, a conta do Social Blade), sem patrocínios |
 | 🎲 Coisas que não sabias | Um pouco de tudo |
+
+**🤔 Consegues adivinhar?** Algumas curiosidades (até 3 por episódio) começam com uma pergunta de escolha múltipla, 5 segundos para pensar e a resposta certa a acender, para quem vê comentar o que respondeu. As respostas erradas são feitas à volta da certa e respeitam os limites (por exemplo, nunca "14 de 8 meses").
+
+Os formatos novos vieram do que está a ter sucesso nos vídeos de dados: a "escala real" (comparar um número difícil de imaginar com coisas conhecidas, do pequeno ao enorme), os icebergs (camadas do conhecido ao obscuro), os catálogos completos com linha do tempo (todos os vencedores de uma competição), a nostalgia de 2016 e os títulos em forma de pergunta.
 
 Com "Ao acaso", o tema é sorteado entre os que têm factos suficientes, evitando os últimos que saíram. Dentro do tema, os factos são sorteados com peso (os mais impressionantes saem mais vezes), sem repetir a mesma pessoa e evitando os que já saíram nas últimas vezes (a memória fica no browser). As frases e, em alguns temas, a maneira de mostrar também variam. O mais impressionante fica para o fim ("E a mais incrível…") e o episódio acaba com todas as caras e a pergunta para os comentários. O plano inteiro fica guardado com o espetáculo, por isso um exclusivo mostra exatamente o mesmo. Para juntar um tema novo: uma linha em `stage/curiosidades-temas.js` e um gerador em `stage/curiosidades.js`.
 
