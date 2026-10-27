@@ -1,9 +1,9 @@
 // Área de edição: login e separadores.
 
-import { api, guardarToken, temSessao, estado } from "../data.js";
+import { api, guardarToken, temSessao, estado, carregar } from "../data.js";
 import { esc } from "../format.js";
 import { $, toast } from "../ui.js";
-import { adm, lerDb, quotaTexto } from "./common.js";
+import { adm, lerDb, quotaTexto, aoMudarNoutraJanela } from "./common.js";
 
 const SEPARADORES = [
   { id: "youtubers", nome: "Youtubers", mod: "./people.js" },
@@ -14,14 +14,20 @@ const SEPARADORES = [
   { id: "definicoes", nome: "Definições", mod: "./settings.js" },
 ];
 
+// A secção aberta, para o botão "Atualizar dados" e para a atualização automática
+let vista = null;
+
 export async function render(main, { params, query }) {
   if (!temSessao()) return login(main);
   const sep = SEPARADORES.find((s) => s.id === params[0]) || SEPARADORES[0];
   main.dataset.titulo = sep.nome;
   main.innerHTML = `<div class="wrap editar">
-    <div class="pagina-topo"><p class="pn-migalha">Dados</p><h1>${esc(sep.nome)}</h1><p class="muted" id="ed-estado"></p></div>
+    <div class="pagina-topo pn-topo-acoes"><div><p class="pn-migalha">Dados</p><h1>${esc(sep.nome)}</h1><p class="muted" id="ed-estado"></p></div>
+      <div class="ed-atualizar"><button class="btn btn-pequeno" id="ed-atualizar" title="Volta a ler os dados do servidor, sem carregar em F5">${ICONE_ATUALIZAR}<span>Atualizar dados</span></button><small class="muted" id="ed-atualizado"></small></div></div>
+    <div class="aviso info ed-novidade" id="ed-novidade" hidden><p>Chegaram dados novos de outra janela. Não atualizei esta para não perderes o que estás a escrever.</p><button class="btn btn-pequeno btn-primario" id="ed-novidade-sim">Atualizar agora</button></div>
     <nav class="ed-separadores" aria-label="Secções de edição">${SEPARADORES.map((s) => `<a href="#/editar/${s.id}" ${s.id === sep.id ? 'aria-current="page"' : ""}>${s.nome}</a>`).join("")}</nav>
     <div id="ed-conteudo"><div class="a-carregar" style="min-height:30vh"><div class="roda"></div></div></div></div>`;
+  vista = null;
   try {
     await lerDb();
   } catch (e) {
@@ -29,11 +35,110 @@ export async function render(main, { params, query }) {
     $("#ed-conteudo", main).innerHTML = `<div class="aviso"><p>${esc(e.message)}</p></div>`;
     return;
   }
-  const semCanal = Object.values(adm.db.people).filter((p) => !p.channels.length).length;
-  $("#ed-estado", main).innerHTML = `${Object.keys(adm.db.people).length} Youtubers, ${Object.keys(adm.db.channels).length} canais ligados${semCanal ? `, ${semCanal} ainda sem canal` : ""}. ${esc(quotaTexto())}${adm.hasApiKey ? "" : ' <b style="color:var(--ouro)">Falta a chave da API do YouTube.</b>'}`;
+  escreverEstado(main);
   const mod = await import(sep.mod);
-  return mod.render($("#ed-conteudo", main), query);
+  const conteudo = $("#ed-conteudo", main);
+  const v = { main, sep, mod, conteudo, sujo: false, pendente: false };
+  vista = v;
+  // Escrever num campo (que não seja de procurar) conta como alterações por gravar
+  conteudo.addEventListener("input", (e) => {
+    if (e.target.matches?.("input:not([type=search]), textarea, select")) v.sujo = true;
+  });
+  conteudo.addEventListener("change", (e) => {
+    if (e.target.matches?.("input:not([type=search]), textarea, select")) v.sujo = true;
+  });
+  $("#ed-atualizar", main).addEventListener("click", (e) => {
+    if (v.sujo && !confirm("Tens alterações por gravar nesta página. Atualizar na mesma? (O que não gravaste perde-se.)")) return;
+    atualizarDados({ botao: e.currentTarget, aviso: true });
+  });
+  $("#ed-novidade-sim", main).addEventListener("click", (e) => atualizarDados({ botao: e.currentTarget }));
+  marcarHora(main);
+  return mod.render(conteudo, query);
 }
+
+const ICONE_ATUALIZAR = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 11a8 8 0 0 0-14.6-4.5L4 8"/><path d="M4 3v5h5"/><path d="M4 13a8 8 0 0 0 14.6 4.5L20 16"/><path d="M20 21v-5h-5"/></svg>`;
+
+function escreverEstado(main) {
+  const el = $("#ed-estado", main);
+  if (!el) return;
+  const semCanal = Object.values(adm.db.people).filter((p) => !p.channels.length).length;
+  el.innerHTML = `${Object.keys(adm.db.people).length} Youtubers, ${Object.keys(adm.db.channels).length} canais ligados${semCanal ? `, ${semCanal} ainda sem canal` : ""}. ${esc(quotaTexto())}${adm.hasApiKey ? "" : ' <b style="color:var(--ouro)">Falta a chave da API do YouTube.</b>'}`;
+}
+
+function marcarHora(main) {
+  const el = $("#ed-atualizado", main);
+  if (el) el.textContent = "Dados de " + new Date().toLocaleTimeString("pt-PT", { hour: "2-digit", minute: "2-digit" });
+}
+
+const aberta = () => (vista && vista.conteudo.isConnected ? vista : (vista = null));
+
+/**
+ * Volta a ler a base de dados e o dataset e desenha outra vez a secção aberta, sem F5.
+ * Fica no mesmo Youtuber (o link guarda-o), com a mesma procura e no mesmo sítio da página.
+ */
+async function atualizarDados({ botao, aviso = false, redesenhar = true } = {}) {
+  const v = aberta();
+  if (!v || v.ocupado) return;
+  v.ocupado = true;
+  const texto = botao?.innerHTML;
+  if (botao) {
+    botao.disabled = true;
+    botao.innerHTML = `<span class="mini-roda"></span> A atualizar`;
+  }
+  try {
+    await lerDb();
+    await carregar({ forcar: true });
+    if (aberta() !== v) return;
+    escreverEstado(v.main);
+    marcarHora(v.main);
+    if (!redesenhar) return;
+    const y = scrollY;
+    const query = new URLSearchParams(location.hash.split("?")[1] || "");
+    await v.mod.render(v.conteudo, query, { refrescar: true });
+    scrollTo({ top: y });
+    v.sujo = false;
+    $("#ed-novidade", v.main).hidden = true;
+    if (aviso) toast("Dados atualizados.");
+  } catch (e) {
+    if (e.status === 401) return login(v.main, "A sessão expirou. Entra outra vez.");
+    toast(e.message, { erro: true });
+  } finally {
+    v.ocupado = false;
+    if (botao?.isConnected) {
+      botao.disabled = false;
+      botao.innerHTML = texto;
+    }
+  }
+}
+
+// Outra janela do painel gravou dados (por exemplo a que o marcador abriu para importar):
+// esta atualiza-se quando voltas a ela. Se estiveres a meio de escrever, só avisa.
+function tratarNovidade() {
+  const v = aberta();
+  if (!v) return;
+  v.pendente = false;
+  const ocupada = v.sujo || v.sep.id === "importar" || document.querySelector(".janela-fundo");
+  if (ocupada) {
+    $("#ed-novidade", v.main).hidden = false;
+    atualizarDados({ redesenhar: false });
+  } else {
+    atualizarDados().then(() => aberta() === v && toast("Chegaram dados novos de outra janela: já estão aqui."));
+  }
+}
+aoMudarNoutraJanela(() => {
+  const v = aberta();
+  if (!v) return;
+  v.pendente = true;
+  if (document.visibilityState === "visible" && document.hasFocus()) tratarNovidade();
+});
+const aoVoltar = () => document.visibilityState === "visible" && aberta()?.pendente && tratarNovidade();
+document.addEventListener("visibilitychange", aoVoltar);
+window.addEventListener("focus", aoVoltar);
+// Gravar nesta janela limpa as "alterações por gravar"
+window.addEventListener("placar:painel-gravou", () => {
+  const v = aberta();
+  if (v) v.sujo = false;
+});
 
 export async function login(main, msg = "") {
   main.innerHTML = `<div class="a-carregar"><div class="roda" aria-label="A carregar"></div></div>`;

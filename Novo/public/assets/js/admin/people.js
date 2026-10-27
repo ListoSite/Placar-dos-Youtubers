@@ -24,9 +24,13 @@ const ESTADOS = [
   ["arquivado", "Arquivado (já não publica)"],
 ];
 
-export async function render(alvo, query) {
-  let filtro = "todos";
-  let termo = "";
+// O que estava na lista, para o "Atualizar dados" não a deixar em branco
+let ultimaLista = { filtro: "todos", termo: "", scroll: 0 };
+
+export async function render(alvo, query, { refrescar = false } = {}) {
+  if (refrescar) ultimaLista.scroll = $("#pp-lista", alvo)?.scrollTop || 0;
+  let filtro = refrescar ? ultimaLista.filtro : "todos";
+  let termo = refrescar ? ultimaLista.termo : "";
   let selecionado = query.get("id") && adm.db.people[query.get("id")] ? query.get("id") : null;
 
   alvo.innerHTML = `<div class="ed-duas">
@@ -82,13 +86,15 @@ export async function render(alvo, query) {
     }, abrir);
   };
 
+  $("#pp-q", alvo).value = termo;
+  $$("#pp-filtro button", alvo).forEach((x) => x.setAttribute("aria-pressed", String(x.dataset.f === filtro)));
   $("#pp-q", alvo).addEventListener("input", (e) => {
-    termo = e.target.value;
+    termo = ultimaLista.termo = e.target.value;
     desenharLista();
   });
   $$("#pp-filtro button", alvo).forEach((b) =>
     b.addEventListener("click", () => {
-      filtro = b.dataset.f;
+      filtro = ultimaLista.filtro = b.dataset.f;
       $$("#pp-filtro button", alvo).forEach((x) => x.setAttribute("aria-pressed", String(x === b)));
       desenharLista();
     }),
@@ -104,9 +110,12 @@ export async function render(alvo, query) {
     }
   });
   $("#pp-novo", alvo).addEventListener("click", () => novo(abrir));
+  ultimaLista.filtro = filtro;
+  ultimaLista.termo = termo;
   desenharLista();
   if (selecionado) abrir(selecionado);
-  else $("#pp-editor", alvo).innerHTML = `<div class="vazio"><h3>Escolhe um Youtuber</h3><p>Ou cria um novo a partir do link do canal.</p></div>`;
+  if (refrescar) $("#pp-lista", alvo).scrollTop = ultimaLista.scroll;
+  if (!selecionado) $("#pp-editor", alvo).innerHTML = `<div class="vazio"><h3>Escolhe um Youtuber</h3><p>Ou cria um novo a partir do link do canal.</p></div>`;
 }
 
 function novo(abrir) {

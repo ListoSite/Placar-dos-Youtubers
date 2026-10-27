@@ -6,6 +6,21 @@ import { avatar, toast } from "../ui.js";
 
 export const adm = { db: null, quota: null, hasApiKey: false };
 
+// Avisar as outras janelas do painel abertas neste browser de que os dados mudaram
+// (o marcador abre uma janela nova para importar; a que já estava aberta atualiza-se sozinha).
+const canal = typeof BroadcastChannel === "function" ? new BroadcastChannel("placar-painel") : null;
+export function avisarMudanca() {
+  try {
+    canal?.postMessage({ t: "dados", em: Date.now() });
+  } catch {
+    /* sem canal */
+  }
+  window.dispatchEvent(new Event("placar:painel-gravou"));
+}
+export function aoMudarNoutraJanela(fn) {
+  canal?.addEventListener("message", (e) => e.data?.t === "dados" && fn());
+}
+
 export async function lerDb() {
   const r = await api("admin/db");
   adm.db = r.db;
@@ -29,6 +44,7 @@ export async function chamar(rota, corpo, { botao, sucesso, recarregar = true } 
     if (recarregar) {
       await lerDb();
       await carregar({ forcar: true });
+      avisarMudanca();
     }
     if (sucesso) toast(typeof sucesso === "function" ? sucesso(r) : sucesso);
     return r;

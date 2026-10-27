@@ -3,7 +3,7 @@
 import { estado, carregar } from "../data.js";
 import { esc, curto, inteiro, mesNome, norm, plural } from "../format.js";
 import { $, $$, toast } from "../ui.js";
-import { adm, chamar, escolherPessoa, pessoasOrdenadas, lerDb, linkSocialBlade } from "./common.js";
+import { adm, chamar, escolherPessoa, pessoasOrdenadas, lerDb, linkSocialBlade, avisarMudanca } from "./common.js";
 import { blocoEstimativa } from "./estimate-ui.js";
 import { blocoAbout, escolhas } from "./youtube.js";
 
@@ -521,8 +521,9 @@ function mostrarLote(alvo, lote) {
       }
       await lerDb();
       await carregar({ forcar: true });
+      avisarMudanca();
       toast(`Gravados ${plural(canais, "canal", "canais")}.`);
-      alvo.innerHTML = `<div class="aviso info" style="margin-top:14px"><p>Feito: ${plural(canais, "canal atualizado", "canais atualizados")} com dados do Social Blade, ${plural(meses, "mês", "meses")} de views${redesGravadas ? ` e ${plural(redesGravadas, "link novo", "links novos")} de redes sociais` : ""}${ig ? `, Instagram de ${plural(ig, "Youtuber", "Youtubers")}` : ""}${tw ? `, Twitch de ${plural(tw, "Youtuber", "Youtubers")}` : ""}. Os gráficos e o ranking já usam estes números.</p></div>`;
+      alvo.innerHTML = `<div class="aviso info" style="margin-top:14px"><p>Feito: ${plural(canais, "canal atualizado", "canais atualizados")} com dados do Social Blade, ${plural(meses, "mês", "meses")} de views${redesGravadas ? ` e ${plural(redesGravadas, "link novo", "links novos")} de redes sociais` : ""}${ig ? `, Instagram de ${plural(ig, "Youtuber", "Youtubers")}` : ""}${tw ? `, Twitch de ${plural(tw, "Youtuber", "Youtubers")}` : ""}. Os gráficos e o ranking já usam estes números.</p>${voltarJanela()}</div>`;
     });
   };
   desenhar();
@@ -670,12 +671,20 @@ export function mostrarYouTube(alvo, raw) {
     }
     await lerDb();
     await carregar({ forcar: true });
+    avisarMudanca();
     toast(`${plural(total.canais, "canal guardado", "canais guardados")}.`);
     const pessoas = [...new Map(lote.map((l) => [l.personId, adm.db.people[l.personId]])).values()].filter(Boolean);
     alvo.innerHTML = `<div class="aviso info" style="margin-top:14px"><p>Feito: ${plural(total.canais, "canal atualizado", "canais atualizados")}${total.ligados ? `, ${plural(total.ligados, "canal novo ligado", "canais novos ligados")}` : ""}${total.redes ? `, ${plural(total.redes, "link de rede social", "links de redes sociais")}` : ""}${total.bios ? `, ${plural(total.bios, "descrição", "descrições")}` : ""}${total.notas ? `, ${plural(total.notas, "linha nova", "linhas novas")} nas notas` : ""}.</p>
       ${total.erros.length ? `<p>${esc(total.erros.join(" "))}</p>` : ""}
-      ${pessoas.length <= 12 ? `<p>${pessoas.map((p) => `<a href="#/editar/youtubers?id=${encodeURIComponent(p.id)}">${esc(p.name)}</a>`).join(" · ")}</p>` : ""}</div>`;
+      ${pessoas.length <= 12 ? `<p>${pessoas.map((p) => `<a href="#/editar/youtubers?id=${encodeURIComponent(p.id)}">${esc(p.name)}</a>`).join(" · ")}</p>` : ""}${voltarJanela()}</div>`;
   });
+}
+
+/** Esta janela foi aberta pelo marcador: a do painel que já estava aberta atualiza-se sozinha. */
+function voltarJanela() {
+  if (!window.opener) return "";
+  setTimeout(() => document.querySelector("[data-fechar-janela]")?.addEventListener("click", () => window.close()), 0);
+  return `<p class="muted" style="margin-top:10px">A outra janela do painel já recebeu estes dados, não precisas de carregar em F5. <button class="btn btn-pequeno" data-fechar-janela>Fechar esta janela</button></p>`;
 }
 
 // ---------- Colar da folha ----------

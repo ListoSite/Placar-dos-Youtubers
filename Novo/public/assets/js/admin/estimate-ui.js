@@ -2,7 +2,7 @@
 
 import { esc, inteiro } from "../format.js";
 import { $, toast, confirmar } from "../ui.js";
-import { adm, chamar, lerDb } from "./common.js";
+import { adm, chamar, lerDb, avisarMudanca } from "./common.js";
 import { carregar } from "../data.js";
 
 export function blocoEstimativa(alvo, antesDe = null) {
@@ -58,6 +58,7 @@ export function blocoEstimativa(alvo, antesDe = null) {
       }
       await lerDb();
       await carregar({ forcar: true });
+      avisarMudanca();
       toast(`Estimativa feita para ${i} Youtubers.`);
       desenhar();
     };

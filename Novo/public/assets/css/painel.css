@@ -2767,3 +2767,44 @@ body.sem-sessao .pn-marca-movel {
     font-size: 16px;
   }
 }
+
+/* ---------- Dados: atualizar sem F5 ---------- */
+.ed-atualizar {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 6px;
+}
+.ed-atualizar .btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+}
+.ed-atualizar .btn svg {
+  width: 15px;
+  height: 15px;
+  flex: none;
+  transition: transform 0.4s ease;
+}
+.ed-atualizar .btn:hover svg {
+  transform: rotate(180deg);
+}
+.ed-atualizar small {
+  font-size: 11px;
+}
+.ed-novidade {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px 16px;
+  margin: 0 0 16px;
+}
+.ed-novidade[hidden] {
+  display: none;
+}
+@media (max-width: 640px) {
+  .ed-atualizar {
+    align-items: flex-start;
+  }
+}
