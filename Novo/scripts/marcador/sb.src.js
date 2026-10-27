@@ -3,7 +3,8 @@
 // Corre dentro de uma página do socialblade.com, no browser de quem o usa. Faz duas coisas:
 //   1. "Este canal": lê os números da página aberta e manda-os para o Placar.
 //   2. "Todos os canais": recebe a lista de canais copiada no Placar e vai buscar os dados de
-//      cada um, um de cada vez, com pausas entre canais. No fim, os resultados vão para o Placar.
+//      vários ao mesmo tempo, a um ritmo que se ajusta sozinho (abranda se o Social Blade pedir
+//      calma e volta a acelerar depois). No fim, os resultados vão para o Placar.
 //
 // Como o Social Blade muda de aspeto de vez em quando, o marcador não depende de um formato fixo.
 // Procura séries de datas e views em três sítios:
@@ -21,8 +22,81 @@
     return;
   }
 
-  const esperar = (ms) => new Promise((r) => setTimeout(r, ms));
+  // Esperas que não abrandam com o separador escondido: o Chrome trava os temporizadores das
+  // páginas que não estão à vista (ao fim de uns minutos, um por minuto), mas não os de um Worker.
+  // Se a página não deixar criar o Worker, fica o setTimeout normal.
+  const relogio = (() => {
+    try {
+      const w = new Worker(URL.createObjectURL(new Blob(["onmessage=function(e){setTimeout(function(){postMessage(e.data[0])},e.data[1])}"], { type: "text/javascript" })));
+      const fila = new Map();
+      w.onmessage = (e) => {
+        const f = fila.get(e.data);
+        fila.delete(e.data);
+        if (f) f();
+      };
+      let n = 0;
+      return (ms) =>
+        new Promise((r) => {
+          const id = ++n;
+          fila.set(id, r);
+          w.postMessage([id, ms]);
+        });
+    } catch (e) {
+      return null;
+    }
+  })();
+  const esperar = (ms) => {
+    const normal = new Promise((r) => setTimeout(r, ms));
+    return relogio ? Promise.race([normal, relogio(ms)]) : normal;
+  };
   const DIA = 864e5;
+
+  // ---------- Ritmo dos pedidos ----------
+  // Todos os pedidos ao Social Blade passam por vez(): ficam espaçados pelo intervalo, mesmo com
+  // vários canais a ser lidos ao mesmo tempo. Se o Social Blade responder "calma" (429), o ritmo
+  // abranda para o dobro e todos esperam; depois de muitos pedidos bem-sucedidos volta a acelerar.
+  const VELOCIDADES = {
+    rapida: { nome: "Rápida", par: 4, intervalo: 220, min: 150, pausa: 0 },
+    normal: { nome: "Normal", par: 3, intervalo: 380, min: 260, pausa: 250 },
+    cuidado: { nome: "Cuidadosa", par: 1, intervalo: 700, min: 600, pausa: 1800 },
+  };
+  const CHAVE_VEL = "placarSBVelocidade";
+  let velocidade = "normal";
+  try {
+    const v = localStorage.getItem(CHAVE_VEL);
+    if (VELOCIDADES[v]) velocidade = v;
+  } catch (e) {}
+  // Estado da recolha de vários canais (declarado cá em cima porque a interface já o lê)
+  let correr = false;
+  let cicloAtual = null;
+  let pararPorVerificacao = false;
+  let previsao = "";
+  const ritmo = { intervalo: 0, min: 0, par: 1, pausa: 0, proximo: 0, seguidos: 0, pedidos: 0 };
+  function porVelocidade(v) {
+    const x = VELOCIDADES[v];
+    Object.assign(ritmo, { intervalo: x.intervalo, min: x.min, par: x.par, pausa: x.pausa, seguidos: 0 });
+  }
+  porVelocidade(velocidade);
+  async function vez() {
+    const agora = Date.now();
+    const quando = Math.max(agora, ritmo.proximo);
+    ritmo.proximo = quando + ritmo.intervalo;
+    ritmo.pedidos++;
+    if (quando > agora) await esperar(quando - agora);
+  }
+  function correuBem() {
+    if (++ritmo.seguidos >= 30 && ritmo.intervalo > ritmo.min) {
+      ritmo.intervalo = Math.max(ritmo.min, Math.round(ritmo.intervalo * 0.85));
+      ritmo.seguidos = 0;
+    }
+  }
+  /** O Social Blade pediu calma: o dobro do intervalo, menos canais ao mesmo tempo e uma pausa para todos. */
+  function abrandar(segundos) {
+    ritmo.seguidos = 0;
+    ritmo.intervalo = Math.min(5000, ritmo.intervalo * 2);
+    ritmo.par = Math.max(1, ritmo.par - 1);
+    ritmo.proximo = Math.max(ritmo.proximo, Date.now() + segundos * 1000);
+  }
 
   // ---------- Datas e números ----------
   function dataISO(x) {
@@ -225,16 +299,24 @@
     return [...new Set(entradas)].filter((u) => u.startsWith(base) && /\/api\//.test(u) && !/\.(js|css|png|jpe?g|webp|svg|gif|woff2?|ico)(\?|$)/i.test(u)).slice(-40);
   }
 
-  class Bloqueado extends Error {}
+  // tipo "limite": muitos pedidos (429/503), basta esperar; "verificacao": o Social Blade quer
+  // que a pessoa prove que não é um robô, e só recarregando a página.
+  class Bloqueado extends Error {
+    constructor(msg, tipo) {
+      super(msg);
+      this.tipo = tipo || "verificacao";
+    }
+  }
+  const DESAFIO = /challenge|cf-chl|captcha|just a moment/i;
 
   async function lerResposta(url) {
+    await vez();
     const r = await fetch(url, { credentials: "include", headers: { accept: "application/json, */*" } });
     const tipo = r.headers.get("content-type") || "";
     const texto = await r.text();
     const html = /text\/html/.test(tipo);
-    if (r.status === 429 || r.status === 503 || (r.status === 403 && html) || (html && /challenge|cf-chl|captcha|just a moment/i.test(texto))) {
-      throw new Bloqueado(`O Social Blade respondeu ${r.status}.`);
-    }
+    if ((r.status === 403 && html) || (html && DESAFIO.test(texto))) throw new Bloqueado(`O Social Blade pediu uma verificação (${r.status}).`, "verificacao");
+    if (r.status === 429 || r.status === 503) throw new Bloqueado(`O Social Blade respondeu ${r.status}.`, "limite");
     if (!r.ok) return null;
     return texto;
   }
@@ -566,9 +648,11 @@
     return "";
   }
   async function trpcBruto(procs, inp) {
+    await vez();
     const r = await fetch(`${location.origin}/api/trpc/${procs}?batch=1&input=${encodeURIComponent(JSON.stringify(inp))}`, { credentials: "include", headers: { accept: "application/json" } });
     const texto = await r.text();
-    if (r.status === 429 || r.status === 503 || /challenge|cf-chl|captcha|just a moment/i.test(texto.slice(0, 3000))) throw new Bloqueado(`O Social Blade respondeu ${r.status}.`);
+    if (DESAFIO.test(texto.slice(0, 3000))) throw new Bloqueado(`O Social Blade pediu uma verificação (${r.status}).`, "verificacao");
+    if (r.status === 429 || r.status === 503) throw new Bloqueado(`O Social Blade respondeu ${r.status}.`, "limite");
     try {
       const j = JSON.parse(texto);
       return Array.isArray(j) ? j.map((x) => ({ dados: x && x.result && x.result.data ? x.result.data.json : undefined, erro: x && x.error ? (x.error.json && x.error.json.message) || "erro" : "" })) : [];
@@ -635,17 +719,18 @@
   }
   /** Instagram e Twitch de quem tem link no Placar (ou nas redes que o Social Blade mostra no canal). */
   async function juntarRedes(r, alvo, sb) {
-    for (const rede of Object.keys(REDES_SB)) {
-      const nome = nomeRede(rede, alvo && alvo[rede === "instagram" ? "ig" : "tw"]) || redeDasRedes(rede, sb);
-      if (!nome) continue;
-      try {
-        const x = await porRede(rede, nome);
-        if (x) (r.redes ||= {})[rede] = x;
-      } catch (e) {
-        if (e instanceof Bloqueado) throw e;
-      }
-      await esperar(300);
-    }
+    await Promise.all(
+      Object.keys(REDES_SB).map(async (rede) => {
+        const nome = nomeRede(rede, alvo && alvo[rede === "instagram" ? "ig" : "tw"]) || redeDasRedes(rede, sb);
+        if (!nome) return;
+        try {
+          const x = await porRede(rede, nome);
+          if (x) (r.redes ||= {})[rede] = x;
+        } catch (e) {
+          if (e instanceof Bloqueado) throw e;
+        }
+      }),
+    );
   }
   const NOME_REDE = { instagram: "Instagram", twitch: "Twitch" };
   const textoRedes = (r) =>
@@ -781,6 +866,7 @@
     const f = document.createElement("iframe");
     Object.assign(f.style, { position: "fixed", left: "-3000px", top: "0", width: "1280px", height: "900px", border: "0", opacity: "0", pointerEvents: "none" });
     const carregou = new Promise((r) => f.addEventListener("load", r, { once: true }));
+    await vez();
     f.src = urlCanal(alvo);
     document.body.appendChild(f);
     try {
@@ -852,6 +938,39 @@
   const area = el("textarea", { width: "100%", boxSizing: "border-box", height: "64px", marginTop: "8px", background: "rgba(0,0,0,.3)", color: C.texto, border: `1px solid ${C.linha}`, borderRadius: "12px", padding: "8px", font: "12px ui-monospace, monospace" });
   area.placeholder = '{"kind":"placar-sb-lista",...}';
   s2.appendChild(area);
+  // Velocidade: quantos canais de cada vez e o espaço entre pedidos (fica guardada neste browser)
+  const linhaVel = el("div", { display: "flex", alignItems: "center", flexWrap: "wrap", gap: "6px", marginTop: "10px", fontSize: "12px", color: C.suave });
+  linhaVel.appendChild(el("span", { marginRight: "2px" }, "Velocidade:"));
+  const botoesVel = {};
+  for (const [id, v] of Object.entries(VELOCIDADES)) {
+    const b = el("button", { font: "600 12px system-ui, sans-serif", padding: "5px 11px", borderRadius: "999px", border: `1px solid ${C.linha}`, background: C.vidro, color: C.texto, cursor: "pointer" }, v.nome);
+    b.title = id === "rapida" ? "4 canais de cada vez. Se o Social Blade pedir calma, abranda sozinho." : id === "normal" ? "3 canais de cada vez, com pequenas pausas." : "Um canal de cada vez, com pausas (como antes).";
+    b.onclick = () => escolherVelocidade(id);
+    botoesVel[id] = b;
+    linhaVel.appendChild(b);
+  }
+  s2.appendChild(linhaVel);
+  const notaVel = el("div", { fontSize: "11.5px", color: C.suave, marginTop: "4px" });
+  s2.appendChild(notaVel);
+  function escolherVelocidade(id) {
+    velocidade = id;
+    try {
+      localStorage.setItem(CHAVE_VEL, id);
+    } catch (e) {}
+    for (const [k, b] of Object.entries(botoesVel)) {
+      const ativo = k === id;
+      b.style.background = ativo ? C.rubi : C.vidro;
+      b.style.borderColor = ativo ? "transparent" : C.linha;
+    }
+    const x = VELOCIDADES[id];
+    notaVel.textContent = `${x.par} ${x.par > 1 ? "canais" : "canal"} de cada vez${relogio ? ". Podes mudar de separador enquanto corre." : ". Deixa este separador à vista enquanto corre (escondido, o browser abranda-o)."}`;
+    if (correr) {
+      // Já a correr: o espaço entre pedidos muda logo; mais canais de cada vez só ao Continuar
+      Object.assign(ritmo, { intervalo: x.intervalo, min: x.min, pausa: x.pausa, par: Math.min(ritmo.par, x.par) });
+      if (x.par > ritmo.par) log("Mais canais de cada vez só depois de Pausar e Continuar.");
+    }
+  }
+  escolherVelocidade(velocidade);
   const bComecar = botao("Começar", true);
   const bPausar = botao("Pausar");
   const bEnviar2 = botao("Enviar resultados para o Placar", true);
@@ -944,7 +1063,6 @@
 
   // ---------- Vários canais ----------
   let estado = lerEstado();
-  let correr = false;
   function lerLista(txt) {
     const o = JSON.parse(txt);
     if (!o || o.kind !== "placar-sb-lista" || !Array.isArray(o.canais)) throw new Error("Isto não é a lista copiada no Placar.");
@@ -956,23 +1074,21 @@
   function mostrarEstado() {
     if (!estado) return;
     const n = estado.lista.length;
-    const feitos = estado.i;
+    const feitos = estado.itens.length;
     const ok = estado.itens.filter(temDados).length;
     barra.style.display = "";
     barraI.style.width = `${Math.round((feitos / Math.max(1, n)) * 100)}%`;
     estadoTxt.replaceChildren();
-    estadoTxt.append(el("b", null, `${feitos} de ${n} canais`), document.createTextNode(` · ${ok} com dados · ${feitos - ok} sem dados`));
+    estadoTxt.append(el("b", null, `${feitos} de ${n} canais`), document.createTextNode(` · ${ok} com dados · ${feitos - ok} sem dados${correr && previsao ? ` · ${previsao}` : ""}`));
     const temRes = estado.itens.length > 0;
+    const ocupado = Boolean(cicloAtual) || correr;
     bEnviar2.style.display = bCopiar2.style.display = temRes ? "" : "none";
     bComecar.textContent = feitos < n ? "Continuar" : "Começar";
-    bComecar.style.display = correr || feitos >= n ? "none" : "";
-    bPausar.style.display = correr ? "" : "none";
-    bLimpar.style.display = correr ? "none" : "";
+    bComecar.style.display = ocupado || feitos >= n ? "none" : "";
+    bPausar.style.display = ocupado ? "" : "none";
+    bPausar.textContent = correr ? "Pausar" : "A pausar…";
+    bLimpar.style.display = ocupado ? "none" : "";
     area.style.display = "none";
-  }
-  if (estado) {
-    log(`Há uma recolha a meio (${estado.i} de ${estado.lista.length}). Carrega em Continuar.`);
-    mostrarEstado();
   }
 
   let ordem = ["api", "html", "iframe"];
@@ -986,8 +1102,8 @@
       else if (sb) {
         falhasSB = 0;
         const r = { kind: "placar-sb-raw", v: 3, channelId: alvo.id, handle: alvo.h || "", title: alvo.n || "", series: [], sb, meses: contarMeses(sb), metodo: "sb" };
-        await juntarTikTok(r, ttUser(alvo.tt) || ttDasRedes(sb));
-        await juntarRedes(r, alvo, sb);
+        // TikTok, Instagram e Twitch ao mesmo tempo (o ritmo continua a espaçar os pedidos)
+        await Promise.all([juntarTikTok(r, ttUser(alvo.tt) || ttDasRedes(sb)), juntarRedes(r, alvo, sb)]);
         return r;
       } else falhasSB++;
       if (falhasSB < 3) return Object.assign({ channelId: alvo.id, title: alvo.n || "", series: [], meses: 0 }, ultimo || { erro: "O Social Blade não tem este canal." });
@@ -1013,39 +1129,95 @@
     return Object.assign({ channelId: alvo.id, title: alvo.n || "", series: [], meses: 0 }, ultimo || { erro: "Sem dados." });
   }
 
+  // Vários canais ao mesmo tempo: cada "trabalhador" tira o próximo canal da fila. O ritmo
+  // (vez) espaça os pedidos de todos; se o Social Blade pedir calma, o canal volta para a fila.
+  const minutos = (ms) => (ms < 90000 ? "menos de 2 min" : `uns ${Math.round(ms / 60000)} min`);
   async function ciclo() {
     correr = true;
+    pararPorVerificacao = false;
     mostrarEstado();
     await leitura;
     const modelos = aprenderModelos(atual ? atual.rec : novaRecolha());
-    if (estado.i === 0) log(modelos.length ? `Aprendi ${modelos.length} pedido(s) da página aberta.` : "Sem pedidos para copiar. Vou abrir cada canal.");
-    while (correr && estado.i < estado.lista.length) {
-      const alvo = estado.lista[estado.i];
-      let r;
-      try {
-        r = await umCanal(alvo, modelos);
-      } catch (e) {
-        if (e instanceof Bloqueado) {
-          correr = false;
-          log("⚠ O Social Blade pediu uma verificação ou travou os pedidos. Recarrega esta página (resolve a verificação se aparecer), espera um minuto e carrega outra vez no marcador para continuar.");
-          break;
+    const feitos = new Set(estado.itens.map((x) => x.channelId));
+    const fila = estado.lista.filter((c) => !feitos.has(c.id));
+    if (!feitos.size) log(modelos.length ? `Aprendi ${modelos.length} pedido(s) da página aberta.` : "Sem pedidos para copiar. Vou abrir cada canal.");
+    log(`Velocidade ${VELOCIDADES[velocidade].nome}: ${ritmo.par} ${ritmo.par > 1 ? "canais" : "canal"} de cada vez.`);
+    const inicio = Date.now();
+    const nInicio = estado.itens.length;
+    let calmas = 0;
+    let ultimaCalma = 0;
+    const trabalhador = async (n) => {
+      while (correr && fila.length) {
+        // Depois de abrandar ficam menos trabalhadores; e nos métodos de recurso (página e iframe) só um
+        if (n >= ritmo.par || (falhasSB >= 3 && n > 0)) return;
+        const alvo = fila.shift();
+        let r;
+        try {
+          r = await umCanal(alvo, modelos);
+          correuBem();
+          calmas = 0;
+        } catch (e) {
+          if (e instanceof Bloqueado && e.tipo === "limite") {
+            fila.unshift(alvo);
+            // Vários canais a meio recebem o "calma" ao mesmo tempo: conta como um só aviso
+            if (Date.now() - ultimaCalma > 4000) {
+              calmas++;
+              if (calmas > 5) {
+                correr = false;
+                log("⚠ O Social Blade continua a pedir calma. Fica em pausa: espera uns minutos e carrega em Continuar (ou escolhe a velocidade Cuidadosa).");
+                return;
+              }
+              const seg = Math.min(60, 10 * 2 ** (calmas - 1));
+              abrandar(seg);
+              log(`⏳ O Social Blade pediu calma: a esperar ${seg} s e a abrandar (${ritmo.par} de cada vez).`);
+            }
+            ultimaCalma = Date.now();
+            continue;
+          }
+          if (e instanceof Bloqueado) {
+            fila.unshift(alvo);
+            if (correr) {
+              correr = false;
+              pararPorVerificacao = true;
+            }
+            return;
+          }
+          r = { channelId: alvo.id, title: alvo.n || "", series: [], meses: 0, erro: String(e.message || e) };
         }
-        r = { channelId: alvo.id, title: alvo.n || "", series: [], meses: 0, erro: String(e.message || e) };
+        estado.itens = estado.itens.filter((x) => x.channelId !== alvo.id);
+        estado.itens.push(r);
+        estado.i = estado.itens.length;
+        gravarEstado(estado);
+        const feitosAgora = estado.itens.length - nInicio;
+        const falta = estado.lista.length - estado.itens.length;
+        previsao = feitosAgora >= 3 && falta > 0 ? `faltam ${minutos(((Date.now() - inicio) / feitosAgora) * falta)}` : "";
+        log(`${temDados(r) ? "✓" : "–"} ${alvo.n || alvo.id}: ${temDados(r) ? `${r.meses} meses${r.sb && r.sb.info && r.sb.info.redes.length ? `, ${r.sb.info.redes.length} redes` : ""}${textoTT(r)}${textoRedes(r)} (${r.metodo})` : r.erro || "sem dados"}`);
+        mostrarEstado();
+        if (ritmo.pausa && fila.length) await esperar(ritmo.pausa + Math.random() * ritmo.pausa);
       }
-      estado.itens = estado.itens.filter((x) => x.channelId !== alvo.id);
-      estado.itens.push(r);
-      estado.i++;
-      gravarEstado(estado);
-      log(`${temDados(r) ? "✓" : "–"} ${alvo.n || alvo.id}: ${temDados(r) ? `${r.meses} meses${r.sb && r.sb.info && r.sb.info.redes.length ? `, ${r.sb.info.redes.length} redes` : ""}${textoTT(r)}${textoRedes(r)} (${r.metodo})` : r.erro || "sem dados"}`);
-      mostrarEstado();
-      if (estado.i < estado.lista.length) await esperar(1500 + Math.random() * 1500);
-    }
+    };
+    await Promise.all(Array.from({ length: ritmo.par }, (_, n) => trabalhador(n)));
     correr = false;
-    if (estado.i >= estado.lista.length) log("Terminado. Envia os resultados para o Placar.");
+    previsao = "";
+    if (pararPorVerificacao) {
+      // Da próxima vez vai um pouco mais devagar
+      if (velocidade !== "cuidado") escolherVelocidade(velocidade === "rapida" ? "normal" : "cuidado");
+      log(`⚠ O Social Blade pediu uma verificação. Recarrega esta página (resolve a verificação se aparecer), espera um minuto e carrega outra vez no marcador para continuar de onde ficou. Passei para a velocidade ${VELOCIDADES[velocidade].nome}.`);
+    } else if (estado.itens.length >= estado.lista.length) {
+      const seg = Math.round((Date.now() - inicio) / 1000);
+      log(`Terminado em ${seg < 120 ? seg + " s" : Math.round(seg / 60) + " min"}. Envia os resultados para o Placar.`);
+    }
+    mostrarEstado();
+  }
+
+  // Uma recolha que ficou a meio (o estado fica guardado neste browser)
+  if (estado) {
+    log(`Há uma recolha a meio (${estado.itens.length} de ${estado.lista.length}). Carrega em Continuar.`);
     mostrarEstado();
   }
 
   bComecar.onclick = () => {
+    if (cicloAtual) return;
     if (!estado) {
       let lista;
       try {
@@ -1058,15 +1230,22 @@
       estado = { lista, i: 0, itens: [] };
       gravarEstado(estado);
     }
-    ciclo();
+    porVelocidade(velocidade);
+    cicloAtual = ciclo().finally(() => {
+      cicloAtual = null;
+      mostrarEstado();
+    });
   };
   bPausar.onclick = () => {
+    if (!correr) return;
     correr = false;
-    log("Em pausa. Carrega em Continuar quando quiseres.");
+    log("A pausar: acabo os canais que estão a meio. Depois carrega em Continuar quando quiseres.");
+    mostrarEstado();
   };
   bEnviar2.onclick = () => abrirPlacar("sbl", resultadosLote());
   bCopiar2.onclick = () => copiar(resultadosLote(), bCopiar2);
   bLimpar.onclick = () => {
+    if (cicloAtual) return;
     if (!confirm("Apagar a recolha guardada e começar outra vez?")) return;
     correr = false;
     estado = null;
