@@ -17,6 +17,7 @@ import { aleatorio } from "./sorte.js";
 import { animar } from "./grafico.js";
 import { curiosidadesRedes } from "./cartao.js";
 import { TEMAS_CURIOSIDADES, temaCuriosidades } from "./curiosidades-temas.js";
+import { DATA_MUNDO, CANAIS_GIGANTES, VIDEOS_GIGANTES, GENTE_PT, PASTEIS_DIA, SALARIO_MINIMO, EUROMILHOES, ALTURAS, FOLHA_M, MOEDA_M, DISTANCIAS, PESSOA_M, altura, distancia } from "./mundo.js";
 import { PORTUGUESES, MINUTOS_POR_NASCIMENTO, CONCELHOS, DISTRITOS, NORTE, deLugar, emLugar, distritoDe, noMapa, CONTORNO_PATH, CAIXAS_ILHAS } from "./portugal.js";
 
 const DIA = 864e5;
@@ -72,6 +73,7 @@ function fmt(v, f = "curto") {
   if (f === "ano") return String(Math.round(v));
   if (f === "tempo") return tempo(v);
   if (f === "dolares") return `${curto(Math.round(v))} $`;
+  if (f === "altura") return altura(v);
   return curto(v);
 }
 
@@ -120,6 +122,18 @@ function melhorPior(p, meses) {
   }
   return { max, min };
 }
+
+// A referência logo abaixo e logo acima de um valor (as listas estão por ordem crescente)
+function entre(lista, v, campo) {
+  return { abaixo: lista.filter((a) => a[campo] <= v).at(-1), acima: lista.find((a) => a[campo] > v) };
+}
+// As referências para as cenas que crescem (torre e fila): até 6 abaixo e a seguinte acima
+function marcosAte(lista, v, campo) {
+  const abaixo = lista.filter((a) => a[campo] <= v && a[campo] >= v / 3000).slice(-6);
+  const acima = lista.find((a) => a[campo] > v);
+  return [...abaixo, ...(acima ? [acima] : [])].map((a) => ({ nome: a.nome, ic: a.ic, v: a[campo] }));
+}
+const PASSO_M = 0.75;
 
 // ---------- Os factos de cada tema ----------
 // Cada facto: { k (chave única), tema, peso (quanto impressiona), vis (a cena), pessoas, titulo,
@@ -968,6 +982,300 @@ const GERADORES = {
     }
     return out;
   },
+
+  // Empilhados: os subscritores em folhas de papel e as views em moedas, ao lado de torres e montanhas
+  torre(c) {
+    const out = [];
+    const mes = mesNome(c.ref, { ano: false });
+    const facto = ({ k, peso, p, h, tipo, titulo, inicio, fim = "", rot, ic, q }) => {
+      const { abaixo, acima } = entre(ALTURAS, h, "m");
+      if (!abaixo) return;
+      const r = h / abaixo.m;
+      peso += ALTURAS.indexOf(abaixo) * 0.4;
+      let txt = `${inicio}, a pilha tinha **${altura(h)}**: ${r >= 2 ? `**${vezes(r)}×** a altura ${abaixo.de}` : `mais alta do que ${abaixo.t} (${altura(abaixo.m)})`}.`;
+      if (acima && acima.m / h < 3) txt += ` Para chegar à altura ${acima.de} faltavam **${altura(acima.m - h)}**.`;
+      out.push({ k, peso, vis: "torre", p: p?.id, pessoas: p ? [snap(p)] : [], titulo, texto: txt + fim, num: N(h, "altura"), q, dados: { h, tipo, rot, ic, marcos: marcosAte(ALTURAS, h, "m") } });
+    };
+    for (const p of c.gente) {
+      const s = subs(p);
+      if (s < 300000) continue;
+      const h = s * FOLHA_M;
+      facto({ k: `torre:folhas:${p.id}`, peso: 0.6 + Math.log10(s) * 0.3, p, h, tipo: "folha", rot: "de folhas de papel", titulo: escolher([`Os subscritores de **${p.name}** em folhas de papel`, `Quão alta é a pilha de **${p.name}**?`, `**${p.name}** empilhado`]), inicio: `Se cada um dos **${curto(s)}** subscritores de **${p.name}** fosse uma folha de papel`, q: { t: `Se cada subscritor de **${p.name}** fosse uma folha de papel, que altura tinha a pilha?`, v: h, f: "altura" } });
+    }
+    for (const x of rankingMes(c.ref, { categoria: c.cat }).slice(0, 15)) {
+      if (x.v < 30000) continue;
+      const h = x.v * MOEDA_M;
+      facto({ k: `torre:moedas:${x.p.id}:${c.ref}`, peso: 1 + Math.log10(x.v) * 0.3, p: x.p, h, tipo: "moeda", rot: "de moedas de 1 cêntimo", titulo: escolher([`As views de **${x.p.name}** em moedas`, `Uma moeda por cada view de ${mes}`]), inicio: `Se cada uma das **${curto(x.v)}** views de **${x.p.name}** em ${mes} fosse uma moeda de 1 cêntimo`, fim: ` E eram **${inteiro(Math.round(x.v / 100))} €** em moedas.`, q: { t: `Uma moeda de 1 cêntimo por cada view de **${x.p.name}** em ${mes}: que altura tinha a pilha?`, v: h, f: "altura" } });
+    }
+    for (const p of [...c.gente].sort((a, b) => vtot(b) - vtot(a)).slice(0, 12)) {
+      const v = vtot(p);
+      if (v < 1e7) continue;
+      facto({ k: `torre:total:${p.id}`, peso: 0.8 + Math.log10(v) * 0.25, p, h: v * FOLHA_M, tipo: "folha", rot: "de folhas de papel", titulo: escolher([`Todas as views de **${p.name}** numa pilha`, `**${curto(v)}** folhas de papel`]), inicio: `Se cada uma das **${curto(v)}** views de sempre de **${p.name}** fosse uma folha de papel` });
+    }
+    const soma = c.gente.reduce((a, p) => a + subs(p), 0);
+    if (soma > 1e6) facto({ k: `torre:placar`, peso: 1.5, h: soma * FOLHA_M, tipo: "folha", ic: "🇵🇹", rot: "de folhas de papel", titulo: `Todos os subscritores do Placar numa pilha`, inicio: `Se os **${curto(soma)}** subscritores de todos os Youtubers do Placar fossem folhas de papel` });
+    return out;
+  },
+
+  // De mãos dadas: até onde chegava a fila dos subscritores (e as views do mês, em passos)
+  fila(c) {
+    const out = [];
+    const mes = mesNome(c.ref, { ano: false });
+    const facto = ({ k, peso, p, km, titulo, inicio, ic, unid, q }) => {
+      const { abaixo, acima } = entre(DISTANCIAS, km, "km");
+      if (!abaixo) return;
+      const r = km / abaixo.km;
+      peso += DISTANCIAS.indexOf(abaixo) * 0.3;
+      let txt = `${inicio} **${distancia(km)}**: ${abaixo.frase}${r >= 2 ? ` **${inteiro(Math.floor(r))} vezes**` : ""}.`;
+      if (acima && acima.km / km < 4) txt += ` Para ${acima.inf} faltavam **${distancia(acima.km - km)}**.`;
+      out.push({ k, peso, vis: "fila", p: p?.id, pessoas: p ? [snap(p)] : [], titulo, texto: txt, num: N(km * 1000, "altura"), q, dados: { km, ic, unid, marcos: marcosAte(DISTANCIAS, km, "km") } });
+    };
+    for (const p of c.gente) {
+      const s = subs(p);
+      if (s < 5000) continue;
+      const km = (s * PESSOA_M) / 1000;
+      facto({ k: `fila:${p.id}`, peso: 0.8 + Math.log10(s) * 0.3, p, km, ic: "🧍", unid: "de gente de mãos dadas", titulo: escolher([`Se os subscritores de **${p.name}** dessem as mãos…`, `Até onde chega a fila de **${p.name}**?`, `**${p.name}** de mãos dadas`]), inicio: `De mãos dadas e braços abertos, os **${curto(s)}** subscritores de **${p.name}** faziam uma fila de`, q: { t: `Se os subscritores de **${p.name}** dessem as mãos, quão comprida era a fila?`, v: km * 1000, f: "altura" } });
+    }
+    for (const x of rankingMes(c.ref, { categoria: c.cat }).slice(0, 10)) {
+      const km = (x.v * PASSO_M) / 1000;
+      if (km < 3) continue;
+      facto({ k: `fila:passos:${x.p.id}:${c.ref}`, peso: 1.2 + Math.log10(x.v) * 0.25, p: x.p, km, ic: "👣", unid: "de passos", titulo: escolher([`Uma view, um passo`, `As views de **${x.p.name}** a pé`]), inicio: `Se cada uma das **${curto(x.v)}** views de **${x.p.name}** em ${mes} fosse um passo (uns 75 cm), dava uma caminhada de` });
+    }
+    const soma = c.gente.reduce((a, p) => a + subs(p), 0);
+    if (soma > 1e6) facto({ k: `fila:placar`, peso: 2, km: (soma * PESSOA_M) / 1000, ic: "🧍", unid: "de gente de mãos dadas", titulo: `Todos os subscritores do Placar de mãos dadas`, inicio: `Os **${curto(soma)}** subscritores de todos os Youtubers do Placar, de mãos dadas, faziam uma fila de` });
+    return out;
+  },
+
+  // Contra os gigantes do mundo: quantos canais portugueses cabem no MrBeast, e as views contra o Baby Shark
+  mundo(c) {
+    const out = [];
+    for (const p of c.gente) {
+      const s = subs(p);
+      if (s >= 300000) {
+        const g = escolher(CANAIS_GIGANTES.filter((x) => x.v / s >= 3 && x.v / s <= 1500));
+        if (g) {
+          const n = Math.round(g.v / s);
+          out.push({
+            k: `mundo:canal:${p.id}:${g.id}`,
+            grupo: `gigante:${g.id}`,
+            peso: 2 + Math.log10(s) * 0.6,
+            vis: "cabem",
+            p: p.id,
+            pessoas: [snap(p)],
+            titulo: escolher([`Quantos **${p.name}** cabem no **${g.nome}**?`, `**${p.name}** contra o **${g.nome}**`]),
+            texto: `O **${g.nome}**, ${g.nota}, tem **${marco(g.v)}** de subscritores (${DATA_MUNDO}). Eram precisos **${inteiro(n)}** canais como o de **${p.name}** (${curto(s)}) para lá chegar.`,
+            num: N(n, "inteiro", { pre: "×" }),
+            q: { t: `Quantos canais como o de **${p.name}** eram precisos para fazer um **${g.nome}**?`, v: n, f: "inteiro" },
+            dados: { gig: { nome: g.nome, ic: g.ic, v: g.v, rot: "subscritores" }, n },
+          });
+        }
+      }
+      const v = vtot(p);
+      if (v >= 1e8) {
+        const g = escolher(VIDEOS_GIGANTES.filter((x) => x.v / v >= 2 && x.v / v <= 600));
+        if (g) {
+          const n = Math.round(g.v / v);
+          out.push({
+            k: `mundo:video:${p.id}:${g.id}`,
+            grupo: `gigante:${g.id}`,
+            peso: 2.2 + Math.log10(v) * 0.4,
+            vis: "cabem",
+            p: p.id,
+            pessoas: [snap(p)],
+            titulo: escolher([`Todos os vídeos de **${p.name}** contra um só`, `**${p.name}** contra o **${g.nome}**`]),
+            texto: `Todos os vídeos de **${p.name}** juntos têm **${curto(v)}** views. Um só vídeo, o **${g.nome}** (${g.nota}), tem **${marco(g.v)}**: era preciso juntar **${inteiro(n)}** canais como o de **${p.name}** para chegar lá.`,
+            num: N(n, "inteiro", { pre: "×" }),
+            dados: { gig: { nome: g.nome, ic: g.ic, v: g.v, rot: "views num só vídeo" }, n },
+          });
+        }
+      }
+    }
+    // Todos juntos: os subscritores contra os maiores canais e as views contra os maiores vídeos
+    const comSubs = [...c.gente].filter((p) => subs(p) > 0).sort((a, b) => subs(b) - subs(a));
+    const somaS = comSubs.reduce((a, p) => a + subs(p), 0);
+    const somaV = c.gente.reduce((a, p) => a + vtot(p), 0);
+    const partes = (lista, f) => {
+      const top = lista.slice(0, 6);
+      const resto = lista.slice(6);
+      return { partes: top.map((p) => ({ ...snap(p), v: f(p) })), outros: { n: resto.length, v: resto.reduce((a, p) => a + f(p), 0) } };
+    };
+    if (comSubs.length >= 8) {
+      for (const g of [CANAIS_GIGANTES[0], CANAIS_GIGANTES.find((x) => x.id === "pewdiepie")]) {
+        const passa = somaS >= g.v;
+        out.push({
+          k: `mundo:soma:${g.id}`,
+          grupo: "soma-subs",
+          peso: 3.4,
+          vis: "soma",
+          pessoas: comSubs.slice(0, 3).map(snap),
+          titulo: escolher([`Todos juntos contra o **${g.nome}**`, `O YouTube português inteiro contra o **${g.nome}**`]),
+          texto: passa
+            ? `Os **${comSubs.length}** Youtubers do Placar somam **${marco(somaS)}** de subscritores: juntos, passam o **${g.nome}** (**${marco(g.v)}**).`
+            : `Os **${comSubs.length}** Youtubers do Placar somam **${marco(somaS)}** de subscritores. O **${g.nome}** sozinho tem **${marco(g.v)}**: **${vezes(g.v / somaS)}×** mais do que todos juntos.`,
+          num: N(somaS),
+          dados: { ...partes(comSubs, subs), gig: { nome: g.nome, ic: g.ic, v: g.v }, rot: "subscritores", nos: "Todos do Placar" },
+        });
+      }
+    }
+    const comViews = [...c.gente].filter((p) => vtot(p) > 0).sort((a, b) => vtot(b) - vtot(a));
+    if (comViews.length >= 8 && somaV > 1e9) {
+      const passou = VIDEOS_GIGANTES.filter((x) => x.v <= somaV).sort((a, b) => b.v - a.v)[0];
+      const falta = VIDEOS_GIGANTES.filter((x) => x.v > somaV).sort((a, b) => a.v - b.v)[0];
+      const g = passou || falta;
+      out.push({
+        k: `mundo:somaviews:${g.id}`,
+        peso: 3.6,
+        vis: "soma",
+        pessoas: comViews.slice(0, 3).map(snap),
+        titulo: passou ? `Todos juntos já passaram o **${passou.nome}**` : `Todos juntos contra o **${g.nome}**`,
+        texto: passou
+          ? `Somando todos os vídeos de todos os Youtubers do Placar, são **${marco(somaV)}** views: mais do que o **${passou.nome}** sozinho (**${marco(passou.v)}**).${falta ? ` Mas o **${falta.nome}** ainda tem **${marco(falta.v)}**.` : ""}`
+          : `Somando todos os vídeos de todos os Youtubers do Placar, são **${marco(somaV)}** views. Um só vídeo, o **${g.nome}**, tem **${marco(g.v)}**.`,
+        num: N(somaV),
+        dados: { ...partes(comViews, vtot), gig: { nome: g.nome, ic: g.ic, v: g.v }, rot: "views", nos: "Todos do Placar" },
+      });
+    }
+    return out;
+  },
+
+  // Mais gente do que…: os subscritores no meio dos sócios dos clubes, dos festivais e dos turistas
+  pais(c) {
+    const out = [];
+    const mes = mesNome(c.ref, { ano: false });
+    const linhas = (v, eu, lista = GENTE_PT) => {
+      const abaixo = lista.filter((g) => g.v <= v).slice(-3);
+      const acima = lista.filter((g) => g.v > v).slice(0, 2);
+      return [...acima.reverse(), eu, ...abaixo.reverse()].map((x) => (x.quem ? x : { nome: x.nome, ic: x.ic, v: x.v, nota: x.nota }));
+    };
+    for (const p of c.gente) {
+      const s = subs(p);
+      if (s < 60000) continue;
+      const { abaixo, acima } = entre(GENTE_PT, s, "v");
+      if (!abaixo) continue;
+      const perto = Math.abs(Math.log(s / abaixo.v));
+      out.push({
+        k: `pais:${p.id}`,
+        grupo: `pais:${abaixo.id}`,
+        peso: 2 + Math.log10(s) * 0.5 + Math.max(0, 1 - perto),
+        vis: "misto",
+        p: p.id,
+        pessoas: [snap(p)],
+        titulo: escolher([`**${p.name}** tem mais gente do que…`, `Onde fica **${p.name}** no meio de Portugal?`, `**${p.name}** contra ${abaixo.vs}`]),
+        texto: `**${p.name}** tem **${curto(s)}** subscritores: ${s / abaixo.v < 1.05 ? "praticamente tantos como" : "mais do que"} ${abaixo.t} (**${curto(abaixo.v)}**, ${abaixo.nota})${acima ? `, mas ainda menos do que ${acima.t} (**${curto(acima.v)}**)` : ""}.`,
+        num: N(s),
+        q: (() => {
+          const ref = acima && aleatorio() < 0.5 ? acima : abaixo;
+          return { t: `Quem tem mais gente: os subscritores de **${p.name}** ou ${ref.t}?`, opcoesTexto: true, certa: s > ref.v ? p.name : ref.curto, outras: [s > ref.v ? ref.curto : p.name] };
+        })(),
+        dados: { rot: "subscritores", linhas: linhas(s, { ...snap(p), quem: true, v: s, nota: "subscritores" }) },
+      });
+    }
+    // As views de um mês contra o que Portugal faz num ano inteiro
+    const anuais = GENTE_PT.filter((g) => g.v >= 6e6);
+    for (const x of rankingMes(c.ref, { categoria: c.cat }).slice(0, 10)) {
+      const g = anuais.filter((a) => a.v <= x.v).at(-1);
+      if (!g) continue;
+      out.push({
+        k: `pais:mes:${x.p.id}:${c.ref}`,
+        grupo: `paismes:${g.id}`,
+        peso: 2.6 + Math.log10(x.v / g.v) + Math.log10(x.v) * 0.2,
+        vis: aleatorio() < 0.5 ? "misto" : "comparar",
+        p: x.p.id,
+        pessoas: [snap(x.p)],
+        titulo: escolher([`Um mês de **${x.p.name}** contra um ano de Portugal`, `Num mês, mais do que Portugal num ano`]),
+        texto: `Só em ${mes}, os vídeos de **${x.p.name}** tiveram **${curto(x.v)}** views: mais do que ${g.t} (**${curto(g.v)}**, ${g.nota}).`,
+        num: N(x.v),
+        dados: { f: "curto", a: { rot: `Views de ${x.p.name} em ${mes}`, v: x.v, ic: "👁" }, b: { rot: `${g.nome} (${g.nota})`, v: g.v, ic: g.ic }, rot: "", linhas: linhas(x.v, { ...snap(x.p), quem: true, v: x.v, nota: `views em ${mes}` }, anuais) },
+      });
+    }
+    const soma = c.gente.reduce((a, p) => a + subs(p), 0);
+    const g = GENTE_PT.filter((a) => a.v <= soma).at(-1);
+    if (g && soma > 1e6)
+      out.push({
+        k: `pais:placar`,
+        peso: 3,
+        vis: "misto",
+        pessoas: [],
+        titulo: `Todos os subscritores do Placar juntos`,
+        texto: `Os subscritores de todos os Youtubers do Placar somam **${curto(soma)}**: mais do que ${g.t} (**${curto(g.v)}**, ${g.nota}).`,
+        num: N(soma),
+        dados: { rot: "", linhas: linhas(soma, { id: "placar", name: "Todos do Placar", photo: "", quem: true, v: soma, nota: "subscritores somados", ic: "🇵🇹" }) },
+      });
+    return out;
+  },
+
+  // À portuguesa: as views em pastéis de nata, apostas do Euromilhões e salários mínimos
+  portuguesa(c) {
+    const out = [];
+    const mes = mesNome(c.ref, { ano: false });
+    const anoAgora = new Date(c.agora).getFullYear();
+    for (const [i, x] of rankingMes(c.ref, { categoria: c.cat }).slice(0, 8).entries()) {
+      if (x.v < 200000) continue;
+      const dias = x.v / PASTEIS_DIA;
+      out.push({
+        k: `portuguesa:pasteis:${x.p.id}:${c.ref}`,
+        peso: 2.2 + Math.log10(x.v) * 0.35,
+        vis: "frasco",
+        p: x.p.id,
+        pessoas: [snap(x.p)],
+        titulo: escolher([`As views de **${x.p.name}** em pastéis de nata`, `Um pastel de nata por cada view`]),
+        texto: `Se cada uma das **${curto(x.v)}** views de **${x.p.name}** em ${mes} fosse um pastel de nata, a fábrica dos Pastéis de Belém (uns **20 mil por dia**) levava **${tempo(dias)}** a fazê-los todos.`,
+        num: N(dias, "tempo"),
+        q: { t: `A fazer 20 mil por dia, quanto tempo levavam os Pastéis de Belém a fazer um pastel por cada view de **${x.p.name}** em ${mes}?`, v: dias, f: "tempo" },
+        dados: { icone: "🥧", ate: dias, f: "tempo", rot: "a fazer pastéis sem parar" },
+      });
+      const euros = x.v / 100;
+      if (euros >= SALARIO_MINIMO * 2 && i < 4)
+        out.push({
+          k: `portuguesa:salario:${x.p.id}:${c.ref}`,
+          peso: 2 + Math.log10(x.v) * 0.3,
+          vis: "frasco",
+          p: x.p.id,
+          pessoas: [snap(x.p)],
+          titulo: escolher([`E se cada view valesse 1 cêntimo?`, `**${x.p.name}** a 1 cêntimo por view`]),
+          texto: `Se cada view de ${mes} valesse **1 cêntimo**, **${x.p.name}** juntava **${inteiro(Math.round(euros))} €**: **${dec(euros / SALARIO_MINIMO)}** salários mínimos (920 € em 2026). Não é o que ganha: é só para ver o tamanho do número.`,
+          num: N(euros / SALARIO_MINIMO, "dec", { suf: " salários" }),
+          dados: { icone: "💶", ate: euros / SALARIO_MINIMO, f: "dec", rot: "salários mínimos" },
+        });
+    }
+    for (const p of [...c.gente].sort((a, b) => vtot(b) - vtot(a)).slice(0, 10)) {
+      const v = vtot(p);
+      if (v < 2e7) continue;
+      const anos = v / PASTEIS_DIA / 365.25;
+      if (anos >= 3) {
+        const desde = Math.round(anoAgora - anos);
+        out.push({
+          k: `portuguesa:pasteistotal:${p.id}`,
+          peso: 2.6 + Math.min(2, anos / 60),
+          vis: "frasco",
+          p: p.id,
+          pessoas: [snap(p)],
+          titulo: escolher([`Um pastel de nata por cada view de sempre`, `**${p.name}** em pastéis de Belém`]),
+          texto: `Um pastel por cada uma das **${curto(v)}** views de **${p.name}**: a fazer 20 mil por dia, a fábrica de Belém precisava de **${inteiro(Math.round(anos))} anos**.${desde < anoAgora - 2 ? ` Tinha de ter começado em **${desde}**${desde < 1837 ? `, antes de a fábrica abrir (1837)!` : "."}` : ""}`,
+          num: N(anos, "inteiro", { suf: " anos" }),
+          dados: { icone: "🥧", ate: anos, f: "inteiro", suf: " anos", rot: "a fazer pastéis sem parar" },
+        });
+      }
+      const k = v / EUROMILHOES;
+      const numeros = baralharSorte(Array.from({ length: 50 }, (_, i) => i + 1)).slice(0, 5).sort((a, b) => a - b);
+      const estrelas = baralharSorte(Array.from({ length: 12 }, (_, i) => i + 1)).slice(0, 2).sort((a, b) => a - b);
+      out.push({
+        k: `portuguesa:euromilhoes:${p.id}`,
+        peso: 2.4 + Math.min(2, Math.log10(1 + k)),
+        vis: "bilhete",
+        p: p.id,
+        pessoas: [snap(p)],
+        titulo: escolher([`**${p.name}** no Euromilhões`, `E se cada view fosse uma aposta?`]),
+        texto:
+          k >= 1
+            ? `O Euromilhões tem **139 838 160** chaves diferentes. Com uma aposta diferente por cada uma das **${curto(v)}** views de **${p.name}**, jogava todas as chaves **${k >= 2 ? `${inteiro(Math.floor(k))} vezes` : "uma vez"}**: o primeiro prémio era garantido.`
+            : `O Euromilhões tem **139 838 160** chaves diferentes. Com uma aposta diferente por cada uma das **${curto(v)}** views de **${p.name}**, tinha **${dec(k * 100)}%** de hipóteses de ganhar o primeiro prémio.`,
+        num: k >= 1 ? N(k, "dec", { pre: "×" }) : N(k * 100, "dec", { suf: "%" }),
+        dados: { v, k, numeros, estrelas },
+      });
+    }
+    return out;
+  },
 };
 
 // Os que entram no "Ao acaso" e na mistura (os ganhos só quando se escolhem)
@@ -1275,11 +1583,19 @@ const ESPECIAIS = { escala: planoEscala, iceberg: planoIceberg, reis: planoReis,
 function criarPergunta({ t, v, f, max = Infinity, opcoesTexto, certa: certaTxt, outras }, anoAgora) {
   if (opcoesTexto) {
     const erradas = baralharSorte(outras || []).slice(0, 2);
-    if (erradas.length < 2) return null;
+    if (!erradas.length) return null;
     const opcoes = baralharSorte([certaTxt, ...erradas]);
     return { t, opcoes, certa: opcoes.indexOf(certaTxt) };
   }
   const certa = fmt(v, f);
+  // Às vezes é "mais ou menos do que…?": só duas respostas, com um número perto do certo
+  if (f !== "ano" && aleatorio() < 0.35) {
+    for (const k of baralharSorte([0.5, 0.65, 1.5, 2])) {
+      const limiar = f === "inteiro" ? Math.max(1, Math.round(v * k)) : v * k;
+      if (limiar > max || fmt(limiar, f) === certa) continue;
+      return { t: `${t} Mais ou menos do que **${fmt(limiar, f)}**?`, opcoes: ["⬆️ Mais", "⬇️ Menos"], certa: v > limiar ? 0 : 1, maisMenos: true };
+    }
+  }
   const ks = baralharSorte(f === "ano" ? [-7, -4, 3, 5] : Number.isFinite(max) ? [0.3, 0.5, 1.5, 2, 0.75, 1.25] : [0.3, 0.45, 2.2, 3.4]);
   const erradas = [];
   for (const k of ks) {
@@ -1505,10 +1821,10 @@ async function cenaPergunta(palco, alvo, f) {
   const q = f.pergunta;
   const s = f.pessoas.find((x) => x.id === f.p) || f.pessoas.at(-1);
   alvo.innerHTML = `<div class="cu-cartao cu-pergunta">
-    <div class="cu-num-etq">🤔 Consegues adivinhar?</div>
+    <div class="cu-num-etq">${q.maisMenos ? "⬆️⬇️ Mais ou menos?" : "🤔 Consegues adivinhar?"}</div>
     ${s ? avatarPalco(s, palco.vertical ? 190 : 150) : ""}
     <h2 class="cu-titulo">${rico(q.t)}</h2>
-    <div class="cu-opcoes">${q.opcoes.map((o, i) => `<div class="cu-op"><i>${"ABC"[i]}</i><b>${esc(o)}</b></div>`).join("")}</div>
+    <div class="cu-opcoes${q.maisMenos ? " duas" : ""}">${q.opcoes.map((o, i) => `<div class="cu-op"><i>${"ABC"[i]}</i><b>${esc(o)}</b></div>`).join("")}</div>
     <div class="cu-contagem-q"><b>5</b></div>
   </div>`;
   const c = alvo.firstElementChild;
@@ -2042,6 +2358,312 @@ const CENAS = {
       await palco.esperar(1900);
       entrar(cartao.querySelector(".cu-texto"));
       await palco.passo(5600);
+    },
+  },
+
+  // Empilhados: a pilha cresce e a "câmara" afasta-se; as torres e montanhas passam e ficam lá em baixo
+  torre: {
+    html: (f, palco) => {
+      const d = f.dados;
+      return `<div class="cu-to">
+        <div class="cu-to-lado">${f.pessoas[0] ? avatarPalco(f.pessoas[0], palco.vertical ? 120 : 130) : `<span class="cu-to-grande">${esc(d.ic || "📄")}</span>`}${titulo(f)}
+          <div class="cu-to-num"><b>0 m</b><small>${esc(d.rot)}</small></div>${texto(f)}</div>
+        <div class="cu-to-ceu">
+          ${d.marcos.map((m) => `<div class="cu-to-m" data-v="${m.v}"><span class="ic">${esc(m.ic)}</span><span class="t"><b>${esc(m.nome)}</b><small>${esc(altura(m.v))}</small></span></div>`).join("")}
+          <div class="cu-to-pilha ${esc(d.tipo)}"><i></i><span class="topo">${f.pessoas[0] ? avatarPalco(f.pessoas[0], 64) : ""}</span></div>
+        </div></div>`;
+    },
+    async animar(palco, cartao, f) {
+      const d = f.dados;
+      const pilha = cartao.querySelector(".cu-to-pilha");
+      const num = cartao.querySelector(".cu-to-num b");
+      const ms = [...cartao.querySelectorAll(".cu-to-m")].map((el) => ({ el, v: Number(el.dataset.v), passou: false }));
+      const acima = ms.find((m) => m.v > d.h);
+      const h0 = Math.max(d.h / 4000, Math.min(d.h, (ms[0]?.v || d.h) * 0.45));
+      const topo = (h) => Math.max(h * 1.35, h0 * 1.6);
+      const desenhar = (h, S) => {
+        pilha.style.height = `${Math.min(100, (h / S) * 100)}%`;
+        num.textContent = altura(h);
+        // De cima para baixo: um nome demasiado perto do de cima esconde-se (fica o mais alto)
+        let ultimo = Infinity;
+        for (const m of [...ms].reverse()) {
+          const y = (m.v / S) * 100;
+          m.el.style.bottom = `${y}%`;
+          const longe = ultimo - y >= 8.5;
+          m.el.style.opacity = y > 101 || !longe ? 0 : y < 10 ? Math.max(0, (y - 3) / 7) : 1;
+          if (y <= 101 && longe) ultimo = y;
+        }
+        for (const m of ms) {
+          if (!m.passou && h >= m.v) {
+            m.passou = true;
+            m.el.classList.add("passou");
+            palco.tocar("ding", {}, 0);
+          }
+        }
+      };
+      desenhar(h0, topo(h0));
+      palco.tocar("whoosh");
+      await palco.esperar(500);
+      palco.tocar("subida", { dur: 4 });
+      await animar(palco, 4600, (t) => {
+        const e = 1 - (1 - t) ** 2;
+        const h = h0 * (d.h / h0) ** e;
+        desenhar(h, topo(h));
+      }, { easing: (t) => t });
+      // No fim, afasta mais um pouco para se ver o que vem a seguir
+      const S1 = topo(d.h);
+      const S2 = acima && acima.v < d.h * 3 ? Math.max(S1, acima.v * 1.12) : S1;
+      if (S2 > S1) await animar(palco, 900, (_, e) => desenhar(d.h, S1 + (S2 - S1) * e));
+      if (acima) acima.el.classList.add("proximo");
+      pilha.classList.add("fim");
+      palco.tocar("impacto");
+      palco.tremer(0.25);
+      entrar(cartao.querySelector(".cu-texto"));
+      await palco.passo(5600);
+    },
+  },
+
+  // De mãos dadas: a fila estende-se pela estrada e o mapa afasta-se ao passar cada sítio
+  fila: {
+    html: (f, palco) => {
+      const d = f.dados;
+      return `<div class="cu-fi">
+        <div class="cu-fi-topo">${f.pessoas[0] ? avatarPalco(f.pessoas[0], palco.vertical ? 140 : 120) : `<span class="cu-to-grande">🇵🇹</span>`}<div>${titulo(f)}</div></div>
+        <div class="cu-fi-num"><b>0 km</b><small>${esc(d.ic)} ${esc(d.unid)}</small></div>
+        <div class="cu-fi-estrada">
+          <div class="cu-fi-chao"></div>
+          <div class="cu-fi-fila ${d.ic === "👣" ? "passos" : ""}"><i></i></div>
+          ${d.marcos.map((m, k) => `<div class="cu-fi-m ${k % 2 ? "baixo" : "cima"}" data-v="${m.v}"><span class="pino"></span><span class="t"><span class="ic">${esc(m.ic)}</span><b>${esc(m.nome)}</b><small>${esc(distancia(m.v))}</small></span></div>`).join("")}
+        </div>${texto(f)}</div>`;
+    },
+    async animar(palco, cartao, f) {
+      const d = f.dados;
+      const fila = cartao.querySelector(".cu-fi-fila");
+      const num = cartao.querySelector(".cu-fi-num b");
+      const ms = [...cartao.querySelectorAll(".cu-fi-m")].map((el) => ({ el, v: Number(el.dataset.v), passou: false }));
+      const acima = ms.find((m) => m.v > d.km);
+      const k0 = Math.max(d.km / 4000, Math.min(d.km, (ms[0]?.v || d.km) * 0.45));
+      const fim = (k) => Math.max(k * 1.3, k0 * 1.6);
+      const desenhar = (k, S) => {
+        fila.style.width = `${Math.min(100, (k / S) * 100)}%`;
+        num.textContent = distancia(k);
+        // Da direita para a esquerda: dois sítios do mesmo lado demasiado juntos ficam só com o mais longe
+        const ultimo = { cima: Infinity, baixo: Infinity };
+        for (const m of [...ms].reverse()) {
+          const x = (m.v / S) * 100;
+          const lado = m.el.classList.contains("cima") ? "cima" : "baixo";
+          m.el.style.left = `${x}%`;
+          // Perto das pontas, o nome encosta para dentro para não ficar cortado
+          m.el.querySelector(".t").style.transform = `translateX(${x < 12 ? -12 : x > 88 ? -88 : -50}%)`;
+          const longe = ultimo[lado] - x >= 13;
+          m.el.style.opacity = x > 101 || !longe ? 0 : x < 6 ? Math.max(0, (x - 1) / 5) : 1;
+          if (x <= 101 && longe) ultimo[lado] = x;
+        }
+        for (const m of ms) {
+          if (!m.passou && k >= m.v) {
+            m.passou = true;
+            m.el.classList.add("passou");
+            palco.tocar("ding");
+          }
+        }
+      };
+      desenhar(k0, fim(k0));
+      palco.tocar("whoosh");
+      await palco.esperar(500);
+      for (let i = 0; i < 14; i++) palco.tocar("tique", {}, i * 0.32);
+      await animar(palco, 4600, (t) => {
+        const e = 1 - (1 - t) ** 2;
+        const k = k0 * (d.km / k0) ** e;
+        desenhar(k, fim(k));
+      }, { easing: (t) => t });
+      const S1 = fim(d.km);
+      const S2 = acima && acima.v < d.km * 4 ? Math.max(S1, acima.v * 1.1) : S1;
+      if (S2 > S1) await animar(palco, 900, (_, e) => desenhar(d.km, S1 + (S2 - S1) * e));
+      if (acima) acima.el.classList.add("proximo");
+      fila.classList.add("fim");
+      palco.tocar("impacto");
+      entrar(cartao.querySelector(".cu-texto"));
+      await palco.passo(5600);
+    },
+  },
+
+  // Quantos cabem: o círculo do gigante enche-se de bolinhas com a cara do Youtuber
+  cabem: {
+    html: (f, palco) => {
+      const d = f.dados;
+      const s = f.pessoas[0];
+      const cada = Math.max(1, Math.ceil(d.n / 140));
+      const n = Math.max(1, Math.round(d.n / cada));
+      // Grelha hexagonal dentro do círculo, a encher de baixo para cima
+      let r = Math.sqrt(0.86 / n) * 0.5;
+      let pts = [];
+      for (let tent = 0; tent < 30; tent++) {
+        pts = [];
+        const dx = 2 * r;
+        const dy = Math.sqrt(3) * r;
+        for (let y = 0.5 - 0.5 + r, lin = 0; y <= 1 - r; y += dy, lin++)
+          for (let x = r + (lin % 2 ? r : 0); x <= 1 - r; x += dx) if (Math.hypot(x - 0.5, y - 0.5) <= 0.5 - r * 1.05) pts.push([x, y]);
+        if (pts.length >= n) break;
+        r *= 0.96;
+      }
+      pts = pts.sort((a, b) => b[1] - a[1] || Math.abs(a[0] - 0.5) - Math.abs(b[0] - 0.5)).slice(0, n);
+      const tam = palco.vertical ? 580 : 620;
+      const px = Math.max(8, Math.floor(r * 2 * tam * 0.92));
+      return `<div class="cu-cb">
+        <div class="cu-cb-gig" style="--tam:${tam}px">
+          <div class="cu-cb-fundo"><span class="ic">${esc(d.gig.ic)}</span><b>${esc(d.gig.nome)}</b><small>${esc(marco(d.gig.v))} ${esc(d.gig.rot)}</small></div>
+          ${pts.map(([x, y]) => `<span class="cu-cb-d" style="left:${(x * 100).toFixed(2)}%;top:${(y * 100).toFixed(2)}%">${px >= 26 && s ? avatarPalco(s, px) : `<i style="--px:${px}px"></i>`}</span>`).join("")}
+        </div>
+        <div class="cu-cb-lado">${s ? avatarPalco(s, palco.vertical ? 120 : 140) : ""}${titulo(f)}
+          <div class="cu-cb-x">×<b>0</b></div>
+          ${cada > 1 ? `<small class="cu-cb-leg">Cada bolinha são ${cada} canais como o de ${esc(s?.name || "")}</small>` : ""}
+          ${texto(f)}</div></div>`;
+    },
+    async animar(palco, cartao, f) {
+      const ds = [...cartao.querySelectorAll(".cu-cb-d")];
+      palco.tocar("whoosh");
+      cartao.querySelector(".cu-cb-gig").classList.add("ve");
+      await palco.esperar(700);
+      const passo = Math.min(90, 2600 / ds.length);
+      ds.forEach((el, k) => el.animate([{ transform: "translate(-50%, -50%) scale(0)" }, { transform: "translate(-50%, -50%) scale(1)" }], { duration: 320, delay: k * passo * palco.fator, easing: "cubic-bezier(.2,1.6,.4,1)", fill: "backwards" }));
+      for (let k = 0; k < Math.min(16, ds.length); k++) palco.tocar("bolha", {}, (k * ds.length * passo) / 16 / 1000);
+      contar(cartao.querySelector(".cu-cb-x b"), f.dados.n, { formato: (x) => inteiro(Math.max(1, Math.round(x))), duracao: ds.length * passo + 300 });
+      await palco.esperar(ds.length * passo + 500);
+      cartao.querySelector(".cu-cb-x").classList.add("ve");
+      palco.tocar("ooh");
+      palco.flash(0.25);
+      entrar(cartao.querySelector(".cu-texto"), 300 * palco.fator);
+      await palco.passo(5800);
+    },
+  },
+
+  // Todos juntos contra um gigante: a barra de baixo vai somando Youtubers até onde chegar
+  soma: {
+    html: (f, palco) => {
+      const d = f.dados;
+      const total = d.partes.reduce((a, x) => a + x.v, 0) + d.outros.v;
+      const S = Math.max(total, d.gig.v) * 1.03;
+      const w = (v) => (v / S) * 100;
+      return `<div class="cu-so">${titulo(f)}
+        <div class="cu-so-barras">
+          <div class="cu-so-l gig"><div class="cu-so-rot"><span class="ic">${esc(d.gig.ic)}</span><b>${esc(d.gig.nome)}</b></div><div class="cu-so-pista"><i style="--w:${w(d.gig.v)}"></i></div><b class="cu-so-v">${esc(marco(d.gig.v))}</b></div>
+          <div class="cu-so-l nos"><div class="cu-so-rot"><span class="ic">🇵🇹</span><b>${esc(d.nos)}</b></div><div class="cu-so-pista">${d.partes.map((x) => `<i class="seg" style="--w:${w(x.v)}" data-v="${x.v}">${w(x.v) > (palco.vertical ? 9 : 5) ? avatarPalco(x, palco.vertical ? 46 : 52) : ""}</i>`).join("")}${d.outros.n ? `<i class="seg outros" style="--w:${w(d.outros.v)}" data-v="${d.outros.v}"><small>+${d.outros.n}</small></i>` : ""}<span class="cu-so-marca" style="--w:${w(d.gig.v)}"></span></div><b class="cu-so-v nos-v">0</b></div>
+        </div>
+        <div class="cu-so-nomes">${d.partes.map((x) => `<span>${avatarPalco(x, 34)}${esc(x.name)} <b>${esc(curto(x.v))}</b></span>`).join("")}${d.outros.n ? `<span>+ ${d.outros.n} outros <b>${esc(curto(d.outros.v))}</b></span>` : ""}</div>
+        ${texto(f)}</div>`;
+    },
+    async animar(palco, cartao, f) {
+      const d = f.dados;
+      palco.tocar("whoosh");
+      cartao.querySelector(".cu-so-l.gig").classList.add("ve");
+      palco.tocar("subida", { dur: 1 });
+      await palco.esperar(1300);
+      const v = cartao.querySelector(".nos-v");
+      let soma = 0;
+      const segs = [...cartao.querySelectorAll(".seg")];
+      for (const s of segs) {
+        s.classList.add("ve");
+        const antes = soma;
+        soma += Number(s.dataset.v);
+        const depois = soma;
+        animar(palco, 450, (_, e) => (v.textContent = marco(antes + (depois - antes) * e))).catch(() => {});
+        palco.tocar("ponto");
+        await palco.esperar(s.classList.contains("outros") ? 900 : 520);
+      }
+      cartao.querySelectorAll(".cu-so-nomes span").forEach((s, k) => s.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 300, delay: k * 60 * palco.fator, fill: "backwards" }));
+      const passou = soma >= d.gig.v;
+      cartao.querySelector(".cu-so-barras").classList.add(passou ? "passou" : "falta");
+      palco.tocar(passou ? "vitoria" : "falha");
+      if (passou) {
+        palco.flash(0.35);
+        palco.tremer(0.35);
+      }
+      entrar(cartao.querySelector(".cu-texto"), 300 * palco.fator);
+      await palco.passo(6200);
+    },
+  },
+
+  // No meio de Portugal: uma tabela com coisas reais e o Youtuber lá no meio
+  misto: {
+    html: (f, palco) => {
+      const ls = f.dados.linhas;
+      const max = Math.max(...ls.map((l) => l.v));
+      return `<div class="cu-mi">${titulo(f)}
+        <div class="cu-mi-lista">${ls
+          .map((l) => `<div class="cu-mi-l${l.quem ? " eu" : ""}"><span class="cara">${l.quem ? (l.photo || l.id !== "placar" ? avatarPalco(l, palco.vertical ? 70 : 62) : `<span class="ic">${esc(l.ic || "🇵🇹")}</span>`) : `<span class="ic">${esc(l.ic)}</span>`}</span><span class="nome"><b>${esc(l.quem ? l.name : l.nome)}</b><small>${esc(l.nota || "")}</small></span><span class="pista"><i style="--w:${Math.max(1.2, (l.v / max) * 100)}"></i></span><b class="v">${esc(curto(l.v))}</b></div>`)
+          .join("")}</div>${texto(f)}</div>`;
+    },
+    async animar(palco, cartao) {
+      const ls = [...cartao.querySelectorAll(".cu-mi-l")].reverse();
+      for (const l of ls) {
+        l.classList.add("ve");
+        const eu = l.classList.contains("eu");
+        palco.tocar(eu ? "impacto" : "tique");
+        if (eu) palco.tremer(0.2);
+        await palco.esperar(eu ? 900 : 480);
+      }
+      entrar(cartao.querySelector(".cu-texto"), 200 * palco.fator);
+      await palco.passo(6000);
+    },
+  },
+
+  // O frasco: as coisas caem lá para dentro enquanto o número conta
+  frasco: {
+    html: (f, palco) => {
+      const d = f.dados;
+      const n = 42;
+      return `<div class="cu-fr">
+        <div class="cu-fr-frasco"><span class="tampa"></span><div class="vidro">${Array.from({ length: n }, (_, k) => `<span style="--c:${k % 7};--l:${Math.floor(k / 7)};--r:${((k * 47) % 30) - 15}deg">${esc(d.icone)}</span>`).join("")}</div></div>
+        <div class="cu-fr-lado">${f.pessoas[0] ? avatarPalco(f.pessoas[0], palco.vertical ? 120 : 130) : ""}${titulo(f)}
+          <div class="cu-fr-num"><b>0</b><small>${esc(d.rot)}</small></div>${texto(f)}</div></div>`;
+    },
+    async animar(palco, cartao, f) {
+      const d = f.dados;
+      const is = [...cartao.querySelectorAll(".vidro span")];
+      const dur = 3000;
+      is.forEach((s, k) => s.animate([{ transform: `translateY(-700px) rotate(0deg)`, opacity: 0 }, { opacity: 1, offset: 0.2 }, { transform: `translateY(0) rotate(var(--r))`, opacity: 1 }], { duration: 650, delay: (300 + (k * dur) / is.length) * palco.fator, easing: "cubic-bezier(.5,0,.7,1.3)", fill: "backwards" }));
+      for (let k = 0; k < 14; k++) palco.tocar("ponto", {}, 0.5 + (k * dur) / 14 / 1000);
+      contar(cartao.querySelector(".cu-fr-num b"), d.ate, { formato: (x) => `${fmt(x, d.f)}${d.suf || ""}`, duracao: dur, atraso: 300 });
+      await palco.esperar(dur + 800);
+      cartao.querySelector(".cu-fr-frasco").classList.add("cheio");
+      palco.tocar("sino");
+      entrar(cartao.querySelector(".cu-texto"));
+      await palco.passo(5800);
+    },
+  },
+
+  // O boletim do Euromilhões: as bolas saem, e as views contra os 139 838 160 boletins possíveis
+  bilhete: {
+    html: (f, palco) => {
+      const d = f.dados;
+      const res = d.k >= 1 ? `<b>${d.k >= 2 ? `${inteiro(Math.floor(d.k))}×` : "1×"}</b><small>todas as chaves jogadas</small>` : `<b>${esc(dec(d.k * 100))}%</b><small>de hipóteses de ganhar</small>`;
+      return `<div class="cu-bi">
+        <div class="cu-bi-boletim"><div class="cab">⭐ Euromilhões</div>
+          <div class="bolas">${d.numeros.map((x) => `<span class="bola">${x}</span>`).join("")}</div>
+          <div class="estrelas">${d.estrelas.map((x) => `<span class="estrela">${x}</span>`).join("")}</div>
+          <div class="chaves"><small>Chaves possíveis</small><b>139 838 160</b></div></div>
+        <div class="cu-bi-lado">${avatarPalco(f.pessoas[0], palco.vertical ? 120 : 130)}${titulo(f)}
+          <div class="cu-bi-v">🎟️ <b>0</b> <small>apostas (uma por view)</small></div>
+          <div class="cu-bi-res">${res}</div>${texto(f)}</div></div>`;
+    },
+    async animar(palco, cartao, f) {
+      palco.tocar("whoosh");
+      cartao.querySelector(".cu-bi-boletim").classList.add("ve");
+      await palco.esperar(600);
+      for (const b of cartao.querySelectorAll(".bola, .estrela")) {
+        b.classList.add("ve");
+        palco.tocar(b.classList.contains("estrela") ? "estrela" : "bolha");
+        await palco.esperar(330);
+      }
+      contar(cartao.querySelector(".cu-bi-v b"), f.dados.v, { formato: curto, duracao: 1400 });
+      palco.tocar("rufo");
+      await palco.esperar(1600);
+      cartao.querySelector(".cu-bi-res").classList.add("ve");
+      palco.tocar(f.dados.k >= 1 ? "moeda" : "ooh");
+      if (f.dados.k >= 1) for (let k = 0; k < 6; k++) palco.tocar("moeda", {}, 0.15 + k * 0.15);
+      palco.flash(0.3);
+      entrar(cartao.querySelector(".cu-texto"), 300 * palco.fator);
+      await palco.passo(5800);
     },
   },
 };
