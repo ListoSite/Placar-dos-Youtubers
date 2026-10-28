@@ -1,7 +1,7 @@
 // Edição de Youtubers: dados, canais, redes sociais, views por mês, juntar e apagar.
 
-import { estado } from "../data.js";
-import { esc, curto, inteiro, norm, mesNome, data } from "../format.js";
+import { estado, views, mediaMeses, mesAnterior, indice } from "../data.js";
+import { esc, curto, inteiro, norm, mesNome, data, pct, ha } from "../format.js";
 import { $, $$, avatar, janela, confirmar, toast, REDES, ICONES } from "../ui.js";
 import { adm, chamar, pessoasOrdenadas, categorias, cartaoCanal, escolherPessoa, fonteEtiqueta, linkSocialBlade } from "./common.js";
 import { blocoAbout, escolhas, resumoAbout } from "./youtube.js";
@@ -27,29 +27,112 @@ const ESTADOS = [
 // O que estava na lista, para o "Atualizar dados" não a deixar em branco
 let ultimaLista = { filtro: "todos", termo: "", scroll: 0 };
 
+// ---------- Ordenar e filtrar a lista ----------
+// Os números vêm do dataset do site (o mesmo do ranking). Cada ordem: v(pessoa do dataset) e o texto.
+const ultimoGanho = (o) => {
+  const e = Object.entries(o || {}).sort((a, b) => a[0].localeCompare(b[0])).at(-1);
+  return e && e[1] > 0 ? e[1] : null;
+};
+const ORDENS = [
+  { id: "nome", nome: "Nome (A–Z)" },
+  { id: "mes", resumo: "views do mês", nome: "Views do mês", v: (d) => views(d, estado.ref), txt: (v) => `${curto(v)} views em ${mesNome(estado.ref, { curto: true })}` },
+  { id: "media", resumo: "média de views", nome: "Média de views (3 meses)", v: (d) => mediaMeses(d, estado.ref, 3), txt: (v) => `${curto(v)} views por mês` },
+  {
+    id: "cresc",
+    resumo: "crescimento",
+    nome: "A crescer mais",
+    v: (d) => {
+      const a = views(d, mesAnterior(estado.ref));
+      const b = views(d, estado.ref);
+      return a >= 10000 && b !== null ? b / a - 1 : null;
+    },
+    txt: (v) => `${pct(v, { sinal: true })} em views num mês`,
+  },
+  { id: "subs", resumo: "subscritores", nome: "Subscritores", v: (d) => d.totals?.subs || null, txt: (v) => `${curto(v)} subscritores` },
+  { id: "ganhos", resumo: "subscritores ganhos", nome: "Subscritores ganhos no mês", v: (d) => ultimoGanho(d.sb?.s), txt: (v) => `+${curto(v)} subscritores num mês` },
+  { id: "indice", resumo: "Índice", nome: "Índice do Placar", v: (d) => indice(d.id).total, txt: (v) => `Índice ${inteiro(v)}` },
+  { id: "total", resumo: "views totais", nome: "Views totais", v: (d) => d.totals?.views || null, txt: (v) => `${curto(v)} views no total` },
+  { id: "recente", resumo: "último vídeo", nome: "Último vídeo (mais recente)", v: (d) => (d.vid?.last ? Date.parse(d.vid.last) : null), txt: (v) => `último vídeo ${ha(new Date(v).toISOString())}` },
+  { id: "ritmo", resumo: "vídeos em 30 dias", nome: "Vídeos nos últimos 30 dias", v: (d) => (d.vid?.up30 > 0 ? d.vid.up30 : null), txt: (v) => `${inteiro(v)} ${v === 1 ? "vídeo" : "vídeos"} em 30 dias` },
+];
+const ATIVIDADES = [
+  { id: "", nome: "Todos" },
+  { id: "ativos", nome: "Publicaram nos últimos 30 dias", ok: (d) => d && (d.vid?.up30 > 0 || (d.vid?.last && Date.now() - Date.parse(d.vid.last) < 30 * 864e5)) },
+  { id: "parados", nome: "Sem vídeos há 3 meses ou mais", ok: (d) => d && d.vid?.last && Date.now() - Date.parse(d.vid.last) >= 90 * 864e5 },
+  { id: "semmes", nome: "Sem views do mês (falta importar)", ok: (d) => !d || views(d, estado.ref) === null },
+  { id: "grandes", nome: "Mais de 100 mil subscritores", ok: (d) => (d?.totals?.subs || 0) >= 100000 },
+];
+const CHAVE_LISTA = "painel-youtubers-lista";
+function lerVista() {
+  try {
+    const v = JSON.parse(localStorage.getItem(CHAVE_LISTA) || "{}") || {};
+    return { ordem: ORDENS.some((o) => o.id === v.ordem) ? v.ordem : "nome", cat: String(v.cat || ""), atividade: ATIVIDADES.some((a) => a.id === v.atividade) ? v.atividade : "" };
+  } catch {
+    return { ordem: "nome", cat: "", atividade: "" };
+  }
+}
+function guardarVista(v) {
+  try {
+    localStorage.setItem(CHAVE_LISTA, JSON.stringify(v));
+  } catch {
+    /* sem memória: fica só nesta visita */
+  }
+}
+
 export async function render(alvo, query, { refrescar = false } = {}) {
   if (refrescar) ultimaLista.scroll = $("#pp-lista", alvo)?.scrollTop || 0;
   let filtro = refrescar ? ultimaLista.filtro : "todos";
   let termo = refrescar ? ultimaLista.termo : "";
   let selecionado = query.get("id") && adm.db.people[query.get("id")] ? query.get("id") : null;
+  const vista = lerVista();
+  const cats = categorias();
+  if (vista.cat && !cats.includes(vista.cat)) vista.cat = "";
 
   alvo.innerHTML = `<div class="ed-duas">
     <aside class="ed-lista">
       <div style="display:flex;gap:8px"><input class="input" id="pp-q" type="search" placeholder="Procurar"><button class="btn btn-primario" id="pp-novo" title="Novo Youtuber">Novo</button></div>
+      <div class="ed-ordem">
+        <label class="ed-ordem-campo larga"><span>Ordenar por</span><select class="input" id="pp-ordem">${ORDENS.map((o) => `<option value="${o.id}"${o.id === vista.ordem ? " selected" : ""}>${esc(o.nome)}</option>`).join("")}</select></label>
+        <label class="ed-ordem-campo"><span>Categoria</span><select class="input" id="pp-cat"><option value="">Todas</option>${cats.map((c) => `<option value="${esc(c)}"${c === vista.cat ? " selected" : ""}>${esc(c)}</option>`).join("")}</select></label>
+        <label class="ed-ordem-campo"><span>Mostrar</span><select class="input" id="pp-ativ">${ATIVIDADES.map((a) => `<option value="${a.id}"${a.id === vista.atividade ? " selected" : ""}>${esc(a.nome)}</option>`).join("")}</select></label>
+      </div>
       <div class="segmentos" id="pp-filtro" style="margin:10px 0">
         <button data-f="todos" aria-pressed="true">Todos</button><button data-f="semcanal">Sem canal</button><button data-f="confirmar" title="Com canais sugeridos por confirmar">Para confirmar</button><button data-f="escondidos">Escondidos</button>
       </div>
+      <div class="ed-resumo"><span id="pp-resumo"></span><button class="btn-link" id="pp-limpar" hidden>Limpar filtros</button></div>
       <div id="pp-lista" class="ed-itens"></div>
     </aside>
     <section id="pp-editor" class="ed-editor"></section></div>`;
 
+  const ordem = () => ORDENS.find((o) => o.id === vista.ordem) || ORDENS[0];
+  const ativ = () => ATIVIDADES.find((a) => a.id === vista.atividade) || ATIVIDADES[0];
+  // O valor de cada um na ordem escolhida (null quando não há número)
+  const valor = (p) => {
+    const o = ordem();
+    const d = estado.pessoas?.get(p.id);
+    if (!o.v || !d) return null;
+    const v = o.v(d);
+    return Number.isFinite(v) ? v : null;
+  };
   const listaAtual = () => {
     const t = norm(termo);
-    return pessoasOrdenadas().filter((p) => {
+    const a = ativ();
+    const lista = pessoasOrdenadas().filter((p) => {
       if (filtro === "semcanal" && p.channels.length) return false;
       if (filtro === "confirmar" && !sugestoes(p).length) return false;
       if (filtro === "escondidos" && !p.hidden) return false;
+      if (vista.cat && p.category !== vista.cat) return false;
+      if (a.ok && !a.ok(estado.pessoas?.get(p.id))) return false;
       return !t || norm(p.name).includes(t) || norm(p.realName).includes(t);
+    });
+    if (!ordem().v) return lista;
+    // Do maior para o menor; quem não tem número fica no fim, por nome
+    const vs = new Map(lista.map((p) => [p.id, valor(p)]));
+    return lista.sort((x, y) => {
+      const a1 = vs.get(x.id);
+      const b1 = vs.get(y.id);
+      if (a1 === null || b1 === null) return a1 === null && b1 === null ? 0 : a1 === null ? 1 : -1;
+      return b1 - a1;
     });
   };
   irSeguinte = (id) => {
@@ -66,16 +149,39 @@ export async function render(alvo, query, { refrescar = false } = {}) {
   };
   const desenharLista = () => {
     const lista = listaAtual();
+    const o = ordem();
     const nConf = Object.values(adm.db.people).filter((p) => sugestoes(p).length).length;
     $('#pp-filtro [data-f="confirmar"]', alvo).textContent = `Para confirmar${nConf ? ` (${nConf})` : ""}`;
+    const comValor = o.v ? lista.filter((p) => valor(p) !== null).length : 0;
+    $("#pp-resumo", alvo).textContent = `${inteiro(lista.length)} ${lista.length === 1 ? "Youtuber" : "Youtubers"}${o.v ? `, ordenados por ${o.resumo}${comValor < lista.length ? ` (${inteiro(lista.length - comValor)} sem número)` : ""}` : ""}`;
+    $("#pp-limpar", alvo).hidden = vista.ordem === "nome" && !vista.cat && !vista.atividade;
+    let pos = 0;
     $("#pp-lista", alvo).innerHTML =
       lista
         .slice(0, 400)
-        .map(
-          (p) => `<button class="ed-item${p.id === selecionado ? " ativo" : ""}" data-id="${esc(p.id)}">${avatar(estado.pessoas.get(p.id) || { name: p.name }, 30)}<span><b>${esc(p.name)}</b><small>${esc(p.category || "sem categoria")}${p.channels.length ? `, ${p.channels.length} canal${p.channels.length > 1 ? "is" : ""}` : ", sem canal"}${p.hidden ? ", escondido" : ""}</small></span>${sugestoes(p).length ? `<span class="ed-item-sug" title="${sugestoes(p).length} canais sugeridos por confirmar">${sugestoes(p).length}</span>` : ""}</button>`,
-        )
+        .map((p) => {
+          const v = o.v ? valor(p) : null;
+          const extra = v !== null ? `<small class="ed-item-num">${esc(o.txt(v))}</small>` : "";
+          const lugar = v !== null ? `<span class="ed-item-pos">${++pos}</span>` : "";
+          return `<button class="ed-item${p.id === selecionado ? " ativo" : ""}" data-id="${esc(p.id)}">${lugar}${avatar(estado.pessoas.get(p.id) || { name: p.name }, 30)}<span><b>${esc(p.name)}</b>${extra}<small>${esc(p.category || "sem categoria")}${p.channels.length ? `, ${p.channels.length} canal${p.channels.length > 1 ? "is" : ""}` : ", sem canal"}${p.hidden ? ", escondido" : ""}</small></span>${sugestoes(p).length ? `<span class="ed-item-sug" title="${sugestoes(p).length} canais sugeridos por confirmar">${sugestoes(p).length}</span>` : ""}</button>`;
+        })
         .join("") || `<p class="muted" style="padding:12px">Ninguém encontrado.</p>`;
   };
+  const mudarVista = () => {
+    guardarVista(vista);
+    desenharLista();
+    $("#pp-lista", alvo).scrollTop = 0;
+  };
+  $("#pp-ordem", alvo).addEventListener("change", (e) => ((vista.ordem = e.target.value), mudarVista()));
+  $("#pp-cat", alvo).addEventListener("change", (e) => ((vista.cat = e.target.value), mudarVista()));
+  $("#pp-ativ", alvo).addEventListener("change", (e) => ((vista.atividade = e.target.value), mudarVista()));
+  $("#pp-limpar", alvo).addEventListener("click", () => {
+    Object.assign(vista, { ordem: "nome", cat: "", atividade: "" });
+    $("#pp-ordem", alvo).value = "nome";
+    $("#pp-cat", alvo).value = "";
+    $("#pp-ativ", alvo).value = "";
+    mudarVista();
+  });
 
   const abrir = (id) => {
     selecionado = id;

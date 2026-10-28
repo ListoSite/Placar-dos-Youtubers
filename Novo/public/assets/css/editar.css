@@ -1328,3 +1328,68 @@ details > summary {
   display: block;
   overflow-wrap: anywhere;
 }
+
+/* Lista de Youtubers: ordenar e filtrar */
+.ed-ordem {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-top: 10px;
+}
+.ed-ordem-campo {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+.ed-ordem-campo.larga {
+  grid-column: 1 / -1;
+}
+.ed-ordem-campo span {
+  font-size: var(--t-xs);
+  color: var(--texto-3);
+}
+.ed-ordem-campo .input {
+  padding-top: 6px;
+  padding-bottom: 6px;
+  font-size: var(--t-sm);
+  min-width: 0;
+}
+.ed-resumo {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 8px;
+  margin: -2px 2px 8px;
+  font-size: var(--t-xs);
+  color: var(--texto-3);
+}
+.ed-item-pos {
+  flex: none;
+  min-width: 22px;
+  font-size: var(--t-xs);
+  font-weight: 800;
+  color: var(--texto-3);
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+.ed-item:nth-child(-n + 3) .ed-item-pos {
+  color: var(--ouro);
+}
+.ed-item small.ed-item-num {
+  display: block;
+  color: var(--ouro);
+  font-weight: 700;
+}
+#pp-lista {
+  max-height: max(260px, calc(100vh - 380px));
+}
+@media (max-width: 900px) {
+  #pp-lista {
+    max-height: 340px;
+  }
+}
+#pp-limpar {
+  flex: none;
+  white-space: nowrap;
+}
